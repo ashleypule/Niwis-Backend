@@ -85,6 +85,23 @@ Primary tables: `6.1_core_rainfall_variables_master` (daily rows, monthly/season
 `6.2_rainfall_derived_drought_indices_master` (monthly SPI/SPEI). Supporting: `4_2_wet_dry_spells_master`,
 `4_3_mean_annual_precipitation_master`, `meteorological_drought_master` (SPEI-6, identical rainfall/SPI).
 
+**Implemented (Phase 2, 2026-10-14)** — `app/modules/rainfall/`. Implementation details beyond the tables below:
+
+- **Window totals** are sums of daily rainfall over the exact window (default 12 M ending at the newest daily record,
+  2026-09-06), computed in SQL per district; a district needs ≥ 95 % of days. **Normals** = the DB climatology
+  (monthly total − stored anomaly, constant per district-month) pro-rated by the days of each month in the window.
+- **Partial current month.** The DB's September 2026 rows cover 6 days, but its stored anomaly / SPI compare them with
+  a full month. The API therefore uses the **latest complete month** (2026-08) for SPI, SPEI and monthly-anomaly
+  series and says so in `sublabel` / `note`; the `monthly` chart and `monthly` map include the partial month, labelled
+  "to 6 Sep".
+- **CDD (summary, map)** = days since the last day with ≥ 1 mm, up to the newest record (look-back 730 days).
+- **Seasonal breakdown** categories = the last 7 full years; **events** = district-days > 50 mm per year, last 10
+  years (current year to date).
+- **Provinces table** `status` = drought class (scale `drought`) of the province's area-weighted SPI-12.
+- **Statistics table** trend = Sen's slope × 10 (per decade) over full years 2000–2025 (`pymannkendall`).
+- **Aggregation** below 95 % area coverage returns `null` (never a mean of the districts that happen to have data).
+- Verified against SQL: `docs/VERIFICATION.md`.
+
 ### Summary (`KpiSet`)
 
 | KPI (`metric`) | Status | Source → transformation |

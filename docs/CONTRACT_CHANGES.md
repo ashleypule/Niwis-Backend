@@ -117,7 +117,14 @@ header.
 | `GET /api/v1/meta/coverage` | Per module roll-up of the above (for the Data Integration and Governance pages) |
 | `GET /api/v1/meta/variables` | Every variable: canonical source, duplicates, or why it is unavailable |
 
-## 7. Derived values
+## 7. Module notes
+
+**Rainfall (live).** `entities` are the 52 districts (`type: "district"`); `timeseries?metric=station` needs
+`entityId` (district MDB code; missing → 400, unknown → 404). SPI / SPEI values are for the latest complete month (the
+current month is partial). `activeStations` KPI is `null` with `unavailableReason`; the `sources` table's Stations
+column is `null` with an `unavailable` entry. `matrix` has no rainfall datasets (any metric → 404).
+
+## 8. Derived values
 
 | Value | Derivation |
 | --- | --- |

@@ -28,6 +28,7 @@
 | 11 | Read-only access for the API | database roles / RLS | P2 |
 | 12 | ~~No district boundaries~~ — resolved: official district boundaries supplied 2026-10-14 | `reference/geo/districts.json` | done |
 | 13 | The same data stored in several tables; canonical source chosen per variable | 9 tables | P3 |
+| 14 | Partial current month: anomaly and SPI compare a few days with a full-month normal | `6.1`, `6.2`, `meteorological`, `5.2` | P2 |
 
 ---
 
@@ -218,4 +219,15 @@ and consider dropping or documenting the copies.
 
 `hydrological_drought_master` and `runoff_variables_master` hold *different* runoff models (monthly correlation
 r = 0.61), not duplicates; the hydrology flow columns are withheld (§3).
+
+## 14. Partial current month (P2)
+
+The newest month in the monthly columns is incomplete (2026-09 covers 1–6 September), but it is treated as a full
+month: `6.1.Monthly_Anomaly_mm` for Alfred Nzo, Sep 2026 = 31.93 mm − 55.40 mm normal = **−23.47 mm** (6 days of rain
+against a 30-day normal); SPI / SPEI for 2026-09 are computed the same way, so the latest month always looks drier
+than it is.
+
+**What the API does:** uses the latest **complete** month for SPI, SPEI and monthly anomalies, and pro-rates normals
+by days for window totals. **Ask:** either publish monthly indices only for complete months, or add a
+`days_in_record` / `is_complete` column so consumers can tell.
 

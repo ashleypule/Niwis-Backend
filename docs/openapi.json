@@ -1,6 +1,1027 @@
 {
   "components": {
     "schemas": {
+      "Axis": {
+        "additionalProperties": false,
+        "properties": {
+          "inverse": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inverse"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "log": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Log"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unit"
+        ],
+        "title": "Axis",
+        "type": "object"
+      },
+      "Band": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "from": {
+            "title": "From",
+            "type": "number"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "to": {
+            "title": "To",
+            "type": "number"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "color",
+          "label"
+        ],
+        "title": "Band",
+        "type": "object"
+      },
+      "CategorySeries": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Axis"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "bar",
+                  "line"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "stack": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stack"
+          },
+          "values": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "values"
+        ],
+        "title": "CategorySeries",
+        "type": "object"
+      },
+      "CategorySet": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "district",
+                  "district-area-weighted",
+                  "district-overlap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggregation"
+          },
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "axis2Unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Axis2Unit"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baselineNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinenote"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "center": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Center"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "colors": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Colors"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/CategorySeries"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "unavailable": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UnavailableField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "unit",
+          "categories",
+          "series"
+        ],
+        "title": "CategorySet",
+        "type": "object"
+      },
+      "Center": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "Center",
+        "type": "object"
+      },
+      "Column": {
+        "additionalProperties": false,
+        "properties": {
+          "align": {
+            "anyOf": [
+              {
+                "enum": [
+                  "left",
+                  "right",
+                  "center"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Align"
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals"
+          },
+          "goodDirection": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gooddirection"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale"
+          },
+          "type": {
+            "enum": [
+              "text",
+              "number",
+              "class",
+              "trend",
+              "delta",
+              "bar",
+              "date",
+              "rank"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type"
+        ],
+        "title": "Column",
+        "type": "object"
+      },
+      "Component": {
+        "additionalProperties": false,
+        "properties": {
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "isStale": {
+            "default": false,
+            "title": "Isstale",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "source": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Source",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "Component",
+        "type": "object"
+      },
+      "Entity": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "municipality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipality"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "sub": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "wma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wma"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "title": "Entity",
+        "type": "object"
+      },
+      "EntityDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/EntityField"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "image": {
+            "anyOf": [
+              {
+                "enum": [
+                  "dam",
+                  "river",
+                  "borehole",
+                  "wwtw",
+                  "wtp",
+                  "settlement",
+                  "station",
+                  "aquifer",
+                  "municipality"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "municipality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipality"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Status"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sub": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "wma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wma"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "title",
+          "fields"
+        ],
+        "title": "EntityDetail",
+        "type": "object"
+      },
+      "EntityField": {
+        "additionalProperties": false,
+        "properties": {
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "EntityField",
+        "type": "object"
+      },
+      "EntityList": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "district",
+                  "district-area-weighted",
+                  "district-overlap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggregation"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baselineNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinenote"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Entity"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "total": {
+            "title": "Total",
+            "type": "number"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "unavailable": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UnavailableField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable"
+          }
+        },
+        "required": [
+          "type",
+          "total",
+          "items"
+        ],
+        "title": "EntityList",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "issues": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issues"
+          },
+          "missing": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -12,6 +1033,832 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Kpi": {
+        "additionalProperties": false,
+        "properties": {
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "decimals": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decimals"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "deltaLabel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deltalabel"
+          },
+          "deltaUnit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deltaunit"
+          },
+          "goodDirection": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gooddirection"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "spark": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spark"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Status"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sublabel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sublabel"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "id",
+          "metric",
+          "label",
+          "value"
+        ],
+        "title": "Kpi",
+        "type": "object"
+      },
+      "KpiSet": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "district",
+                  "district-area-weighted",
+                  "district-overlap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggregation"
+          },
+          "asOf": {
+            "title": "Asof",
+            "type": "string"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baselineNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinenote"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/Kpi"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "module": {
+            "title": "Module",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "unavailable": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UnavailableField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable"
+          }
+        },
+        "required": [
+          "module",
+          "asOf",
+          "scope",
+          "kpis"
+        ],
+        "title": "KpiSet",
+        "type": "object"
+      },
+      "MapLayer": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "district",
+                  "district-area-weighted",
+                  "district-overlap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggregation"
+          },
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baselineNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinenote"
+          },
+          "cellSize": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cellsize"
+          },
+          "cells": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxItems": 3,
+                  "minItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cells"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "geometry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geometry"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "kind": {
+            "enum": [
+              "choropleth",
+              "grid",
+              "points"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "province",
+              "wma",
+              "catchment",
+              "municipality",
+              "grid",
+              "point"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "points": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MapPoint"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points"
+          },
+          "scale": {
+            "title": "Scale",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "unavailable": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UnavailableField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "values": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Values"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "level",
+          "scale",
+          "unit",
+          "date"
+        ],
+        "title": "MapLayer",
+        "type": "object"
+      },
+      "MapPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "sub": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "lat",
+          "lon",
+          "value"
+        ],
+        "title": "MapPoint",
+        "type": "object"
+      },
+      "MatrixSet": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "district",
+                  "district-area-weighted",
+                  "district-overlap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggregation"
+          },
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baselineNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinenote"
+          },
+          "cols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cols",
+            "type": "array"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "rows": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "scale": {
+            "title": "Scale",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "unavailable": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UnavailableField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "rows",
+          "cols",
+          "values",
+          "unit",
+          "scale"
+        ],
+        "title": "MatrixSet",
         "type": "object"
       },
       "RefItem": {
@@ -66,6 +1913,47 @@
         "title": "RefItem",
         "type": "object"
       },
+      "RefLine": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Axis"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "y": {
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "y",
+          "label"
+        ],
+        "title": "RefLine",
+        "type": "object"
+      },
       "RefList": {
         "additionalProperties": false,
         "properties": {
@@ -86,6 +1974,608 @@
           "items"
         ],
         "title": "RefList",
+        "type": "object"
+      },
+      "Scope": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "national",
+              "province",
+              "wma",
+              "catchment",
+              "municipality",
+              "entity"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "id",
+          "name"
+        ],
+        "title": "Scope",
+        "type": "object"
+      },
+      "Series": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Axis"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "dash": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dash"
+          },
+          "data": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "line",
+              "bar",
+              "area",
+              "band",
+              "scatter",
+              "step"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "smooth": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Smooth"
+          },
+          "stack": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stack"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "kind",
+          "data"
+        ],
+        "title": "Series",
+        "type": "object"
+      },
+      "SeriesSet": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "district",
+                  "district-area-weighted",
+                  "district-overlap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggregation"
+          },
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "axes": {
+            "items": {
+              "$ref": "#/components/schemas/Axis"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Axes",
+            "type": "array"
+          },
+          "bands": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Band"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bands"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baselineNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinenote"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "refLines": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RefLine"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflines"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/Series"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "unavailable": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UnavailableField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable"
+          },
+          "xLog": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xlog"
+          },
+          "xType": {
+            "enum": [
+              "time",
+              "category",
+              "value"
+            ],
+            "title": "Xtype",
+            "type": "string"
+          },
+          "xUnit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xunit"
+          }
+        },
+        "required": [
+          "id",
+          "xType",
+          "axes",
+          "series"
+        ],
+        "title": "SeriesSet",
+        "type": "object"
+      },
+      "Status": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "scale": {
+            "title": "Scale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scale",
+          "id",
+          "label"
+        ],
+        "title": "Status",
+        "type": "object"
+      },
+      "TableSet": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "anyOf": [
+              {
+                "enum": [
+                  "district",
+                  "district-area-weighted",
+                  "district-overlap"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aggregation"
+          },
+          "asOf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asof"
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "baselineNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinenote"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Components"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isStale": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isstale"
+          },
+          "linkTo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkto"
+          },
+          "rowKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rowkey"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "unavailable": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UnavailableField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable"
+          }
+        },
+        "required": [
+          "id",
+          "columns",
+          "rows"
+        ],
+        "title": "TableSet",
+        "type": "object"
+      },
+      "UnavailableField": {
+        "additionalProperties": false,
+        "description": "A field returned as null because the database cannot provide it yet.",
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "reason"
+        ],
+        "title": "UnavailableField",
         "type": "object"
       },
       "ValidationError": {
@@ -266,6 +2756,2112 @@
         "summary": "Every variable with its canonical source, duplicates or withheld reason",
         "tags": [
           "meta"
+        ]
+      }
+    },
+    "/api/v1/rainfall/breakdown": {
+      "get": {
+        "operationId": "breakdown_api_v1_rainfall_breakdown_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategorySet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Breakdown",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/entities": {
+      "get": {
+        "operationId": "entities_api_v1_rainfall_entities_get",
+        "parameters": [
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Entities",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/entities/{code}": {
+      "get": {
+        "operationId": "entity_api_v1_rainfall_entities__code__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Entity",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/forecast": {
+      "get": {
+        "operationId": "forecast_api_v1_rainfall_forecast_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Forecast",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/map": {
+      "get": {
+        "operationId": "map_layer_api_v1_rainfall_map_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "layer",
+            "required": true,
+            "schema": {
+              "title": "Layer",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapLayer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Map Layer",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/matrix": {
+      "get": {
+        "operationId": "matrix_api_v1_rainfall_matrix_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatrixSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Matrix",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/summary": {
+      "get": {
+        "operationId": "summary_api_v1_rainfall_summary_get",
+        "parameters": [
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/table": {
+      "get": {
+        "operationId": "table_api_v1_rainfall_table_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 500,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Table",
+        "tags": [
+          "rainfall"
+        ]
+      }
+    },
+    "/api/v1/rainfall/timeseries": {
+      "get": {
+        "operationId": "timeseries_api_v1_rainfall_timeseries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Timeseries",
+        "tags": [
+          "rainfall"
         ]
       }
     },

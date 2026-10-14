@@ -8,6 +8,7 @@ from fastapi import Request
 
 from app.config import Settings
 from app.core.cache import Cache
+from app.core.data import DataAccess
 from app.core.spatial import Spatial
 from app.db import Database
 from app.meta.service import MetaService
@@ -22,6 +23,7 @@ class AppState:
     cache: Cache
     meta: MetaService
     spatial: Spatial
+    data: DataAccess
 
 
 def get_state(request: Request) -> AppState:

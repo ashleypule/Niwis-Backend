@@ -1,12 +1,27 @@
 # Progress
 
-## Status: Phase 1 complete (2026-10-14). Next: Phase 2 — Rainfall.
+## Status: Phase 2 (Rainfall) complete (2026-10-14). Next: Phase 3 — Drought.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Phase 2 — Rainfall (2026-10-14)
+
+- [x] `app/modules/rainfall/`: summary, timeseries (monthly, anomaly, spi-spei, intensity, dry-wet, station),
+      forecast (501), breakdown (seasonal, events), tables (provinces, extremes, statistics, sources), 12 map layers
+      (+ 3 forecast layers → 501), entities (52 districts) + entity cards
+- [x] Shared layers: `app/core/data.py` (canonical-source loaders, SQL-side window aggregation), `aggregate.py`
+      (area weights, ≥ 95 % coverage rule, pro-rated normals), `stats.py` (Sen's slope / Mann-Kendall),
+      `palettes.py`, `app/modules/common.py` (filters dependency, provenance, response cache)
+- [x] Live on Supabase: every endpoint and filter combination returns the expected status; warm cache 3–70 ms,
+      cold 2.5–4 s (network round-trips to eu-west-1); startup pre-loads the rainfall frames
+- [x] `docs/VERIFICATION.md`: 5 / 5 rainfall values match independent SQL (incl. pro-rated anomaly and the
+      area-weighted Western Cape SPI-6) — `python scripts/verify.py rainfall`
+- [x] 47 rainfall tests on the fixture DB (207 total); ruff + mypy clean; openapi.json refreshed
+- [x] Found: partial current month treated as complete in the DB's anomalies / SPI → DATA_GAPS §14
 
 ### District boundaries (2026-10-14)
 

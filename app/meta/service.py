@@ -100,12 +100,28 @@ class MetaService:
         return stats
 
     async def newest_date(self) -> dt.date | None:
-        """Newest date covered by any table — the reference point for staleness."""
-        ends = [s.covered_to for s in await self.table_stats() if s.covered_to]
-        newest = max(ends) if ends else None
-        lasts = [s.last_date for s in await self.table_stats() if s.last_date and s.resolution == "daily"]
-        # Monthly/annual rows cover their whole period; never count a period end beyond the newest daily record.
-        return min(newest, max(lasts)) if newest and lasts else newest
+        """Newest daily record in the database — the reference point for staleness.
+
+        Monthly / annual rows cover their whole period, so only daily tables define "newest". A cheap max() per daily
+        table, cached separately from the full statistics so the first data request does not wait for them.
+        """
+
+        async def load() -> dt.date | None:
+            daily = [ds for ds in self.registry.datasets.values() if ds.time.resolution == "daily"]
+
+            async def one(ds: Dataset) -> dt.date | None:
+                try:
+                    v = await self.db.fetchval(f"SELECT max({ds.date_sql()}) FROM {ds.fq}")
+                    return v if isinstance(v, dt.date) else None
+                except Exception:
+                    log.exception("newest date failed", extra={"table": ds.table})
+                    return None
+
+            found = [d for d in await asyncio.gather(*(one(ds) for ds in daily)) if d]
+            return max(found) if found else None
+
+        newest: dt.date | None = await self.cache.get_or_set("meta:newest", self.settings.cache_ttl_meta_s, load)
+        return newest
 
     # ---------------------------------------------------------------- payloads
 

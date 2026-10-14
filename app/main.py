@@ -17,6 +17,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app import __version__
 from app.config import Settings, get_settings
 from app.core.cache import MemoryCache
+from app.core.data import DataAccess
 from app.core.errors import APIError
 from app.core.spatial import get_spatial
 from app.db import Database
@@ -24,6 +25,8 @@ from app.logging_config import configure_logging
 from app.meta.router import router as meta_router
 from app.meta.service import MetaService
 from app.middleware import RateLimitMiddleware, RequestLogMiddleware
+from app.modules.rainfall.router import router as rainfall_router
+from app.modules.rainfall.service import prewarm as prewarm_rainfall
 from app.refdata.router import router as reference_router
 from app.registry.registry import get_registry
 from app.state import AppState
@@ -42,8 +45,11 @@ Backend for the National Integrated Water Information System (DWS). Serves the f
 
 
 async def _warm(state: AppState) -> None:
-    """Fill the meta cache (full-table statistics take ~15 s cold) so the first /meta or staleness lookup is fast."""
+    """Pre-load the newest DB date, the rainfall frames and the table statistics (~15 s cold) in the background."""
     try:
+        await state.meta.newest_date()
+        await prewarm_rainfall(state.data)
+        log.info("data cache warmed")
         await state.meta.table_stats()
         log.info("meta cache warmed")
     except Exception:
@@ -70,6 +76,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             cache=cache,
             meta=MetaService(database, registry, cache, settings),
             spatial=get_spatial(),
+            data=DataAccess(database, registry, cache, settings),
         )
         log.info("startup complete", extra={"tables": len(registry.datasets), "env": settings.environment})
         warm = asyncio.create_task(_warm(app.state.niwis)) if database.configured else None
@@ -122,6 +129,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
 
     app.include_router(meta_router)
     app.include_router(reference_router)
+    app.include_router(rainfall_router)
     return app
 
 
