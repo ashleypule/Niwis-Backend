@@ -4,13 +4,18 @@
 
 ### Blocking / waiting on others
 
-- **District boundaries** (user / data team): `reference/geo/municipalities.json` has 213 local municipalities with
-  ids `LM001…`, a name and a province, but **no district or MDB code**, so districts cannot be dissolved from it.
-  Needed: official 52-district boundaries with MDB codes as `reference/geo/districts.json`. Until then province,
-  national and WMA aggregates and district maps return `DATA_UNAVAILABLE`.
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### District boundaries (2026-10-14)
+
+- [x] Supplied `docs/south_africa_52_areas_clean.geojson` (geoBoundaries ADM2, 32 MB; kept out of git) validated with
+      `scripts/check_district_boundaries.py`: 52/52 districts, no overlaps, provinces tiled within 0.15 %, areas
+      within 0.2 % of official figures
+- [x] `reference/geo/districts.json` (0.8 MB, MDB codes, full-resolution areas) built with
+      `scripts/build_districts_geo.py`; app loads it — `/health` reports `areaWeighting: true`
+- [x] District–WMA overlap computed (99.8–100 % of each WMA covered); tests added (160 passing)
 
 ### Phase 1 — skeleton (2026-10-14)
 

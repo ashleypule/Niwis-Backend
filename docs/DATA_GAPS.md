@@ -26,7 +26,7 @@
 | 9 | Variables the dashboard needs that no table has | — | P2 |
 | 10 | Table naming, types, keys and indexes | most `4_*`, `5.*`, `6.*` tables | P3 |
 | 11 | Read-only access for the API | database roles / RLS | P2 |
-| 12 | No district boundaries: the frontend's municipality layer has no district code | `public/geo/municipalities.json` | P1 |
+| 12 | ~~No district boundaries~~ — resolved: official district boundaries supplied 2026-10-14 | `reference/geo/districts.json` | done |
 | 13 | The same data stored in several tables; canonical source chosen per variable | 9 tables | P3 |
 
 ---
@@ -186,17 +186,16 @@ current month, and agree an update cadence per table (daily / monthly) so the AP
 - **Ask:** create a dedicated read-only login for the API (SELECT on these tables only). Proposed SQL will be in
   `migrations/proposed/` for review — the backend team will not run it.
 
-## 12. District boundaries (P1)
+## 12. District boundaries — resolved 2026-10-14
 
-The API weights province, national and WMA aggregates by **real district area** and draws district maps. The boundary
-files available (`reference/geo/`, copied from the frontend's `public/geo/`) contain provinces, WMAs, secondary
-catchments and 213 **local** municipalities — but the local municipalities carry only an internal id (`LM001` …), a name
-and a province: **no district code and no MDB code**, so they cannot be dissolved into the 52 districts reliably.
-
-**Ask:** supply official district-municipality boundaries (MDB 2016 or later, 52 features carrying the MDB district
-code, e.g. `DC44`, `CPT`) as `reference/geo/districts.json`. Until then the API returns `DATA_UNAVAILABLE` for
-province, national and WMA aggregates and for district maps (single-district values are still served). The frontend's
-`municipalities.json` would also benefit from MDB codes (`EC101` …) and the parent district code.
+The frontend's `municipalities.json` has 213 local municipalities with no district or MDB code, so districts could not
+be dissolved from it. The backend team supplied official district boundaries (geoBoundaries ZAF ADM2,
+`south_africa_52_areas_clean.geojson`). Validation (`scripts/check_district_boundaries.py`): 52 / 52 districts matched
+by name (including the database's old names Cacadu, Eden, Sisonke, Uthungulu); no overlaps; districts tile each
+province within 0.15 %; areas within 0.2 % of official figures (Cape Town 2 446 km², Namakwa 126 966 vs 126 836 km²).
+A simplified copy with MDB codes is in `reference/geo/districts.json` and is used for area weights and the district–WMA
+overlap. **Remaining ask (frontend):** use `districts.json` (or the same boundaries) to draw district maps keyed by MDB
+code.
 
 ## 13. Duplicated data and the canonical source per variable (P3)
 

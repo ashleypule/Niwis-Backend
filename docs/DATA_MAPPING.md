@@ -5,8 +5,8 @@
 > Evidence: `docs/DB_INVENTORY.md` (profile of every table) and `scripts/data_checks.sql` (targeted checks; run with
 > `python scripts/run_checks.py scripts/data_checks.sql`). Problems the data team can fix are in `docs/DATA_GAPS.md`.
 >
-> **Status:** decisions D1–D5 resolved on 2026-10-14 (see [§0.4](#04-decisions-resolved-2026-10-14)). Rows still
-> marked ⚑D2 need official district boundaries (`docs/DATA_GAPS.md` §12). Canonical sources per variable:
+> **Status:** decisions D1–D5 resolved on 2026-10-14 (see [§0.4](#04-decisions-resolved-2026-10-14)). Rows marked
+> ⚑D2 use the area weights from `reference/geo/districts.json` (supplied and validated 2026-10-14). Canonical sources per variable:
 > `app/registry/datasets.yaml`.
 
 ## 0. What shapes every mapping
@@ -66,7 +66,7 @@ District names are not consistent across tables (see Appendix A); the API normal
 | # | Decision | Applied as |
 | --- | --- | --- |
 | D1 | Districts as entities and map units | Entities `type: "district"`, id = MDB code; district choropleths keyed by MDB code. Province / national aggregates area-weighted; **WMA** filter = district values weighted by area of overlap, flagged `"aggregation": "district-overlap"`; **catchment** filter → `DATA_UNAVAILABLE`. Recorded in `CONTRACT_CHANGES.md`. |
-| D2 | Real district areas | Weights from official district polygons. **Blocked:** `reference/geo/municipalities.json` has no district code, so districts cannot be dissolved from it; official boundaries requested (`DATA_GAPS.md` §12). Until supplied, every aggregate needing weights returns `DATA_UNAVAILABLE`. Runoff volume = depth (mm) × real district area (km²) / 1000 → Mm³, labelled derived; the table's 6 500 km² volumes are never used. |
+| D2 | Real district areas | Weights from official district polygons: `reference/geo/districts.json` (geoBoundaries ADM2, supplied 2026-10-14, validated — `DATA_GAPS.md` §12). The district–WMA overlap covers 99.8–100 % of every WMA. Runoff volume = depth (mm) × real district area (km²) / 1000 → Mm³, labelled derived; the table's 6 500 km² volumes are never used. |
 | D3 | Baseline | Stored anomalies labelled `"baseline": "2000–2026 monthly mean"` with `baselineNote` "shorter than the WMO 30-year standard"; anomalies the API computes use 2000–2025 full years and say so. |
 | D4 | One vegetation source | `satellite_remote_sensing` passed the plausibility check and serves **both** the drought and vegetation pages; `5.1` failed and is withheld entirely (evidence: `DATA_GAPS.md` §5). |
 | D5 | Withhold placeholders / implausible values | Withheld, never rescaled: constant soil moisture and every vegetation index in `5.1`, VPI, hydrology discharge/runoff/baseflow/SSI/FDC/borehole level, all of `4_4`, `4_5`, `4_6`, runoff peak flow, monthly volume, catchment area, curve number, land cover, impervious fraction, wind speed. |

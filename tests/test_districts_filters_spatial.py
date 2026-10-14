@@ -147,9 +147,42 @@ def test_province_areas_within_1pct(prov: str, official_km2: float) -> None:
     assert abs(area - official_km2) / official_km2 < 0.01
 
 
-def test_wmas_loaded_and_districts_pending() -> None:
+def test_wmas_loaded() -> None:
+    assert sorted(w.id for w in get_spatial().wmas) == sorted(f"WMA{i}" for i in range(1, 10))
+
+
+def test_all_52_district_boundaries_loaded() -> None:
     s = get_spatial()
-    assert sorted(w.id for w in s.wmas) == sorted(f"WMA{i}" for i in range(1, 10))
-    if not s.has_districts:
-        assert s.district_areas() is None and s.wma_overlap() is None
-        assert s.district_problems
+    assert s.has_districts and not s.district_problems
+    areas = s.district_areas()
+    assert areas is not None and set(areas) == {d.code for d in districts.districts()}
+
+
+@pytest.mark.parametrize(
+    ("code", "official_km2"),
+    # Stats SA / MDB official areas
+    [("CPT", 2_446), ("JHB", 1_645), ("ETH", 2_556), ("TSH", 6_298), ("DC6", 126_836), ("DC5", 38_854)],
+)
+def test_district_areas_within_half_pct(code: str, official_km2: float) -> None:
+    areas = get_spatial().district_areas()
+    assert areas is not None and abs(areas[code] - official_km2) / official_km2 < 0.005
+
+
+def test_districts_tile_their_provinces() -> None:
+    s = get_spatial()
+    areas = s.district_areas()
+    assert areas is not None
+    for p in s.provinces:
+        total = sum(areas[d.code] for d in districts.in_province(p.id))
+        assert abs(total - p.area_km2) / p.area_km2 < 0.005, p.id
+
+
+def test_wma_overlap() -> None:
+    s = get_spatial()
+    ov = s.wma_overlap()
+    assert ov is not None and set(ov) == {f"WMA{i}" for i in range(1, 10)}
+    for w in s.wmas:
+        assert abs(sum(ov[w.id].values()) - w.area_km2) / w.area_km2 < 0.005, w.id  # districts cover each WMA
+    assert {"DC1", "DC2", "CPT"} <= set(ov["WMA9"])  # Berg-Olifants: West Coast, Cape Winelands, Cape Town
+    wd = s.wma_districts()
+    assert wd is not None and "DC34" in wd["WMA1"]  # Limpopo WMA includes Vhembe

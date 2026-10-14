@@ -134,7 +134,10 @@ def _load_districts() -> tuple[list[Region], list[str]]:
         if d.code in regions:  # multi-part districts delivered as several features
             prev = regions[d.code]
             g = prev.geom.union(g)
-        regions[d.code] = Region(d.code, d.official_name, g, area_km2(g), p)
+            p = {k: v for k, v in p.items() if k != "area_km2"}
+        # Prefer the full-resolution area recorded by scripts/build_districts_geo.py over the simplified polygon's.
+        area = float(p["area_km2"]) if p.get("area_km2") else area_km2(g)
+        regions[d.code] = Region(d.code, d.official_name, g, area, p)
     missing = sorted({d.code for d in dmod.districts()} - set(regions))
     if missing:
         problems.append(f"districts without a boundary: {', '.join(missing)}")

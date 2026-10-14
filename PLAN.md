@@ -14,7 +14,7 @@ Build order (from the build prompt). ✅ done · ▶ next · ⏸ blocked
 7. Hardening: performance pass, proposed indexes, security review, README / VERIFICATION / CONTRACT_CHANGES,
    `docker compose up` from a clean clone, docs/FRONTEND_INTEGRATION.md.
 
-⏸ Area-weighted province / national / WMA aggregates and district maps need official district boundaries
-(`reference/geo/districts.json`, DATA_GAPS §12). District-level values work without them.
+✅ District boundaries supplied and validated (2026-10-14): area-weighted province / national / WMA aggregates are
+unblocked (`reference/geo/districts.json`).
 
 Ground rules: database read-only; secrets stay out of git; never invent data; commit after each phase.

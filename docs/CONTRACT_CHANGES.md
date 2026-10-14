@@ -20,8 +20,9 @@ cells in the database.
 | Province-level layers (`province-class` …) | `kind: "choropleth"`, `level: "province"`, keys = province codes (unchanged meaning) |
 
 **Frontend impact:** the map needs district polygons keyed by MDB code. The frontend's `public/geo/municipalities.json`
-has 213 *local* municipalities with ids `LM001…` and no district code, so it cannot draw these layers yet. Official
-district boundaries are needed (see `docs/DATA_GAPS.md` §12); the same file will feed the backend's area weights.
+has 213 *local* municipalities (ids `LM001…`, no district code), so it cannot draw these layers. Copy the backend's
+`reference/geo/districts.json` (52 features, `properties.id` = MDB code, 0.8 MB) into `public/geo/` — it is the same
+boundary set the backend uses for area weights.
 
 ## 2. Filters
 
