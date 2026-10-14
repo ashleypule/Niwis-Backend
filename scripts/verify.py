@@ -153,6 +153,48 @@ WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remo
                 AND extract(year FROM satellite_remote_sensing.date) BETWEEN 2001 AND 2025)
 SELECT round(((v - n) / n * 100)::numeric, 1) FROM cur, clim""",
     ),
+    Check(
+        "climate",
+        "Hot days (Tmax > 35 °C), Vhembe (DC34), last full year — map layer hot-days vs count of daily Tmax > 35 °C",
+        "/api/v1/climate/map?layer=hot-days",
+        lambda b: b["values"]["DC34"],
+        """SELECT count(*) FROM "4_1_temperature_change_master"
+WHERE "District_Name" = 'Vhembe' AND "Tmax_C" > 35
+  AND left("Date", 4)::int = (SELECT max(left("Date", 4)::int) - 1 FROM "4_1_temperature_change_master")""",
+        tol=0.5,
+    ),
+    Check(
+        "climate",
+        "Reference ET₀, Vhembe, last full year (mm) — Σ daily et0_mm_day",
+        "/api/v1/climate/summary?municipality=DC34",
+        kpi("et0"),
+        """SELECT round(sum(et0_mm_day)::numeric, 0) FROM meteorological_drought_master
+WHERE district_name = 'Vhembe' AND year = (SELECT max(year) - 1 FROM meteorological_drought_master)""",
+        tol=0.5,
+    ),
+    Check(
+        "climate",
+        "Warming trend, Vhembe, 2000–last full year (°C/decade) — Sen's slope computed in SQL (median of pairwise slopes)",
+        "/api/v1/climate/map?layer=temp-trend",
+        lambda b: b["values"]["DC34"],
+        """WITH y AS (SELECT left("Date", 4)::int AS yr, avg("Tavg_C") AS t FROM "4_1_temperature_change_master"
+           WHERE "District_Name" = 'Vhembe' GROUP BY 1
+           HAVING left("Date", 4)::int < (SELECT max(left("Date", 4)::int) FROM "4_1_temperature_change_master"))
+SELECT round((percentile_cont(0.5) WITHIN GROUP (ORDER BY (b.t - a.t) / (b.yr - a.yr)) * 10)::numeric, 3)
+FROM y a JOIN y b ON b.yr > a.yr""",
+        tol=0.0015,
+    ),
+    Check(
+        "climate",
+        "Temperature anomaly, Vhembe, 12 complete months (°C) — mean of the stored monthly anomaly",
+        "/api/v1/climate/map?layer=temp-anomaly",
+        lambda b: b["values"]["DC34"],
+        """WITH m AS (SELECT left("Date", 7) AS ym, max("Temperature_Anomaly_C") AS a FROM "4_1_temperature_change_master"
+           WHERE "District_Name" = 'Vhembe' GROUP BY 1)
+SELECT round(avg(a)::numeric, 2) FROM (SELECT a FROM m
+  WHERE ym < (SELECT left(max("Date"), 7) FROM "6.1_core_rainfall_variables_master") ORDER BY ym DESC LIMIT 12) s""",
+        tol=0.005,
+    ),
 ]
 
 

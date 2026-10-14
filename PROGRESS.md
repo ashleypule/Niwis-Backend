@@ -1,12 +1,21 @@
 # Progress
 
-## Status: Phase 3 (Drought) complete (2026-10-14). Next: Phase 4 — Climate.
+## Status: Phase 4 (Climate) complete (2026-10-14). Next: Phase 5 — Vegetation.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Phase 4 — Climate (2026-10-14)
+
+- [x] `app/modules/climate/`: summary (8 KPIs), 9 time series, 2 breakdowns, 3 tables, 7 map layers; 501 for
+      projections, irrigation, risk index, vulnerability and projection tables / maps
+- [x] Sen's slope intercept + trend lines (`app/core/stats.py`); national warming +0.30 °C/decade (p = 0.011)
+- [x] Withheld 4_4 / 4_5 / 4_6 never appear in any response (tested)
+- [x] `docs/VERIFICATION.md`: 4 / 4 climate values match SQL (hot days, ET₀, Sen's slope in SQL, temperature anomaly)
+- [x] 35 climate tests (290 total)
 
 ### Phase 3 — Drought (2026-10-14)
 

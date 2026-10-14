@@ -4,6 +4,54 @@
 > value from the API and recomputes it with independent SQL. Area weights for province values come from
 > `reference/geo/districts.json` (the only non-SQL input).
 
+## climate — 2026-10-14
+
+### ✅ Hot days (Tmax > 35 °C), Vhembe (DC34), last full year — map layer hot-days vs count of daily Tmax > 35 °C
+
+- API: `GET /api/v1/climate/map?layer=hot-days` → **5.0**
+- SQL result: **5** (tolerance ± 0.5)
+
+```sql
+SELECT count(*) FROM "4_1_temperature_change_master"
+WHERE "District_Name" = 'Vhembe' AND "Tmax_C" > 35
+  AND left("Date", 4)::int = (SELECT max(left("Date", 4)::int) - 1 FROM "4_1_temperature_change_master")
+```
+
+### ✅ Reference ET₀, Vhembe, last full year (mm) — Σ daily et0_mm_day
+
+- API: `GET /api/v1/climate/summary?municipality=DC34` → **1506.0**
+- SQL result: **1506** (tolerance ± 0.5)
+
+```sql
+SELECT round(sum(et0_mm_day)::numeric, 0) FROM meteorological_drought_master
+WHERE district_name = 'Vhembe' AND year = (SELECT max(year) - 1 FROM meteorological_drought_master)
+```
+
+### ✅ Warming trend, Vhembe, 2000–last full year (°C/decade) — Sen's slope computed in SQL (median of pairwise slopes)
+
+- API: `GET /api/v1/climate/map?layer=temp-trend` → **0.221**
+- SQL result: **0.221** (tolerance ± 0.0015)
+
+```sql
+WITH y AS (SELECT left("Date", 4)::int AS yr, avg("Tavg_C") AS t FROM "4_1_temperature_change_master"
+           WHERE "District_Name" = 'Vhembe' GROUP BY 1
+           HAVING left("Date", 4)::int < (SELECT max(left("Date", 4)::int) FROM "4_1_temperature_change_master"))
+SELECT round((percentile_cont(0.5) WITHIN GROUP (ORDER BY (b.t - a.t) / (b.yr - a.yr)) * 10)::numeric, 3)
+FROM y a JOIN y b ON b.yr > a.yr
+```
+
+### ✅ Temperature anomaly, Vhembe, 12 complete months (°C) — mean of the stored monthly anomaly
+
+- API: `GET /api/v1/climate/map?layer=temp-anomaly` → **-0.48**
+- SQL result: **-0.48** (tolerance ± 0.005)
+
+```sql
+WITH m AS (SELECT left("Date", 7) AS ym, max("Temperature_Anomaly_C") AS a FROM "4_1_temperature_change_master"
+           WHERE "District_Name" = 'Vhembe' GROUP BY 1)
+SELECT round(avg(a)::numeric, 2) FROM (SELECT a FROM m
+  WHERE ym < (SELECT left(max("Date"), 7) FROM "6.1_core_rainfall_variables_master") ORDER BY ym DESC LIMIT 12) s
+```
+
 ## drought — 2026-10-14
 
 ### ✅ SPI-3, KwaZulu-Natal, latest complete month — area-weighted from the 11 KZN districts

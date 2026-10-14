@@ -130,6 +130,10 @@ column is `null` with an `unavailable` entry. `matrix` has no rainfall datasets 
 `gw-sgi`'s "Mean borehole level" series is all `null` + `unavailable` (withheld). Points layers (`dams`, `boreholes`,
 `settlements`), `catchment-class`, restrictions, probabilities, early warning and all forecasts → 501.
 
+**Climate (live).** Annual indicators are for the last full year (currently 2025); trends are `null` with fewer
+than 8 years. `evaporation` pan / VPD series and `signal-chain` severity are `null` + `unavailable`; projections,
+irrigation, risk index, vulnerability and forecast-summary / risk-outlook → 501. `/climate/forecast` → 404 (no keys).
+
 ## 8. Derived values
 
 | Value | Derivation |

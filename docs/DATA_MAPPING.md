@@ -273,6 +273,23 @@ Tables: `4_1_temperature_change_master` (daily; temperatures identical to `meteo
 `4_4_potential_evaporation_daily_master`, `4_5_irrigation_demand_daily_master` (daily),
 `4_6_streamflow_and_climate_linkage_annual _master` (annual).
 
+**Implemented (Phase 4, 2026-10-14)** — `app/modules/climate/`. Notes beyond the tables below:
+
+- **Annual values** use full years only (2000 – last full year, currently 2025); temperatures are annual means of
+  daily values (Σ / days), ET₀ / PET / AET / runoff are annual sums of daily values.
+- **Trends** = Sen's slope × 10 (per decade) with Mann-Kendall p (`pymannkendall`); fewer than 8 years → `null`.
+- **Temperature anomaly** = mean of the DB's monthly anomaly over the last 12 complete months (2000–2026 baseline).
+- **Rainfall / runoff change** = last full year vs the 2000–(last full year) mean.
+- `4_4`, `4_5`, `4_6` are withheld (D5): runoff indicators come from `runoff_variables_master` (modelled depth);
+  `evaporation` serves ET₀ / PET (meteorological) and AET (runoff table), with pan evaporation and VPD as `null` series
+  + `unavailable`; `irrigation` → 501.
+- `seasonal-change`: the 1981–2000 series is `null` + `unavailable` (no data before 2000).
+- `map-seasonality` categories = 2000–2009, 2010–2019, 2020–(last full year).
+- `signal-chain` severity is `null` + `unavailable`: `thresholds.ts` defines no severity classes for these signals.
+- `rain-trend` map = last 10 full years vs the earlier years (no 1981–2010).
+- `forecast` has no climate keys in the contract → 404; projections, risk index, vulnerability → 501.
+- Verified against SQL: `docs/VERIFICATION.md` (4 / 4, incl. a Sen's slope recomputed in SQL).
+
 ### Summary
 
 | KPI | Status | Source → transformation |

@@ -1,0 +1,973 @@
+"""Climate Change Indicators (contract module `climate`, spec §4; DB Module 2).
+
+Sources (canonical, app/registry/datasets.yaml): temperatures, anomaly and hot days from `4_1`; ETCCDI rainfall
+indices from `4_2`; annual and seasonal rainfall from `4_3`; ET₀ / PET from `meteorological_drought_master`; runoff
+depth and AET from `runoff_variables_master`; SPI-3 from `6.2`. Withheld (D5): all of `4_4`, `4_5`, `4_6`
+(evaporation magnitudes, irrigation, annual streamflow) — so pan evaporation, VPD and irrigation are unavailable and
+runoff indicators come from `runoff_variables_master` instead. No projections or vulnerability data exist.
+
+Methods (docs/DATA_MAPPING.md §3): annual values use full years only (2000 – last full year); trends are Sen's slope
+with Mann-Kendall significance (`pymannkendall`); temperature anomaly = mean of the DB's monthly anomaly (2000–2026
+baseline); other anomalies vs the 2000–(last full year) mean; area-weighted district means (≥ 95 % coverage).
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+from app.core import districts
+from app.core.aggregate import weighted, weighted_scalar
+from app.core.data import DataAccess
+from app.core.errors import DataUnavailable
+from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
+from app.core.provenance import iso
+from app.core.stats import rnd, sens_slope, trend_line
+from app.modules.common import Ctx, unknown
+from app.modules.rainfall.service import HISTORY_START, RainfallService, _months
+from app.schemas import contract as c
+
+MODULE = "climate"
+SEASONS = {"DJF": (12, 1, 2), "MAM": (3, 4, 5), "JJA": (6, 7, 8), "SON": (9, 10, 11)}
+DROUGHT_SPI3 = -1.5  # contract: "Months with SPI-3 ≤ −1.5"
+
+
+def unavailable(what: str, missing: str) -> DataUnavailable:
+    return DataUnavailable(what, missing=[missing])
+
+
+def _d(ts: Any) -> dt.date:
+    d: dt.date = pd.Timestamp(ts).date()
+    return d
+
+
+class ClimateService:
+    def __init__(self, ctx: Ctx) -> None:
+        self.ctx = ctx
+        self.data: DataAccess = ctx.data
+        self.rain = RainfallService(ctx)
+
+    # ---------------------------------------------------------------- helpers
+
+    def src(self, *variables: str) -> list[str]:
+        return self.rain.src(*variables)
+
+    def _prov(self, as_of: dt.date | None, *variables: str, baseline: bool = False) -> dict[str, Any]:
+        p = self.ctx.provenance(as_of, self.src(*variables), baseline=baseline)
+        p.pop("asOf")
+        return p
+
+    def kpi_extra(self, as_of: dt.date | None, *variables: str) -> dict[str, Any]:
+        return {"as_of": iso(as_of), "source": self.src(*variables), "is_stale": self.ctx.stale(as_of)}
+
+    async def last_full_year(self) -> int:
+        newest = await self.rain.newest_daily()
+        return newest.year if newest >= dt.date(newest.year, 12, 30) else newest.year - 1
+
+    async def years(self) -> tuple[int, int]:
+        """Full years for annual series: whole record unless `from`/`to` narrow it."""
+        y1 = await self.last_full_year()
+        win = self.ctx.filters.window
+        y0 = max(HISTORY_START.year, win.date_from.year) if win.date_from else HISTORY_START.year
+        if win.date_to:
+            y1 = min(y1, win.date_to.year)
+        return y0, y1
+
+    async def annual_daily(self, var: str, how: str) -> pd.DataFrame:
+        """District-year values from a daily variable: `mean` (Σ sum / Σ days) or `sum`.
+
+        Columns: district, date, value.
+        """
+        dm = await self.data.daily_monthly_stats(var, ())
+        g = dm.assign(year=dm["date"].dt.year).groupby(["district", "year"], as_index=False)[["sum", "days"]].sum()
+        g["value"] = g["sum"] / g["days"] if how == "mean" else g["sum"]
+        g["date"] = pd.to_datetime(g["year"].astype(str) + "-01-01")
+        return g[["district", "date", "value"]]
+
+    async def annual_agg(self, df: pd.DataFrame, y0: int, y1: int) -> pd.Series:
+        """Area-weighted scope series indexed by year."""
+        df = df[(df["date"].dt.year >= y0) & (df["date"].dt.year <= y1)]
+        agg = weighted(df, self.ctx.weights())
+        return agg.set_index(agg["date"].dt.year)["value"]
+
+    async def annual_var(self, var: str, y0: int, y1: int) -> pd.Series:
+        return await self.annual_agg(await self.data.annual(var), y0, y1)
+
+    async def monthly_mean(self, var: str) -> pd.DataFrame:
+        """District-month mean of a daily variable."""
+        dm = await self.data.daily_monthly_stats(var, ())
+        return dm.assign(value=dm["sum"] / dm["days"])[["district", "date", "value"]]
+
+    async def temp_anomaly_12m(self) -> tuple[float | None, pd.Series, dt.date]:
+        """Mean monthly temperature anomaly over the last 12 complete months: scope value, per district, last month."""
+        last = await self.rain.latest_complete_month()
+        df = await self.data.monthly("temp_anomaly")
+        lo = pd.Timestamp(last) - pd.DateOffset(months=11)
+        win = df[(df["date"] >= lo) & (df["date"] <= pd.Timestamp(last))]
+        per = win.groupby("district")["value"].mean()
+        return weighted_scalar(per, self.ctx.weights()), per, last
+
+    @staticmethod
+    def series(years: range, s: pd.Series, nd: int = 2) -> list[list[Any]]:
+        return [[f"{y}-01-01", rnd(s.get(y), nd)] for y in years]
+
+    @staticmethod
+    def trend_series(years: range, s: pd.Series, nd: int = 2) -> list[list[Any]]:
+        line = trend_line([s.get(y) for y in years])
+        return [[f"{y}-01-01", rnd(v, nd)] for y, v in zip(years, line, strict=True)]
+
+    # ---------------------------------------------------------------- summary
+
+    async def summary(self) -> dict[str, Any]:
+        y0, y1 = HISTORY_START.year, await self.last_full_year()
+        yr_end = dt.date(y1, 12, 31)
+        kpis: list[c.Kpi] = []
+
+        ta, _, last = await self.temp_anomaly_12m()
+        kpis.append(
+            c.Kpi(
+                id="tempAnomaly",
+                metric="tempAnomaly",
+                label="Temperature Anomaly",
+                sublabel=f"12 months to {last:%b %Y}, vs 2000–2026",
+                value=rnd(ta, 2),
+                unit="°C",
+                decimals=1,
+                **self.kpi_extra(last, "temp_anomaly"),
+            )
+        )
+        tavg = await self.annual_agg(await self.annual_daily("tavg", "mean"), y0, y1)
+        tr = sens_slope([tavg.get(y) for y in range(y0, y1 + 1)])
+        kpis.append(
+            c.Kpi(
+                id="tempTrend",
+                metric="tempTrend",
+                label="Warming Trend",
+                sublabel=f"Sen's slope {y0}–{y1}" + (f", p = {tr.p:.2f}" if tr else ""),
+                value=rnd(tr.slope * 10, 2) if tr else None,
+                unit="°C/decade",
+                decimals=2,
+                **self.kpi_extra(yr_end, "tavg"),
+            )
+        )
+        rain = await self.annual_var("rain_annual", y0, y1)
+        r_mean = rain.mean()
+        kpis.append(
+            c.Kpi(
+                id="rainChange",
+                metric="rainfallAnomaly",
+                label="Rainfall Change",
+                sublabel=f"{y1} vs {y0}–{y1} mean ({r_mean:.0f} mm)" if not np.isnan(r_mean) else None,
+                value=rnd((rain.get(y1) - r_mean) / r_mean * 100, 1) if y1 in rain.index and r_mean else None,
+                unit="%",
+                decimals=0,
+                **self.kpi_extra(yr_end, "rain_annual"),
+            )
+        )
+        et0 = await self.annual_agg(await self.annual_daily("et0_daily", "sum"), y0, y1)
+        kpis.append(
+            c.Kpi(
+                id="et0",
+                metric="et0",
+                label="Reference ET₀ (annual)",
+                sublabel=f"{y1}",
+                value=rnd(et0.get(y1), 0),
+                unit="mm",
+                decimals=0,
+                delta=rnd(et0.get(y1) - et0.mean(), 0) if y1 in et0.index else None,
+                delta_unit=" mm",
+                delta_label=f"vs {y0}–{y1} mean",
+                **self.kpi_extra(yr_end, "et0_daily"),
+            )
+        )
+        q = await self.annual_agg(await self.annual_daily("runoff_depth_daily", "sum"), y0, y1)
+        q_mean = q.mean()
+        kpis.append(
+            c.Kpi(
+                id="runoff",
+                metric="runoffAnomaly",
+                label="Mean Annual Runoff",
+                sublabel=f"{y1} vs {y0}–{y1} mean ({q_mean:.0f} mm)" if not np.isnan(q_mean) else None,
+                value=rnd((q.get(y1) - q_mean) / q_mean * 100, 1) if y1 in q.index and q_mean else None,
+                unit="%",
+                decimals=0,
+                **self.kpi_extra(yr_end, "runoff_depth_daily"),
+            )
+        )
+        for kid, var, metric, label, unit in (
+            ("hotDays", "hot_days", "hotDays", "Hot Days (> 35 °C)", "days"),
+            ("r20", "r20mm", "heavyRainDays", "Heavy Rain Days (R20mm)", "days"),
+            ("cdd", "cdd", "cdd", "Consecutive Dry Days", "days"),
+        ):
+            s = await self.annual_var(var, y0, y1)
+            kpis.append(
+                c.Kpi(
+                    id=kid,
+                    metric=metric,
+                    label=label,
+                    sublabel=f"{y1}, district mean",
+                    value=rnd(s.get(y1), 1),
+                    unit=unit,
+                    decimals=0,
+                    delta=rnd(s.get(y1) - s.mean(), 1) if y1 in s.index else None,
+                    delta_unit=" days",
+                    delta_label=f"vs {y0}–{y1} mean",
+                    **self.kpi_extra(yr_end, var),
+                )
+            )
+        as_of = max(dt.date.fromisoformat(k.as_of) for k in kpis if k.as_of)
+        body = c.KpiSet(
+            module=MODULE,
+            as_of=iso(as_of) or "",
+            scope=self.ctx.scope,
+            kpis=kpis,
+            components=[
+                c.Component(key=k.id, as_of=k.as_of, source=k.source or [], is_stale=bool(k.is_stale))
+                for k in kpis
+                if k.as_of
+            ],
+            **self._prov(
+                as_of,
+                "temp_anomaly",
+                "tavg",
+                "rain_annual",
+                "et0_daily",
+                "runoff_depth_daily",
+                "hot_days",
+                "r20mm",
+                "cdd",
+                baseline=True,
+            ),
+        )
+        return body.dump()
+
+    # ---------------------------------------------------------------- time series
+
+    async def timeseries(self, metric: str) -> dict[str, Any]:
+        handlers = {
+            "temperature-long": self.ts_temperature_long,
+            "national-trend": self.ts_national_trend,
+            "extremes": self.ts_extremes,
+            "heat-days": self.ts_heat_days,
+            "extreme-rain": self.ts_extreme_rain,
+            "evaporation": self.ts_evaporation,
+            "streamflow-linkage": self.ts_streamflow_linkage,
+            "drought-frequency": self.ts_drought_frequency,
+            "indicator-trends": self.ts_indicator_trends,
+        }
+        if metric == "projections":
+            raise unavailable("No climate projections (RCP scenarios) in the database", "projections")
+        if metric == "irrigation":
+            raise unavailable(
+                "Irrigation demand is withheld: table 4_5 is built on implausible ET₀ values (4_4)", "irrigation_demand"
+            )
+        if metric not in handlers:
+            raise unknown("metric", metric, [*handlers, "projections", "irrigation"])
+        return (await handlers[metric]()).dump()
+
+    async def ts_temperature_long(self) -> c.SeriesSet:
+        w = self.ctx.weights()
+        last = await self.rain.latest_complete_month()
+        win = self.ctx.filters.window
+        first = pd.Timestamp((win.date_from or HISTORY_START).replace(day=1))
+        lt = min(pd.Timestamp(last), pd.Timestamp(win.date_to.replace(day=1))) if win.date_to else pd.Timestamp(last)
+        ms = _months(first.date(), lt.date())
+        out = {}
+        for var in ("tmax", "tavg", "tmin"):
+            out[var] = weighted(await self.monthly_mean(var), w).set_index("date")["value"]
+        anom = weighted(await self.data.monthly("temp_anomaly"), w).set_index("date")["value"]
+        return c.SeriesSet(
+            id="temperature-long",
+            title="Temperature",
+            x_type="time",
+            axes=[c.Axis(unit="°C", label="Temperature"), c.Axis(unit="°C", label="Anomaly")],
+            series=[
+                c.Series(
+                    key="anomaly",
+                    name="Tavg anomaly (vs 2000–2026)",
+                    kind="bar",
+                    axis=1,
+                    color=NEGATIVE,
+                    data=[[iso(m.date()), rnd(anom.get(m), 2)] for m in ms],
+                ),
+                c.Series(
+                    key="tmax",
+                    name="Tmax",
+                    kind="line",
+                    axis=0,
+                    color=SERIES[3],
+                    data=[[iso(m.date()), rnd(out["tmax"].get(m), 1)] for m in ms],
+                ),
+                c.Series(
+                    key="tavg",
+                    name="Tavg",
+                    kind="line",
+                    axis=0,
+                    color=OBSERVED,
+                    data=[[iso(m.date()), rnd(out["tavg"].get(m), 1)] for m in ms],
+                ),
+                c.Series(
+                    key="tmin",
+                    name="Tmin",
+                    kind="line",
+                    axis=0,
+                    color=SERIES[0],
+                    data=[[iso(m.date()), rnd(out["tmin"].get(m), 1)] for m in ms],
+                ),
+            ],
+            as_of=iso(lt.date()),
+            note="Monthly means of daily values; anomaly label '1981–2010' → 2000–2026 (data start in 2000). "
+            "Complete months only.",
+            **self._prov(lt.date(), "tmax", "temp_anomaly", baseline=True),
+        )
+
+    async def ts_national_trend(self) -> c.SeriesSet:
+        y0, y1 = await self.years()
+        yrs = range(y0, y1 + 1)
+        t = await self.annual_agg(await self.annual_daily("tavg", "mean"), y0, y1)
+        vals = [t.get(y) for y in yrs]
+        line = trend_line(vals)
+        resid = [v - f for v, f in zip(vals, line, strict=True) if v is not None and f is not None]
+        sd = float(np.std(resid, ddof=1)) if len(resid) > 2 else None
+        ma = pd.Series(vals, index=list(yrs), dtype=float).rolling(5, min_periods=5).mean()
+        tr = sens_slope(vals)
+        return c.SeriesSet(
+            id="national-trend",
+            title="Mean annual temperature",
+            x_type="time",
+            axes=[c.Axis(unit="°C", label="Mean temperature")],
+            series=[
+                c.Series(
+                    key="band",
+                    name="Trend ± 1 s.d.",
+                    kind="band",
+                    color="#FDDBC7",
+                    data=[
+                        [
+                            f"{y}-01-01",
+                            rnd(f - sd, 2) if f is not None and sd else None,
+                            rnd(f + sd, 2) if f is not None and sd else None,
+                        ]
+                        for y, f in zip(yrs, line, strict=True)
+                    ],
+                ),
+                c.Series(
+                    key="annual", name="Annual", kind="line", color=OBSERVED, symbol=True, data=self.series(yrs, t)
+                ),
+                c.Series(
+                    key="ma5",
+                    name="5-year moving average",
+                    kind="line",
+                    color=SERIES[3],
+                    smooth=True,
+                    data=[[f"{y}-01-01", rnd(ma.get(y), 2)] for y in yrs],
+                ),
+            ],
+            as_of=f"{y1}-01-01",
+            note=(
+                f"Sen's slope {tr.slope * 10:+.2f} °C/decade (Mann-Kendall p = {tr.p:.3f}, {tr.trend}); "
+                f"full years {y0}–{y1}."
+            )
+            if tr
+            else f"Full years {y0}–{y1}.",
+            **self._prov(dt.date(y1, 12, 31), "tavg"),
+        )
+
+    async def ts_extremes(self) -> c.SeriesSet:
+        y0, y1 = await self.years()
+        yrs = range(y0, y1 + 1)
+        s = {v: await self.annual_var(v, y0, y1) for v in ("cdd", "cwd", "rx1day", "rx5day")}
+        return c.SeriesSet(
+            id="extremes",
+            title="Rainfall extremes (ETCCDI)",
+            x_type="time",
+            axes=[c.Axis(unit="days", label="Spell length"), c.Axis(unit="mm", label="Max rainfall")],
+            series=[
+                c.Series(key="cdd", name="CDD", kind="bar", axis=0, color=NEGATIVE, data=self.series(yrs, s["cdd"], 1)),
+                c.Series(key="cwd", name="CWD", kind="bar", axis=0, color=POSITIVE, data=self.series(yrs, s["cwd"], 1)),
+                c.Series(
+                    key="rx1day",
+                    name="Rx1day",
+                    kind="line",
+                    axis=1,
+                    color=SERIES[3],
+                    data=self.series(yrs, s["rx1day"], 1),
+                ),
+                c.Series(
+                    key="rx5day",
+                    name="Rx5day",
+                    kind="line",
+                    axis=1,
+                    color=SERIES[4],
+                    data=self.series(yrs, s["rx5day"], 1),
+                ),
+            ],
+            as_of=f"{y1}-01-01",
+            note="Area-weighted district means of annual indices; full years only.",
+            **self._prov(dt.date(y1, 12, 31), "cdd", "rx1day"),
+        )
+
+    async def _count_with_trend(self, var: str, sid: str, title: str, label: str, axis_label: str) -> c.SeriesSet:
+        y0, y1 = await self.years()
+        yrs = range(y0, y1 + 1)
+        s = await self.annual_var(var, y0, y1)
+        tr = sens_slope([s.get(y) for y in yrs])
+        return c.SeriesSet(
+            id=sid,
+            title=title,
+            x_type="time",
+            axes=[c.Axis(unit="days", label=axis_label)],
+            series=[
+                c.Series(key="annual", name=label, kind="bar", color=SERIES[0], data=self.series(yrs, s, 1)),
+                c.Series(
+                    key="trend",
+                    name="Trend",
+                    kind="line",
+                    color=SERIES[3],
+                    dash=True,
+                    data=self.trend_series(yrs, s, 2),
+                ),
+            ],
+            as_of=f"{y1}-01-01",
+            note=(f"Sen's slope {tr.slope * 10:+.1f} days/decade (p = {tr.p:.3f}). " if tr else "")
+            + "Area-weighted district mean; full years only.",
+            **self._prov(dt.date(y1, 12, 31), var),
+        )
+
+    async def ts_heat_days(self) -> c.SeriesSet:
+        return await self._count_with_trend(
+            "hot_days", "heat-days", "Hot days (Tmax > 35 °C)", "Annual count", "Days with Tmax > 35 °C"
+        )
+
+    async def ts_extreme_rain(self) -> c.SeriesSet:
+        return await self._count_with_trend(
+            "r20mm", "extreme-rain", "Heavy rain days (R20mm)", "Heavy rain days (R20mm)", "Days ≥ 20 mm"
+        )
+
+    async def ts_evaporation(self) -> c.SeriesSet:
+        y0, y1 = await self.years()
+        yrs = range(y0, y1 + 1)
+        et0 = await self.annual_agg(await self.annual_daily("et0_daily", "sum"), y0, y1)
+        pet = await self.annual_agg(await self.annual_daily("pet_daily", "sum"), y0, y1)
+        aet = await self.annual_agg(await self.annual_daily("aet_daily", "sum"), y0, y1)
+        reason = "Pan evaporation and VPD are withheld: table 4_4 values are implausible (ET₀ 23–97× too small)"
+        return c.SeriesSet(
+            id="evaporation",
+            title="Evaporation",
+            x_type="time",
+            axes=[c.Axis(unit="mm/yr", label="Evaporation"), c.Axis(unit="kPa", label="VPD")],
+            series=[
+                c.Series(key="et0", name="ET₀", kind="line", axis=0, color=SERIES[3], data=self.series(yrs, et0, 0)),
+                c.Series(key="pet", name="PET", kind="line", axis=0, color=SERIES[2], data=self.series(yrs, pet, 0)),
+                c.Series(
+                    key="aet",
+                    name="AET (water balance)",
+                    kind="line",
+                    axis=0,
+                    color=SERIES[1],
+                    data=self.series(yrs, aet, 0),
+                ),
+                c.Series(
+                    key="pan",
+                    name="Pan evaporation (Class A)",
+                    kind="line",
+                    axis=0,
+                    color=SERIES[4],
+                    data=[[f"{y}-01-01", None] for y in yrs],
+                ),
+                c.Series(
+                    key="vpd",
+                    name="Vapour pressure deficit",
+                    kind="line",
+                    axis=1,
+                    color=SERIES[5],
+                    data=[[f"{y}-01-01", None] for y in yrs],
+                ),
+            ],
+            as_of=f"{y1}-01-01",
+            note="ET₀ / PET from meteorological_drought_master (annual sums; that table lacks 31 Dec); AET from "
+            "runoff_variables_master. Contract labels' methods (FAO-56 Hargreaves, Thornthwaite) are not documented "
+            "in the database.",
+            unavailable=[
+                c.UnavailableField(field="series.pan", reason=reason),
+                c.UnavailableField(field="series.vpd", reason=reason),
+            ],
+            **self._prov(dt.date(y1, 12, 31), "et0_daily", "pet_daily", "aet_daily"),
+        )
+
+    async def ts_streamflow_linkage(self) -> c.SeriesSet:
+        y0, y1 = await self.years()
+        yrs = range(y0, y1 + 1)
+        q = await self.annual_agg(await self.annual_daily("runoff_depth_daily", "sum"), y0, y1)
+        mean = q.mean()
+        return c.SeriesSet(
+            id="streamflow-linkage",
+            title="Runoff and climate",
+            x_type="time",
+            axes=[c.Axis(unit="mm/yr", label="Runoff"), c.Axis(unit="%", label="Anomaly")],
+            series=[
+                c.Series(
+                    key="runoff",
+                    name="Mean annual runoff",
+                    kind="bar",
+                    axis=0,
+                    color=SERIES[0],
+                    data=self.series(yrs, q, 1),
+                ),
+                c.Series(
+                    key="anomaly",
+                    name="Runoff anomaly",
+                    kind="line",
+                    axis=1,
+                    color=SERIES[3],
+                    data=[
+                        [f"{y}-01-01", rnd((q.get(y) - mean) / mean * 100, 1) if y in q.index else None] for y in yrs
+                    ],
+                ),
+            ],
+            as_of=f"{y1}-01-01",
+            note=f"Modelled runoff depth (runoff_variables_master); anomaly vs {y0}–{y1} mean. Table 4_6 withheld.",
+            **{**self._prov(dt.date(y1, 12, 31), "runoff_depth_daily"), "baseline": f"{y0}–{y1}"},
+        )
+
+    async def ts_drought_frequency(self) -> c.SeriesSet:
+        y0, y1 = await self.years()
+        yrs = range(y0, y1 + 1)
+        spi = weighted(await self.data.monthly("spi_3"), self.ctx.weights())
+        spi = spi[spi["value"].notna()]
+        counts = (spi["value"] <= DROUGHT_SPI3).groupby(spi["date"].dt.year).sum().astype(float)
+        counts = counts[(counts.index >= y0) & (counts.index <= y1)]
+        return c.SeriesSet(
+            id="drought-frequency",
+            title="Drought frequency",
+            x_type="time",
+            axes=[c.Axis(unit="months", label="Months with SPI-3 ≤ −1.5")],
+            series=[
+                c.Series(
+                    key="months", name="Drought months", kind="bar", color=NEGATIVE, data=self.series(yrs, counts, 0)
+                ),
+                c.Series(
+                    key="trend",
+                    name="Trend",
+                    kind="line",
+                    color=SERIES[3],
+                    dash=True,
+                    data=self.trend_series(yrs, counts, 2),
+                ),
+            ],
+            as_of=f"{y1}-01-01",
+            note="Months per year in which the scope's area-weighted SPI-3 is ≤ −1.5.",
+            **self._prov(dt.date(y1, 12, 31), "spi_3"),
+        )
+
+    async def ts_indicator_trends(self) -> c.SeriesSet:
+        _, y1 = await self.years()
+        base = 2020
+        if y1 <= base:
+            raise unavailable("Indicator trends need full years after 2020", "years after 2020")
+        yrs = range(base, y1 + 1)
+        t = await self.annual_agg(await self.annual_daily("tavg", "mean"), base, y1)
+        rain = await self.annual_var("rain_annual", base, y1)
+        hot = await self.annual_var("hot_days", base, y1)
+        r20 = await self.annual_var("r20mm", base, y1)
+        spi = weighted(await self.data.monthly("spi_3"), self.ctx.weights())
+        dm = (spi["value"] <= DROUGHT_SPI3).groupby(spi["date"].dt.year).sum().astype(float)
+
+        def pct(s: pd.Series) -> list[list[Any]]:
+            b = s.get(base)
+            return [[f"{y}-01-01", rnd((s.get(y) - b) / b * 100, 1) if b and y in s.index else None] for y in yrs]
+
+        return c.SeriesSet(
+            id="indicator-trends",
+            title=f"Change vs {base}",
+            x_type="time",
+            axes=[c.Axis(unit="%", label=f"Change vs {base}")],
+            series=[
+                c.Series(
+                    key="temp",
+                    name="Mean temperature (×10 %/°C)",
+                    kind="line",
+                    color=SERIES[3],
+                    data=[
+                        [f"{y}-01-01", rnd((t.get(y) - t.get(base)) * 10, 1) if base in t.index else None] for y in yrs
+                    ],
+                ),
+                c.Series(key="rain", name="Annual rainfall", kind="line", color=SERIES[0], data=pct(rain)),
+                c.Series(key="hot", name="Extreme heat days", kind="line", color=SERIES[4], data=pct(hot)),
+                c.Series(key="drought", name="Drought frequency", kind="line", color=NEGATIVE, data=pct(dm)),
+                c.Series(key="r20", name="Extreme rainfall events", kind="line", color=SERIES[1], data=pct(r20)),
+            ],
+            as_of=f"{y1}-01-01",
+            note="Mean temperature is plotted as 10 × change in °C (contract convention); others as % change. A "
+            "zero base year makes the % change undefined (null).",
+            **self._prov(dt.date(y1, 12, 31), "tavg", "rain_annual", "hot_days", "spi_3", "r20mm"),
+        )
+
+    # ---------------------------------------------------------------- forecast
+
+    async def forecast(self, metric: str) -> dict[str, Any]:
+        # The contract defines no climate forecast keys (the forecast page uses projections, which are unavailable).
+        raise unknown("metric", metric, [])
+
+    # ---------------------------------------------------------------- breakdown
+
+    async def breakdown(self, metric: str) -> dict[str, Any]:
+        if metric in ("risk-index", "projection-bars"):
+            raise unavailable("No climate risk index or projections in the database", metric)
+        if metric == "seasonal-change":
+            w = self.ctx.weights()
+            last = await self.rain.latest_complete_month()
+            t = weighted(await self.monthly_mean("tavg"), w)
+            t = t[t["date"] <= pd.Timestamp(last)]
+            periods = [("1981–2000", 1981, 2000), ("2001–2020", 2001, 2020), (f"2021–{last.year}", 2021, last.year)]
+            series = []
+            for i, (name, a, b) in enumerate(periods):
+                sub = t[(t["date"].dt.year >= a) & (t["date"].dt.year <= b)]
+                vals = [
+                    rnd(sub[sub["date"].dt.month.isin(ms)]["value"].mean(), 2) if not sub.empty else None
+                    for ms in SEASONS.values()
+                ]
+                series.append(c.CategorySeries(key=f"p{i}", name=name, values=vals, color=SERIES[i]))
+            return c.CategorySet(
+                id="seasonal-change",
+                title="Seasonal mean temperature by period",
+                unit="°C",
+                categories=list(SEASONS),
+                series=series,
+                as_of=iso(last),
+                unavailable=[c.UnavailableField(field="series.p0", reason="No data before 2000 in the database")],
+                **self._prov(last, "tavg"),
+            ).dump()
+        if metric == "map-seasonality":
+            y1 = await self.last_full_year()
+            decades = [(2000, 2009), (2010, 2019), (2020, y1)]
+            cols = [
+                ("rain_annual", "Annual"),
+                ("rain_season_djf", "DJF"),
+                ("rain_season_mam", "MAM"),
+                ("rain_season_jja", "JJA"),
+                ("rain_season_son", "SON"),
+            ]
+            series = []
+            for i, (var, name) in enumerate(cols):
+                s = await self.annual_var(var, 2000, y1)
+                series.append(
+                    c.CategorySeries(
+                        key=name.lower(),
+                        name=name,
+                        color=SERIES[i],
+                        values=[rnd(s[(s.index >= a) & (s.index <= b)].mean(), 0) for a, b in decades],
+                    )
+                )
+            return c.CategorySet(
+                id="map-seasonality",
+                title="Mean annual and seasonal precipitation by period",
+                unit="mm",
+                categories=[f"{a}–{b}" for a, b in decades],
+                series=series,
+                as_of=f"{y1}-01-01",
+                **self._prov(dt.date(y1, 12, 31), "rain_annual", "rain_season_djf"),
+            ).dump()
+        raise unknown("metric", metric, ["seasonal-change", "map-seasonality", "risk-index", "projection-bars"])
+
+    # ---------------------------------------------------------------- tables
+
+    async def table(self, metric: str, limit: int | None) -> dict[str, Any]:
+        if metric in ("forecast-summary", "risk-outlook"):
+            raise unavailable("No climate projections in the database", metric)
+        handlers = {
+            "statistics": self.tbl_statistics,
+            "provinces": self.tbl_provinces,
+            "signal-chain": self.tbl_signal_chain,
+        }
+        if metric not in handlers:
+            raise unknown("metric", metric, [*handlers, "forecast-summary", "risk-outlook"])
+        return (await handlers[metric](limit)).dump()
+
+    async def tbl_statistics(self, limit: int | None) -> c.TableSet:
+        y0, y1 = HISTORY_START.year, await self.last_full_year()
+        yrs = range(y0, y1 + 1)
+        tavg = await self.annual_agg(await self.annual_daily("tavg", "mean"), y0, y1)
+        rain = await self.annual_var("rain_annual", y0, y1)
+        hot = await self.annual_var("hot_days", y0, y1)
+        ta, _, last = await self.temp_anomaly_12m()
+        rows: list[dict[str, Any]] = []
+
+        def add(rid: str, stat: str, value: str | None) -> None:
+            rows.append({"id": rid, "statistic": stat, "value": value})
+
+        tt, rt, ht = (sens_slope([s.get(y) for y in yrs]) for s in (tavg, rain, hot))
+        add("tmean", f"Mean annual temperature {y0}–{y1}", f"{tavg.mean():.1f} °C" if not tavg.empty else None)
+        add(
+            "ttrend",
+            "Warming trend (Sen's slope)",
+            f"{tt.slope * 10:+.2f} °C/decade (p = {tt.p:.3f}, {tt.trend})" if tt else None,
+        )
+        add("tanom", f"Temperature anomaly, 12 months to {last:%b %Y}", f"{ta:+.2f} °C" if ta is not None else None)
+        add("rmean", f"Mean annual rainfall {y0}–{y1}", f"{rain.mean():.0f} mm" if not rain.empty else None)
+        add(
+            "rtrend",
+            "Rainfall trend (Sen's slope)",
+            f"{rt.slope * 10:+.1f} mm/decade (p = {rt.p:.3f}, {rt.trend})" if rt else None,
+        )
+        add(
+            "htrend",
+            "Hot-day trend (Sen's slope)",
+            f"{ht.slope * 10:+.1f} days/decade (p = {ht.p:.3f}, {ht.trend})" if ht else None,
+        )
+        if self.ctx.filters.scope.level == "municipality":
+            enso = await self.data.annual("enso_correlation")
+            v = enso[enso["district"] == self.ctx.filters.scope.id]["value"]
+            add("enso", "Rainfall–Niño 3.4 correlation (DB)", f"{v.iloc[0]:.2f}" if not v.empty else None)
+        return c.TableSet(
+            id="statistics",
+            title="Climate statistics",
+            columns=[
+                c.Column(key="statistic", label="Statistic", type="text"),
+                c.Column(key="value", label="Value", type="text", align="right"),
+            ],
+            rows=rows,
+            row_key="id",
+            as_of=f"{y1}-01-01",
+            **self._prov(dt.date(y1, 12, 31), "tavg", "rain_annual", "hot_days", "temp_anomaly", baseline=True),
+        )
+
+    async def tbl_provinces(self, limit: int | None) -> c.TableSet:
+        areas = self.ctx.state.spatial.district_areas()
+        if areas is None:
+            raise unavailable("Province aggregates need district boundaries", "district boundaries")
+        y0, y1 = HISTORY_START.year, await self.last_full_year()
+        yrs = range(y0, y1 + 1)
+        _, ta_d, last = await self.temp_anomaly_12m()
+        tavg = await self.annual_daily("tavg", "mean")
+        rain, hot = await self.data.annual("rain_annual"), await self.data.annual("hot_days")
+        rows = []
+        for p in districts.PROVINCES:
+            w = {d.code: areas[d.code] for d in districts.in_province(p)}
+
+            def agg(df: pd.DataFrame, w: dict[str, float] = w) -> pd.Series:
+                sub = df[(df["date"].dt.year >= y0) & (df["date"].dt.year <= y1)]
+                a = weighted(sub, w)
+                return a.set_index(a["date"].dt.year)["value"]
+
+            t, r, h = agg(tavg), agg(rain), agg(hot)
+            tt, ht = sens_slope([t.get(y) for y in yrs]), sens_slope([h.get(y) for y in yrs])
+            rows.append(
+                {
+                    "id": p,
+                    "province": districts.PROVINCES[p],
+                    "temp": rnd(weighted_scalar(ta_d, w), 2),
+                    "rain": rnd((r.get(y1) - r.mean()) / r.mean() * 100, 1) if y1 in r.index else None,
+                    "trend": rnd(tt.slope * 10, 2) if tt else None,
+                    "hot": rnd(h.get(y1), 1),
+                    "hotTrend": (
+                        "Rising"
+                        if ht and ht.trend == "increasing"
+                        else "Declining"
+                        if ht and ht.trend == "decreasing"
+                        else "Stable"
+                    )
+                    if ht
+                    else None,
+                }
+            )
+        return c.TableSet(
+            id="provinces",
+            title=f"Climate indicators by province (temperature: 12 months to {last:%b %Y}; "
+            f"rainfall and hot days: {y1})",
+            columns=[
+                c.Column(key="province", label="Province", type="text"),
+                c.Column(
+                    key="temp",
+                    label="Temp change",
+                    type="delta",
+                    unit="°C",
+                    decimals=2,
+                    scale="tempAnomaly",
+                    good_direction="down",
+                    align="right",
+                ),
+                c.Column(
+                    key="rain",
+                    label="Rainfall change",
+                    type="delta",
+                    unit="%",
+                    decimals=0,
+                    good_direction="up",
+                    align="right",
+                ),
+                c.Column(
+                    key="trend",
+                    label="Trend",
+                    type="number",
+                    unit="°C/dec",
+                    decimals=2,
+                    scale="tempTrend",
+                    align="right",
+                ),
+                c.Column(key="hot", label="Hot days", type="number", decimals=0, align="right"),
+                c.Column(key="hotTrend", label="Trend", type="class", scale="trendClass"),
+            ],
+            rows=rows,
+            row_key="id",
+            total=len(rows),
+            as_of=iso(last),
+            **{
+                **self._prov(last, "temp_anomaly", "tavg", "rain_annual", "hot_days", baseline=True),
+                "aggregation": "district-area-weighted",
+            },
+        )
+
+    async def tbl_signal_chain(self, limit: int | None) -> c.TableSet:
+        y0, y1 = HISTORY_START.year, await self.last_full_year()
+        ta, _, last = await self.temp_anomaly_12m()
+        et0 = await self.annual_agg(await self.annual_daily("et0_daily", "sum"), y0, y1)
+        rain = await self.annual_var("rain_annual", y0, y1)
+        q = await self.annual_agg(await self.annual_daily("runoff_depth_daily", "sum"), y0, y1)
+
+        def pct(s: pd.Series) -> str | None:
+            return f"{(s.get(y1) - s.mean()) / s.mean() * 100:+.0f} % ({y1} vs {y0}–{y1})" if y1 in s.index else None
+
+        rows: list[dict[str, Any]] = [
+            {
+                "id": "temp",
+                "signal": "Temperature",
+                "change": f"{ta:+.2f} °C (12 months)" if ta is not None else None,
+                "severity": None,
+            },
+            {"id": "et0", "signal": "Evaporative demand (ET₀)", "change": pct(et0), "severity": None},
+            {"id": "rain", "signal": "Rainfall", "change": pct(rain), "severity": None},
+            {"id": "runoff", "signal": "Runoff", "change": pct(q), "severity": None},
+        ]
+        return c.TableSet(
+            id="signal-chain",
+            title="Climate signal chain",
+            columns=[
+                c.Column(key="signal", label="Signal", type="text"),
+                c.Column(key="change", label="Change", type="text"),
+                c.Column(key="severity", label="Severity", type="class", scale="risk"),
+            ],
+            rows=rows,
+            row_key="id",
+            as_of=iso(last),
+            unavailable=[
+                c.UnavailableField(
+                    field="rows.severity",
+                    reason="No agreed severity thresholds for these signals (none in thresholds.ts)",
+                )
+            ],
+            **self._prov(last, "temp_anomaly", "et0_daily", "rain_annual", "runoff_depth_daily", baseline=True),
+        )
+
+    # ---------------------------------------------------------------- maps
+
+    async def map(self, layer: str) -> dict[str, Any]:
+        if layer in ("vulnerability", "proj-temp", "proj-rain", "proj-spi", "proj-availability"):
+            raise unavailable("No climate projections or vulnerability index in the database", layer)
+        w = self.ctx.weights()
+        y0, y1 = HISTORY_START.year, await self.last_full_year()
+        yrs = range(y0, y1 + 1)
+        baseline = False
+        if layer == "temp-trend":
+            df = await self.annual_daily("tavg", "mean")
+            df = df[df["date"].dt.year.between(y0, y1)]
+            vals = {}
+            for code, g in df.groupby("district"):
+                s = g.set_index(g["date"].dt.year)["value"]
+                tr = sens_slope([s.get(y) for y in yrs])
+                vals[code] = rnd(tr.slope * 10, 3) if tr else None
+            spec = (f"Temperature trend {y0}–{y1} (°C/decade)", "tempTrend", "°C/decade", dt.date(y1, 12, 31), ["tavg"])
+        elif layer == "temp-anomaly":
+            _, per, last = await self.temp_anomaly_12m()
+            vals = {k: rnd(v, 2) for k, v in per.items()}
+            spec = (f"Temperature anomaly, 12 months to {last:%b %Y} (°C)", "tempAnomaly", "°C", last, ["temp_anomaly"])
+            baseline = True
+        elif layer == "mean-temp":
+            df = await self.annual_daily("tavg", "mean")
+            vals = {
+                k: rnd(v, 1)
+                for k, v in df[df["date"].dt.year.between(y0, y1)].groupby("district")["value"].mean().items()
+            }
+            spec = (f"Mean annual temperature {y0}–{y1} (°C)", "temperature", "°C", dt.date(y1, 12, 31), ["tavg"])
+        elif layer == "rain-trend":
+            df = await self.data.annual("rain_annual")
+            recent = df[df["date"].dt.year.between(y1 - 9, y1)].groupby("district")["value"].mean()
+            early = df[df["date"].dt.year.between(y0, y1 - 10)].groupby("district")["value"].mean()
+            vals = {k: rnd(v, 1) for k, v in ((recent - early) / early * 100).items()}
+            spec = (
+                f"Rainfall change, {y1 - 9}–{y1} vs {y0}–{y1 - 10} (%)",
+                "anomalyPct",
+                "%",
+                dt.date(y1, 12, 31),
+                ["rain_annual"],
+            )
+        elif layer in ("hot-days", "cdd"):
+            var = "hot_days" if layer == "hot-days" else "cdd"
+            df = await self.data.annual(var)
+            vals = {k: rnd(v, 0) for k, v in df[df["date"].dt.year == y1].set_index("district")["value"].items()}
+            label = "Hot days (Tmax > 35 °C)" if var == "hot_days" else "Consecutive dry days"
+            spec = (f"{label}, {y1}", "days", "days", dt.date(y1, 12, 31), [var])
+        elif layer == "et0":
+            df = await self.annual_daily("et0_daily", "sum")
+            vals = {
+                k: rnd(v, 0)
+                for k, v in df[df["date"].dt.year.between(y0, y1)].groupby("district")["value"].mean().items()
+            }
+            spec = (f"Reference ET₀ (mm/yr, {y0}–{y1} mean)", "rainfall", "mm", dt.date(y1, 12, 31), ["et0_daily"])
+        else:
+            raise unknown(
+                "layer",
+                layer,
+                [
+                    "temp-trend",
+                    "temp-anomaly",
+                    "mean-temp",
+                    "rain-trend",
+                    "hot-days",
+                    "cdd",
+                    "et0",
+                    "vulnerability",
+                    "proj-temp",
+                    "proj-rain",
+                    "proj-spi",
+                    "proj-availability",
+                ],
+            )
+        title, scale, unit, date, variables = spec
+        prov = self.ctx.provenance(date, self.src(*variables), baseline=baseline)
+        prov["aggregation"] = "district"
+        return c.MapLayer(
+            id=layer,
+            title=title,
+            kind="choropleth",
+            level="municipality",
+            scale=scale,
+            unit=unit,
+            date=iso(date) or "",
+            values={k: v for k, v in vals.items() if k in w},
+            geometry="districts",
+            **prov,
+        ).dump()
+
+
+async def prewarm(data: DataAccess) -> None:
+    for var in ("tavg", "tmax", "tmin", "et0_daily", "pet_daily", "aet_daily", "runoff_depth_daily"):
+        await data.daily_monthly_stats(var, ())
+    for var in (
+        "hot_days",
+        "r20mm",
+        "cdd",
+        "cwd",
+        "rx1day",
+        "rx5day",
+        "rain_annual",
+        "rain_season_djf",
+        "rain_season_mam",
+        "rain_season_jja",
+        "rain_season_son",
+    ):
+        await data.annual(var)
+    await data.monthly("temp_anomaly")
