@@ -357,6 +357,13 @@ district-month never shows two values). `5.1_primary_satellite_vegetation_variab
 plausibility check and is withheld entirely (`DATA_GAPS.md` §5). Drivers from `5.2` (GDD) and the canonical rainfall /
 temperature / ET₀ tables. Everything from the satellite table is ≥ 9 months old → `isStale: true`.
 
+**Implemented (Phase 5, 2026-10-14)** — `app/modules/vegetation/`. Notes: NDVI normal / anomaly vs the same calendar
+month 2001–2025; `index-trend` band = mean ± 1 s.d. per calendar month, previous year plotted on the current months;
+`seasonal` categories = last 7 full years, DJF of year Y = Dec Y−1 + Jan–Feb Y; `drivers` = % change of the last 6
+months vs the same months 2001–2025, each driver over its own latest months (dates in `components`); `hotspots` =
+districts by lowest VCI; health status / stress from `veg_class` / `vegetation.stress_below` in thresholds.json.
+Verified: `docs/VERIFICATION.md` (4 / 4).
+
 ### Summary
 
 | KPI | Status | Source → transformation |

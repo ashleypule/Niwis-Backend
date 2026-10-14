@@ -1,12 +1,21 @@
 # Progress
 
-## Status: Phase 4 (Climate) complete (2026-10-14). Next: Phase 5 — Vegetation.
+## Status: Phase 5 (Vegetation) complete (2026-10-14). Next: Phase 6 — Runoff.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Phase 5 — Vegetation (2026-10-14)
+
+- [x] `app/modules/vegetation/`: summary (8 KPIs), 4 time series, 4 breakdowns, 2 tables, 9 map layers, all from
+      `satellite_remote_sensing` (D4); 501 for the 7 indices only in withheld `5.1`, land cover and forecasts
+- [x] Drought and vegetation pages return identical values for the same district-month (tested)
+- [x] `docs/VERIFICATION.md`: 4 / 4 vegetation values match SQL
+- [x] `tests/test_aggregate.py`: unit tests for area weighting, the 95 % coverage rule, class areas, WMA fractions and
+      pro-rated normals; 35 vegetation tests (331 total)
 
 ### Phase 4 — Climate (2026-10-14)
 

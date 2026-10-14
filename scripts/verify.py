@@ -58,6 +58,20 @@ def _province_weighted(rows: list[tuple[Any, ...]], province: str) -> float:
     return num / den
 
 
+def _area_share_below(rows: list[tuple[Any, ...]], threshold: float) -> float:
+    """Share (%) of national area in districts whose value is below `threshold`."""
+    from app.core import districts
+
+    areas = get_spatial().district_areas() or {}
+    total = below = 0.0
+    for name, v in rows:
+        d = districts.resolve(name)
+        if d and v is not None:
+            total += areas[d.code]
+            below += areas[d.code] if float(v) < threshold else 0.0
+    return below / total * 100
+
+
 CHECKS: list[Check] = [
     Check(
         "rainfall",
@@ -194,6 +208,43 @@ FROM y a JOIN y b ON b.yr > a.yr""",
 SELECT round(avg(a)::numeric, 2) FROM (SELECT a FROM m
   WHERE ym < (SELECT left(max("Date"), 7) FROM "6.1_core_rainfall_variables_master") ORDER BY ym DESC LIMIT 12) s""",
         tol=0.005,
+    ),
+    Check(
+        "vegetation",
+        "NDVI, Western Cape, latest month — area-weighted from the 6 WC districts (satellite_remote_sensing)",
+        "/api/v1/vegetation/summary?province=WC",
+        kpi("ndvi"),
+        """SELECT district_name, ndvi FROM satellite_remote_sensing WHERE date = (SELECT max(date) FROM satellite_remote_sensing)""",
+        tol=0.0006,
+        sql_post=lambda rows: round(_province_weighted(rows, "WC"), 3),
+    ),
+    Check(
+        "vegetation",
+        "VHI, Namakwa (DC6), latest month — map layer vhi",
+        "/api/v1/vegetation/map?layer=vhi",
+        lambda b: b["values"]["DC6"],
+        """SELECT round(vhi::numeric, 1) FROM satellite_remote_sensing
+WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)""",
+    ),
+    Check(
+        "vegetation",
+        "Area under stress (VHI < 40 %), national, latest month (% of area)",
+        "/api/v1/vegetation/summary",
+        kpi("stress"),
+        """SELECT district_name, vhi FROM satellite_remote_sensing WHERE date = (SELECT max(date) FROM satellite_remote_sensing)""",
+        sql_post=lambda rows: round(_area_share_below(rows, 40), 1),
+    ),
+    Check(
+        "vegetation",
+        "NDVI anomaly, Namakwa, latest month — NDVI minus the same-month 2001–2025 mean",
+        "/api/v1/vegetation/map?layer=ndvi-anomaly",
+        lambda b: b["values"]["DC6"],
+        """WITH cur AS (SELECT date, ndvi FROM satellite_remote_sensing
+             WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing))
+SELECT round((cur.ndvi - avg(s.ndvi))::numeric, 3) FROM cur, satellite_remote_sensing s
+WHERE s.district_name = 'namakwa' AND extract(month FROM s.date) = extract(month FROM cur.date)
+  AND extract(year FROM s.date) BETWEEN 2001 AND 2025 GROUP BY cur.ndvi""",
+        tol=0.0006,
     ),
 ]
 

@@ -9,8 +9,8 @@ Build order (from the build prompt). ✅ done · ▶ next · ⏸ blocked
    by SQL in docs/VERIFICATION.md.
 3. ✅ Drought (Module 1) — per-component asOf (cascade, drought class).
 4. ✅ Climate (Module 2).
-5. ▶ Vegetation (Module 3) — from `satellite_remote_sensing` (D4).
-6. Runoff (Module 5) — derived volume = depth × real district area.
+5. ✅ Vegetation (Module 3) — from `satellite_remote_sensing` (D4).
+6. ▶ Runoff (Module 5) — derived volume = depth × real district area.
 7. Hardening: performance pass, proposed indexes, security review, README / VERIFICATION / CONTRACT_CHANGES,
    `docker compose up` from a clean clone, docs/FRONTEND_INTEGRATION.md.
 

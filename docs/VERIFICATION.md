@@ -162,3 +162,46 @@ WHERE "District_Name" = 'Namakwa' AND make_date("Year"::int, "Month"::int, 1) = 
 SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainfall_derived_drought_indices_master"
 WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month'
 ```
+
+## vegetation — 2026-10-14
+
+### ✅ NDVI, Western Cape, latest month — area-weighted from the 6 WC districts (satellite_remote_sensing)
+
+- API: `GET /api/v1/vegetation/summary?province=WC` → **0.269**
+- SQL result: **0.269** (tolerance ± 0.0006)
+
+```sql
+SELECT district_name, ndvi FROM satellite_remote_sensing WHERE date = (SELECT max(date) FROM satellite_remote_sensing)
+```
+
+### ✅ VHI, Namakwa (DC6), latest month — map layer vhi
+
+- API: `GET /api/v1/vegetation/map?layer=vhi` → **87.4**
+- SQL result: **87.4** (tolerance ± 0.05)
+
+```sql
+SELECT round(vhi::numeric, 1) FROM satellite_remote_sensing
+WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)
+```
+
+### ✅ Area under stress (VHI < 40 %), national, latest month (% of area)
+
+- API: `GET /api/v1/vegetation/summary` → **0.0**
+- SQL result: **0.0** (tolerance ± 0.05)
+
+```sql
+SELECT district_name, vhi FROM satellite_remote_sensing WHERE date = (SELECT max(date) FROM satellite_remote_sensing)
+```
+
+### ✅ NDVI anomaly, Namakwa, latest month — NDVI minus the same-month 2001–2025 mean
+
+- API: `GET /api/v1/vegetation/map?layer=ndvi-anomaly` → **0.006**
+- SQL result: **0.006** (tolerance ± 0.0006)
+
+```sql
+WITH cur AS (SELECT date, ndvi FROM satellite_remote_sensing
+             WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing))
+SELECT round((cur.ndvi - avg(s.ndvi))::numeric, 3) FROM cur, satellite_remote_sensing s
+WHERE s.district_name = 'namakwa' AND extract(month FROM s.date) = extract(month FROM cur.date)
+  AND extract(year FROM s.date) BETWEEN 2001 AND 2025 GROUP BY cur.ndvi
+```

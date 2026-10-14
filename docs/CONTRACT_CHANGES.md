@@ -134,6 +134,10 @@ column is `null` with an `unavailable` entry. `matrix` has no rainfall datasets 
 than 8 years. `evaporation` pan / VPD series and `signal-chain` severity are `null` + `unavailable`; projections,
 irrigation, risk index, vulnerability and forecast-summary / risk-outlook → 501. `/climate/forecast` → 404 (no keys).
 
+**Vegetation (live).** All indices come from `satellite_remote_sensing` (same values as the drought page) and
+are dated 2025-12 (`isStale: true`). EVI / SAVI / MSAVI2 series in `indices` are `null` + `unavailable`; maps `evi`,
+`savi`, `msavi2`, `vpi`, `asi`, `svi`, `ndii`, the land-cover breakdown and all forecasts → 501.
+
 ## 8. Derived values
 
 | Value | Derivation |

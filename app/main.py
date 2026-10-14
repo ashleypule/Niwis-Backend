@@ -31,6 +31,8 @@ from app.modules.drought.router import router as drought_router
 from app.modules.drought.service import prewarm as prewarm_drought
 from app.modules.rainfall.router import router as rainfall_router
 from app.modules.rainfall.service import prewarm as prewarm_rainfall
+from app.modules.vegetation.router import router as vegetation_router
+from app.modules.vegetation.service import prewarm as prewarm_vegetation
 from app.refdata.router import router as reference_router
 from app.registry.registry import get_registry
 from app.state import AppState
@@ -55,6 +57,7 @@ async def _warm(state: AppState) -> None:
         await prewarm_rainfall(state.data)
         await prewarm_drought(state.data)
         await prewarm_climate(state.data)
+        await prewarm_vegetation(state.data)
         log.info("data cache warmed")
         await state.meta.table_stats()
         log.info("meta cache warmed")
@@ -138,6 +141,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(rainfall_router)
     app.include_router(drought_router)
     app.include_router(climate_router)
+    app.include_router(vegetation_router)
     return app
 
 
