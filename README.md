@@ -6,6 +6,20 @@ serves the frontend contract (`reference/API_CONTRACT.md`) from the NIWIS Supaba
 - Python 3.12 · FastAPI · asyncpg · Pydantic v2
 - Interactive docs: `http://localhost:8000/docs` · schema: `docs/openapi.json`
 - Status of modules and data: `PROGRESS.md` · contract additions: `docs/CONTRACT_CHANGES.md`
+- **Live modules:** `rainfall`, `drought`, `climate`, `vegetation`, `runoff` — what each serves and what is unavailable:
+  `docs/FRONTEND_INTEGRATION.md`
+
+| Document | Contents |
+| --- | --- |
+| `docs/DB_INVENTORY.md` | Profile of the 14 database tables |
+| `docs/DATA_MAPPING.md` | Every contract key → source table / columns / method, or unavailable |
+| `docs/DATA_GAPS.md` | What the database lacks or gets wrong — for the data team |
+| `docs/CONTRACT_CHANGES.md` | Backwards-compatible additions to the API contract |
+| `docs/FRONTEND_INTEGRATION.md` | How to switch the frontend from mock data to this API |
+| `docs/VERIFICATION.md` | API values checked against independent SQL (21 checks) |
+| `docs/PERFORMANCE.md` | Summary-endpoint latency |
+| `docs/SECURITY_REVIEW.md` | Security controls, findings and recommendations |
+| `docs/openapi.json` | OpenAPI schema (also served at `/openapi.json`) |
 
 ## Quick start
 
@@ -62,6 +76,10 @@ mypy
 pytest                                        # unit, contract-conformance and API tests (fixture DB)
 pytest -m integration                         # opt-in, read-only checks against the real Supabase DB
 python scripts/export_openapi.py              # refresh docs/openapi.json (a test fails if it is stale)
+python scripts/verify.py                      # API values vs independent SQL on Supabase → docs/VERIFICATION.md
+python scripts/bench.py                       # summary latency on Supabase → docs/PERFORMANCE.md
+python scripts/inventory.py                   # re-profile the database → docs/DB_INVENTORY.md
+python -m pip_audit -r requirements.txt       # dependency vulnerability check
 ```
 
 `tests/test_contract_conformance.py` checks every response model field-by-field against the zod schemas in
@@ -80,9 +98,10 @@ app/
                           spatial (areas, WMA overlap), provenance/staleness, cache, errors
   meta/                   /health, /meta/sources, /meta/coverage, /meta/variables
   refdata/                /reference/{provinces|wmas|municipalities|catchments}
-  modules/                one package per contract module (rainfall, drought, …)
+  modules/                one package per contract module (rainfall, drought, climate, vegetation, runoff)
+  modules/router_factory.py  builds the contract endpoints for a module from its service class
   schemas/contract.py     Pydantic mirrors of the contract's zod schemas
-scripts/                  inventory, data checks, fixture builder, OpenAPI export
+scripts/                  inventory, data checks, fixture builder, boundary builder, verify, bench, OpenAPI export
 migrations/proposed/      SQL for the data team to review — never run by this project
 reference/                inputs copied from the frontend (contract, data dictionary, thresholds, geo)
 docs/                     inventory, mapping, gaps, contract changes, verification, openapi.json
@@ -100,14 +119,18 @@ Example: Dam & Reservoir Status (`dams`, spec §8) once the data team loads per-
 2. **Add the table names** to `.env` / `.env.example` as `NIWIS_SUPABASE_TABLES_MODULE_6=…`.
 3. **Profile it**: `python scripts/inventory.py` refreshes `docs/DB_INVENTORY.md`; add mapping rows to
    `docs/DATA_MAPPING.md` and any problems to `docs/DATA_GAPS.md`.
-4. **Add `app/modules/dams/`** with `router.py` (the contract endpoints for the module), `service.py` (queries via
-   the registry: `registry.canonical_source(var)` gives table + column; build SQL with `ds.fq`, `ds.date_sql()`,
-   `ds.column_sql()`; values as bind parameters) and `schemas.py` if it needs more than `app/schemas/contract.py`.
-   Use `app/core/filters.py` for the global filters and set `asOf`, `source`, `isStale` on every response.
-5. **List it** in `IMPLEMENTED_MODULES` (`app/modules/__init__.py`) and include the router in `app/main.py`;
-   `/health` then reports it as `live`.
+4. **Add `app/modules/dams/`**: a `service.py` class with `summary()`, `timeseries(metric)`, `forecast(metric)`,
+   `breakdown(metric)`, `table(metric, limit)`, `map(layer)` (and `matrix`, `entities`, `entity` if the contract
+   has them), and a two-line `router.py`: `router = build_router("dams", DamsService, entities=True)`. Read data
+   through `ctx.data` (`DataAccess`: canonical-source loaders by variable id, SQL-side aggregation), aggregate with
+   `app/core/aggregate.py` (area weights, 95 % coverage rule, sums over a scope), and raise `DataUnavailable` /
+   `unknown(...)` for keys the DB cannot serve / the contract does not define. Set `asOf`, `source`, `isStale` via
+   `ctx.provenance(...)`. The rainfall module is the reference implementation.
+5. **List it** in `IMPLEMENTED_MODULES` (`app/modules/__init__.py`), include the router and its `prewarm` in
+   `app/main.py`; `/health` then reports it as `live`.
 6. **Test**: rebuild the fixture (`python scripts/make_fixture.py`), add API tests, run
-   `python scripts/export_openapi.py`, and record three SQL spot-checks in `docs/VERIFICATION.md`.
+   `python scripts/export_openapi.py`, and add ≥ 3 `Check(...)` entries to `scripts/verify.py`
+   (`python scripts/verify.py dams` writes them to `docs/VERIFICATION.md`).
 
 ## Data notes
 

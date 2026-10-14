@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -106,6 +106,22 @@ class Dataset(_Strict):
             return f"make_date({ident(t.year)}::int, {ident(t.month)}::int, 1)"
         assert t.column
         return f"make_date({ident(t.column)}::int, 1, 1)"
+
+    def range_sql(self, lo: str = "$1", hi: str = "$2") -> str:
+        """Index-friendly `date BETWEEN lo AND hi` predicate.
+
+        For ISO text dates the raw column is compared with ISO text bounds (text order = date order), so an index on
+        the column can be used; casting the column to date would prevent that. Bind the bounds with `range_args()`.
+        """
+        if self.time.kind == "text_date":
+            assert self.time.column
+            return f"{ident(self.time.column)} BETWEEN {lo}::text AND {hi}::text"
+        return f"{self.date_sql()} BETWEEN {lo} AND {hi}"
+
+    def range_args(self, start: Any, end: Any) -> tuple[Any, Any]:
+        if self.time.kind == "text_date":
+            return start.isoformat(), end.isoformat()
+        return start, end
 
     def period_end_sql(self) -> str:
         """SQL expression for the last day the row covers (for asOf on monthly/annual data)."""

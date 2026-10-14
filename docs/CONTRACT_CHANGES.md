@@ -108,7 +108,12 @@ and a `note`; the backend does not pretend the data cover 1981–2010.
 `code` is an optional addition to the contract's `{error, issues?}` body. Every response carries an `X-Request-Id`
 header.
 
-## 6. New endpoints
+## 6. Endpoints
+
+Not implemented by this backend yet (404): every module other than the five listed in §7, `GET /api/v1/alerts`
+and `GET /api/v1/search`.
+
+New:
 
 | Endpoint | Purpose |
 | --- | --- |

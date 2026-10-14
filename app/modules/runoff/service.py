@@ -818,9 +818,9 @@ class RunoffService:
         a = self.areas()
         # Q10 = flow exceeded 10 % of the time = 90th percentile of daily depth (flow ∝ depth for a district)
         q10 = await self.data.daily_percentile(Q, HISTORY_START, dt.date(y1, 12, 31), 0.9)
-        daily = await self.data.daily(Q, start, end)
-        daily = daily[daily["district"].isin(sel.district_codes)]
-        high = daily[daily["value"] > daily["district"].map(q10)]
+        high = await self.data.daily_exceedances(
+            Q, start, end, {k: v for k, v in q10.items() if k in sel.district_codes}
+        )
         rows = []
         for _, r in high.iterrows():
             code = str(r["district"])

@@ -88,14 +88,6 @@ class DataAccess:
             raise ValueError(f"{var} is not an annual variable")
         return await self._cached(f"data:annual:{var}", sql)
 
-    async def daily(self, var: str, start: dt.date, end: dt.date) -> pd.DataFrame:
-        ds, col = self.source(var)
-        if ds.time.resolution != "daily" or ds.columns[col].repeats:
-            raise ValueError(f"{var} is not a daily variable")
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
-        sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {d} BETWEEN $1 AND $2"
-        return await self._cached(f"data:daily:{var}:{start}:{end}", sql, start, end)
-
     async def daily_window_stats(
         self, var: str, start: dt.date, end: dt.date, thresholds: tuple[float, ...] = ()
     ) -> pd.DataFrame:
@@ -111,14 +103,14 @@ class DataAccess:
         )
         sql = (
             f"SELECT {loc}, sum({c}), count({c}), max({c}), (array_agg({d} ORDER BY {c} DESC NULLS LAST))[1]{extra} "
-            f"FROM {ds.fq} WHERE {d} BETWEEN $1 AND $2 GROUP BY 1"
+            f"FROM {ds.fq} WHERE {ds.range_sql()} GROUP BY 1"
         )
         names = ["district", "sum", "days", "max", "max_date"]
         for t in thresholds:
             names += [f"ge_{t:g}", f"last_ge_{t:g}"]
 
         async def load() -> pd.DataFrame:
-            rows = await self.db.fetch(sql, start, end)
+            rows = await self.db.fetch(sql, *ds.range_args(start, end))
             df = pd.DataFrame([tuple(r) for r in rows], columns=names)
             codes = {n: (x.code if (x := districts.resolve(n)) else None) for n in df["district"].unique()}
             df["district"] = df["district"].map(codes)
@@ -154,30 +146,54 @@ class DataAccess:
         sql = (
             f"SELECT {d} AS day, sum({c} * w.f) AS v, count(DISTINCT {loc}) AS n FROM {ds.fq} "
             f"JOIN unnest($3::text[], $4::float8[]) AS w(name, f) ON w.name = {loc} "
-            f"WHERE {d} BETWEEN $1 AND $2 GROUP BY 1"
+            f"WHERE {ds.range_sql()} GROUP BY 1"
         )
         need = len(factors)
         key = f"data:dscope:{var}:{start}:{end}:{hash(tuple(sorted(factors.items())))}"
 
         async def load() -> pd.Series:
-            rows = await self.db.fetch(sql, start, end, names, facs)
+            rows = await self.db.fetch(sql, *ds.range_args(start, end), names, facs)
             s = pd.Series({pd.Timestamp(r["day"]): float(r["v"]) for r in rows if r["n"] == need}, dtype=float)
             return s.sort_index()
 
         out: pd.Series = await self.cache.get_or_set(key, self.settings.cache_ttl_long_series_s, load)
         return out
 
+    async def daily_exceedances(
+        self, var: str, start: dt.date, end: dt.date, thresholds: dict[str, float]
+    ) -> pd.DataFrame:
+        """Days in [start, end] where a district's value exceeds its threshold (MDB code → threshold), filtered in SQL.
+
+        Only exceedance rows travel and are cached, so arbitrary windows cannot fill memory with daily slices.
+        """
+        ds, col = self.source(var)
+        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        names: list[str] = []
+        thr: list[float] = []
+        for code, t in thresholds.items():
+            dist = districts.by_code(code)
+            if dist is not None:
+                for n in {dist.db_name, dist.db_name.lower(), *dist.aliases}:
+                    names.append(n)
+                    thr.append(float(t))
+        sql = (
+            f"SELECT {loc}, {d}, {c} FROM {ds.fq} JOIN unnest($3::text[], $4::float8[]) AS t(name, thr) "
+            f"ON t.name = {loc} WHERE {ds.range_sql()} AND {c} > t.thr ORDER BY {c} DESC LIMIT 5000"
+        )
+        key = f"data:exceed:{var}:{start}:{end}:{hash(tuple(sorted(thresholds.items())))}"
+        return await self._cached(key, sql, *ds.range_args(start, end), names, thr)
+
     async def daily_percentile(self, var: str, start: dt.date, end: dt.date, q: float) -> pd.Series:
         """Per-district percentile `q` (0–1) of a daily variable over [start, end], computed in SQL."""
         ds, col = self.source(var)
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        c, loc = ds.column_sql(col), ident(ds.location.column)
         sql = (
             f"SELECT {loc}, percentile_cont($3) WITHIN GROUP (ORDER BY {c}) FROM {ds.fq} "
-            f"WHERE {d} BETWEEN $1 AND $2 GROUP BY 1"
+            f"WHERE {ds.range_sql()} GROUP BY 1"
         )
 
         async def load() -> pd.Series:
-            rows = await self.db.fetch(sql, start, end, q)
+            rows = await self.db.fetch(sql, *ds.range_args(start, end), q)
             out = {}
             for r in rows:
                 dist = districts.resolve(r[0])

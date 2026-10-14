@@ -59,4 +59,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 headers={"Retry-After": str(retry)},
             )
         q.append(now)
+        if len(self.hits) > 10_000:  # bound memory: forget clients idle for over a minute
+            for k in [k for k, v in self.hits.items() if not v or now - v[-1] > 60]:
+                del self.hits[k]
         return await call_next(request)

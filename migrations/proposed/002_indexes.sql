@@ -10,7 +10,8 @@
 -- Unique indexes double as a data-quality guard (one row per district per day/month/year). The inventory found no
 -- duplicate (district, date) pairs today, so they should build without errors.
 
--- Daily tables keyed by a text "Date" column (ISO yyyy-mm-dd, so text order = date order)
+-- Daily tables keyed by a text "Date" column (ISO yyyy-mm-dd, so text order = date order). The API compares the raw
+-- text column with ISO bounds (no cast), so these indexes are usable for its district + date-range queries.
 CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS ux_4_1_district_date ON public."4_1_temperature_change_master" ("District_Name", "Date");
 CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS ux_4_4_district_date ON public."4_4_potential_evaporation_daily_master" ("District_Name", "Date");
 CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS ux_4_5_district_date ON public."4_5_irrigation_demand_daily_master" ("District_Name", "Date");

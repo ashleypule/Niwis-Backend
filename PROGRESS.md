@@ -1,12 +1,32 @@
 # Progress
 
-## Status: Phase 6 (Runoff) complete — all five modules live (2026-10-14). Next: Phase 7 — Hardening.
+## Status: all phases complete (2026-10-14). Five modules live; hardening done. Waiting on the data team (below).
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Phase 7 — Hardening (2026-10-14)
+
+- [x] Performance (`docs/PERFORMANCE.md`): summary p95 16–106 ms with warm data caches across 61 scopes per module
+      (target < 800 ms); cached repeats ≈ 2 ms; cold first requests 2.6–18 s right after a restart (network to
+      eu-west-1, unindexed tables) — background pre-load at startup
+- [x] Index-friendly text-date range filters (raw ISO text, no cast); `migrations/proposed/002_indexes.sql` updated
+- [x] Security review (`docs/SECURITY_REVIEW.md`): pip-audit clean; fixed unbounded per-window caching in the runoff
+      events table and rate-limiter memory growth; security tests (`tests/test_security.py`)
+- [x] `docs/FRONTEND_INTEGRATION.md`; README (documents, scripts, adding a module via `router_factory`)
+- [x] `docs/VERIFICATION.md`: 21 / 21 checks pass across the five modules
+- [x] `docker compose up` from a clean clone: verified
+- [x] 380 tests; ruff + mypy (strict) clean
+
+### Open questions / actions for the data team
+
+See `docs/DATA_GAPS.md`. Highest impact: (1) create the read-only role (`001_readonly_api_role.sql`) and the indexes
+(`002_indexes.sql`); (2) fix or replace `5.1` vegetation and extend `satellite_remote_sensing` / hydrology beyond
+2025-12; (3) fix the placeholder / implausible columns (§3–§4); (4) load data back to 1981 or confirm the baseline;
+(5) reload 31 December; (6) flag partial months.
 
 ### Phase 6 — Runoff (2026-10-14)
 
