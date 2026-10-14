@@ -5,7 +5,9 @@
 > Evidence: `docs/DB_INVENTORY.md` (profile of every table) and `scripts/data_checks.sql` (targeted checks; run with
 > `python scripts/run_checks.py scripts/data_checks.sql`). Problems the data team can fix are in `docs/DATA_GAPS.md`.
 >
-> **Status of this document: draft for review.** Rows marked ⚑ depend on a decision listed in [§0.4](#04-decisions-needed).
+> **Status:** decisions D1–D5 resolved on 2026-10-14 (see [§0.4](#04-decisions-resolved-2026-10-14)). Rows still
+> marked ⚑D2 need official district boundaries (`docs/DATA_GAPS.md` §12). Canonical sources per variable:
+> `app/registry/datasets.yaml`.
 
 ## 0. What shapes every mapping
 
@@ -22,7 +24,8 @@ table. Consequences:
 | `map` layers of `kind: points` (stations) | No coordinates → **UNAVAILABLE** as points. A choropleth equivalent is offered where the variable exists. ⚑ D1 |
 | `province` filter | District → province lookup (each district lies in exactly one province). Fully supported. |
 | `municipality` filter | Supported for **district / metro MDB codes** (`DC44`, `CPT`, …). Local-municipality codes (`EC101`) → `400` with a message pointing to the parent district (values are not available below district level). |
-| `wma`, `catchment` filters | Districts cross WMA/catchment boundaries. Needs an area-overlap table district × WMA / catchment from `reference/geo/` (not yet provided). Until then → `400 {"error": "...filter not supported by district-level data"}`. ⚑ D2 |
+| `wma` filter | District values weighted by each district's area of overlap with the WMA (`reference/geo/wmas.json` × district polygons), flagged `"aggregation": "district-overlap"`. ⚑ D2 — until district polygons are supplied → `501 DATA_UNAVAILABLE`. |
+| `catchment` filter | `501 DATA_UNAVAILABLE`: districts are far coarser than quaternary catchments (D1). |
 
 District names are not consistent across tables (see Appendix A); the API normalises them through an alias table.
 
@@ -30,12 +33,13 @@ District names are not consistent across tables (see Appendix A); the API normal
 
 | Variable type | Method | Weight / note |
 | --- | --- | --- |
-| Depths and intensive values (rainfall mm, temperature °C, ET mm, NDVI, VCI %, runoff mm, soil moisture) | **Area-weighted mean** of district values: Σ wᵢ·xᵢ / Σ wᵢ | wᵢ = district area (km²) from the district boundaries in `reference/geo/`. ⚑ D2 — until boundaries arrive, aggregates are **unavailable** rather than plain means (the build prompt forbids plain means). |
+| Depths and intensive values (rainfall mm, temperature °C, ET mm, NDVI, VCI %, runoff mm, soil moisture) | **Area-weighted mean** of district values: Σ wᵢ·xᵢ / Σ wᵢ | wᵢ = district area (km²) from official district boundaries (`reference/geo/districts.json`). ⚑ D2 — until supplied, aggregates are **unavailable** rather than plain means. |
 | Anomaly % | Recomputed from the aggregated quantities: (Σw·x − Σw·normal) / Σw·normal × 100 — never an average of percentages | |
 | Standardised indices (SPI, SPEI, SSI, SGI, SVI) | Area-weighted mean of district index values; documented as an approximation (a regional SPI proper needs a gamma fit on the aggregated series) | |
 | Drought class of an area | Class of the aggregated SPI-6 (thresholds from `core/thresholds.json`) | |
 | Area in drought / class shares | Σ area of districts in class / Σ area × 100 | |
-| Volumes (dam storage, inflow) | **Sum** | storage % = Σ volume / Σ FSC (FSC per district implied by volume / %FSC) |
+| Volumes (dam storage, inflow, derived runoff volume) | **Sum** | storage % = Σ volume / Σ FSC (FSC per district implied by volume / %FSC) |
+| WMA scope | Σ wᵢ·xᵢ / Σ wᵢ with wᵢ = area of district *i* inside the WMA | approximate — `aggregation: "district-overlap"` |
 | Counts (days ≥ 20 mm, hot days) | Area-weighted mean for "per location" statistics (labelled "district mean") | |
 | Extremes (max daily rainfall, peak flow) | Max over districts, with the district named in `sublabel` | |
 
@@ -57,15 +61,17 @@ District names are not consistent across tables (see Appendix A); the API normal
 - **Downsampling:** daily series longer than 2 000 points are aggregated to monthly (sum for rainfall/volume, mean for
   rates, max for extremes) — never thinned by skipping points.
 
-### 0.4 Decisions needed
+### 0.4 Decisions resolved (2026-10-14)
 
-| # | Decision | Recommendation |
+| # | Decision | Applied as |
 | --- | --- | --- |
-| D1 | Districts stand in for stations and grid cells (entities, choropleth maps). Points layers without coordinates are unavailable. | Accept. Needs a contract addition (`Entity.type = "district"`, district-keyed choropleths) listed in `CONTRACT_CHANGES.md`. |
-| D2 | Area weights and WMA/catchment filters need district boundaries. | Provide `public/geo/` (I expect a geoBoundaries ADM2 = 52-district layer). Until then: province/national aggregates and WMA/catchment filters return the unavailable response. |
-| D3 | Baseline: no 1981–2010 data. | Use the DB's stored anomalies as-is and expose the real baseline in a new optional `baseline` field (e.g. `"2000–2026 monthly mean"`); anomalies the API computes itself use 2000–2025 full years. Titles with "1981–2010" get a `note` saying the baseline differs. |
-| D4 | Two vegetation sources disagree (NDVI 0.68 vs 0.12 for the same district-month). | Vegetation module → `5.1` (its own module table, current to 2026-09). Drought module → `satellite_remote_sensing` (Module 1 table). Ask the data team which is authoritative. |
-| D5 | Columns that are placeholders (identical in every district, or one constant value) | Treat as **UNAVAILABLE** (do not serve). Columns that vary but look implausible (4_4 ET₀ magnitude, 4_6 MAR scale, runoff volumes with a constant 6 500 km² area) are served **only if you agree**, with a `note`; otherwise unavailable. Recommend: unavailable until the data team confirms. |
+| D1 | Districts as entities and map units | Entities `type: "district"`, id = MDB code; district choropleths keyed by MDB code. Province / national aggregates area-weighted; **WMA** filter = district values weighted by area of overlap, flagged `"aggregation": "district-overlap"`; **catchment** filter → `DATA_UNAVAILABLE`. Recorded in `CONTRACT_CHANGES.md`. |
+| D2 | Real district areas | Weights from official district polygons. **Blocked:** `reference/geo/municipalities.json` has no district code, so districts cannot be dissolved from it; official boundaries requested (`DATA_GAPS.md` §12). Until supplied, every aggregate needing weights returns `DATA_UNAVAILABLE`. Runoff volume = depth (mm) × real district area (km²) / 1000 → Mm³, labelled derived; the table's 6 500 km² volumes are never used. |
+| D3 | Baseline | Stored anomalies labelled `"baseline": "2000–2026 monthly mean"` with `baselineNote` "shorter than the WMO 30-year standard"; anomalies the API computes use 2000–2025 full years and say so. |
+| D4 | One vegetation source | `satellite_remote_sensing` passed the plausibility check and serves **both** the drought and vegetation pages; `5.1` failed and is withheld entirely (evidence: `DATA_GAPS.md` §5). |
+| D5 | Withhold placeholders / implausible values | Withheld, never rescaled: constant soil moisture and every vegetation index in `5.1`, VPI, hydrology discharge/runoff/baseflow/SSI/FDC/borehole level, all of `4_4`, `4_5`, `4_6`, runoff peak flow, monthly volume, catchment area, curve number, land cover, impervious fraction, wind speed. |
+| — | Mixed dates | Every value carries its own `asOf`; combined panels list per-component dates in `components`; `isStale` when a value is > 90 days (configurable) behind the newest DB date. |
+| — | Duplicates | One canonical source per variable in `datasets.yaml`; duplicates listed in `DATA_GAPS.md` §13. |
 
 Legend for the tables below: **LIVE** = column served directly · **DERIVED** = computed from DB rows ·
 **PARTIAL** = some series/columns available · **UNAVAILABLE — not in DB** · ⚑ = depends on a decision above.
@@ -149,13 +155,13 @@ Tables: `meteorological_drought_master` (daily rows; SPI/SPEI 1–24 repeated mo
 
 | KPI | Status | Source → transformation |
 | --- | --- | --- |
-| Drought Class (`droughtClass`) | DERIVED | class of aggregated SPI-6 (`thresholds.json`); `text` = "D1", `status` on scale `drought`. |
+| Drought Class (`droughtClass`) | DERIVED | class of aggregated SPI-6 (`thresholds.json`); `text` = "D1", `status` on scale `drought`. KpiSet `components` gives each KPI source's date (SPI 2026-09, VCI / dams / SGI 2025-12). |
 | SPI-3, SPI-6 (`spi`) | LIVE→aggregated | `spi_3`, `spi_6` latest month |
 | SPEI-12 (`spei`) | LIVE→aggregated | `spei_12` |
-| VCI (`vci`, %) | LIVE→aggregated ⚑D4 | `satellite_remote_sensing.vci` (latest 2025-12; `asOf` says so) |
+| VCI (`vci`, %) | LIVE→aggregated | `satellite_remote_sensing.vci` (latest 2025-12: KPI `asOf` 2025-12-01, `isStale: true`) |
 | Soil Moisture Anomaly (`soilMoistureAnomaly`, %) | DERIVED | `surface_soil_moisture` vs same-month 2001–2025 mean, % |
-| SSI-3 (`ssi`) | **UNAVAILABLE** ⚑D5 | `ssi_dimensionless` is computed from `river_discharge_m3_s`, which is identical for all 52 districts every month (placeholder). Scale (SSI-1/3/…) also unspecified. |
-| Dam Storage (`storagePct`, % FSC) | DERIVED ⚑D5 | Σ `dam_storage_million_m3` / Σ (`dam_storage_million_m3` / `dam_level_pct_fsc` × 100). National 2025-12: 63.6 %. District aggregates, not per dam. |
+| SSI-3 (`ssi`) | **UNAVAILABLE** (D5) | `ssi_dimensionless` is computed from `river_discharge_m3_s`, which is identical for all 52 districts every month (placeholder). Scale (SSI-1/3/…) also unspecified. |
+| Dam Storage (`storagePct`, % FSC) | DERIVED | Σ `dam_storage_million_m3` / Σ (`dam_storage_million_m3` / `dam_level_pct_fsc` × 100). National 2025-12: 63.6 %. District aggregates, not per dam. |
 | SGI (`sgi`) | LIVE→aggregated | `sgi_dimensionless` (to 2025-12) |
 | Settlements at Risk (`settlementsAtRisk`) | **UNAVAILABLE — not in DB** | |
 
@@ -166,10 +172,10 @@ Tables: `meteorological_drought_master` (daily rows; SPI/SPEI 1–24 repeated mo
 | `spi` | LIVE | SPI-3 monthly |
 | `rain-spei` | DERIVED ⚑D3 | monthly rainfall (`monthly_rainfall_mm_month`), long-term mean (DB climatology), SPEI-3 |
 | `rain-anomaly` | DERIVED | anomaly % of aggregated monthly rainfall |
-| `dam-flows` | DERIVED ⚑D5 | storage % (as above); inflow / outflow Mm³/month = m³/s × seconds in month / 10⁶ from `dam_inflow_m3_s`, `dam_outflow_m3_s` |
+| `dam-flows` | DERIVED | storage % (as above); inflow / outflow Mm³/month = m³/s × seconds in month / 10⁶ from `dam_inflow_m3_s`, `dam_outflow_m3_s` |
 | `gw-sgi` | PARTIAL | SGI LIVE; "mean borehole level (m bgl)" **UNAVAILABLE**: `borehole_water_level_m_bgl` ranges −0.18 … +0.20, which is not a depth below ground (looks like an anomaly). |
 | `soil-moisture` | DERIVED | surface & root-zone from `satellite_remote_sensing`; min–max band and long-term mean per calendar month (2001–2025) |
-| `vegetation` | LIVE ⚑D4 | NDVI, VCI, VHI from `satellite_remote_sensing` |
+| `vegetation` | LIVE | NDVI, VCI, VHI from `satellite_remote_sensing` (same source as the vegetation page) |
 | `drought-area` | DERIVED ⚑D2 | % of area per class D0–D4 per month, from district SPI-6 classes and district areas |
 | `storage-vs-spi` | **UNAVAILABLE** | needs individual dams (large/medium/small) |
 | `population-at-risk` | **UNAVAILABLE** | no population data |
@@ -190,7 +196,7 @@ Tables: `meteorological_drought_master` (daily rows; SPI/SPEI 1–24 repeated mo
 
 | Key | Status | Source → transformation |
 | --- | --- | --- |
-| `cascade` | PARTIAL | Stage rows: Meteorological (SPI-6) LIVE; Agricultural (VCI, soil-moisture anomaly) LIVE; Hydrological (dam storage %) ⚑D5, SSI unavailable; Socio-economic (settlements) null + unavailable. |
+| `cascade` | PARTIAL | Stage rows: Meteorological (SPI-6, to 2026-09) LIVE; Agricultural (VCI, soil-moisture anomaly, to 2025-12) LIVE; Hydrological (dam storage %, to 2025-12) LIVE, SSI unavailable; Socio-economic (settlements) null + `unavailable`. Each stage's date in `components` and a per-row `asOf` cell. |
 | `affected` | PARTIAL | per province: SPI-6, class, area affected % (⚑D2), last update = `asOf`; Confidence = null (unavailable). |
 | `early-warning` | **UNAVAILABLE** | forecast columns |
 | `sources` | LIVE | from `/meta`: table, cadence, row count, newest date, status (Online if newest date within expected cadence, else Delayed) |
@@ -201,7 +207,7 @@ Tables: `meteorological_drought_master` (daily rows; SPI/SPEI 1–24 repeated mo
 
 | Key | Status | Source |
 | --- | --- | --- |
-| `veg-heatmap` (9 provinces × 12 months, VCI %) | DERIVED ⚑D2 ⚑D4 | `satellite_remote_sensing.vci`, last 12 months |
+| `veg-heatmap` (9 provinces × 12 months, VCI %) | DERIVED ⚑D2 | `satellite_remote_sensing.vci`, last 12 months |
 | `province-risk` | **UNAVAILABLE** | probabilities |
 
 ### Map layers ⚑D1
@@ -213,7 +219,7 @@ Tables: `meteorological_drought_master` (daily rows; SPI/SPEI 1–24 repeated mo
 | `catchment-class` | **UNAVAILABLE** ⚑D2 | needs district × catchment overlap |
 | `spi1`, `spi3`, `spi6`, `spi12`, `spi24`, `spei3`, `spei12` | LIVE | latest month |
 | `rain-anomaly` (3 months) | DERIVED | 3-month total vs normal |
-| `soil-moisture`, `ndvi`, `vci` | LIVE ⚑D4 | `satellite_remote_sensing`, 2025-12 |
+| `soil-moisture`, `ndvi`, `vci` | LIVE | `satellite_remote_sensing`, 2025-12 (`isStale`) |
 | `dams`, `boreholes`, `settlements` (points) | **UNAVAILABLE** | no coordinates / individual sites |
 | `outlook-1..3`, `forecast-6` | **UNAVAILABLE** | forecasts |
 
@@ -241,8 +247,8 @@ Tables: `4_1_temperature_change_master` (daily; temperatures identical to `meteo
 | Temperature Anomaly (`tempAnomaly`, °C) | DERIVED ⚑D3 | mean of monthly `Temperature_Anomaly_C` over last 12 months, area-weighted |
 | Warming Trend (`tempTrend`, °C/decade) | DERIVED | Sen's slope of annual mean `Tavg_C`, full years 2000–2025, × 10; Mann-Kendall p in `sublabel` |
 | Rainfall Change (`rainfallAnomaly`, %) | DERIVED ⚑D3 | last full year `4_3.MAP_mm` vs 2000–2025 mean |
-| Reference ET₀ annual (`et0`, mm) | DERIVED ⚑D5 | Σ `meteorological_drought_master.et0_mm_day` over the last 12 months (plausible 1–7 mm/day). `4_4.Daily_ET0_mm` is 23–97× smaller and is not used. |
-| Mean Annual Runoff (`runoffAnomaly`, %) | LIVE ⚑D5 | `4_6.Streamflow_Anomaly_percent`, last full year |
+| Reference ET₀ annual (`et0`, mm) | DERIVED | Σ `meteorological_drought_master.et0_mm_day` over the last 12 months (plausible 1–7 mm/day). `4_4.Daily_ET0_mm` is 23–97× smaller and is not used. |
+| Mean Annual Runoff (`runoffAnomaly`, %) | DERIVED | last full year's runoff depth (`runoff_variables_master`) vs 2000–2025 mean. `4_6` is withheld (D5). |
 | Hot Days > 35 °C (`hotDays`) | LIVE | `4_1.Heatwave_Frequency_Days` (= count of days Tmax > 35 °C in the year; verified) |
 | Heavy Rain Days (`heavyRainDays`) | LIVE | `4_2.R20mm_Days` |
 | Consecutive Dry Days (`cdd`) | LIVE | `4_2.CDD_Days` |
@@ -257,9 +263,9 @@ Tables: `4_1_temperature_change_master` (daily; temperatures identical to `meteo
 | `extremes` | LIVE | `4_2`: CDD_Days, CWD_Days, Rx1day_mm, Rx5day_mm |
 | `heat-days` | LIVE + DERIVED | `Heatwave_Frequency_Days` per year + Sen's-slope trend |
 | `extreme-rain` | LIVE + DERIVED | `R20mm_Days` + trend |
-| `evaporation` | PARTIAL ⚑D5 | ET₀ from `meteorological_drought_master.et0_mm_day`, PET from `pet_mm_day` (annual sums); AET, Pan evaporation, VPD from `4_4` only if D5 accepts it (AET/Pan magnitudes share the ET₀ problem; VPD 0.03–2.9 kPa looks plausible) |
-| `irrigation` | **UNAVAILABLE** ⚑D5 | `4_5` values are the same tiny magnitude as `4_4` (CWR = 0.85 × the suspect ET₀); `Soil_Moisture_Deficit_m3m3` is m³/m³ but the chart axis is mm/yr |
-| `streamflow-linkage` | PARTIAL ⚑D5 | anomaly LIVE; MAR is in m³/yr — converting to mm/yr needs district areas (⚑D2), and national sums are ~7× SA's known MAR |
+| `evaporation` | PARTIAL | ET₀ (`et0_mm_day`) and PET (`pet_mm_day`) annual sums from `meteorological_drought_master`; AET (water balance) from `runoff_variables_master.Actual_ET_from_Catchment_mm`; Pan evaporation and VPD **unavailable** (`4_4` withheld). |
+| `irrigation` | **UNAVAILABLE** (D5) | `4_5` values are the same tiny magnitude as `4_4` (CWR = 0.85 × the suspect ET₀); `Soil_Moisture_Deficit_m3m3` is m³/m³ but the chart axis is mm/yr |
+| `streamflow-linkage` | DERIVED | annual runoff depth (mm/yr) and anomaly from `runoff_variables_master` (`4_6` withheld) |
 | `drought-frequency` | DERIVED | months per year with SPI-3 ≤ −1.5 (`6.2`), + trend |
 | `indicator-trends` | DERIVED | % change vs 2020 of annual Tavg, rainfall, hot days, drought months, R20 days |
 
@@ -289,35 +295,37 @@ Tables: `4_1_temperature_change_master` (daily; temperatures identical to `meteo
 | `mean-temp` | DERIVED | mean annual Tavg |
 | `rain-trend` | DERIVED ⚑D3 | last decade vs earlier years (no 1981–2010) |
 | `hot-days`, `cdd` | LIVE | 2025 values |
-| `et0` | DERIVED ⚑D5 | from `meteorological_drought_master.et0_mm_day` |
+| `et0` | DERIVED | from `meteorological_drought_master.et0_mm_day` |
 | `vulnerability`, `proj-temp`, `proj-rain`, `proj-spi`, `proj-availability` | **UNAVAILABLE** | |
 
 ---
 
 ## 4. Vegetation — `vegetation` (DB Module 3; spec §5)
 
-Tables: `5.1_primary_satellite_vegetation_variables_sansa_master` (daily rows to 2026-09-06; NDVI varies daily
-despite the "10-day composite" name), `5.2_meteorological_drivers_saws_master` (monthly drivers). ⚑D4
+Source (D4): **`satellite_remote_sensing`** (monthly, 2001-01 → 2025-12; same source as the drought page, so the same
+district-month never shows two values). `5.1_primary_satellite_vegetation_variables_sansa_master` failed the
+plausibility check and is withheld entirely (`DATA_GAPS.md` §5). Drivers from `5.2` (GDD) and the canonical rainfall /
+temperature / ET₀ tables. Everything from the satellite table is ≥ 9 months old → `isStale: true`.
 
 ### Summary
 
 | KPI | Status | Source → transformation |
 | --- | --- | --- |
-| NDVI mean (`ndvi`) | DERIVED | monthly mean of `NDVI_10day_composite` (latest full month), area-weighted |
-| VCI, VHI, TCI (`vci`, `vhi`, `tci`, %) | DERIVED | monthly means of `VCI_percent`, `VHI_percent`, `TCI_percent` |
-| LST (`lst`, °C) | DERIVED | `LST_Land_Surface_Temperature_C` monthly mean |
-| Soil Moisture surface (`soilMoisture`) | **UNAVAILABLE** ⚑D5 | `5.1.Surface_Soil_Moisture_m3m3` is the constant 0.22. (Alternative: `satellite_remote_sensing.surface_soil_moisture`, to 2025-12.) |
+| NDVI mean (`ndvi`) | LIVE→aggregated | `ndvi`, latest month |
+| VCI, VHI, TCI (`vci`, `vhi`, `tci`, %) | LIVE→aggregated | `vci`, `vhi`, `tci` |
+| LST (`lst`, °C) | LIVE→aggregated | `lst` |
+| Soil Moisture surface (`soilMoisture`) | LIVE→aggregated | `surface_soil_moisture` |
 | Area Under Stress (`vegStressArea`, %) | DERIVED ⚑D2 | share of area with VHI < 40 % |
-| Vegetation Anomaly (`vegAnomaly`, %) | DERIVED | NDVI vs same-month 2000–2025 mean, % |
+| Vegetation Anomaly (`vegAnomaly`, %) | DERIVED | NDVI vs same-month 2001–2025 mean, % |
 
 ### Time series
 
 | Key | Status | Source |
 | --- | --- | --- |
-| `indices` | DERIVED | monthly NDVI, EVI, SAVI, MSAVI2 |
-| `index-trend` | DERIVED ⚑D3 | ±1 s.d. band per calendar month (2000–2025, not 1991–2020), current year, previous year |
+| `indices` | PARTIAL | NDVI LIVE; EVI, SAVI, MSAVI2 **unavailable** (only in withheld `5.1`) → returned as `null` series entries + `unavailable` |
+| `index-trend` | DERIVED | ±1 s.d. band per calendar month (2001–2025, not 1991–2020), current year, previous year |
 | `anomaly` | DERIVED | NDVI anomaly % |
-| `drivers` | LIVE | `5.2.Monthly_Rainfall_mm` (December values miss 31 Dec → use `6.1`) |
+| `drivers` | LIVE | monthly rainfall from `6.1` |
 
 ### Forecast — **UNAVAILABLE** (`ndvi`, `recovery-probability`).
 
@@ -326,10 +334,10 @@ despite the "10-day composite" name), `5.2_meteorological_drivers_saws_master` (
 | Key | Status | Source |
 | --- | --- | --- |
 | `land-cover` | **UNAVAILABLE** | no land-cover data per district |
-| `classification` | DERIVED ⚑D2 | % area per VHI class (Very Healthy … Very Stressed, `vegClass` thresholds) |
+| `classification` | DERIVED ⚑D2 | % area per VHI class (`vegClass` thresholds) |
 | `by-province` | DERIVED ⚑D2 | class shares per province |
 | `seasonal` | DERIVED | mean NDVI per season per category (category set to confirm) |
-| `drivers` | DERIVED | change vs normal over 6 months for rainfall, mean temperature, ET₀, GDD (`5.2`), LST (`5.1`) |
+| `drivers` | DERIVED | change vs normal over 6 months: rainfall (`6.1`), mean temperature (`4_1`), ET₀ (`meteorological`), GDD (`5.2`), LST (`satellite`) — each with its own `asOf` in `components` |
 
 ### Tables
 
@@ -339,16 +347,14 @@ despite the "10-day composite" name), `5.2_meteorological_drivers_saws_master` (
 | `hotspots` | DERIVED | districts ranked by NDVI change / VCI (Municipality = district) |
 | `forecast-indicators` | **UNAVAILABLE** | |
 
-### Map layers ⚑D1 — latest full month, district choropleth
+### Map layers — latest month, district choropleth
 
 | Key | Status | Note |
 | --- | --- | --- |
-| `ndvi`, `evi`, `savi`, `msavi2`, `vci`, `vhi`, `tci`, `svi`, `ndwi`, `ndii`, `lst` | DERIVED (monthly mean) | |
-| `vpi` | DERIVED ⚑D5 | `VPI_percent` is an exact copy of `VCI_percent` in every row — served only if D5 accepts it |
-| `asi` | DERIVED ⚑D5 | `ASI_percent` = 100 − `VHI_percent` exactly; plausible as a definition but to confirm |
-| `sm` | **UNAVAILABLE** ⚑D5 | constant 0.22 |
-| `ndvi-anomaly` | DERIVED ⚑D3 | vs same month 2000–2025 (title says 1981–2010) |
+| `ndvi`, `vci`, `vhi`, `tci`, `ndwi`, `lst`, `sm` | LIVE | `satellite_remote_sensing` (2025-12, `isStale`) |
+| `ndvi-anomaly` | DERIVED | vs same month 2001–2025 (title says 1981–2010 → `baseline` + note) |
 | `ndvi-trend` | DERIVED | Sen's slope per decade, 2001–2025 |
+| `evi`, `savi`, `msavi2`, `vpi`, `asi`, `svi`, `ndii` | **UNAVAILABLE** | only in the withheld `5.1` source |
 | `forecast-ndvi`, `forecast-anomaly` | **UNAVAILABLE** | |
 
 ---
@@ -360,7 +366,9 @@ The table is **modelled, not gauged**: `Daily_Surface_Runoff_Volume_m3_day` = ra
 coefficient for every district (verified to < 0.1 %); `Catchment_Area_km2` (6 500), `Curve_Number_CN` (72.9),
 `Impervious_Surface_Fraction_percent` (4.5) and `Dominant_LandCover_Class` are single constants. Runoff **depth**
 (mm = volume / area used) is internally consistent; **volumes and flows (m³, m³/s) are not** real district values
-because every district is given the same area. ⚑D5
+because every district is given the same area. Per D2/D5 the API recovers depth (volume / 6 500 km²) and re-derives
+**volume = depth × real district area** (labelled derived); the table's own volumes, peak flows, catchment area and
+other constants are withheld.
 
 ### Summary
 
@@ -368,8 +376,8 @@ because every district is given the same area. ⚑D5
 | --- | --- | --- |
 | Annual Runoff (`runoff`, mm) | DERIVED | Σ daily volume / (6 500 km²) over 12 months → mm, area-weighted |
 | Runoff Anomaly (`runoffAnomaly`, %) | DERIVED | 12 m runoff vs same-period 2000–2025 mean |
-| Peak Flow Qmax (`peakFlow`, m³/s) | ⚑D5 | max `Peak_Flow_Rates_m3s` (scaled to 6 500 km²) |
-| Baseflow Index (`baseflowIndex`) | DERIVED ⚑D5 | Σ `Baseflow_Component_m3s` / Σ (daily volume / 86 400) |
+| Peak Flow Qmax (`peakFlow`, m³/s) | **UNAVAILABLE** (D5) | `Peak_Flow_Rates_m3s` is scaled to the constant 6 500 km² area |
+| Baseflow Index (`baseflowIndex`) | DERIVED | Σ `Baseflow_Component_m3s` / Σ (model volume / 86 400) — a ratio, so the shared area scaling cancels |
 | Runoff Coefficient (`runoffCoefficient`) | DERIVED | mean `Runoff_Coefficient_dimensionless` (equivalently Σ runoff / Σ rainfall) |
 | SSI-6 (`ssi`) | DERIVED | computed in `core/indices.py`: 6-month runoff totals, gamma fit per calendar month over 2000–2025 (documented; 26 years < WMO-recommended 30) |
 | Stations with Normal / Low Flow (`stationsHighFlow`, `stationsLowFlow`, %) | **UNAVAILABLE — not in DB** | no gauging stations |
@@ -378,15 +386,15 @@ because every district is given the same area. ⚑D5
 
 | Key | Status | Source |
 | --- | --- | --- |
-| `discharge` | DERIVED ⚑D5 | daily mean flow = volume / 86 400 (m³/s), monthly mean, long-term mean (2000–2025; title says 1981–2010) |
+| `discharge` | DERIVED ⚑D2 | daily mean flow = derived volume (depth × real area) / 86 400 (m³/s); monthly mean; long-term mean 2000–2025 |
 | `runoff-anomaly` | DERIVED | monthly anomaly % + 12-month moving average |
 | `ssi` | DERIVED | SSI-1/3/6/12 computed |
 | `rainfall-runoff` | LIVE | monthly Σ `Mean_Catchment_Rainfall_mm` and runoff mm |
 | `water-balance` | LIVE | monthly P, AET (`Actual_ET_from_Catchment_mm`), Q (mm) |
-| `flood-frequency` | DERIVED ⚑D5 | annual maxima of `Peak_Flow_Rates_m3s` (2000–2025), Log-Pearson III fit + 90 % CI (`scipy`) |
-| `fdc` | DERIVED ⚑D5 | flow-duration curves: last 12 m, previous 12 m, 2011–2020 |
-| `seasonal` | DERIVED ⚑D5 | mean flow per calendar month: 2026, 2025, long-term |
-| `national-volume` | ⚑D5 | Mm³ per month — only meaningful once real areas are used |
+| `flood-frequency` | DERIVED ⚑D2 | annual maxima of derived **daily mean** flow (2000–2025; not instantaneous peaks — labelled), Log-Pearson III fit + 90 % CI |
+| `fdc` | DERIVED ⚑D2 | flow-duration curves of derived daily flow: last 12 m, previous 12 m, 2011–2020 |
+| `seasonal` | DERIVED ⚑D2 | mean derived flow per calendar month: 2026, 2025, long-term |
+| `national-volume` | DERIVED ⚑D2 | Σ derived district volumes (Mm³) per month |
 | `drivers` | LIVE | catchment rainfall |
 
 ### Forecast — **UNAVAILABLE** (`runoff`, `flow`, `flood-probability`).
@@ -396,7 +404,7 @@ because every district is given the same area. ⚑D5
 | Key | Status | Note |
 | --- | --- | --- |
 | `by-province` (stations by flow status) | **UNAVAILABLE** | no stations |
-| `by-wma` (Mm³) | **UNAVAILABLE** ⚑D2 ⚑D5 | needs WMA overlap and real volumes |
+| `by-wma` (Mm³) | DERIVED ⚑D2 | derived volumes apportioned by district–WMA overlap area (`district-overlap`) |
 
 ### Tables
 
@@ -404,7 +412,7 @@ because every district is given the same area. ⚑D5
 | --- | --- | --- |
 | `statistics` | DERIVED | runoff mm, coefficient, BFI, peak flow — current 12 m, climatology 2000–2025, anomaly, Sen's slope |
 | `top-stations` | **UNAVAILABLE** ⚑D1 | no stations (districts could be ranked instead if D1 is accepted) |
-| `events` | DERIVED ⚑D5 | days where a district's flow exceeds its Q10 (flood) or falls below Q90 (low flow) |
+| `events` | DERIVED | days where a district's runoff depth exceeds its Q10 (high) or falls below Q90 (low) |
 
 ### Map layers ⚑D1
 
@@ -435,9 +443,9 @@ because every district is given the same area. ⚑D5
 
 The API keys districts by **MDB code**. `province` is the contract province code. `aliases` are names found in the
 database (matching is case- and space-insensitive). Codes are the Municipal Demarcation Board codes; current official
-names are given where the database uses an older one. **To confirm against the boundary IDs in `reference/geo/`.**
+names are given where the database uses an older one. Machine-readable copy: `app/reference/districts.csv`.
 
-| MDB code | DB name (`meteorological`, `4_*`, `5.*`, `6.*`, `runoff`) | Extra alias (`satellite_*`, `hydrological_*`) | Current official name | Province |
+| MDB code | DB name (`meteorological`, `4_*`, `5.*`, `6.*`, `runoff`; lowercase in `hydrological_*`) | Extra alias (`satellite_remote_sensing`) | Current official name | Province |
 | --- | --- | --- | --- | --- |
 | DC44 | Alfred Nzo | | Alfred Nzo | EC |
 | DC12 | Amathole | | Amathole | EC |

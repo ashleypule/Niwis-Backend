@@ -2,7 +2,11 @@
 
 > What the NIWIS dashboard needs that the Supabase database does not provide yet, and data problems found while
 > profiling it. Generated from a read-only inventory on 2026-10-14 (`docs/DB_INVENTORY.md`); every finding can be
-> reproduced with `python scripts/run_checks.py scripts/data_checks.sql`.
+> reproduced with `python scripts/run_checks.py scripts/data_checks.sql` (plus `ndvi_plausibility.sql` and
+> `duplicate_checks.sql` for §5 and §13). Updated 2026-10-14 after the backend team's decisions D1–D5.
+>
+> **What the API does today:** anything listed here as withheld is *not served*; those panels return
+> `DATA_UNAVAILABLE` and show as "Sample" on the dashboard until the data are fixed.
 >
 > Each item says **what to fix** and **what it unblocks** on the dashboard. Priorities: **P1** blocks a headline
 > panel or makes a shown number wrong · **P2** blocks secondary panels · **P3** tidy-up.
@@ -15,13 +19,15 @@
 | 2 | Data starts in **2000** → no 1981–2010 baseline; stored anomalies use a 2000–2026 mean | all | P1 |
 | 3 | Placeholder columns: same value in every district, or one constant | `hydrological_drought_master`, `5.1`, `runoff_variables_master` | P1 |
 | 4 | Implausible magnitudes / units | `4_4`, `4_5`, `4_6`, `hydrological_drought_master`, `runoff_variables_master` | P1 |
-| 5 | Two vegetation sources disagree strongly | `satellite_remote_sensing` vs `5.1` | P1 |
+| 5 | Two vegetation sources disagree; **`5.1` fails the plausibility check and is withheld** | `satellite_remote_sensing` vs `5.1` | P1 |
 | 6 | 31 December missing every year | `meteorological_drought_master`, `4_1`, `4_4`, `4_5`, `5.1`, `5.2` | P2 |
 | 7 | `satellite_remote_sensing`, `hydrological_drought_master` end 2025-12 (9 months behind) | 2 tables | P2 |
-| 8 | District names differ between tables; several are pre-2016 names | `satellite_remote_sensing`, `hydrological_drought_master` (+ old names everywhere) | P2 |
+| 8 | District names differ between tables; several are pre-2016 names | `satellite_remote_sensing` (+ lowercase in `hydrological_drought_master`, old names everywhere) | P2 |
 | 9 | Variables the dashboard needs that no table has | — | P2 |
 | 10 | Table naming, types, keys and indexes | most `4_*`, `5.*`, `6.*` tables | P3 |
 | 11 | Read-only access for the API | database roles / RLS | P2 |
+| 12 | No district boundaries: the frontend's municipality layer has no district code | `public/geo/municipalities.json` | P1 |
+| 13 | The same data stored in several tables; canonical source chosen per variable | 9 tables | P3 |
 
 ---
 
@@ -90,19 +96,32 @@ No table or column has a comment today. A short **column dictionary** (`COMMENT 
 with unit, method and source per column, and whether the table is observed or modelled) would remove most of the
 questions above.
 
-## 5. Vegetation: two sources that disagree (P1)
+## 5. Vegetation: `5.1` fails the plausibility check — withheld (P1)
 
-| | `satellite_remote_sensing` (Module 1) | `5.1_…_sansa_master` (Module 3) |
-| --- | --- | --- |
-| Resolution | monthly, 2001-01 → 2025-12 | daily rows, 2000-01 → 2026-09-06 |
-| NDVI, Alfred Nzo, Jan 2024 | **0.677** | **0.115** (monthly mean of daily) |
-| VCI, same | 98.9 % | 54.8 % |
-| Mean NDVI (all rows) | 0.433 | 0.352 |
+The two NDVI sources disagree (Alfred Nzo, Jan 2024: **0.677** in `satellite_remote_sensing`, **0.115** in `5.1`).
+The same district and month must never show different values on different pages, so both were tested against what
+NDVI must look like in South Africa (`scripts/ndvi_plausibility.sql`, common period 2001–2025):
 
-`5.1.NDVI_10day_composite` also changes **every day** (up to 31 values per month), so it is not a 10-day composite.
+| Test | Expected | `satellite_remote_sensing` | `5.1_…_sansa_master` |
+| --- | --- | --- | --- |
+| Arid west, mean NDVI | ≈ 0.10–0.25 | Namakwa **0.17**, Central Karoo 0.18, ZF Mgcawu 0.19, Pixley ka Seme 0.22 ✅ | 0.35 in every district ❌ |
+| Wet east, wet season (DJF) | high, above the dry season | eThekwini 0.68 / 0.50 (DJF / JJA), Ugu 0.74 / 0.56, Ehlanzeni 0.64 / 0.43 ✅ | DJF **0.13**, JJA **0.57** in every district — inverted ❌ |
+| Seasonal cycle follows the rainfall regime | peak 1–2 months after the rainy season | Summer-rainfall districts peak Jan–Apr; winter-rainfall Western Cape (Cape Town, Overberg, West Coast, Cape Winelands) peak **July** ✅. Climatology vs previous-month rainfall: mean r = **0.87**; r ≥ 0.5 in **48 / 52** districts | Same cycle everywhere, peak June/July, identical amplitude 0.48. Mean r = **−0.58**; r ≥ 0.5 in 4 / 52 (only the winter-rainfall districts, by coincidence) ❌ |
+| Wettest vs driest districts | east high, Karoo low | top Ugu 0.66, iLembe 0.65; bottom Namakwa 0.17, Central Karoo 0.18 ✅ | all 52 districts 0.35 ❌ |
+| Year-to-year response to rain | NDVI anomaly follows the 3-month rainfall anomaly | r = **0.63** ✅ | r = −0.03 ❌ |
 
-**Ask:** which source is authoritative? Until answered, the drought page uses `satellite_remote_sensing` and the
-vegetation page uses `5.1`, and the two pages will show different NDVI/VCI for the same place.
+The only weak cases for `satellite_remote_sensing` are districts with all-year or bimodal rainfall (Eden, Nelson
+Mandela Bay) and the Karoo (Cacadu, Central Karoo), where a weak seasonal cycle is expected.
+
+**Outcome (applied in the API):** `satellite_remote_sensing` is the single vegetation source for **both** the drought
+and vegetation pages. The whole vegetation part of `5.1` is withheld: its NDVI fails; EVI, SAVI and NDII are perfectly
+correlated with that NDVI (r = 1.000); VPI is an exact copy of VCI; ASI = 100 − VHI; soil moisture is the constant
+0.22. Indices that only `5.1` provides (EVI, SAVI, MSAVI2, VPI, ASI, SVI, NDII) are therefore unavailable.
+
+`5.1.NDVI_10day_composite` also changes every day (up to 31 values per month), so it is not a 10-day composite.
+
+**Ask:** fix or replace `5.1` (the cycle looks like one synthetic curve applied to every district); extend
+`satellite_remote_sensing` beyond 2025-12 (§7), and add EVI/SAVI/MSAVI2 there if the dashboard should show them.
 
 ## 6. Missing 31 December (P2)
 
@@ -119,9 +138,10 @@ current month, and agree an update cadence per table (daily / monthly) so the AP
 
 ## 8. District names (P2)
 
-- `satellite_remote_sensing` and `hydrological_drought_master` use lowercase names, and five use different spellings:
-  `cape town`, `johannesburg`, `tshwane`, `ortambo`, `sarah baartman` (other tables: `City of Cape Town`,
-  `City of Johannesburg`, `City of Tshwane`, `O.R.Tambo`, `Cacadu`).
+- `satellite_remote_sensing` uses lowercase names, and five use different spellings: `cape town`, `johannesburg`,
+  `tshwane`, `ortambo`, `sarah baartman` (other tables: `City of Cape Town`, `City of Johannesburg`,
+  `City of Tshwane`, `O.R.Tambo`, `Cacadu`). `hydrological_drought_master` uses lowercase versions of the standard
+  names (`city of cape town`, `o.r.tambo`, …).
 - All tables use some **pre-2016 names**: `Cacadu` (now Sarah Baartman), `Eden` (Garden Route), `Sisonke`
   (Harry Gwala), `Uthungulu` (King Cetshwayo); `Bojanala` (Bojanala Platinum).
 - The API maps all of these through an alias table (`docs/DATA_MAPPING.md`, Appendix A). Names that don't match the
@@ -165,3 +185,38 @@ current month, and agree an update cadence per table (daily / monthly) so the AP
 - A `supabase_read_only_user` role exists but has **no grants** on these tables.
 - **Ask:** create a dedicated read-only login for the API (SELECT on these tables only). Proposed SQL will be in
   `migrations/proposed/` for review — the backend team will not run it.
+
+## 12. District boundaries (P1)
+
+The API weights province, national and WMA aggregates by **real district area** and draws district maps. The boundary
+files available (`reference/geo/`, copied from the frontend's `public/geo/`) contain provinces, WMAs, secondary
+catchments and 213 **local** municipalities — but the local municipalities carry only an internal id (`LM001` …), a name
+and a province: **no district code and no MDB code**, so they cannot be dissolved into the 52 districts reliably.
+
+**Ask:** supply official district-municipality boundaries (MDB 2016 or later, 52 features carrying the MDB district
+code, e.g. `DC44`, `CPT`) as `reference/geo/districts.json`. Until then the API returns `DATA_UNAVAILABLE` for
+province, national and WMA aggregates and for district maps (single-district values are still served). The frontend's
+`municipalities.json` would also benefit from MDB codes (`EC101` …) and the parent district code.
+
+## 13. Duplicated data and the canonical source per variable (P3)
+
+The same values are stored in several tables (verified with `scripts/duplicate_checks.sql`). The API reads each
+variable from exactly one table (`app/registry/datasets.yaml`); the copies are never served. Please confirm the choices
+and consider dropping or documenting the copies.
+
+| Variable | Canonical (served) | Duplicates (not served) | Evidence |
+| --- | --- | --- | --- |
+| Daily rainfall | `6.1.Daily_Rainfall_Total_mm` | `meteorological.daily_rainfall_mm_day`, `6.1.Gridded_Rainfall_Product_1km_mm`, `runoff.Mean_Catchment_Rainfall_mm` | identical in all 505 440 shared rows; `6.1` also has 31 Dec |
+| Monthly rainfall | `6.1.Monthly_Total_Precipitation_mm` | `meteorological.monthly_rainfall_mm_month`, `5.2.Monthly_Rainfall_mm` | identical except December (copies miss 31 Dec) |
+| Monthly rainfall anomaly (mm, %) | `6.1.Monthly_Anomaly_mm`, `_percent` | `meteorological.rainfall_anomaly_*`, `5.2.Rainfall_Anomaly_percent` | identical except December |
+| Annual rainfall | `4_3.MAP_mm` | `6.1.Annual_Total_Precipitation_mm` | identical |
+| Rainfall intensity | `6.1.Hourly_Rainfall_Intensity_mm_h` | `meteorological.rainfall_intensity_mm_h` | identical |
+| SPI-1/3/6/12/24 | `6.2.SPI_*` | `meteorological.spi_*`, `5.2.SPI_*_month` | identical in all 16 692 district-months |
+| SPEI-1/3/6/12/24 | `meteorological.spei_*` (only complete set) | `6.2.SPEI_3_*`, `6.2.SPEI_12_*`, `5.2.SPEI_*_month` | same series, rounding differences ≤ 0.06 (r = 1.000) — confirm which precision is official |
+| Tmin, Tmax, Tavg | `4_1.Tmin_C`, `Tmax_C`, `Tavg_C` | `meteorological.tmin_c`, `tmax_c`, `tavg_c`; `5.2.Mean_Temperature_C` (monthly mean) | identical |
+| Temperature anomaly | `4_1.Temperature_Anomaly_C` | `meteorological.temp_anomaly_c` | differences ≤ 0.001 °C (rounding) |
+| Reference ET₀ | `meteorological.et0_mm_day` | `5.2.Potential_Evapotranspiration_ET0_mm` (monthly sum) | identical sums |
+
+`hydrological_drought_master` and `runoff_variables_master` hold *different* runoff models (monthly correlation
+r = 0.61), not duplicates; the hydrology flow columns are withheld (§3).
+

@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import decimal
+import itertools
 import json
 import os
 import re
@@ -196,7 +197,7 @@ def profile_postgres(db_url: str, modules: dict[str, list[str]]) -> dict[str, An
                 print(f"[{module}] {table} ...", flush=True)
                 try:
                     out["tables"][table] = {"module": module, **profile_table_pg(conn, table)}
-                except Exception as exc:  # noqa: BLE001 - record and continue with the next table
+                except Exception as exc:
                     out["tables"][table] = {"module": module, "error": scrub(f"{type(exc).__name__}: {exc}")}
                     print("   ! " + out["tables"][table]["error"], flush=True)
     return out
@@ -312,9 +313,7 @@ def profile_table_pg(conn: Any, table: str) -> dict[str, Any]:
         "SELECT relrowsecurity AS r FROM pg_class WHERE oid = format('%%I.%%I', %s::text, %s::text)::regclass",
         (schema, table),
     ).fetchone()["r"]
-    info["sample_rows"] = [
-        jsonable(dict(r)) for r in conn.execute(f"SELECT * FROM {fq} LIMIT 5").fetchall()
-    ]
+    info["sample_rows"] = [jsonable(dict(r)) for r in conn.execute(f"SELECT * FROM {fq} LIMIT 5").fetchall()]
 
     analyse_structure(info)
     analyse_time_pg(conn, fq, info)
@@ -345,7 +344,10 @@ def analyse_structure(info: dict[str, Any]) -> None:
         measures = [
             c["name"]
             for c in cols
-            if c["type"] in NUMERIC_TYPES and c["name"] not in time_cols and not c["location_role"] and c["name"] != "id"
+            if c["type"] in NUMERIC_TYPES
+            and c["name"] not in time_cols
+            and not c["location_role"]
+            and c["name"] != "id"
         ]
         info["shape"] = f"wide ({len(measures)} numeric measure columns)"
         info["measure_columns"] = measures
@@ -361,8 +363,12 @@ def analyse_time_pg(conn: Any, fq: str, info: dict[str, Any]) -> None:
 
     # Build a SQL date expression from whatever the table uses.
     date_cols = [c for c in tc if cols[c]["type"] in TIME_TYPES]
-    year_col = next((c for c in tc if re.search(r"(^|_)(year|yr)($|_)", c, re.I) and cols[c]["type"] in NUMERIC_TYPES), None)
-    month_col = next((c for c in tc if re.search(r"(^|_)month($|_)", c, re.I) and cols[c]["type"] in NUMERIC_TYPES), None)
+    year_col = next(
+        (c for c in tc if re.search(r"(^|_)(year|yr)($|_)", c, re.I) and cols[c]["type"] in NUMERIC_TYPES), None
+    )
+    month_col = next(
+        (c for c in tc if re.search(r"(^|_)month($|_)", c, re.I) and cols[c]["type"] in NUMERIC_TYPES), None
+    )
     text_date = next((c for c in tc if cols[c].get("looks_like_iso_date_pct")), None)
 
     # Prefer the finest-grained column: real date > ISO text date > year+month > year.
@@ -371,8 +377,7 @@ def analyse_time_pg(conn: Any, fq: str, info: dict[str, Any]) -> None:
     elif text_date:
         primary = text_date
         q = qident(text_date)
-        expr = (f"(CASE WHEN {q} ~ '^\\d{{4}}-\\d{{2}}' "
-                f"THEN to_date(rpad(left({q}, 10), 10, '-01'), 'YYYY-MM-DD') END)")
+        expr = f"(CASE WHEN {q} ~ '^\\d{{4}}-\\d{{2}}' THEN to_date(rpad(left({q}, 10), 10, '-01'), 'YYYY-MM-DD') END)"
     elif year_col and month_col:
         primary = f"{year_col}+{month_col}"
         expr = f"make_date({qident(year_col)}::int, {qident(month_col)}::int, 1)"
@@ -384,18 +389,22 @@ def analyse_time_pg(conn: Any, fq: str, info: dict[str, Any]) -> None:
 
     t: dict[str, Any] = {"primary": primary, "sql_expr": expr}
     try:
-        rng = conn.execute(f"SELECT min({expr}) AS lo, max({expr}) AS hi, count(DISTINCT {expr}) AS nd FROM {fq}").fetchone()
+        rng = conn.execute(
+            f"SELECT min({expr}) AS lo, max({expr}) AS hi, count(DISTINCT {expr}) AS nd FROM {fq}"
+        ).fetchone()
         t["min"], t["max"], t["distinct_dates"] = jsonable(rng["lo"]), jsonable(rng["hi"]), rng["nd"]
         dates = [
             r["d"]
-            for r in conn.execute(f"SELECT DISTINCT {expr} AS d FROM {fq} WHERE {expr} IS NOT NULL ORDER BY 1 LIMIT 200000").fetchall()
+            for r in conn.execute(
+                f"SELECT DISTINCT {expr} AS d FROM {fq} WHERE {expr} IS NOT NULL ORDER BY 1 LIMIT 200000"
+            ).fetchall()
         ]
-        steps = [(b - a).days for a, b in zip(dates, dates[1:])]
+        steps = [(b - a).days for a, b in itertools.pairwise(dates)]
         res = resolution_from_steps([float(s) for s in steps])
         t["resolution"] = res
         exp = expected_step_days(res)
         if exp:
-            big = [(a, b) for a, b in zip(dates, dates[1:]) if (b - a).days > exp * 1.5]
+            big = [(a, b) for a, b in itertools.pairwise(dates) if (b - a).days > exp * 1.5]
             t["gap_count"] = len(big)
             t["gaps_sample"] = [[a.isoformat(), b.isoformat()] for a, b in big[:10]]
             t["largest_gap_days"] = max(((b - a).days for a, b in big), default=0)
@@ -408,8 +417,9 @@ def analyse_time_pg(conn: Any, fq: str, info: dict[str, Any]) -> None:
         if not ids and info.get("has_coordinates"):
             ids = [c for c, r in info["location_columns"].items() if r in ("lat", "lon")]
         if not ids:  # region-keyed tables (province / WMA / catchment / municipality series)
-            ids = [c for c, r in info["location_columns"].items()
-                   if r in ("catchment", "municipality", "wma", "province")][:1]
+            ids = [
+                c for c, r in info["location_columns"].items() if r in ("catchment", "municipality", "wma", "province")
+            ][:1]
         if ids:
             key = ", ".join(qident(i) for i in ids)
             per = conn.execute(
@@ -426,7 +436,7 @@ def analyse_time_pg(conn: Any, fq: str, info: dict[str, Any]) -> None:
                 f"SELECT count(*) AS n FROM (SELECT {key}, {expr} FROM {fq} GROUP BY {key}, {expr} HAVING count(*) > 1) d"
             ).fetchone()
             t["duplicate_location_date_pairs"] = dup["n"]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         t["error"] = scrub(f"{type(exc).__name__}: {exc}")
     info["time"] = t
 
@@ -453,7 +463,9 @@ def profile_rest(modules: dict[str, list[str]]) -> dict[str, Any]:
                     if d is None:
                         out["tables"][table] = {"module": module, "error": "not exposed via PostgREST"}
                         continue
-                    r = client.get(f"{url}/{table}", params={"select": "*", "limit": 5}, headers={"Prefer": "count=exact"})
+                    r = client.get(
+                        f"{url}/{table}", params={"select": "*", "limit": 5}, headers={"Prefer": "count=exact"}
+                    )
                     r.raise_for_status()
                     total = int(r.headers.get("content-range", "*/0").split("/")[-1])
                     columns = []
@@ -475,12 +487,18 @@ def profile_rest(modules: dict[str, list[str]]) -> dict[str, Any]:
                                 rows = rr.json() if rr.status_code == 200 else []
                                 col[agg] = rows[0][name] if rows else None
                         columns.append(col)
-                    info = {"module": module, "row_count": total, "columns": columns, "sample_rows": r.json(),
-                            "primary_key": [], "indexes": "unavailable via REST"}
+                    info = {
+                        "module": module,
+                        "row_count": total,
+                        "columns": columns,
+                        "sample_rows": r.json(),
+                        "primary_key": [],
+                        "indexes": "unavailable via REST",
+                    }
                     analyse_structure(info)
                     info["time"] = {"note": "resolution and gaps need direct Postgres access"}
                     out["tables"][table] = info
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     out["tables"][table] = {"module": module, "error": scrub(f"{type(exc).__name__}: {exc}")}
     return out
 
@@ -502,11 +520,15 @@ def fmt(v: Any) -> str:
 def write_markdown(inv: dict[str, Any], path: Path) -> None:
     L: list[str] = []
     L.append("# Database inventory\n")
-    L.append(f"> Generated by `scripts/inventory.py` on {inv['generated_at']} (read-only, method: **{inv['method']}**).")
+    L.append(
+        f"> Generated by `scripts/inventory.py` on {inv['generated_at']} (read-only, method: **{inv['method']}**)."
+    )
     L.append("> Re-run the script to refresh; do not edit by hand.\n")
     if inv["method"] == "postgres":
-        L.append(f"- Server: PostgreSQL {inv.get('server_version')}; connected as `{inv.get('current_user')}`; "
-                 f"session read-only: `{inv.get('session_read_only')}`")
+        L.append(
+            f"- Server: PostgreSQL {inv.get('server_version')}; connected as `{inv.get('current_user')}`; "
+            f"session read-only: `{inv.get('session_read_only')}`"
+        )
         ro_roles = [r for r in inv.get("roles", []) if re.search(r"read|ro$|_ro_|viewer|niwis", r, re.I)]
         L.append(f"- Candidate read-only roles found: {', '.join(f'`{r}`' for r in ro_roles) or 'none'}\n")
 
@@ -533,7 +555,10 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
             continue
         if t.get("table_comment"):
             L.append(f"_{t['table_comment']}_\n")
-        L.append(f"- Rows: **{t['row_count']:,}**" + (f" · size {t['total_size_bytes'] / 1e6:,.1f} MB" if t.get("total_size_bytes") else ""))
+        L.append(
+            f"- Rows: **{t['row_count']:,}**"
+            + (f" · size {t['total_size_bytes'] / 1e6:,.1f} MB" if t.get("total_size_bytes") else "")
+        )
         if t.get("profile_note"):
             L.append(f"- Note: {t['profile_note']}")
         L.append(f"- Shape: {t.get('shape')}")
@@ -542,20 +567,33 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
             L.append("- Indexes: " + ("; ".join(f"`{i['def']}`" for i in t["indexes"]) or "**none**"))
         if "rls_enabled" in t:
             L.append(f"- Row-level security enabled: {t['rls_enabled']}")
-        L.append(f"- Location columns: {', '.join(f'`{k}` ({v})' for k, v in t.get('location_columns', {}).items()) or 'none detected'}; "
-                 f"coordinates: {'yes' if t.get('has_coordinates') else '**no**'}")
+        L.append(
+            f"- Location columns: {', '.join(f'`{k}` ({v})' for k, v in t.get('location_columns', {}).items()) or 'none detected'}; "
+            f"coordinates: {'yes' if t.get('has_coordinates') else '**no**'}"
+        )
         tm = t.get("time", {})
         if tm.get("primary"):
-            L.append(f"- Time: `{tm['primary']}` · {tm.get('resolution')} · {tm.get('min')} → {tm.get('max')} · "
-                     f"{fmt(tm.get('distinct_dates'))} distinct dates · {tm.get('years_of_record')} years")
+            L.append(
+                f"- Time: `{tm['primary']}` · {tm.get('resolution')} · {tm.get('min')} → {tm.get('max')} · "
+                f"{fmt(tm.get('distinct_dates'))} distinct dates · {tm.get('years_of_record')} years"
+            )
             if "gap_count" in tm:
-                L.append(f"- Gaps (> 1.5 × step): {tm['gap_count']}" + (f", largest {tm['largest_gap_days']} days; e.g. "
-                         + ", ".join(f"{a}→{b}" for a, b in tm["gaps_sample"][:5]) if tm["gap_count"] else ""))
+                L.append(
+                    f"- Gaps (> 1.5 × step): {tm['gap_count']}"
+                    + (
+                        f", largest {tm['largest_gap_days']} days; e.g. "
+                        + ", ".join(f"{a}→{b}" for a, b in tm["gaps_sample"][:5])
+                        if tm["gap_count"]
+                        else ""
+                    )
+                )
             L.append(f"- Covers 1981–2010 baseline: **{tm.get('covers_1981_2010_baseline')}**")
             if tm.get("per_location"):
                 p = tm["per_location"]
-                L.append(f"- Per location ({', '.join(p['key'])}): {fmt(p['locations'])} locations · median "
-                         f"{fmt(p['median_records'])} records · median span {fmt(p['median_years'])} years")
+                L.append(
+                    f"- Per location ({', '.join(p['key'])}): {fmt(p['locations'])} locations · median "
+                    f"{fmt(p['median_records'])} records · median span {fmt(p['median_years'])} years"
+                )
             if tm.get("duplicate_location_date_pairs"):
                 L.append(f"- ⚠ Duplicate (location, date) pairs: {tm['duplicate_location_date_pairs']:,}")
             if tm.get("error"):
@@ -567,7 +605,11 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
         L.append("| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |")
         for c in t["columns"]:
             vals = c.get("values")
-            ex = ", ".join(f"{fmt(v)} ({n:,})" for v, n in vals[:8]) if vals else ", ".join(fmt(e) for e in c.get("examples", [])[:4])
+            ex = (
+                ", ".join(f"{fmt(v)} ({n:,})" for v, n in vals[:8])
+                if vals
+                else ", ".join(fmt(e) for e in c.get("examples", [])[:4])
+            )
             L.append(
                 f"| `{c['name']}`{' 🗺' if c.get('location_role') else ''} | {c['type']}{'' if c.get('nullable') else ' NOT NULL'} | "
                 f"{fmt(c.get('null_pct'))} | {fmt(c.get('distinct'))} | {fmt(c.get('min'))} | {fmt(c.get('max'))} | "
@@ -605,14 +647,16 @@ def main() -> int:
         else:
             print("SUPABASE_DB_URL not set (or --rest given): using the REST fallback.", flush=True)
             inv = profile_rest(modules)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print("Inventory failed: " + scrub(f"{type(exc).__name__}: {exc}"), file=sys.stderr)
         return 1
 
-    inv["generated_at"] = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    inv["generated_at"] = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d %H:%M UTC")
     inv["modules"] = modules
     DOCS.mkdir(exist_ok=True)
-    (DOCS / "db_inventory.json").write_text(json.dumps(jsonable(inv), indent=1, ensure_ascii=False, default=str), encoding="utf-8")
+    (DOCS / "db_inventory.json").write_text(
+        json.dumps(jsonable(inv), indent=1, ensure_ascii=False, default=str), encoding="utf-8"
+    )
     write_markdown(inv, DOCS / "DB_INVENTORY.md")
     errors = [t for t, v in inv["tables"].items() if "error" in v]
     print(f"Wrote docs/DB_INVENTORY.md and docs/db_inventory.json ({len(inv['tables'])} tables, {len(errors)} errors).")

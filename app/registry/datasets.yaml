@@ -1,0 +1,415 @@
+# NIWIS dataset registry — THE place database tables are registered.
+#
+# Every column the API may read is listed here with the variable it carries and its role:
+#   canonical  – the one source the API uses for that variable (exactly one per variable)
+#   duplicate  – same data as the canonical column (evidence in scripts/duplicate_checks.sql); never served
+#   withheld   – placeholder / implausible / failed plausibility check; never served (reason required)
+#   unused     – plausible but not needed by the contract yet
+# `module` is the DB module that owns the table; `serves` lists the contract modules whose endpoints read it.
+# `repeats` marks monthly/annual values stored on every daily row: read one row per period, never sum them.
+# Adding a module = add its tables here (+ variables in the catalogue) and a package under app/modules/.
+# Evidence for every role: docs/DATA_MAPPING.md, docs/DATA_GAPS.md, scripts/*.sql. Validated by app/registry/registry.py.
+
+version: 1
+
+baseline:
+  stored_anomalies: "2000–2026 monthly mean"     # what the DB's anomaly columns are relative to (verified)
+  computed_period: [2000, 2025]                 # full years used for anomalies/climatologies the API computes
+  note: "Baseline shorter than the WMO 30-year standard (1981–2010 data not available)."
+
+# Variables: id → label, unit (contract unit), DATA_DICTIONARY metric id where one exists.
+variables:
+  rain_daily:            {label: Daily rainfall, unit: mm, metric: rainfall}
+  rain_daily_chirps:     {label: CHIRPS daily rainfall estimate, unit: mm}
+  rain_dekad_tamsat:     {label: TAMSAT dekadal rainfall estimate, unit: mm}
+  rain_intensity:        {label: Rainfall intensity, unit: mm/h}
+  rain_monthly:          {label: Monthly rainfall, unit: mm, metric: rainfallMonthly}
+  rain_anomaly_mm:       {label: Monthly rainfall anomaly, unit: mm}
+  rain_anomaly_pct:      {label: Monthly rainfall anomaly, unit: "%", metric: rainfallAnomaly}
+  rainy_days:            {label: Rainy days (≥ 1 mm), unit: days, metric: rainyDays}
+  rain_annual:           {label: Annual rainfall, unit: mm, metric: rainfallAnnual}
+  rain_season_djf:       {label: DJF rainfall, unit: mm}
+  rain_season_mam:       {label: MAM rainfall, unit: mm}
+  rain_season_jja:       {label: JJA rainfall, unit: mm}
+  rain_season_son:       {label: SON rainfall, unit: mm}
+  rain_season_ond:       {label: OND rainfall, unit: mm}
+  rain_season_jfm:       {label: JFM rainfall, unit: mm}
+  rain_season_amj:       {label: AMJ rainfall, unit: mm}
+  rain_season_jas:       {label: JAS rainfall, unit: mm}
+  rain_seasonal_met:     {label: Seasonal rainfall (definition undocumented), unit: mm}
+  rain_cv:               {label: Interannual rainfall CV, unit: "%"}
+  rain_trend_sen:        {label: Rainfall trend (Sen's slope), unit: mm/yr}
+  rain_trend_mk_p:       {label: Mann-Kendall p-value, unit: "—"}
+  rain_trend_mk:         {label: Mann-Kendall trend class, unit: "—"}
+  rai:                   {label: Rainfall Anomaly Index, unit: "—"}
+  nino34_annual:         {label: Niño 3.4 annual mean, unit: "°C"}
+  enso_correlation:      {label: Rainfall–Niño 3.4 correlation, unit: "—"}
+  spi_1:                 {label: SPI-1, unit: "—", metric: spi}
+  spi_3:                 {label: SPI-3, unit: "—", metric: spi}
+  spi_6:                 {label: SPI-6, unit: "—", metric: spi}
+  spi_12:                {label: SPI-12, unit: "—", metric: spi}
+  spi_24:                {label: SPI-24, unit: "—", metric: spi}
+  spei_1:                {label: SPEI-1, unit: "—", metric: spei}
+  spei_3:                {label: SPEI-3, unit: "—", metric: spei}
+  spei_6:                {label: SPEI-6, unit: "—", metric: spei}
+  spei_12:               {label: SPEI-12, unit: "—", metric: spei}
+  spei_24:               {label: SPEI-24, unit: "—", metric: spei}
+  spei_daily:            {label: Daily SPEI, unit: "—", metric: spei}
+  cdd:                   {label: Consecutive dry days, unit: days, metric: cdd}
+  cwd:                   {label: Consecutive wet days, unit: days, metric: cwd}
+  rx1day:                {label: Max 1-day rainfall, unit: mm, metric: maxDailyRain}
+  rx5day:                {label: Max 5-day rainfall, unit: mm}
+  prcptot:               {label: Wet-day rainfall total (PRCPTOT), unit: mm}
+  r10mm:                 {label: Days ≥ 10 mm, unit: days}
+  r20mm:                 {label: Days ≥ 20 mm, unit: days, metric: heavyRainDays}
+  sdii:                  {label: Simple daily intensity index, unit: mm/day}
+  tmin:                  {label: Minimum temperature, unit: "°C", metric: tmin}
+  tmax:                  {label: Maximum temperature, unit: "°C", metric: tmax}
+  tavg:                  {label: Mean temperature, unit: "°C", metric: tmean}
+  temp_anomaly:          {label: Temperature anomaly, unit: "°C", metric: tempAnomaly}
+  hot_days:              {label: Hot days (Tmax > 35 °C), unit: days, metric: hotDays}
+  heatwave_duration:     {label: Longest heatwave, unit: days, metric: heatwaveDuration}
+  frost_day:             {label: Frost day flag, unit: "—", metric: frostDays}
+  lst_day:               {label: Land surface temperature (day), unit: "°C"}
+  lst_night:             {label: Land surface temperature (night), unit: "°C"}
+  growing_season_temp:   {label: Growing-season temperature, unit: "°C"}
+  gdd:                   {label: Growing degree days, unit: "°C·days"}
+  et0_daily:             {label: Reference ET₀, unit: mm, metric: et0}
+  pet_daily:             {label: Potential evapotranspiration, unit: mm, metric: pet}
+  aet_daily:             {label: Actual evapotranspiration, unit: mm}
+  pan_evap_daily:        {label: Pan evaporation, unit: mm}
+  vpd:                   {label: Vapour pressure deficit, unit: kPa, metric: vpd}
+  rh:                    {label: Relative humidity, unit: "%"}
+  solar_radiation:       {label: Solar radiation, unit: W/m²}
+  wind_2m:               {label: Wind speed at 2 m, unit: m/s}
+  cwr:                   {label: Crop water requirement, unit: mm, metric: cwr}
+  irrigation_demand:     {label: Irrigation water demand, unit: mm, metric: irrigationDemand}
+  rainfall_deficit:      {label: Rainfall deficit, unit: mm}
+  soil_moisture_deficit: {label: Soil moisture deficit, unit: m³/m³}
+  irrigation_return:     {label: Irrigation return flow, unit: mm}
+  mar_volume:            {label: Mean annual runoff, unit: m³/yr}
+  streamflow_anomaly:    {label: Streamflow anomaly, unit: "%", metric: runoffAnomaly}
+  q90_low_flow:          {label: Q90 low flow, unit: m³/yr}
+  q10_flood_flow:        {label: Q10 flood flow, unit: m³/yr}
+  rainfall_runoff_ratio: {label: Rainfall–runoff ratio, unit: "—"}
+  streamflow_elasticity: {label: Climate–streamflow elasticity, unit: "—"}
+  ndvi:                  {label: NDVI, unit: "—", metric: ndvi}
+  evi:                   {label: EVI, unit: "—", metric: evi}
+  savi:                  {label: SAVI, unit: "—", metric: savi}
+  msavi2:                {label: MSAVI2, unit: "—", metric: msavi2}
+  vci:                   {label: VCI, unit: "%", metric: vci}
+  vhi:                   {label: VHI, unit: "%", metric: vhi}
+  tci:                   {label: TCI, unit: "%", metric: tci}
+  vpi:                   {label: VPI, unit: "%", metric: vpi}
+  asi:                   {label: Agricultural Stress Index, unit: "%", metric: asi}
+  svi:                   {label: SVI, unit: "—", metric: svi}
+  ndwi:                  {label: NDWI, unit: "—", metric: ndwi}
+  ndii:                  {label: NDII, unit: "—", metric: ndii}
+  lst:                   {label: Land surface temperature, unit: "°C", metric: lst}
+  soil_moisture_surface: {label: Surface soil moisture, unit: m³/m³, metric: soilMoisture}
+  soil_moisture_rootzone: {label: Root-zone soil moisture, unit: m³/m³, metric: rootZoneSoilMoisture}
+  surface_water_extent:  {label: Surface water extent, unit: km²}
+  grace_tws:             {label: GRACE terrestrial water storage (unit undocumented), unit: "?"}
+  river_discharge:       {label: River discharge, unit: m³/s, metric: discharge}
+  fdc_percentile:        {label: Flow-duration percentile flow, unit: m³/s}
+  ssi:                   {label: SSI, unit: "—", metric: ssi}
+  dam_storage:           {label: Dam storage, unit: Mm³, metric: storageVolume}
+  dam_level_pct:         {label: Dam storage, unit: "% FSC", metric: storagePct}
+  dam_inflow:            {label: Dam inflow, unit: m³/s, metric: inflow}
+  dam_outflow:           {label: Dam outflow, unit: m³/s, metric: outflow}
+  gw_level:              {label: Groundwater level, unit: m bgl, metric: gwLevel}
+  sgi:                   {label: SGI, unit: "—", metric: sgi}
+  surface_runoff_flow:   {label: Surface runoff, unit: m³/s}
+  baseflow_flow:         {label: Baseflow, unit: m³/s}
+  catchment_area:        {label: Catchment area, unit: km²}
+  runoff_depth_daily:    {label: Daily runoff, unit: mm, metric: runoff}
+  runoff_volume_monthly: {label: Monthly runoff volume, unit: Mm³, metric: runoffVolume}
+  runoff_coefficient:    {label: Runoff coefficient, unit: "—", metric: runoffCoefficient}
+  soil_moisture_prior:   {label: Antecedent soil moisture, unit: m³/m³}
+  curve_number:          {label: SCS curve number, unit: "—"}
+  peak_flow:             {label: Peak flow, unit: m³/s, metric: peakFlow}
+  baseflow_component:    {label: Baseflow component (model-area scaled), unit: m³/s}
+  land_cover:            {label: Dominant land cover, unit: "—"}
+  impervious_fraction:   {label: Impervious surface fraction, unit: "%"}
+
+datasets:
+  # ------------------------------------------------------------------ DB Module 1 — Drought (spec §3)
+  meteorological_drought_master:
+    db_module: 1
+    module: drought
+    serves: [drought, rainfall, climate]
+    location: {column: district_name}
+    time: {kind: date, column: date, resolution: daily, year: year, month: month}
+    known_issues: ["31 December missing every year"]
+    columns:
+      daily_rainfall_mm_day:       {var: rain_daily, role: duplicate}
+      monthly_rainfall_mm_month:   {var: rain_monthly, role: duplicate, repeats: monthly, note: "December totals miss 31 Dec"}
+      seasonal_rainfall_mm_season: {var: rain_seasonal_met, role: unused, repeats: monthly, note: "season definition undocumented"}
+      rainfall_anomaly_mm:         {var: rain_anomaly_mm, role: duplicate, repeats: monthly}
+      rainfall_anomaly_pct:        {var: rain_anomaly_pct, role: duplicate, repeats: monthly}
+      rainfall_intensity_mm_h:     {var: rain_intensity, role: duplicate}
+      tmin_c:                      {var: tmin, role: duplicate}
+      tmax_c:                      {var: tmax, role: duplicate}
+      tavg_c:                      {var: tavg, role: duplicate}
+      temp_anomaly_c:              {var: temp_anomaly, role: duplicate, repeats: monthly, note: "equals 4_1 to 0.001 °C"}
+      pet_mm_day:                  {var: pet_daily, role: canonical}
+      et0_mm_day:                  {var: et0_daily, role: canonical, note: "plausible 1–7.4 mm/day; 4_4 values withheld"}
+      relative_humidity_pct:       {var: rh, role: canonical}
+      solar_radiation_wm2:         {var: solar_radiation, role: unused}
+      wind_speed_2m_ms:            {var: wind_2m, role: withheld, reason: "constant 2.5 m/s in every row"}
+      spi_1:                       {var: spi_1, role: duplicate, repeats: monthly}
+      spi_3:                       {var: spi_3, role: duplicate, repeats: monthly}
+      spi_6:                       {var: spi_6, role: duplicate, repeats: monthly}
+      spi_12:                      {var: spi_12, role: duplicate, repeats: monthly}
+      spi_24:                      {var: spi_24, role: duplicate, repeats: monthly}
+      spei_1:                      {var: spei_1, role: canonical, repeats: monthly}
+      spei_3:                      {var: spei_3, role: canonical, repeats: monthly}
+      spei_6:                      {var: spei_6, role: canonical, repeats: monthly}
+      spei_12:                     {var: spei_12, role: canonical, repeats: monthly}
+      spei_24:                     {var: spei_24, role: canonical, repeats: monthly}
+
+  satellite_remote_sensing:
+    db_module: 1
+    module: drought
+    serves: [drought, vegetation]
+    location: {column: district_name}
+    time: {kind: date, column: date, resolution: monthly, year: year}
+    known_issues: ["ends 2025-12", "lowercase district names; 5 use other spellings"]
+    columns:
+      ndvi:                   {var: ndvi, role: canonical, note: "passes D4 plausibility check (docs/DATA_GAPS.md §5)"}
+      lst:                    {var: lst, role: canonical}
+      ndwi:                   {var: ndwi, role: canonical}
+      vci:                    {var: vci, role: canonical}
+      tci:                    {var: tci, role: canonical}
+      vhi:                    {var: vhi, role: canonical}
+      rootzone_soil_moisture: {var: soil_moisture_rootzone, role: canonical}
+      surface_soil_moisture:  {var: soil_moisture_surface, role: canonical}
+      surface_water_extent_km2: {var: surface_water_extent, role: unused}
+      grace_tws:              {var: grace_tws, role: unused, note: "unit undocumented"}
+
+  hydrological_drought_master:
+    db_module: 1
+    module: drought
+    serves: [drought]
+    location: {column: district_name}
+    time: {kind: date, column: date, resolution: monthly}
+    known_issues: ["ends 2025-12", "lowercase district names"]
+    columns:
+      river_discharge_m3_s:       {var: river_discharge, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
+      fdc_percentiles_m3_s:       {var: fdc_percentile, role: withheld, reason: "constant 0.01"}
+      ssi_dimensionless:          {var: ssi, role: withheld, reason: "computed from the placeholder discharge"}
+      dam_storage_million_m3:     {var: dam_storage, role: canonical, note: "district aggregates; implied national FSC ≈ 27.8 bn m³ to confirm"}
+      dam_level_pct_fsc:          {var: dam_level_pct, role: canonical}
+      dam_inflow_m3_s:            {var: dam_inflow, role: canonical}
+      dam_outflow_m3_s:           {var: dam_outflow, role: canonical}
+      borehole_water_level_m_bgl: {var: gw_level, role: withheld, reason: "range −0.18…+0.20: not a depth below ground level"}
+      sgi_dimensionless:          {var: sgi, role: canonical}
+      surface_runoff_m3_s:        {var: surface_runoff_flow, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
+      baseflow_separation_m3_s:   {var: baseflow_flow, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
+
+  # ------------------------------------------------------------------ DB Module 2 — Climate (spec §4)
+  "4_1_temperature_change_master":
+    db_module: 2
+    module: climate
+    serves: [climate]
+    location: {column: District_Name}
+    time: {kind: text_date, column: Date, resolution: daily}
+    known_issues: ["31 December missing every year", "Date stored as text", "no primary key or index"]
+    columns:
+      Tmin_C:                                 {var: tmin, role: canonical}
+      Tmax_C:                                 {var: tmax, role: canonical}
+      Tavg_C:                                 {var: tavg, role: canonical}
+      Temperature_Anomaly_C:                  {var: temp_anomaly, role: canonical, repeats: monthly}
+      Heatwave_Frequency_Days:                {var: hot_days, role: canonical, repeats: annual, note: "= count of days Tmax > 35 °C in the year (verified)"}
+      Heatwave_Duration_Max_Consecutive_Days: {var: heatwave_duration, role: canonical, repeats: monthly}
+      Frost_Day_Flag:                         {var: frost_day, role: canonical}
+      LST_Day_C:                              {var: lst_day, role: canonical}
+      LST_Night_C:                            {var: lst_night, role: canonical}
+
+  "4_2_wet_dry_spells_master":
+    db_module: 2
+    module: climate
+    serves: [climate, rainfall]
+    location: {column: District_Name}
+    time: {kind: year, column: Year, resolution: annual}
+    known_issues: ["2026 is a partial year"]
+    columns:
+      CWD_Days:            {var: cwd, role: canonical}
+      CDD_Days:            {var: cdd, role: canonical}
+      Rx1day_mm:           {var: rx1day, role: canonical}
+      Rx5day_mm:           {var: rx5day, role: canonical}
+      PRCPTOT_mm:          {var: prcptot, role: canonical}
+      R10mm_Days:          {var: r10mm, role: canonical}
+      R20mm_Days:          {var: r20mm, role: canonical}
+      SDII_mm_per_wet_day: {var: sdii, role: canonical}
+
+  "4_3_mean_annual_precipitation_master":
+    db_module: 2
+    module: climate
+    serves: [climate, rainfall]
+    location: {column: District_Name}
+    time: {kind: year, column: Year, resolution: annual}
+    known_issues: ["2026 is a partial year", "Nino34_Annual_Mean 2026 = −41.28 (excluded with the partial year)"]
+    columns:
+      MAP_mm:                  {var: rain_annual, role: canonical, note: "identical to 6.1 Annual_Total_Precipitation_mm"}
+      Precip_DJF_mm:           {var: rain_season_djf, role: canonical}
+      Precip_MAM_mm:           {var: rain_season_mam, role: canonical}
+      Precip_JJA_mm:           {var: rain_season_jja, role: canonical}
+      Precip_SON_mm:           {var: rain_season_son, role: canonical}
+      Nino34_Annual_Mean:      {var: nino34_annual, role: canonical}
+      Precip_CV_Percent:       {var: rain_cv, role: canonical, repeats: record}
+      MK_Sens_Slope_mm_yr:     {var: rain_trend_sen, role: canonical, repeats: record}
+      MK_p_value:              {var: rain_trend_mk_p, role: canonical, repeats: record}
+      MK_Trend:                {var: rain_trend_mk, role: canonical, repeats: record}
+      ENSO_Nino34_Correlation: {var: enso_correlation, role: canonical, repeats: record}
+
+  "4_4_potential_evaporation_daily_master":
+    db_module: 2
+    module: climate
+    serves: [climate]
+    location: {column: District_Name}
+    time: {kind: text_date, column: Date, resolution: daily}
+    columns:
+      Daily_ET0_mm:      {var: et0_daily, role: withheld, reason: "23–97× smaller than meteorological et0_mm_day (implausible magnitude)"}
+      Daily_PET_mm:      {var: pet_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
+      Daily_AET_mm:      {var: aet_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
+      Daily_Pan_Evap_mm: {var: pan_evap_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
+      Daily_VPD_kPa:     {var: vpd, role: withheld, reason: "table withheld pending data-team review (decision D5)"}
+      SPEI_Daily:        {var: spei_daily, role: withheld, reason: "stored as text; table withheld (decision D5)"}
+
+  "4_5_irrigation_demand_daily_master":
+    db_module: 2
+    module: climate
+    serves: [climate]
+    location: {column: District_Name}
+    time: {kind: text_date, column: Date, resolution: daily}
+    columns:
+      CWR_mm_day:                 {var: cwr, role: withheld, reason: "built on the implausible 4_4 ET₀ (CWR = 0.85 × ET₀)"}
+      Irrigation_Water_Demand_mm: {var: irrigation_demand, role: withheld, reason: "built on the implausible 4_4 ET₀"}
+      Rainfall_Deficit_mm:        {var: rainfall_deficit, role: withheld, reason: "built on the implausible 4_4 ET₀"}
+      Soil_Moisture_Deficit_m3m3: {var: soil_moisture_deficit, role: withheld, reason: "table withheld (decision D5)"}
+      Growing_Season_Temp_C:      {var: growing_season_temp, role: withheld, reason: "table withheld (decision D5)"}
+      Irrigation_Return_Flow_mm:  {var: irrigation_return, role: withheld, reason: "built on the implausible 4_4 ET₀"}
+
+  "4_6_streamflow_and_climate_linkage_annual _master":
+    db_module: 2
+    module: climate
+    serves: [climate]
+    location: {column: District_Name}
+    time: {kind: year, column: Year, resolution: annual}
+    columns:
+      MAR_m3_year:                   {var: mar_volume, role: withheld, reason: "national sum ≈ 7× South Africa's MAR"}
+      Streamflow_Anomaly_percent:    {var: streamflow_anomaly, role: withheld, reason: "table withheld (decision D5)"}
+      Q90_LowFlow_m3_year:           {var: q90_low_flow, role: withheld, reason: "table withheld (decision D5)"}
+      Q10_FloodFlow_m3_year:         {var: q10_flood_flow, role: withheld, reason: "table withheld (decision D5)"}
+      Rainfall_Runoff_Ratio:         {var: rainfall_runoff_ratio, role: withheld, reason: "0.49–0.98, implausible for SA"}
+      Climate_Streamflow_Elasticity: {var: streamflow_elasticity, role: withheld, reason: "table withheld (decision D5)"}
+
+  # ------------------------------------------------------------------ DB Module 3 — Vegetation (spec §5)
+  "5.1_primary_satellite_vegetation_variables_sansa_master":
+    db_module: 3
+    module: vegetation
+    serves: [vegetation]
+    location: {column: District_Name}
+    time: {kind: text_date, column: Date, resolution: daily, year: Year, month: Month}
+    known_issues: ["failed the D4 NDVI plausibility check: whole vegetation source withheld (docs/DATA_GAPS.md §5)"]
+    columns:
+      NDVI_10day_composite:           {var: ndvi, role: withheld, reason: "failed plausibility: same mean 0.35 and winter peak in every district"}
+      EVI:                            {var: evi, role: withheld, reason: "perfectly correlated with the failed NDVI (r = 1.000)"}
+      SAVI:                           {var: savi, role: withheld, reason: "perfectly correlated with the failed NDVI (r = 1.000)"}
+      MSAVI2:                         {var: msavi2, role: withheld, reason: "same source as the failed NDVI"}
+      VCI_percent:                    {var: vci, role: withheld, reason: "same source as the failed NDVI"}
+      VHI_percent:                    {var: vhi, role: withheld, reason: "same source as the failed NDVI"}
+      TCI_percent:                    {var: tci, role: withheld, reason: "same source as the failed NDVI"}
+      VPI_percent:                    {var: vpi, role: withheld, reason: "exact copy of VCI_percent"}
+      ASI_percent:                    {var: asi, role: withheld, reason: "= 100 − VHI_percent of the failed source"}
+      SVI_standardised:               {var: svi, role: withheld, reason: "same source as the failed NDVI"}
+      NDWI:                           {var: ndwi, role: withheld, reason: "same source as the failed NDVI"}
+      NDII:                           {var: ndii, role: withheld, reason: "perfectly correlated with the failed NDVI (r = 1.000)"}
+      LST_Land_Surface_Temperature_C: {var: lst, role: withheld, reason: "vegetation source withheld (decision D4)"}
+      Surface_Soil_Moisture_m3m3:     {var: soil_moisture_surface, role: withheld, reason: "constant 0.22"}
+
+  "5.2_meteorological_drivers_saws_master":
+    db_module: 3
+    module: vegetation
+    serves: [vegetation]
+    location: {column: District_Name}
+    time: {kind: year_month, year: Year, month: Month, resolution: monthly}
+    known_issues: ["December values miss 31 Dec"]
+    columns:
+      Monthly_Rainfall_mm:                 {var: rain_monthly, role: duplicate, note: "differs from 6.1 only in December"}
+      Rainfall_Anomaly_percent:            {var: rain_anomaly_pct, role: duplicate}
+      SPI_1_month:                         {var: spi_1, role: duplicate}
+      SPI_3_month:                         {var: spi_3, role: duplicate}
+      SPI_6_month:                         {var: spi_6, role: duplicate}
+      SPEI_1_month:                        {var: spei_1, role: duplicate, note: "rounding differences ≤ 0.05"}
+      SPEI_3_month:                        {var: spei_3, role: duplicate, note: "rounding differences ≤ 0.05"}
+      SPEI_6_month:                        {var: spei_6, role: duplicate, note: "rounding differences ≤ 0.05"}
+      Mean_Temperature_C:                  {var: tavg, role: duplicate, note: "= monthly mean of daily Tavg"}
+      Potential_Evapotranspiration_ET0_mm: {var: et0_daily, role: duplicate, note: "= monthly sum of meteorological et0_mm_day"}
+      Growing_Degree_Days_GDD_C:           {var: gdd, role: canonical}
+
+  # ------------------------------------------------------------------ DB Module 4 — Rainfall (spec §6)
+  "6.1_core_rainfall_variables_master":
+    db_module: 4
+    module: rainfall
+    serves: [rainfall, drought, vegetation, runoff]
+    location: {column: District_Name}
+    time: {kind: text_date, column: Date, resolution: daily, year: Year, month: Month}
+    known_issues: ["Date stored as text", "Seasonal_Total_OND_mm stored as text", "no primary key or index"]
+    columns:
+      Daily_Rainfall_Total_mm:                     {var: rain_daily, role: canonical, note: "complete calendar incl. 31 Dec"}
+      Number_of_Rainy_Days_days_month:             {var: rainy_days, role: canonical, repeats: monthly, note: "= days ≥ 1 mm (verified)"}
+      Monthly_Total_Precipitation_mm:              {var: rain_monthly, role: canonical, repeats: monthly}
+      Monthly_Anomaly_mm:                          {var: rain_anomaly_mm, role: canonical, repeats: monthly}
+      Monthly_Anomaly_percent:                     {var: rain_anomaly_pct, role: canonical, repeats: monthly}
+      Seasonal_Total_OND_mm:                       {var: rain_season_ond, role: canonical, repeats: annual, cast: double}
+      Seasonal_Total_JFM_mm:                       {var: rain_season_jfm, role: canonical, repeats: annual}
+      Seasonal_Total_AMJ_mm:                       {var: rain_season_amj, role: canonical, repeats: annual}
+      Seasonal_Total_JAS_mm:                       {var: rain_season_jas, role: canonical, repeats: annual}
+      Annual_Total_Precipitation_mm:               {var: rain_annual, role: duplicate, repeats: annual}
+      Gridded_Rainfall_Product_1km_mm:             {var: rain_daily, role: duplicate}
+      CHIRPS_Daily_Rainfall_Estimate_mm_day:       {var: rain_daily_chirps, role: canonical}
+      TAMSAT_Satellite_Rainfall_Estimate_mm_dekad: {var: rain_dekad_tamsat, role: canonical}
+      Hourly_Rainfall_Intensity_mm_h:              {var: rain_intensity, role: canonical}
+
+  "6.2_rainfall_derived_drought_indices_master":
+    db_module: 4
+    module: rainfall
+    serves: [rainfall, drought, climate]
+    location: {column: District_Name}
+    time: {kind: year_month, year: Year, month: Month, resolution: monthly}
+    columns:
+      SPI_1_Meteorological_Drought_Onset:     {var: spi_1, role: canonical}
+      SPI_3_Short_Term_Agricultural_Drought:  {var: spi_3, role: canonical}
+      SPI_6_Medium_Term_Hydrological_Impacts: {var: spi_6, role: canonical}
+      SPI_12_Long_Term_Groundwater_Impacts:   {var: spi_12, role: canonical}
+      SPI_24_Very_Long_Term_Drought:          {var: spi_24, role: canonical}
+      SPEI_3_Agricultural_Drought_ET:         {var: spei_3, role: duplicate, note: "rounding differences ≤ 0.06 vs meteorological"}
+      SPEI_12_Annual_Water_Balance_Drought:   {var: spei_12, role: duplicate, note: "rounding differences vs meteorological"}
+      RAI_Rainfall_Anomaly_Index:             {var: rai, role: canonical}
+
+  # ------------------------------------------------------------------ DB Module 5 — Runoff (spec §7)
+  runoff_variables_master:
+    db_module: 5
+    module: runoff
+    serves: [runoff, climate]
+    location: {column: District_Name}
+    time: {kind: date, column: Date, resolution: daily, year: Year, month: Month}
+    model_area_km2: 6500   # the area the table's volumes were computed with (same for every district)
+    known_issues: ["modelled: volume = rainfall × 6 500 km² × runoff coefficient for every district"]
+    columns:
+      Catchment_Area_km2:                     {var: catchment_area, role: withheld, reason: "constant 6 500 km² for every district"}
+      Mean_Catchment_Rainfall_mm:             {var: rain_daily, role: duplicate}
+      Actual_ET_from_Catchment_mm:            {var: aet_daily, role: canonical}
+      Daily_Surface_Runoff_Volume_m3_day:     {var: runoff_depth_daily, role: canonical, transform: model_volume_to_depth_mm,
+                                               note: "depth (mm) = volume / model_area_km2; volumes are re-derived as depth × real district area"}
+      Monthly_Runoff_Totals_Million_m3_month: {var: runoff_volume_monthly, role: withheld, reason: "volume computed with the constant 6 500 km² area"}
+      Runoff_Coefficient_dimensionless:       {var: runoff_coefficient, role: canonical}
+      Soil_Moisture_Prior_m3m3:               {var: soil_moisture_prior, role: unused}
+      Curve_Number_CN:                        {var: curve_number, role: withheld, reason: "constant 72.9"}
+      Peak_Flow_Rates_m3s:                    {var: peak_flow, role: withheld, reason: "flow scaled to the constant 6 500 km² area"}
+      Baseflow_Component_m3s:                 {var: baseflow_component, role: canonical, use: ratio_only,
+                                               note: "only the baseflow index (ratio to total flow, same area scaling) is served"}
+      Dominant_LandCover_Class:               {var: land_cover, role: withheld, reason: "one constant class for every district"}
+      Impervious_Surface_Fraction_percent:    {var: impervious_fraction, role: withheld, reason: "constant 4.5 %"}

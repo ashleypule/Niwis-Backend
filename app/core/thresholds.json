@@ -1,0 +1,45 @@
+{
+  "_source": "Converted by hand from reference/thresholds.ts (frontend src/config/thresholds.ts) on 2026-10-14. Keep in sync: tests/test_thresholds.py checks the values against the .ts file.",
+  "drought": {
+    "_spec": "§3.4. Value is rounded to 2 dp first, then compared with <= (as published).",
+    "round_dp": 2,
+    "classes": [
+      {"id": "D4", "label": "Exceptional Drought", "max": -2.0, "probability": "< 2%", "impact": "Water emergency declared"},
+      {"id": "D3", "label": "Extreme Drought", "max": -1.6, "probability": "2–5%", "impact": "Major water restrictions"},
+      {"id": "D2", "label": "Severe Drought", "max": -1.3, "probability": "5–10%", "impact": "Water shortages common"},
+      {"id": "D1", "label": "Moderate Drought", "max": -0.8, "probability": "10–20%", "impact": "Streams/dams low"},
+      {"id": "D0", "label": "Abnormally Dry", "max": -0.5, "probability": "20–30%", "impact": "Pasture/crop stress starting"}
+    ],
+    "none": {"id": "None", "label": "No drought"},
+    "rank": {"None": 0, "D0": 1, "D1": 2, "D2": 3, "D3": 4, "D4": 5}
+  },
+  "spi_wet": {
+    "_spec": "McKee et al. 1993 wet side; >= comparisons",
+    "classes": [
+      {"min": 2.0, "label": "Extremely wet"},
+      {"min": 1.5, "label": "Very wet"},
+      {"min": 1.0, "label": "Moderately wet"}
+    ],
+    "near_normal_above": -0.5
+  },
+  "storage_alerts": {"_spec": "§8.2, % FSC, < comparisons", "L1": 50, "L2": 30, "L3": 15},
+  "storage_bands": [
+    {"max": 25, "id": "very-low"}, {"max": 50, "id": "low"}, {"max": 70, "id": "moderate"},
+    {"max": 90, "id": "high"}, {"max": null, "id": "very-high"}
+  ],
+  "vegetation": {
+    "_spec": "VCI / VHI 0–100 % (Kogan 1995; < 40 % = drought stress). >= comparisons",
+    "classes": [
+      {"min": 80, "id": "Very Healthy"}, {"min": 60, "id": "Healthy"}, {"min": 40, "id": "Moderate"},
+      {"min": 20, "id": "Stressed"}, {"min": null, "id": "Very Stressed"}
+    ],
+    "stress_below": 40
+  },
+  "borehole_status_sgi": {
+    "_spec": "<= comparisons",
+    "classes": [{"max": -1.6, "id": "Critical"}, {"max": -1.0, "id": "Low"}, {"max": -0.5, "id": "Watch"}],
+    "otherwise": "Normal"
+  },
+  "risk_score": {"classes": [{"min": 0.75, "id": "Very High"}, {"min": 0.5, "id": "High"}, {"min": 0.25, "id": "Moderate"}], "otherwise": "Low"},
+  "qa": {"_spec": "§23.1", "max_gap_days": 3, "training_max_missing_pct": 10}
+}

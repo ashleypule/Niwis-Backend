@@ -1,0 +1,28 @@
+# docker compose up            → API on http://localhost:8000 (reads .env; connects to Supabase read-only)
+# docker compose --profile test up -d testdb   → local Postgres with the recorded test fixture (port 55432)
+services:
+  api:
+    build: .
+    image: niwis-backend:dev
+    env_file: .env
+    environment:
+      ENVIRONMENT: docker
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  testdb:
+    profiles: ["test"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: niwis_test
+    ports:
+      - "55432:5432"
+    volumes:
+      - ./tests/fixtures:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d niwis_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

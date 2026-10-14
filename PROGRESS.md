@@ -1,45 +1,61 @@
 # Progress
 
-## Status: Phase 0 complete — waiting for review of decisions D1–D5 before Phase 1
+## Status: Phase 1 complete (2026-10-14). Next: Phase 2 — Rainfall.
 
-### Setup (2026-10-14)
+### Blocking / waiting on others
 
-- [x] git init, .gitignore (.env, confidential spec, venv/caches)
-- [x] reference/API_CONTRACT.md, DATA_DICTIONARY.md, thresholds.ts (pasted by the user, saved verbatim)
-- [ ] reference/geo/ (GeoJSON boundaries + SOURCES.md): **not yet provided** — blocks area weights and WMA/catchment (D2)
-- [x] .env complete (Supabase URL, keys, session-pooler DB URL). Table lists use the real DB names
-      (space in `4_6_… _master`, dots in `5.x` / `6.x`).
+- **District boundaries** (user / data team): `reference/geo/municipalities.json` has 213 local municipalities with
+  ids `LM001…`, a name and a province, but **no district or MDB code**, so districts cannot be dissolved from it.
+  Needed: official 52-district boundaries with MDB codes as `reference/geo/districts.json`. Until then province,
+  national and WMA aggregates and district maps return `DATA_UNAVAILABLE`.
+- **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
+  (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
+- **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Phase 1 — skeleton (2026-10-14)
+
+- [x] `app/config.py`, `app/db.py` (asyncpg pool; READ ONLY + 10 s statement timeout set in SQL on connect and
+      re-asserted on release, because Supabase's pooler drops startup parameters — found and fixed in this phase)
+- [x] `app/registry/datasets.yaml` + validator: 14 tables, 112 variables, one canonical source per variable;
+      duplicates and withheld columns (with reasons) recorded
+- [x] Core: thresholds.json (from thresholds.ts, test-checked), districts (52, MDB codes, aliases), filters
+      (D1 rules), spatial (equal-area areas; provinces within 0.3 % of official), provenance/staleness, cache, errors
+- [x] Endpoints: `/api/v1/health`, `/meta/sources`, `/meta/coverage`, `/meta/variables`, `/reference/*`
+- [x] Contract models (`app/schemas/contract.py`) + conformance tests against the zod schemas and examples
+- [x] Tests: 151 passing (unit, conformance, API on the recorded fixture DB); 3 integration tests passing against
+      Supabase (row counts and asOf equal direct SQL)
+- [x] ruff + mypy (strict) clean; Dockerfile (Python 3.12) builds and runs healthy; docs/openapi.json exported
+- [x] Docs: CONTRACT_CHANGES.md (new), DATA_GAPS.md (§5 NDVI evidence, §12 boundaries, §13 duplicates),
+      DATA_MAPPING.md (decisions applied), README.md
+
+### Decisions applied (2026-10-14)
+
+- D1 districts as entities/map units; WMA = district-overlap (flagged); catchment = DATA_UNAVAILABLE
+- D2 real district areas (pending boundaries); runoff volume = depth × real area
+- D3 baseline labelled "2000–2026", WMO note
+- D4 `satellite_remote_sensing` passes the NDVI plausibility check → single vegetation source for drought and
+  vegetation pages; `5.1` withheld entirely
+- D5 placeholders / implausible columns withheld (not rescaled)
+- Every value carries its own `asOf`; `isStale` after 90 days (configurable); per-component dates for combined panels
+- One canonical source per variable; duplicates in DATA_GAPS §13
+
+### Answer to "15 vs 14 tables"
+
+The database holds exactly 14 user tables (all in `public`; no views or other schemas). The `.env` and the build
+prompt also list 14 (3 + 6 + 2 + 2 + 1); "15" in the prompt was a miscount. Six names need quoting in SQL
+(leading digit, dots, or the space in `4_6_… _master`).
 
 ### Phase 0 — discovery (2026-10-14)
 
-- [x] `scripts/inventory.py` (read-only session; tested on a throwaway local Postgres first) → `docs/DB_INVENTORY.md`,
-      `docs/db_inventory.json`
-- [x] `scripts/data_checks.sql` + `scripts/run_checks.py` — targeted consistency checks (37 queries)
-- [x] `docs/DATA_MAPPING.md` — every contract key for rainfall, drought, climate, vegetation, runoff
-- [x] `docs/DATA_GAPS.md` — for the data team
-- [x] `migrations/proposed/001_readonly_api_role.sql`, `002_indexes.sql` — **not run**; for data-team review
+- [x] `scripts/inventory.py` → `docs/DB_INVENTORY.md`, `docs/db_inventory.json`
+- [x] `scripts/data_checks.sql`, `ndvi_plausibility.sql`, `duplicate_checks.sql` + `scripts/run_checks.py`
+- [x] `docs/DATA_MAPPING.md`, `docs/DATA_GAPS.md`, `migrations/proposed/*.sql` (not run)
 
-### Key facts
+### Open questions for the data team
 
-- 14 tables, all keyed by **52 district municipalities**; no stations, coordinates, catchment or WMA codes.
-- Daily data 2000-01-01 → 2026-09-06; monthly → 2026-09; `satellite_remote_sensing` / `hydrological_drought_master` → 2025-12.
-- Stored anomalies use a 2000–2026 per-month mean, not 1981–2010.
-- Placeholder / implausible columns listed in DATA_GAPS §3–§4.
-
-### Decisions needed (see DATA_MAPPING §0.4)
-
-- D1 districts as entities + district choropleths instead of stations/grids
-- D2 district boundaries for area weighting and WMA/catchment filters (`reference/geo/`)
-- D3 baseline labelling (no 1981–2010 data)
-- D4 vegetation source per module
-- D5 serve or withhold implausible columns
-
-### Credentials
-
-- API connects as `postgres` via the session pooler; every session is set READ ONLY. A dedicated read-only role is
-  proposed in `migrations/proposed/001_readonly_api_role.sql` for the data team.
+See `docs/DATA_GAPS.md` (P1: baseline, placeholder columns, implausible units, `5.1` vegetation, boundaries).
 
 ### Environment
 
-- Python 3.13 locally (prompt says 3.12; the Docker image will use 3.12). uv not installed → `.venv` + pip
-  (inventory deps in `scripts/requirements-inventory.txt`).
+- Local: Python 3.13 venv (`.venv`, pip; uv not installed). Docker image: Python 3.12.
+- Test DB: `docker compose --profile test up -d testdb` (port 55432, recorded fixture `tests/fixtures/01_fixture.sql.gz`).

@@ -1,0 +1,16 @@
+.git
+.env
+.env.*
+!.env.example
+.venv
+**/__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+docs
+tests
+migrations
+scripts
+reference/NIWIS-data-requirements-spec.md
+reference/*.md
+reference/*.ts

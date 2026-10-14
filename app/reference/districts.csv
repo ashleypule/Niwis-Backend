@@ -1,0 +1,53 @@
+mdb_code,db_name,aliases,official_name,province,kind
+DC44,Alfred Nzo,,Alfred Nzo,EC,district
+DC12,Amathole,,Amathole,EC,district
+BUF,Buffalo City,,Buffalo City,EC,metro
+DC10,Cacadu,sarah baartman,Sarah Baartman,EC,district
+DC13,Chris Hani,,Chris Hani,EC,district
+DC14,Joe Gqabi,,Joe Gqabi,EC,district
+NMA,Nelson Mandela Bay,,Nelson Mandela Bay,EC,metro
+DC15,O.R.Tambo,ortambo,O.R. Tambo,EC,district
+DC20,Fezile Dabi,,Fezile Dabi,FS,district
+DC18,Lejweleputswa,,Lejweleputswa,FS,district
+MAN,Mangaung,,Mangaung,FS,metro
+DC19,Thabo Mofutsanyane,,Thabo Mofutsanyana,FS,district
+DC16,Xhariep,,Xhariep,FS,district
+JHB,City of Johannesburg,johannesburg,City of Johannesburg,GP,metro
+TSH,City of Tshwane,tshwane,City of Tshwane,GP,metro
+EKU,Ekurhuleni,,City of Ekurhuleni,GP,metro
+DC42,Sedibeng,,Sedibeng,GP,district
+DC48,West Rand,,West Rand,GP,district
+DC25,Amajuba,,Amajuba,KZN,district
+ETH,eThekwini,,eThekwini,KZN,metro
+DC29,iLembe,,iLembe,KZN,district
+DC43,Sisonke,,Harry Gwala,KZN,district
+DC21,Ugu,,Ugu,KZN,district
+DC22,Umgungundlovu,,uMgungundlovu,KZN,district
+DC27,Umkhanyakude,,uMkhanyakude,KZN,district
+DC24,Umzinyathi,,uMzinyathi,KZN,district
+DC23,Uthukela,,uThukela,KZN,district
+DC28,Uthungulu,,King Cetshwayo,KZN,district
+DC26,Zululand,,Zululand,KZN,district
+DC35,Capricorn,,Capricorn,LP,district
+DC33,Mopani,,Mopani,LP,district
+DC47,Sekhukhune,,Sekhukhune,LP,district
+DC34,Vhembe,,Vhembe,LP,district
+DC36,Waterberg,,Waterberg,LP,district
+DC32,Ehlanzeni,,Ehlanzeni,MP,district
+DC30,Gert Sibande,,Gert Sibande,MP,district
+DC31,Nkangala,,Nkangala,MP,district
+DC9,Frances Baard,,Frances Baard,NC,district
+DC45,John Taolo Gaetsewe,,John Taolo Gaetsewe,NC,district
+DC6,Namakwa,,Namakwa,NC,district
+DC7,Pixley ka Seme,,Pixley ka Seme,NC,district
+DC8,Z F Mgcawu,,ZF Mgcawu,NC,district
+DC37,Bojanala,,Bojanala Platinum,NW,district
+DC40,Dr Kenneth Kaunda,,Dr Kenneth Kaunda,NW,district
+DC39,Dr Ruth Segomotsi Mompati,,Dr Ruth Segomotsi Mompati,NW,district
+DC38,Ngaka Modiri Molema,,Ngaka Modiri Molema,NW,district
+DC2,Cape Winelands,,Cape Winelands,WC,district
+DC5,Central Karoo,,Central Karoo,WC,district
+CPT,City of Cape Town,cape town,City of Cape Town,WC,metro
+DC4,Eden,,Garden Route,WC,district
+DC3,Overberg,,Overberg,WC,district
+DC1,West Coast,,West Coast,WC,district
