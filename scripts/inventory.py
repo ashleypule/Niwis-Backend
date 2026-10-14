@@ -40,16 +40,21 @@ TEXT_TYPES = {"text", "character varying", "character"}
 
 TIME_NAME = re.compile(r"(^|_)(date|time|timestamp|datetime|day|dekad|month|year|yr|period|season)($|_)", re.I)
 LOCATION_PATTERNS: dict[str, re.Pattern[str]] = {
-    "station_id": re.compile(r"(station|stn|site|gauge|gauging|borehole|dam)_?(id|code|no|number)?$|^(id_)?station", re.I),
-    "station_name": re.compile(r"(station|site|gauge|dam|location|place)_?name|^name$|^location$", re.I),
+    # Anchored patterns: measure columns such as NDVI_10day_composite or Catchment_Area_km2 must not match.
+    "station_id": re.compile(r"^(station|stn|site|gauge|gauging|borehole|dam)(_?(id|code|no|number))?$", re.I),
+    "station_name": re.compile(r"^(station|site|gauge|dam|location|place)_?name$|^name$|^location$", re.I),
     "lat": re.compile(r"^(lat|latitude|y|lat_dd|y_coord)$", re.I),
     "lon": re.compile(r"^(lon|long|lng|longitude|x|lon_dd|x_coord)$", re.I),
-    "province": re.compile(r"prov", re.I),
-    "catchment": re.compile(r"catch|quat|tertiary|drainage|basin", re.I),
-    "wma": re.compile(r"(^|_)wma($|_)|water_management", re.I),
-    "municipality": re.compile(r"munic|district|metro|lm_|dm_", re.I),
-    "geometry": re.compile(r"geom|wkt|shape|geojson", re.I),
-    "grid": re.compile(r"(^|_)(grid|cell|pixel|tile)(_|$)", re.I),
+    "province": re.compile(r"^prov(ince)?(_?(name|code|id))?$", re.I),
+    "catchment": re.compile(
+        r"^(quaternary|tertiary|secondary|catchment|drainage_region)(_?(catchment|name|code|id))?$", re.I
+    ),
+    "wma": re.compile(r"^wma(_?(name|code|id))?$|^water_management_area", re.I),
+    "municipality": re.compile(
+        r"^(municipality|munic|district|metro|local_municipality|district_municipality)(_?(name|code|id))?$", re.I
+    ),
+    "geometry": re.compile(r"^(geom|geometry|wkt|shape|geojson|the_geom)$", re.I),
+    "grid": re.compile(r"^(grid|cell|pixel|tile)(_?(id|code))?$", re.I),
 }
 NUMERIC_TIME_NAME = re.compile(
     r"^(year|yr|month|mon|day|dekad|doy|season|hydro_?year|hydrological_year|water_year)$", re.I
@@ -57,7 +62,14 @@ NUMERIC_TIME_NAME = re.compile(
 LONG_NAME = re.compile(r"^(variable|parameter|indicator|index_name|metric|element|var|param|measure)(_name)?$", re.I)
 VALUE_NAME = re.compile(r"^(value|val|measurement|reading|amount|result)$", re.I)
 
-UNIT_HINTS: list[tuple[re.Pattern[str], str]] = [
+UNIT_HINTS: list[tuple[re.Pattern[str], str]] = [  # first match wins, so explicit suffixes come first
+    (re.compile(r"pct|percent", re.I), "%"),
+    (re.compile(r"m3_?m3|soil_moist", re.I), "m³/m³"),
+    (re.compile(r"m3_?s$|m3s$|_m3_s_|cumec", re.I), "m³/s"),
+    (re.compile(r"million_m3|mm3|mcm", re.I), "Mm³"),
+    (re.compile(r"m3_(day|year|yr)$", re.I), "m³ per period"),
+    (re.compile(r"km2$", re.I), "km²"),
+    (re.compile(r"_days?($|_)|days_", re.I), "days"),
     (re.compile(r"_mm($|_)|rain|precip|runoff_depth", re.I), "mm"),
     (re.compile(r"degc|_c$|temp|tmax|tmin|tavg|tmean|lst", re.I), "°C"),
     (re.compile(r"m3_?s|cumec|discharge|flow", re.I), "m³/s"),
@@ -353,18 +365,19 @@ def analyse_time_pg(conn: Any, fq: str, info: dict[str, Any]) -> None:
     month_col = next((c for c in tc if re.search(r"(^|_)month($|_)", c, re.I) and cols[c]["type"] in NUMERIC_TYPES), None)
     text_date = next((c for c in tc if cols[c].get("looks_like_iso_date_pct")), None)
 
+    # Prefer the finest-grained column: real date > ISO text date > year+month > year.
     if date_cols:
         primary, expr = date_cols[0], f"{qident(date_cols[0])}::date"
-    elif year_col and month_col:
-        primary = f"{year_col}+{month_col}"
-        expr = f"make_date({qident(year_col)}::int, {qident(month_col)}::int, 1)"
-    elif year_col:
-        primary, expr = year_col, f"make_date({qident(year_col)}::int, 1, 1)"
     elif text_date:
         primary = text_date
         q = qident(text_date)
         expr = (f"(CASE WHEN {q} ~ '^\\d{{4}}-\\d{{2}}' "
                 f"THEN to_date(rpad(left({q}, 10), 10, '-01'), 'YYYY-MM-DD') END)")
+    elif year_col and month_col:
+        primary = f"{year_col}+{month_col}"
+        expr = f"make_date({qident(year_col)}::int, {qident(month_col)}::int, 1)"
+    elif year_col:
+        primary, expr = year_col, f"make_date({qident(year_col)}::int, 1, 1)"
     else:
         info["time"] = {"note": f"time-like columns {tc} could not be converted to dates"}
         return
