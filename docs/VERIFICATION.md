@@ -163,6 +163,50 @@ SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainf
 WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month'
 ```
 
+## runoff — 2026-10-14
+
+### ✅ Runoff depth, last 12 months, City of Cape Town (mm) — model volume / 6 500 km²
+
+- API: `GET /api/v1/runoff/summary?municipality=CPT` → **85.4**
+- SQL result: **85.4** (tolerance ± 0.05)
+
+```sql
+SELECT round((sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000)::numeric, 1) FROM runoff_variables_master
+WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)
+```
+
+### ✅ Runoff volume, last 12 months, uMgungundlovu (DC22) (Mm³) — depth × real district area (entity card)
+
+- API: `GET /api/v1/runoff/entities/DC22` → **2539.0**
+- SQL result: **2539.0** (tolerance ± 0.5)
+
+```sql
+SELECT sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 FROM runoff_variables_master
+WHERE "District_Name" = 'Umgungundlovu' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)
+```
+
+### ✅ Runoff coefficient, last 12 months, City of Cape Town — Σ runoff / Σ rainfall (6.1)
+
+- API: `GET /api/v1/runoff/summary?municipality=CPT` → **0.186**
+- SQL result: **0.186** (tolerance ± 0.0006)
+
+```sql
+SELECT round(((SELECT sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 FROM runoff_variables_master
+                WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master))
+             / (SELECT sum("Daily_Rainfall_Total_mm") FROM "6.1_core_rainfall_variables_master"
+                WHERE "District_Name" = 'City of Cape Town' AND "Date"::date BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)))::numeric, 3)
+```
+
+### ✅ Baseflow index, last 12 months, City of Cape Town — Σ baseflow × 86 400 / Σ model volume
+
+- API: `GET /api/v1/runoff/summary?municipality=CPT` → **0.32**
+- SQL result: **0.32** (tolerance ± 0.006)
+
+```sql
+SELECT round((sum("Baseflow_Component_m3s") * 86400 / sum("Daily_Surface_Runoff_Volume_m3_day"))::numeric, 2)
+FROM runoff_variables_master WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)
+```
+
 ## vegetation — 2026-10-14
 
 ### ✅ NDVI, Western Cape, latest month — area-weighted from the 6 WC districts (satellite_remote_sensing)

@@ -427,6 +427,15 @@ because every district is given the same area. Per D2/D5 the API recovers depth 
 **volume = depth × real district area** (labelled derived); the table's own volumes, peak flows, catchment area and
 other constants are withheld.
 
+**Implemented (Phase 6, 2026-10-14)** — `app/modules/runoff/`. Notes: flows / volumes are summed over the scope (WMA:
+apportioned by area share); **SSI** is computed by `app/core/indices.py` on the scope's monthly runoff depth (gamma per
+calendar month, calibration 2000–(last full year), ≥ 10 values, probabilities clipped at 1e-6); **flood frequency** =
+Log-Pearson III on annual maxima of derived daily mean flow (labelled "not instantaneous peaks"), Weibull plotting
+positions, 500-sample parametric-bootstrap 90 % band, needs ≥ 10 years; daily series longer than 2 000 points are
+downsampled to monthly means; `top-stations` ranks districts (D1); `events` = district days above that district's Q10
+(90th percentile of 2000–(last full year) daily flow), severity `null` + `unavailable` (no thresholds defined);
+BFI = Σ baseflow × 86 400 / Σ model volume (the shared 6 500 km² scaling cancels). Verified: `docs/VERIFICATION.md`.
+
 ### Summary
 
 | KPI | Status | Source → transformation |

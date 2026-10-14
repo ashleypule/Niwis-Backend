@@ -1,12 +1,22 @@
 # Progress
 
-## Status: Phase 5 (Vegetation) complete (2026-10-14). Next: Phase 6 — Runoff.
+## Status: Phase 6 (Runoff) complete — all five modules live (2026-10-14). Next: Phase 7 — Hardening.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Phase 6 — Runoff (2026-10-14)
+
+- [x] `app/modules/runoff/`: summary (8 KPIs), 10 time series, by-wma breakdown, 3 tables, 4 map layers, entities;
+      501 for station layers / counts, catchment runoff and forecasts
+- [x] Volumes and flows derived from depth × real district area (D2); SQL-side scope sums with bind-parameter factors
+- [x] `app/core/indices.py`: SSI (gamma per calendar month) with property tests (`tests/test_indices.py`)
+- [x] Log-Pearson III flood frequency with bootstrap band; flow-duration curves; downsampling of long daily series
+- [x] `docs/VERIFICATION.md`: 4 / 4 runoff values match SQL (incl. real-area volume for uMgungundlovu)
+- [x] 33 runoff + 5 index tests (369 total)
 
 ### Phase 5 — Vegetation (2026-10-14)
 

@@ -134,6 +134,62 @@ class DataAccess:
         out: pd.DataFrame = await self.cache.get_or_set(key, self.settings.cache_ttl_summary_s, load)
         return out
 
+    async def daily_scope_sum(self, var: str, start: dt.date, end: dt.date, factors: dict[str, float]) -> pd.Series:
+        """Σ factorᵢ · valueᵢ per day over the districts in `factors` (MDB code → factor), computed in SQL.
+
+        Factors are bind parameters (never string-built). Every spelling of a district maps to the same factor; a day is
+        returned only when all districts in `factors` have a value.
+        """
+        ds, col = self.source(var)
+        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        names: list[str] = []
+        facs: list[float] = []
+        for code, f in factors.items():
+            dist = districts.by_code(code)
+            if dist is None:
+                continue
+            for n in {dist.db_name, dist.db_name.lower(), *dist.aliases}:
+                names.append(n)
+                facs.append(float(f))
+        sql = (
+            f"SELECT {d} AS day, sum({c} * w.f) AS v, count(DISTINCT {loc}) AS n FROM {ds.fq} "
+            f"JOIN unnest($3::text[], $4::float8[]) AS w(name, f) ON w.name = {loc} "
+            f"WHERE {d} BETWEEN $1 AND $2 GROUP BY 1"
+        )
+        need = len(factors)
+        key = f"data:dscope:{var}:{start}:{end}:{hash(tuple(sorted(factors.items())))}"
+
+        async def load() -> pd.Series:
+            rows = await self.db.fetch(sql, start, end, names, facs)
+            s = pd.Series({pd.Timestamp(r["day"]): float(r["v"]) for r in rows if r["n"] == need}, dtype=float)
+            return s.sort_index()
+
+        out: pd.Series = await self.cache.get_or_set(key, self.settings.cache_ttl_long_series_s, load)
+        return out
+
+    async def daily_percentile(self, var: str, start: dt.date, end: dt.date, q: float) -> pd.Series:
+        """Per-district percentile `q` (0–1) of a daily variable over [start, end], computed in SQL."""
+        ds, col = self.source(var)
+        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        sql = (
+            f"SELECT {loc}, percentile_cont($3) WITHIN GROUP (ORDER BY {c}) FROM {ds.fq} "
+            f"WHERE {d} BETWEEN $1 AND $2 GROUP BY 1"
+        )
+
+        async def load() -> pd.Series:
+            rows = await self.db.fetch(sql, start, end, q)
+            out = {}
+            for r in rows:
+                dist = districts.resolve(r[0])
+                if dist is not None and r[1] is not None:
+                    out[dist.code] = float(r[1])
+            return pd.Series(out, dtype=float)
+
+        res: pd.Series = await self.cache.get_or_set(
+            f"data:pct:{var}:{start}:{end}:{q}", self.settings.cache_ttl_long_series_s, load
+        )
+        return res
+
     async def daily_monthly_stats(self, var: str, thresholds: tuple[float, ...]) -> pd.DataFrame:
         """Per district-month from a daily variable: sum, max, days with data, and days >= each threshold.
 

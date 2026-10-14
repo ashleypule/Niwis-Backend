@@ -72,6 +72,16 @@ def _area_share_below(rows: list[tuple[Any, ...]], threshold: float) -> float:
     return below / total * 100
 
 
+def _times_area(code: str) -> Callable[[list[tuple[Any, ...]]], Any]:
+    """Multiply a depth (mm) from SQL by the district's boundary area (km²) / 1000 → Mm³."""
+
+    def f(rows: list[tuple[Any, ...]]) -> Any:
+        areas = get_spatial().district_areas() or {}
+        return round(float(rows[0][0]) * areas[code] / 1000, 0)
+
+    return f
+
+
 CHECKS: list[Check] = [
     Check(
         "rainfall",
@@ -245,6 +255,44 @@ SELECT round((cur.ndvi - avg(s.ndvi))::numeric, 3) FROM cur, satellite_remote_se
 WHERE s.district_name = 'namakwa' AND extract(month FROM s.date) = extract(month FROM cur.date)
   AND extract(year FROM s.date) BETWEEN 2001 AND 2025 GROUP BY cur.ndvi""",
         tol=0.0006,
+    ),
+    Check(
+        "runoff",
+        "Runoff depth, last 12 months, City of Cape Town (mm) — model volume / 6 500 km²",
+        "/api/v1/runoff/summary?municipality=CPT",
+        kpi("runoff"),
+        """SELECT round((sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000)::numeric, 1) FROM runoff_variables_master
+WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)""",
+    ),
+    Check(
+        "runoff",
+        "Runoff volume, last 12 months, uMgungundlovu (DC22) (Mm³) — depth × real district area (entity card)",
+        "/api/v1/runoff/entities/DC22",
+        lambda b: next(f["value"] for f in b["fields"] if f["label"] == "Runoff volume, last 12 months"),
+        """SELECT sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 FROM runoff_variables_master
+WHERE "District_Name" = 'Umgungundlovu' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)""",
+        tol=0.5,
+        sql_post=_times_area("DC22"),
+    ),
+    Check(
+        "runoff",
+        "Runoff coefficient, last 12 months, City of Cape Town — Σ runoff / Σ rainfall (6.1)",
+        "/api/v1/runoff/summary?municipality=CPT",
+        kpi("coefficient"),
+        """SELECT round(((SELECT sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 FROM runoff_variables_master
+                WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master))
+             / (SELECT sum("Daily_Rainfall_Total_mm") FROM "6.1_core_rainfall_variables_master"
+                WHERE "District_Name" = 'City of Cape Town' AND "Date"::date BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)))::numeric, 3)""",
+        tol=0.0006,
+    ),
+    Check(
+        "runoff",
+        "Baseflow index, last 12 months, City of Cape Town — Σ baseflow × 86 400 / Σ model volume",
+        "/api/v1/runoff/summary?municipality=CPT",
+        kpi("bfi"),
+        """SELECT round((sum("Baseflow_Component_m3s") * 86400 / sum("Daily_Surface_Runoff_Volume_m3_day"))::numeric, 2)
+FROM runoff_variables_master WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)""",
+        tol=0.006,
     ),
 ]
 

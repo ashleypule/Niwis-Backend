@@ -138,6 +138,11 @@ irrigation, risk index, vulnerability and forecast-summary / risk-outlook → 50
 are dated 2025-12 (`isStale: true`). EVI / SAVI / MSAVI2 series in `indices` are `null` + `unavailable`; maps `evi`,
 `savi`, `msavi2`, `vpi`, `asi`, `svi`, `ndii`, the land-cover breakdown and all forecasts → 501.
 
+**Runoff (live).** Modelled, not gauged: entities are districts (`image: "river"`); flows and volumes are derived
+(depth × real area). `peakFlow`, `stationsHighFlow`, `stationsLowFlow` KPIs are `null` + `unavailable`; `events`
+severity `null` + `unavailable`; station maps, by-province station counts, catchment runoff and forecasts → 501.
+`flood-frequency` uses `xType: "value"`, `xLog: true`, `xUnit: "years"` (return period).
+
 ## 8. Derived values
 
 | Value | Derivation |

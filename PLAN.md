@@ -10,8 +10,8 @@ Build order (from the build prompt). ✅ done · ▶ next · ⏸ blocked
 3. ✅ Drought (Module 1) — per-component asOf (cascade, drought class).
 4. ✅ Climate (Module 2).
 5. ✅ Vegetation (Module 3) — from `satellite_remote_sensing` (D4).
-6. ▶ Runoff (Module 5) — derived volume = depth × real district area.
-7. Hardening: performance pass, proposed indexes, security review, README / VERIFICATION / CONTRACT_CHANGES,
+6. ✅ Runoff (Module 5) — derived volume = depth × real district area.
+7. ▶ Hardening: performance pass, proposed indexes, security review, README / VERIFICATION / CONTRACT_CHANGES,
    `docker compose up` from a clean clone, docs/FRONTEND_INTEGRATION.md.
 
 ✅ District boundaries supplied and validated (2026-10-14): area-weighted province / national / WMA aggregates are
