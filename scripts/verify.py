@@ -112,6 +112,47 @@ WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max(
         tol=0.005,
         sql_post=lambda rows: round(_province_weighted(rows, "WC"), 2),
     ),
+    Check(
+        "drought",
+        "SPI-3, KwaZulu-Natal, latest complete month — area-weighted from the 11 KZN districts",
+        "/api/v1/drought/summary?province=KZN",
+        kpi("spi3"),
+        """SELECT "District_Name", "SPI_3_Short_Term_Agricultural_Drought" FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month'""",
+        tol=0.005,
+        sql_post=lambda rows: round(_province_weighted(rows, "KZN"), 2),
+    ),
+    Check(
+        "drought",
+        "Dam storage, national, latest month (% FSC) — Σ volume / Σ capacity, capacity = volume / %FSC × 100 per district",
+        "/api/v1/drought/summary",
+        kpi("storage"),
+        """WITH cap AS (SELECT district_name, percentile_cont(0.5) WITHIN GROUP (ORDER BY dam_storage_million_m3 / dam_level_pct_fsc * 100) AS fsc
+             FROM hydrological_drought_master WHERE dam_level_pct_fsc > 0.5 GROUP BY 1),
+     cur AS (SELECT district_name, dam_storage_million_m3 AS v FROM hydrological_drought_master
+             WHERE date = (SELECT max(date) FROM hydrological_drought_master))
+SELECT round((sum(cur.v) / sum(cap.fsc) * 100)::numeric, 1) FROM cur JOIN cap USING (district_name)""",
+    ),
+    Check(
+        "drought",
+        "VCI, Namakwa (DC6), latest month — map layer vci (satellite_remote_sensing)",
+        "/api/v1/drought/map?layer=vci",
+        lambda b: b["values"]["DC6"],
+        """SELECT round(vci::numeric, 1) FROM satellite_remote_sensing
+WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)""",
+    ),
+    Check(
+        "drought",
+        "Surface soil-moisture anomaly, Namakwa, latest month vs same month 2001–2025 (%)",
+        "/api/v1/drought/summary?municipality=DC6",
+        kpi("soilMoisture"),
+        """WITH cur AS (SELECT date, surface_soil_moisture AS v FROM satellite_remote_sensing
+             WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)),
+     clim AS (SELECT avg(surface_soil_moisture) AS n FROM satellite_remote_sensing, cur
+              WHERE district_name = 'namakwa' AND extract(month FROM satellite_remote_sensing.date) = extract(month FROM cur.date)
+                AND extract(year FROM satellite_remote_sensing.date) BETWEEN 2001 AND 2025)
+SELECT round(((v - n) / n * 100)::numeric, 1) FROM cur, clim""",
+    ),
 ]
 
 

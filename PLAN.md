@@ -7,8 +7,8 @@ Build order (from the build prompt). ✅ done · ▶ next · ⏸ blocked
    models + conformance tests, fixture DB, Docker.
 2. ✅ Rainfall (Module 4): summary, timeseries, breakdown, table, map, entities, forecast (unavailable); verify 3 values
    by SQL in docs/VERIFICATION.md.
-3. ▶ Drought (Module 1) — per-component asOf (cascade, drought class).
-4. Climate (Module 2).
+3. ✅ Drought (Module 1) — per-component asOf (cascade, drought class).
+4. ▶ Climate (Module 2).
 5. Vegetation (Module 3) — from `satellite_remote_sensing` (D4).
 6. Runoff (Module 5) — derived volume = depth × real district area.
 7. Hardening: performance pass, proposed indexes, security review, README / VERIFICATION / CONTRACT_CHANGES,

@@ -124,6 +124,12 @@ header.
 current month is partial). `activeStations` KPI is `null` with `unavailableReason`; the `sources` table's Stations
 column is `null` with an `unavailable` entry. `matrix` has no rainfall datasets (any metric → 404).
 
+**Drought (live).** KPIs from the satellite and hydrology tables (VCI, soil moisture, dam storage, SGI) are dated
+2025-12 and `isStale: true`; SPI / SPEI are for the latest complete month. A top-level `isStale` on a response with
+`components` is `true` when **any** component is stale. `ssi3` and `settlements` KPIs are `null` + `unavailable`.
+`gw-sgi`'s "Mean borehole level" series is all `null` + `unavailable` (withheld). Points layers (`dams`, `boreholes`,
+`settlements`), `catchment-class`, restrictions, probabilities, early warning and all forecasts → 501.
+
 ## 8. Derived values
 
 | Value | Derivation |

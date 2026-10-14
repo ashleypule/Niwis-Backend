@@ -168,6 +168,22 @@ Primary tables: `6.1_core_rainfall_variables_master` (daily rows, monthly/season
 Tables: `meteorological_drought_master` (daily rows; SPI/SPEI 1–24 repeated monthly), `satellite_remote_sensing`
 (monthly, to 2025-12), `hydrological_drought_master` (monthly, to 2025-12).
 
+**Implemented (Phase 3, 2026-10-14)** — `app/modules/drought/`. Notes beyond the tables below:
+
+- **Mixed dates.** SPI / SPEI are for the latest complete month (2026-08); VCI, VHI, NDVI, soil moisture, dam storage
+  and SGI for 2025-12. Every KPI and cascade row carries its own `asOf` / `isStale`; the KpiSet and cascade list them
+  in `components` and report top-level `isStale: true` when any component is stale.
+- **Headline drought class** = class of the area-weighted SPI-6 (`value` = class rank 0–5, `text` = class id).
+- **Dam storage %** = Σ volume / Σ full-supply capacity; each district's capacity = volume / %FSC × 100, which is
+  constant per district in the data (median taken), so months with 0 % storage still count. WMA scope apportions
+  volumes by the district's share of area inside the WMA.
+- **Soil-moisture anomaly** = surface soil moisture vs the same calendar month 2001–2025 (satellite record), %.
+- **Cascade severity** = % of scope area in D1–D4 (meteorological), % with VHI < 40 (agricultural), 100 − storage %
+  (hydrological); socio-economic row `null` + `unavailable`.
+- `rain-anomaly` reuses the rainfall module's anomaly series (one implementation, identical values).
+- No `entities` endpoints (the contract defines none for drought).
+- Verified against SQL: `docs/VERIFICATION.md` (4 / 4).
+
 ### Summary
 
 | KPI | Status | Source → transformation |

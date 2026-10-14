@@ -1,12 +1,24 @@
 # Progress
 
-## Status: Phase 2 (Rainfall) complete (2026-10-14). Next: Phase 3 — Drought.
+## Status: Phase 3 (Drought) complete (2026-10-14). Next: Phase 4 — Climate.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Phase 3 — Drought (2026-10-14)
+
+- [x] `app/modules/drought/`: summary (10 KPIs, per-component dates), 8 time series, severity / province-area
+      breakdowns, cascade / affected / municipalities / sources tables, veg-heatmap matrix, 15 map layers (district,
+      province); 501 for storage-vs-spi, population, recovery, restrictions, probabilities, early warning, points
+      layers, catchment classes and all forecasts
+- [x] `app/modules/router_factory.py`: one builder for every module's contract endpoints (rainfall migrated)
+- [x] Dam storage = Σ volume / Σ derived capacity (national 63.6 % of 27 846 Mm³, Dec 2025)
+- [x] `docs/VERIFICATION.md`: 4 / 4 drought values match SQL (KZN SPI-3, national dam storage, Namakwa VCI and
+      soil-moisture anomaly)
+- [x] 48 drought tests (255 total)
 
 ### Phase 2 — Rainfall (2026-10-14)
 

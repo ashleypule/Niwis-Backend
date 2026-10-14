@@ -37,6 +37,29 @@ def weights(scope: ScopeSel, spatial: Spatial) -> dict[str, float]:
     return {c: areas[c] for c in scope.district_codes}
 
 
+def sum_fractions(scope: ScopeSel, spatial: Spatial) -> dict[str, float]:
+    """Fraction of each district's volume that belongs to the scope (for sums such as dam storage or runoff volume).
+
+    1 for every district in a municipality / province / national scope; for a WMA, the share of the district's area
+    inside the WMA (approximate: volumes are assumed spread evenly over the district).
+    """
+    if scope.level != "wma":
+        return dict.fromkeys(scope.district_codes, 1.0)
+    ov, areas = spatial.wma_overlap(), spatial.district_areas()
+    if ov is None or areas is None:
+        raise DataUnavailable("WMA aggregation needs district boundaries", missing=["district boundaries"])
+    return {code: a / areas[code] for code, a in ov.get(scope.id, {}).items()}
+
+
+def class_areas(classes: pd.Series, w: dict[str, float]) -> dict[str, float]:
+    """Σ weight (area) per class label for a district-indexed Series of class ids."""
+    out: dict[str, float] = {}
+    for code, cls in classes.items():
+        if code in w and isinstance(cls, str):
+            out[cls] = out.get(cls, 0.0) + w[str(code)]
+    return out
+
+
 def aggregation_label(scope: ScopeSel) -> str:
     return {"municipality": "district", "wma": "district-overlap"}.get(scope.level, "district-area-weighted")
 

@@ -2627,6 +2627,1653 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/drought/breakdown": {
+      "get": {
+        "operationId": "breakdown_api_v1_drought_breakdown_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategorySet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Breakdown",
+        "tags": [
+          "drought"
+        ]
+      }
+    },
+    "/api/v1/drought/forecast": {
+      "get": {
+        "operationId": "forecast_api_v1_drought_forecast_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Forecast",
+        "tags": [
+          "drought"
+        ]
+      }
+    },
+    "/api/v1/drought/map": {
+      "get": {
+        "operationId": "map_layer_api_v1_drought_map_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "layer",
+            "required": true,
+            "schema": {
+              "title": "Layer",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapLayer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Map Layer",
+        "tags": [
+          "drought"
+        ]
+      }
+    },
+    "/api/v1/drought/matrix": {
+      "get": {
+        "operationId": "matrix_api_v1_drought_matrix_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatrixSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Matrix",
+        "tags": [
+          "drought"
+        ]
+      }
+    },
+    "/api/v1/drought/summary": {
+      "get": {
+        "operationId": "summary_api_v1_drought_summary_get",
+        "parameters": [
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "drought"
+        ]
+      }
+    },
+    "/api/v1/drought/table": {
+      "get": {
+        "operationId": "table_api_v1_drought_table_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 500,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Table",
+        "tags": [
+          "drought"
+        ]
+      }
+    },
+    "/api/v1/drought/timeseries": {
+      "get": {
+        "operationId": "timeseries_api_v1_drought_timeseries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad query parameter"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown metric / layer / entity"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
+          }
+        },
+        "summary": "Timeseries",
+        "tags": [
+          "drought"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "health_api_v1_health_get",
@@ -2995,7 +4642,7 @@
     },
     "/api/v1/rainfall/entities": {
       "get": {
-        "operationId": "entities_api_v1_rainfall_entities_get",
+        "operationId": "entity_list_api_v1_rainfall_entities_get",
         "parameters": [
           {
             "description": "Province code: EC FS GP KZN LP MP NC NW WC",
@@ -3212,7 +4859,7 @@
             "description": "DATA_UNAVAILABLE — the database cannot serve this yet"
           }
         },
-        "summary": "Entities",
+        "summary": "Entity List",
         "tags": [
           "rainfall"
         ]

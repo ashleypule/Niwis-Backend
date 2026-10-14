@@ -301,6 +301,20 @@ class RainfallService:
             **self._prov(newest, "rain_daily", "rain_anomaly_mm", baseline=True),
         )
 
+    async def ts_monthly_series(self) -> dict[str, list[list[Any]]]:
+        """Scope monthly rainfall and its 2000–2026 normal for the complete months of the window."""
+        w = self.ctx.weights()
+        first, last = await self._complete_months_in_window()
+        ms = (await self.monthly_stats()).rename(columns={"sum": "value"})
+        p = weighted(ms, w).set_index("date")["value"]
+        norm = (await self.normals()).rename(columns={"normal": "value"})
+        n = weighted(norm, w, by="month").set_index("month")["value"]
+        months = _months(first.date(), last.date())
+        return {
+            "rain": [[iso(m.date()), rnd(p.get(m), 1)] for m in months],
+            "normal": [[iso(m.date()), rnd(n.get(m.month), 1)] for m in months],
+        }
+
     async def ts_anomaly(self) -> c.SeriesSet:
         w = self.ctx.weights()
         first, last = await self._complete_months_in_window()

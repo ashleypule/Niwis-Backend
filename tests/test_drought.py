@@ -1,0 +1,170 @@
+"""Drought endpoints on the recorded fixture DB (districts DC44, CPT, DC6)."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
+
+import httpx
+import pytest
+
+from app.schemas import contract as c
+from tests.conftest import requires_db
+
+pytestmark = [pytest.mark.db, requires_db]
+B = "/api/v1/drought"
+
+
+def kpis(body: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {k["id"]: k for k in body["kpis"]}
+
+
+async def test_summary_per_component_dates(client: httpx.AsyncClient) -> None:
+    body = (await client.get(f"{B}/summary", params={"municipality": "DC6"})).json()
+    c.KpiSet.model_validate(body)
+    k = kpis(body)
+    assert k["spi6"]["asOf"] == "2026-08-01" and k["spi6"]["isStale"] is False
+    for kid in ("vci", "soilMoisture", "storage", "sgi"):  # satellite / hydrology end 2025-12
+        assert k[kid]["asOf"] == "2025-12-01" and k[kid]["isStale"] is True, kid
+    assert body["isStale"] is True  # at least one component is stale
+    comps = {x["key"]: x for x in body["components"]}
+    assert comps["vci"]["source"] == ["satellite_remote_sensing"]
+    assert comps["spi6"]["source"] == ["6.2_rainfall_derived_drought_indices_master"]
+    assert k["class"]["status"]["scale"] == "drought"
+    for kid in ("ssi3", "settlements"):
+        assert k[kid]["value"] is None and k[kid]["unavailableReason"]
+    assert {u["field"] for u in body["unavailable"]} == {"kpis.ssi3", "kpis.settlements"}
+
+
+async def test_vci_matches_sql(client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]) -> None:
+    body = (await client.get(f"{B}/summary", params={"municipality": "CPT"})).json()
+    ((v,),) = fixture_db(
+        "SELECT round(vci::numeric, 1) FROM satellite_remote_sensing "
+        "WHERE district_name = 'cape town' AND date = '2025-12-01'"  # satellite alias for City of Cape Town
+    )
+    assert kpis(body)["vci"]["value"] == float(v)
+
+
+async def test_dam_storage_is_volume_over_capacity(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    body = (await client.get(f"{B}/summary", params={"municipality": "DC44"})).json()
+    ((pct,),) = fixture_db(
+        "SELECT round(dam_level_pct_fsc::numeric, 1) FROM hydrological_drought_master "
+        "WHERE lower(district_name) = 'alfred nzo' AND date = '2025-12-01'"
+    )
+    assert kpis(body)["storage"]["value"] == pytest.approx(float(pct), abs=0.11)
+
+
+@pytest.mark.parametrize(
+    ("kind", "key", "model"),
+    [
+        ("timeseries", "spi", c.SeriesSet),
+        ("timeseries", "rain-spei", c.SeriesSet),
+        ("timeseries", "rain-anomaly", c.SeriesSet),
+        ("timeseries", "dam-flows", c.SeriesSet),
+        ("timeseries", "gw-sgi", c.SeriesSet),
+        ("timeseries", "soil-moisture", c.SeriesSet),
+        ("timeseries", "vegetation", c.SeriesSet),
+        ("timeseries", "drought-area", c.SeriesSet),
+        ("breakdown", "severity", c.CategorySet),
+        ("table", "cascade", c.TableSet),
+        ("table", "municipalities", c.TableSet),
+        ("table", "sources", c.TableSet),
+    ],
+)
+async def test_datasets_validate(client: httpx.AsyncClient, kind: str, key: str, model: type[c.ContractModel]) -> None:
+    r = await client.get(f"{B}/{kind}", params={"metric": key, "municipality": "DC44"})
+    assert r.status_code == 200, r.text
+    model.model_validate(r.json())
+
+
+async def test_rain_anomaly_reuses_rainfall(client: httpx.AsyncClient) -> None:
+    d = (await client.get(f"{B}/timeseries", params={"metric": "rain-anomaly", "municipality": "DC6"})).json()
+    r = (await client.get("/api/v1/rainfall/timeseries", params={"metric": "anomaly", "municipality": "DC6"})).json()
+    assert d["id"] == "rain-anomaly" and d["series"] == r["series"]
+
+
+async def test_cascade_components(client: httpx.AsyncClient) -> None:
+    body = (await client.get(f"{B}/table", params={"metric": "cascade", "municipality": "DC6"})).json()
+    rows = {r["id"]: r for r in body["rows"]}
+    assert rows["meteorological"]["asOf"] == "2026-08-01"
+    assert rows["agricultural"]["asOf"] == "2025-12-01" and rows["hydrological"]["asOf"] == "2025-12-01"
+    assert rows["socio-economic"]["value"] is None
+    stale = {x["key"]: x["isStale"] for x in body["components"]}
+    assert stale == {"meteorological": False, "agricultural": True, "hydrological": True}
+
+
+async def test_gw_sgi_level_unavailable(client: httpx.AsyncClient) -> None:
+    body = (await client.get(f"{B}/timeseries", params={"metric": "gw-sgi", "municipality": "DC6"})).json()
+    level = next(s for s in body["series"] if s["key"] == "level")
+    assert all(p[1] is None for p in level["data"])
+    assert body["unavailable"][0]["field"] == "series.level"
+
+
+async def test_vegetation_same_source_as_vegetation_page(client: httpx.AsyncClient) -> None:
+    body = (await client.get(f"{B}/timeseries", params={"metric": "vegetation", "municipality": "CPT"})).json()
+    assert body["source"] == ["satellite_remote_sensing"]
+
+
+@pytest.mark.parametrize(
+    ("layer", "level", "scale"),
+    [
+        ("drought-class", "municipality", "spi"),
+        ("municipal-class", "municipality", "drought"),
+        ("spi24", "municipality", "spi"),
+        ("spei12", "municipality", "spi"),
+        ("rain-anomaly", "municipality", "anomalyPct"),
+        ("soil-moisture", "municipality", "soilMoisture"),
+        ("ndvi", "municipality", "ndvi"),
+        ("vci", "municipality", "vci"),
+    ],
+)
+async def test_maps(client: httpx.AsyncClient, layer: str, level: str, scale: str) -> None:
+    body = (await client.get(f"{B}/map", params={"layer": layer, "province": "NC"})).json()
+    c.MapLayer.model_validate(body)
+    assert (body["level"], body["scale"]) == (level, scale)
+    assert set(body["values"]) == {"DC6"}
+
+
+async def test_municipal_class_values_are_class_ids(client: httpx.AsyncClient) -> None:
+    body = (await client.get(f"{B}/map", params={"layer": "municipal-class"})).json()
+    assert set(body["values"].values()) <= {"None", "D0", "D1", "D2", "D3", "D4"}
+
+
+@pytest.mark.parametrize(
+    ("path", "params"),
+    [
+        ("timeseries", {"metric": "storage-vs-spi"}),
+        ("timeseries", {"metric": "population-at-risk"}),
+        ("timeseries", {"metric": "recovery-province"}),
+        ("forecast", {"metric": "spi"}),
+        ("forecast", {"metric": "settlements"}),
+        ("breakdown", {"metric": "restrictions"}),
+        ("breakdown", {"metric": "class-probability"}),
+        ("table", {"metric": "early-warning"}),
+        ("table", {"metric": "forecast-kpis"}),
+        ("matrix", {"metric": "province-risk"}),
+        ("map", {"layer": "catchment-class"}),
+        ("map", {"layer": "dams"}),
+        ("map", {"layer": "boreholes"}),
+        ("map", {"layer": "settlements"}),
+        ("map", {"layer": "forecast-6"}),
+    ],
+)
+async def test_unavailable(client: httpx.AsyncClient, path: str, params: dict[str, str]) -> None:
+    r = await client.get(f"{B}/{path}", params=params)
+    assert r.status_code == 501, r.text
+    assert r.json()["code"] == "DATA_UNAVAILABLE" and r.json()["missing"]
+
+
+@pytest.mark.parametrize(
+    ("path", "params"),
+    [("timeseries", {"metric": "x"}), ("map", {"layer": "x"}), ("matrix", {"metric": "x"}), ("table", {"metric": "x"})],
+)
+async def test_unknown_keys(client: httpx.AsyncClient, path: str, params: dict[str, str]) -> None:
+    assert (await client.get(f"{B}/{path}", params=params)).status_code == 404
+
+
+async def test_no_entities_route(client: httpx.AsyncClient) -> None:
+    assert (await client.get(f"{B}/entities")).status_code == 404  # the contract defines no drought entities
