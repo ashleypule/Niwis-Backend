@@ -20,19 +20,20 @@ import numpy as np
 import pandas as pd
 
 from app.core import districts
-from app.core.aggregate import coverage_reason, period_gap, short_of_coverage, weighted, weighted_scalar
+from app.core.aggregate import MIN_COVERAGE, coverage_reason, period_gap, short_of_coverage, weighted, weighted_scalar
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
-from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
+from app.core.palettes import DROUGHT, NEGATIVE, OBSERVED, POSITIVE, SERIES
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope, trend_gap, trend_line
+from app.core.thresholds import drought_class, drought_label
 from app.modules.common import Ctx, Selector, unknown
 from app.modules.rainfall.service import HISTORY_START, RainfallService, _months
 from app.schemas import contract as c
 
 MODULE = "climate"
 SEASONS = {"DJF": (12, 1, 2), "MAM": (3, 4, 5), "JJA": (6, 7, 8), "SON": (9, 10, 11)}
-DROUGHT_SPI3 = -1.5  # contract: "Months with SPI-3 ≤ −1.5"
+SEVERE = ("D2", "D3", "D4")  # spec §3.4: severe drought or worse = SPI ≤ −1.3 (thresholds.json)
 SEASONAL_VAR = Selector("var", ("temperature", "rainfall"), "temperature")
 TREND_VAR = Selector("var", ("temperature", "rainfall", "et", "streamflow"), "temperature")
 HEAT_KIND = Selector("kind", ("hot", "cold"), "hot")
@@ -628,36 +629,88 @@ class ClimateService:
             **{**self._prov(dt.date(y1, 12, 31), "runoff_depth_daily", res="annual"), "baseline": f"{y0}–{y1}"},
         )
 
+    async def severe_drought_by_year(self, y0: int, y1: int) -> tuple[pd.DataFrame, pd.Series]:
+        """Per full year: % of the scope's area in D2, D3 and D4 (mean of the monthly area shares; district SPI-3
+        classified with the spec §3.4 thresholds), and the number of district-months in D2 or worse.
+
+        Districts are classified one by one, then their areas added up: averaging SPI first cancels out regional
+        drought (KZN in D1–D2 while the national mean SPI-3 stays above −1). A month counts when districts with data
+        cover ≥ 95 % of the area (shares are of that area); a year needs all 12 months.
+        """
+        w = self.ctx.weights()
+        total = sum(w.values())
+        df = await self.data.monthly("spi_3")
+        df = df[df["district"].isin(w.keys()) & df["value"].notna() & df["date"].dt.year.between(y0, y1)].copy()
+        df["cls"] = df["value"].map(drought_class)
+        df["w"] = df["district"].map(w)
+        covered = df.groupby("date")["w"].sum()
+        good = covered[covered >= MIN_COVERAGE * total]
+        df = df[df["date"].isin(good.index)]
+        if df.empty:
+            return pd.DataFrame(columns=list(SEVERE), dtype=float), pd.Series(dtype=float)
+        area = df.pivot_table(index="date", columns="cls", values="w", aggfunc="sum").reindex(columns=list(SEVERE))
+        share = area.fillna(0.0).div(good.reindex(area.index), axis=0) * 100
+        years = share.index.year
+        full = share.groupby(years).size() == 12
+        yearly = share.groupby(years).mean()[full]
+        n = df[df["cls"].isin(SEVERE)].groupby(df["date"].dt.year).size()
+        months = pd.Series({y: float(n.get(y, 0)) for y in yearly.index}, dtype=float)
+        return yearly, months
+
     async def ts_drought_frequency(self) -> c.SeriesSet:
         y0, y1 = await self.years()
         yrs = range(y0, y1 + 1)
-        spi = weighted(await self.data.monthly("spi_3"), self.ctx.weights())
-        spi = spi[spi["value"].notna()]
-        counts = (spi["value"] <= DROUGHT_SPI3).groupby(spi["date"].dt.year).sum().astype(float)
-        counts = counts[(counts.index >= y0) & (counts.index <= y1)]
-        if gap := trend_gap([counts.get(y) for y in yrs], "drought-month counts"):
+        yearly, months = await self.severe_drought_by_year(y0, y1)
+        severe = yearly.sum(axis=1) if not yearly.empty else pd.Series(dtype=float)
+        why = f"No SPI-3 for districts covering ≥ {MIN_COVERAGE:.0%} of this scope's area in every month of a year"
+        for key in (*(k.lower() for k in SEVERE), "months"):
+            self.ctx.explain(f"series.{key}", f"{why} ({y0}–{y1})")
+        if gap := trend_gap([severe.get(y) for y in yrs], "area-in-drought shares"):
             self.ctx.explain("series.trend", gap)
-        self.ctx.explain("series.months", f"No area-weighted SPI-3 for this scope in {y0}–{y1}")
+        empty = pd.Series(dtype=float)
         return c.SeriesSet(
             id="drought-frequency",
-            title="Drought frequency",
+            title="Drought frequency: area in severe drought or worse (SPI-3 ≤ −1.3)",
             x_type="time",
-            axes=[c.Axis(unit="months", label="Months with SPI-3 ≤ −1.5")],
+            axes=[
+                c.Axis(unit="%", label="Area in class (% of area, mean of months)", min=0),
+                c.Axis(unit="district-months", label="District-months in D2 or worse", min=0),
+            ],
             series=[
-                c.Series(
-                    key="months", name="Drought months", kind="bar", color=NEGATIVE, data=self.series(yrs, counts, 0)
+                *(
+                    c.Series(
+                        key=k.lower(),
+                        name=drought_label(k),
+                        kind="bar",
+                        stack="area",
+                        axis=0,
+                        color=DROUGHT[k],
+                        data=self.series(yrs, yearly.get(k, empty), 1),
+                    )
+                    for k in SEVERE
                 ),
                 c.Series(
                     key="trend",
-                    name="Trend",
+                    name="Trend (area in D2–D4)",
                     kind="line",
+                    axis=0,
                     color=SERIES[3],
                     dash=True,
-                    data=self.trend_series(yrs, counts, 2),
+                    data=self.trend_series(yrs, severe, 2),
+                ),
+                c.Series(
+                    key="months",
+                    name="District-months in D2 or worse",
+                    kind="line",
+                    axis=1,
+                    color=NEGATIVE,
+                    data=self.series(yrs, months, 0),
                 ),
             ],
             as_of=f"{y1}-01-01",
-            note="Months per year in which the scope's area-weighted SPI-3 is ≤ −1.5.",
+            note="Each district's SPI-3 is classified (spec §3.4: D2 ≤ −1.3, D3 ≤ −1.6, D4 ≤ −2.0) and the areas in "
+            "each class are added up per month, then averaged over the year (% of area-months). Bars: share of the "
+            "scope's area per class; line: number of district-months in D2 or worse. Full years only.",
             **self._prov(dt.date(y1, 12, 31), "spi_3", res="annual"),
         )
 
@@ -678,10 +731,8 @@ class ClimateService:
         rain = await self.annual_var("rain_annual", base, y1)
         hot = await self.annual_var("hot_days", base, y1)
         r20 = await self.annual_var("r20mm", base, y1)
-        spi = weighted(await self.data.monthly("spi_3"), self.ctx.weights())
-        spi = spi[spi["value"].notna()]
-        dm = (spi["value"] <= DROUGHT_SPI3).groupby(spi["date"].dt.year).sum().astype(float)
-        spi_base = spi[spi["date"].dt.year == base]["value"]
+        yearly, months = await self.severe_drought_by_year(base, y1)
+        dm = yearly.sum(axis=1) if not yearly.empty else pd.Series(dtype=float)  # % of area in D2–D4
 
         def pct(s: pd.Series, key: str, what: str, zero_detail: str = "") -> list[list[Any]]:
             b = s.get(base)
@@ -697,7 +748,7 @@ class ClimateService:
 
         if base not in t.index or pd.isna(t.get(base)):
             self.ctx.explain("series.temp", f"No annual mean temperature for {base} (the base year) in this scope")
-        lowest = f" (lowest area-weighted SPI-3 that year: {spi_base.min():.2f})" if not spi_base.empty else ""
+        none_base = " (no district-month reached D2, SPI-3 ≤ −1.3)" if months.get(base) == 0 else ""
 
         return c.SeriesSet(
             id="indicator-trends",
@@ -729,7 +780,7 @@ class ClimateService:
                     name="Drought frequency",
                     kind="line",
                     color=NEGATIVE,
-                    data=pct(dm, "drought", "the number of drought months (SPI-3 ≤ −1.5)", lowest),
+                    data=pct(dm, "drought", "the share of area in severe drought or worse (D2–D4)", none_base),
                 ),
                 c.Series(
                     key="r20",

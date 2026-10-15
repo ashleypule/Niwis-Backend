@@ -268,3 +268,13 @@ runoff coefficient 0.198 as "0"). Tables whose rows hold different variables als
 largest any row needs, so nothing rounds away before the frontend reads the row values:
 `runoff/table?metric=statistics` — runoff (mm) 1, coefficient 3, trends 2 / 4 (columns 3 / 4);
 `rainfall/table?metric=statistics` — 0–1 per row (columns 1).
+
+### 12.3 Drought frequency = area in spec classes D2–D4 (B3)
+
+`climate/timeseries?metric=drought-frequency` counted months where the **national-mean** SPI-3 was ≤ −1.5 (not a spec
+threshold): averaging cancels out regional drought, so it showed 0 months in 26 years, 2015–16 included. Now each
+district's SPI-3 is classified with the spec §3.4 thresholds and the areas are added up per month, then averaged over
+the full year. Series: `d2`, `d3`, `d4` (new; stacked bars, % of the scope's area, axis 0), `trend` (Sen's slope of the
+D2–D4 share, axis 0), `months` (**redefined**: the number of district-months in D2 or worse, now on axis 1, unit
+`district-months`). Axes: `%` and `district-months`. `indicator-trends` → `drought` is now the % change of the
+yearly D2–D4 area share vs 2020 (was the count of months with mean SPI-3 ≤ −1.5).

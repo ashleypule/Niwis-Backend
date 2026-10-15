@@ -48,7 +48,10 @@ audit fixes B1–B14. One commit per step.
 - [x] **B2 Decimals.** Every numeric table column has `decimals`; mixed-unit statistics tables (runoff, rainfall) give
       each row its `unit` / `decimals` and the columns cover the most precise row (coefficient 0.198 no longer "0").
       `tests/test_table_decimals.py` checks every table of every module.
-- [ ] B3–B14 audit fixes
+- [x] **B3 Drought frequency** = % of the scope's area in D2 / D3 / D4 per year (district SPI-3 classified with spec
+      §3.4, areas added, mean of the months) + district-months in D2+; the non-spec −1.5 is gone (also from
+      indicator-trends). Supabase: national D2–D4 share 2019 = 12 % D2 (was 0 months in every year).
+- [ ] B4–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

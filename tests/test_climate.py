@@ -163,3 +163,27 @@ async def test_seasonal_change_var_selects_the_variable(client: httpx.AsyncClien
     assert [s["values"] for s in t["series"]] != [s["values"] for s in r["series"]]
     bad = await client.get(f"{B}/breakdown", params={"metric": "seasonal-change", "var": "snow"})
     assert bad.status_code == 400 and bad.json()["issues"][0]["allowed"] == ["temperature", "rainfall"]
+
+
+async def test_drought_frequency_is_area_in_spec_classes(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """B3: share of the area in D2 / D3 / D4 (spec §3.4, SPI-3 ≤ −1.3), not months of a national-mean SPI ≤ −1.5."""
+    body = (await client.get(f"{B}/timeseries", params={"metric": "drought-frequency", "municipality": "DC44"})).json()
+    s = {x["key"]: dict(map(tuple, x["data"])) for x in body["series"]}
+    assert set(s) == {"d2", "d3", "d4", "trend", "months"}
+    assert [a["unit"] for a in body["axes"]] == ["%", "district-months"]
+    rows = fixture_db(
+        """SELECT round("SPI_3_Short_Term_Agricultural_Drought"::numeric, 2)
+           FROM "6.2_rainfall_derived_drought_indices_master" WHERE "District_Name" = 'Alfred Nzo' AND "Year" = 2025"""
+    )
+    spi = [float(v) for (v,) in rows]
+    assert len(spi) == 12
+    d2 = sum(1 for v in spi if -1.6 < v <= -1.3)
+    d3 = sum(1 for v in spi if -2.0 < v <= -1.6)
+    d4 = sum(1 for v in spi if v <= -2.0)
+    assert s["d2"]["2025-01-01"] == pytest.approx(d2 / 12 * 100, abs=0.05)
+    assert s["d3"]["2025-01-01"] == pytest.approx(d3 / 12 * 100, abs=0.05)
+    assert s["d4"]["2025-01-01"] == pytest.approx(d4 / 12 * 100, abs=0.05)
+    assert s["months"]["2025-01-01"] == d2 + d3 + d4  # one district: district-months = months
+    assert "−1.5" not in body["title"] + body["note"]
