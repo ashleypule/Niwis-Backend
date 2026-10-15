@@ -259,3 +259,12 @@ Entity datasets now describe the `entityId` district, whatever the page scope (`
 aggregate (national, or another area with `province=WC`). With `entityId` the response has
 `aggregation: "district"` and the title ends with the district name. Without `entityId` nothing changes. An unknown
 code → 404 (`issues[0].param = "entityId"`).
+
+### 12.2 Decimals on every numeric table column (B2)
+
+Every `number` / `delta` / `bar` column now has `decimals` (the frontend rounds to `decimals ?? 0`, which showed the
+runoff coefficient 0.198 as "0"). Tables whose rows hold different variables also carry, per row, `unit`,
+`decimals` and (runoff) `trendDecimals` (additions; extra row keys are not columns). The column's `decimals` is the
+largest any row needs, so nothing rounds away before the frontend reads the row values:
+`runoff/table?metric=statistics` — runoff (mm) 1, coefficient 3, trends 2 / 4 (columns 3 / 4);
+`rainfall/table?metric=statistics` — 0–1 per row (columns 1).

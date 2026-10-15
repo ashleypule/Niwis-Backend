@@ -763,6 +763,8 @@ class RunoffService:
         cur_q = weighted_scalar(await self.window_depth(start, end), w)
         cur_p = weighted_scalar((await self.data.daily_window_stats("rain_daily", start, end))["sum"], w)
         rows = []
+        # rows hold different units: each row says its own `unit` and `decimals` (trend: `trendDecimals`); the
+        # columns' `decimals` cover the most precise row so a coefficient never rounds to 0 (B2)
         for rid, name, unit, cur, ann, nd in (
             ("runoff", "Runoff", "mm", cur_q, q_ann, 1),
             (
@@ -782,6 +784,9 @@ class RunoffService:
                 {
                     "id": rid,
                     "variable": f"{name} ({unit})",
+                    "unit": unit,
+                    "decimals": nd,
+                    "trendDecimals": nd + 1,
                     "current": rnd(cur, nd),
                     "climatology": rnd(clim, nd),
                     "anomaly": rnd(cur - clim, nd) if cur is not None else None,
@@ -793,12 +798,18 @@ class RunoffService:
             title=self.entity_title(f"Runoff statistics, 12 months to {end:%d %b %Y}"),
             columns=[
                 c.Column(key="variable", label="Variable", type="text"),
-                c.Column(key="current", label="Current (12 m)", type="number", align="right"),
+                c.Column(key="current", label="Current (12 m)", type="number", decimals=3, align="right"),
                 c.Column(
-                    key="climatology", label=f"Climatology ({HISTORY_START.year}–{y1})", type="number", align="right"
+                    key="climatology",
+                    label=f"Climatology ({HISTORY_START.year}–{y1})",
+                    type="number",
+                    decimals=3,
+                    align="right",
                 ),
-                c.Column(key="anomaly", label="Anomaly", type="delta", good_direction="up", align="right"),
-                c.Column(key="trend", label="Trend (Sen's slope)", type="number", unit="/decade", align="right"),
+                c.Column(key="anomaly", label="Anomaly", type="delta", decimals=3, good_direction="up", align="right"),
+                c.Column(
+                    key="trend", label="Trend (Sen's slope)", type="number", unit="/decade", decimals=4, align="right"
+                ),
             ],
             rows=rows,
             row_key="id",

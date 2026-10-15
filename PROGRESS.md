@@ -45,7 +45,10 @@ audit fixes B1–B14. One commit per step.
       (`ENTITY_DATASETS` per service: runoff discharge / fdc / flood-frequency / seasonal / statistics, rainfall
       station, every category chart) now narrow the request to the district (`Ctx.for_entity`). Audit
       (`tests/entity_audit.py`, fixture + Supabase): two districts differ, scope filters change nothing.
-- [ ] B2–B14 audit fixes
+- [x] **B2 Decimals.** Every numeric table column has `decimals`; mixed-unit statistics tables (runoff, rainfall) give
+      each row its `unit` / `decimals` and the columns cover the most precise row (coefficient 0.198 no longer "0").
+      `tests/test_table_decimals.py` checks every table of every module.
+- [ ] B3–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

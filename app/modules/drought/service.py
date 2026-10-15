@@ -959,7 +959,7 @@ class DroughtService:
                 c.Column(key="province", label="Province", type="text"),
                 c.Column(key="spi6", label="SPI-6", type="number", decimals=2, scale="spi", align="right"),
                 c.Column(key="class", label="Drought class", type="class", scale="drought"),
-                c.Column(key="population", label="Population affected", type="number", align="right"),
+                c.Column(key="population", label="Population affected", type="number", decimals=0, align="right"),
                 c.Column(key="risk", label="Water supply risk", type="class", scale="risk"),
             ],
             rows=rows[: limit or 20],

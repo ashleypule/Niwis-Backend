@@ -767,6 +767,7 @@ class RainfallService:
                     "id": var,
                     "variable": name,
                     "unit": unit,
+                    "decimals": nd,  # per row (units differ by row); the columns cover the most precise row (B2)
                     "value": rnd(val, nd),
                     "climatology": rnd(clim, nd),
                     "anomaly": rnd(val - clim, nd) if val is not None else None,
@@ -779,9 +780,11 @@ class RainfallService:
             title=f"Rainfall statistics, {y1} vs {y0}–{y1}",
             columns=[
                 c.Column(key="variable", label="Variable", type="text"),
-                c.Column(key="value", label=f"Value ({y1})", type="number", align="right"),
-                c.Column(key="climatology", label=f"Climatology ({y0}–{y1})", type="number", align="right"),
-                c.Column(key="anomaly", label="Anomaly", type="delta", good_direction="neutral", align="right"),
+                c.Column(key="value", label=f"Value ({y1})", type="number", decimals=1, align="right"),
+                c.Column(key="climatology", label=f"Climatology ({y0}–{y1})", type="number", decimals=1, align="right"),
+                c.Column(
+                    key="anomaly", label="Anomaly", type="delta", decimals=1, good_direction="neutral", align="right"
+                ),
                 c.Column(
                     key="trend", label="Trend (Sen's slope)", type="number", unit="/decade", decimals=2, align="right"
                 ),
@@ -829,7 +832,7 @@ class RainfallService:
             title="Rainfall data sources",
             columns=[
                 c.Column(key="source", label="Source", type="text"),
-                c.Column(key="stations", label="Stations", type="number", align="right"),
+                c.Column(key="stations", label="Stations", type="number", decimals=0, align="right"),
                 c.Column(key="resolution", label="Resolution", type="text"),
                 c.Column(key="cadence", label="Cadence", type="text"),
             ],
