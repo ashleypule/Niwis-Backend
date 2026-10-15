@@ -36,6 +36,14 @@ def drought_class(spi: float | None) -> str:
     return "None"
 
 
+def drought_class_or_none(spi: float | None) -> str | None:
+    """`drought_class`, but None for a missing value: "None" is the *No drought* class and must never stand in for
+    "no data"."""
+    if spi is None or (isinstance(spi, float) and math.isnan(spi)):
+        return None
+    return drought_class(spi)
+
+
 def drought_label(class_id: str) -> str:
     cfg = thresholds()["drought"]
     if class_id == "None":

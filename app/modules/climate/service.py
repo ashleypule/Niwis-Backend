@@ -20,12 +20,12 @@ import numpy as np
 import pandas as pd
 
 from app.core import districts
-from app.core.aggregate import period_gap, weighted, weighted_scalar
+from app.core.aggregate import coverage_reason, period_gap, short_of_coverage, weighted, weighted_scalar
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
 from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
 from app.core.provenance import iso
-from app.core.stats import rnd, sens_slope, trend_line
+from app.core.stats import rnd, sens_slope, trend_gap, trend_line
 from app.modules.common import Ctx, Selector, unknown
 from app.modules.rainfall.service import HISTORY_START, RainfallService, _months
 from app.schemas import contract as c
@@ -175,6 +175,8 @@ class ClimateService:
         )
         tavg = await self.annual_agg(await self.annual_daily("tavg", "mean"), y0, y1)
         tr = sens_slope([tavg.get(y) for y in range(y0, y1 + 1)])
+        if gap := trend_gap([tavg.get(y) for y in range(y0, y1 + 1)], "annual mean temperature"):
+            self.ctx.explain("kpis.tempTrend", gap)
         kpis.append(
             c.Kpi(
                 id="tempTrend",
@@ -378,6 +380,12 @@ class ClimateService:
         sd = float(np.std(resid, ddof=1)) if len(resid) > 2 else None
         ma = pd.Series(vals, index=list(yrs), dtype=float).rolling(5, min_periods=5).mean()
         tr = sens_slope(vals)
+        if gap := trend_gap(vals, axis_label.lower()):
+            self.ctx.explain("series.band", gap)
+        n_years = sum(1 for v in vals if v is not None and not pd.isna(v))
+        self.ctx.explain(
+            "series.ma5", f"A 5-year moving average needs 5 consecutive years; this scope and period have {n_years}"
+        )
         per = f"{unit}/decade"
         return c.SeriesSet(
             id="national-trend",
@@ -478,6 +486,8 @@ class ClimateService:
         else:
             s = await self.annual_var(var, y0, y1)
         tr = sens_slope([s.get(y) for y in yrs])
+        if gap := trend_gap([s.get(y) for y in yrs], label.lower()):
+            self.ctx.explain("series.trend", gap)
         return c.SeriesSet(
             id=sid,
             title=title,
@@ -616,6 +626,9 @@ class ClimateService:
         spi = spi[spi["value"].notna()]
         counts = (spi["value"] <= DROUGHT_SPI3).groupby(spi["date"].dt.year).sum().astype(float)
         counts = counts[(counts.index >= y0) & (counts.index <= y1)]
+        if gap := trend_gap([counts.get(y) for y in yrs], "drought-month counts"):
+            self.ctx.explain("series.trend", gap)
+        self.ctx.explain("series.months", f"No area-weighted SPI-3 for this scope in {y0}–{y1}")
         return c.SeriesSet(
             id="drought-frequency",
             title="Drought frequency",
@@ -657,11 +670,25 @@ class ClimateService:
         hot = await self.annual_var("hot_days", base, y1)
         r20 = await self.annual_var("r20mm", base, y1)
         spi = weighted(await self.data.monthly("spi_3"), self.ctx.weights())
+        spi = spi[spi["value"].notna()]
         dm = (spi["value"] <= DROUGHT_SPI3).groupby(spi["date"].dt.year).sum().astype(float)
+        spi_base = spi[spi["date"].dt.year == base]["value"]
 
-        def pct(s: pd.Series) -> list[list[Any]]:
+        def pct(s: pd.Series, key: str, what: str, zero_detail: str = "") -> list[list[Any]]:
             b = s.get(base)
+            if b is None or pd.isna(b):
+                self.ctx.explain(f"series.{key}", f"No {what} for {base} (the base year) in this scope")
+            elif b == 0:
+                self.ctx.explain(
+                    f"series.{key}",
+                    f"{what[0].upper()}{what[1:]} was 0 in {base} (the base year) in this scope{zero_detail}, so a "
+                    f"% change from {base} is undefined",
+                )
             return [[f"{y}-01-01", rnd((s.get(y) - b) / b * 100, 1) if b and y in s.index else None] for y in yrs]
+
+        if base not in t.index or pd.isna(t.get(base)):
+            self.ctx.explain("series.temp", f"No annual mean temperature for {base} (the base year) in this scope")
+        lowest = f" (lowest area-weighted SPI-3 that year: {spi_base.min():.2f})" if not spi_base.empty else ""
 
         return c.SeriesSet(
             id="indicator-trends",
@@ -678,10 +705,30 @@ class ClimateService:
                         [f"{y}-01-01", rnd((t.get(y) - t.get(base)) * 10, 1) if base in t.index else None] for y in yrs
                     ],
                 ),
-                c.Series(key="rain", name="Annual rainfall", kind="line", color=SERIES[0], data=pct(rain)),
-                c.Series(key="hot", name="Extreme heat days", kind="line", color=SERIES[4], data=pct(hot)),
-                c.Series(key="drought", name="Drought frequency", kind="line", color=NEGATIVE, data=pct(dm)),
-                c.Series(key="r20", name="Extreme rainfall events", kind="line", color=SERIES[1], data=pct(r20)),
+                c.Series(
+                    key="rain", name="Annual rainfall", kind="line", color=SERIES[0], data=pct(rain, "rain", "rainfall")
+                ),
+                c.Series(
+                    key="hot",
+                    name="Extreme heat days",
+                    kind="line",
+                    color=SERIES[4],
+                    data=pct(hot, "hot", "the number of hot days (Tmax > 35 °C)"),
+                ),
+                c.Series(
+                    key="drought",
+                    name="Drought frequency",
+                    kind="line",
+                    color=NEGATIVE,
+                    data=pct(dm, "drought", "the number of drought months (SPI-3 ≤ −1.5)", lowest),
+                ),
+                c.Series(
+                    key="r20",
+                    name="Extreme rainfall events",
+                    kind="line",
+                    color=SERIES[1],
+                    data=pct(r20, "r20", "the number of heavy-rain days (R20mm)"),
+                ),
             ],
             as_of=f"{y1}-01-01",
             note="Mean temperature is plotted as 10 × change in °C (contract convention); others as % change. A "
@@ -863,6 +910,30 @@ class ClimateService:
         _, ta_d, last = await self.temp_anomaly_12m()
         tavg = await self.annual_daily("tavg", "mean")
         rain, hot = await self.data.annual("rain_annual"), await self.data.annual("hot_days")
+        groups = {
+            districts.PROVINCES[p]: {d.code: areas[d.code] for d in districts.in_province(p)}
+            for p in districts.PROVINCES
+        }
+        n = len(groups)
+        for key, df, what in (
+            ("temp", ta_d.dropna(), "a temperature anomaly"),
+            (
+                "rain",
+                rain[rain["date"].dt.year == y1].dropna(subset=["value"]).set_index("district")["value"],
+                "rainfall",
+            ),
+            (
+                "hot",
+                hot[hot["date"].dt.year == y1].dropna(subset=["value"]).set_index("district")["value"],
+                "hot-day counts",
+            ),
+        ):
+            if short := short_of_coverage(set(df.index), groups):
+                self.ctx.explain(
+                    f"rows.{key}", coverage_reason(f"{what} for {y1 if key != 'temp' else last.year}", short, n)
+                )
+        years_t: list[int] = []  # years with an area-weighted value, per province (trends need 8)
+        years_h: list[int] = []
         rows = []
         for p in districts.PROVINCES:
             w = {d.code: areas[d.code] for d in districts.in_province(p)}
@@ -874,6 +945,8 @@ class ClimateService:
 
             t, r, h = agg(tavg), agg(rain), agg(hot)
             tt, ht = sens_slope([t.get(y) for y in yrs]), sens_slope([h.get(y) for y in yrs])
+            years_t.append(int(t.notna().sum()))
+            years_h.append(int(h.notna().sum()))
             rows.append(
                 {
                     "id": p,
@@ -892,6 +965,12 @@ class ClimateService:
                     if ht
                     else None,
                 }
+            )
+        for key, got, what in (("trend", years_t, "annual mean temperature"), ("hotTrend", years_h, "hot-day counts")):
+            self.ctx.explain(
+                f"rows.{key}",
+                f"A trend needs at least 8 years of {what} with ≥ 95 % area coverage; in {y0}–{y1} the provinces "
+                f"have at most {max(got, default=0)}",
             )
         return c.TableSet(
             id="provinces",
@@ -998,6 +1077,8 @@ class ClimateService:
                 s = g.set_index(g["date"].dt.year)["value"]
                 tr = sens_slope([s.get(y) for y in yrs])
                 vals[code] = rnd(tr.slope * 10, 3) if tr else None
+                if gap := trend_gap([s.get(y) for y in yrs], "annual mean temperature"):
+                    self.ctx.explain("values", gap)
             spec = (f"Temperature trend {y0}–{y1} (°C/decade)", "tempTrend", "°C/decade", dt.date(y1, 12, 31), ["tavg"])
         elif layer == "temp-anomaly":
             _, per, last = await self.temp_anomaly_12m()

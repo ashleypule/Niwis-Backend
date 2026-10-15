@@ -21,14 +21,29 @@ from typing import Any
 import pandas as pd
 
 from app.core import districts
-from app.core.aggregate import class_areas, sum_fractions, weighted, weighted_scalar, window_normal
+from app.core.aggregate import (
+    class_areas,
+    coverage_reason,
+    short_of_coverage,
+    sum_fractions,
+    weighted,
+    weighted_scalar,
+    window_normal,
+)
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
 from app.core.palettes import DROUGHT, NORMAL, OBSERVED, SERIES, drought_bands
 from app.core.provenance import iso
 from app.core.stats import rnd
-from app.core.thresholds import drought_class, drought_label, storage_alert_level, thresholds, veg_class
-from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
+from app.core.thresholds import (
+    drought_class,
+    drought_class_or_none,
+    drought_label,
+    storage_alert_level,
+    thresholds,
+    veg_class,
+)
+from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
 from app.modules.rainfall.service import MONTHS, WINDOW, RainfallService, _months
 from app.schemas import contract as c
 
@@ -148,16 +163,18 @@ class DroughtService:
 
         m = await self.latest("spi_6")
         spi6 = weighted_scalar(await self.at("spi_6", m), w)
-        cls = drought_class(spi6)
+        cls = drought_class_or_none(spi6)
+        if cls is None:
+            self.ctx.explain("kpis.class", f"No area-weighted SPI-6 for this scope in {m:%b %Y} (≥ 95 % area needed)")
         kpis.append(
             c.Kpi(
                 id="class",
                 metric="droughtClass",
                 label="Drought Class",
                 sublabel=f"from SPI-6, {m:%b %Y}",
-                value=float(thresholds()["drought"]["rank"][cls]),
-                text="No drought" if cls == "None" else cls,
-                status=c.Status(scale="drought", id=cls, label=drought_label(cls)),
+                value=float(thresholds()["drought"]["rank"][cls]) if cls else None,
+                **({"text": "No drought" if cls == "None" else cls} if cls else {}),
+                **drought_status(spi6),
                 **self.kpi_extra(m, "spi_6"),
             )
         )
@@ -168,7 +185,8 @@ class DroughtService:
         ):
             mm = await self.latest(var)
             v = weighted_scalar(await self.at(var, mm), w)
-            k = drought_class(v)
+            if v is None:
+                self.ctx.explain(f"kpis.{kid}", f"No area-weighted {label} for this scope in {mm:%b %Y}")
             kpis.append(
                 c.Kpi(
                     id=kid,
@@ -177,7 +195,7 @@ class DroughtService:
                     sublabel=f"{mm:%b %Y}",
                     value=rnd(v, 2),
                     decimals=2,
-                    status=c.Status(scale="drought", id=k, label=drought_label(k)),
+                    **drought_status(v),
                     **self.kpi_extra(mm, var),
                 )
             )
@@ -607,6 +625,12 @@ class DroughtService:
             areas_all = self.ctx.state.spatial.district_areas()
             if areas_all is None:
                 raise unavailable("Province areas need district boundaries", "district boundaries")
+            groups = {
+                districts.PROVINCES[p]: {d.code: areas_all[d.code] for d in districts.in_province(p)}
+                for p in districts.PROVINCES
+            }
+            if short := short_of_coverage(set(classes.dropna().index), groups):
+                self.ctx.explain("series.area", coverage_reason(f"SPI-6 for {m:%b %Y}", short, len(groups)))
             vals = []
             for p in districts.PROVINCES:
                 w = {d.code: areas_all[d.code] for d in districts.in_province(p)}
@@ -649,7 +673,7 @@ class DroughtService:
         total = sum(w.values())
         m = await self.latest("spi_6")
         spi = weighted_scalar(await self.at("spi_6", m), w)
-        met_cls = drought_class(spi)
+        met_cls = drought_class_or_none(spi)
         met_area = class_areas(await self.spi6_classes(m), w)
         mv = await self.latest("vhi")
         vhi_d = await self.at("vhi", mv)
@@ -661,7 +685,7 @@ class DroughtService:
                 "id": "meteorological",
                 "stage": "Meteorological (SPI-6)",
                 "value": rnd(spi, 2),
-                "class": drought_label(met_cls),
+                "class": drought_label(met_cls) if met_cls else None,
                 "severity": rnd(sum(met_area.get(k, 0) for k in IN_DROUGHT) / total * 100, 0),
                 "asOf": iso(m),
             },
@@ -742,19 +766,28 @@ class DroughtService:
             raise unavailable("Province areas need district boundaries", "district boundaries")
         m = await self.latest("spi_6")
         spi = await self.at("spi_6", m)
-        classes = spi.map(drought_class)
+        classes = spi.dropna().map(drought_class)
+        groups = {
+            districts.PROVINCES[p]: {d.code: areas[d.code] for d in districts.in_province(p)}
+            for p in districts.PROVINCES
+        }
+        if short := short_of_coverage(set(classes.index), groups):
+            reason = coverage_reason(f"SPI-6 for {m:%b %Y}", short, len(groups))
+            for col in ("spi6", "class", "area"):
+                self.ctx.explain(f"rows.{col}", reason)
         rows = []
         for p in districts.PROVINCES:
             w = {d.code: areas[d.code] for d in districts.in_province(p)}
             v = weighted_scalar(spi, w)
             a = class_areas(classes, w)
+            covered = sum(a.values()) >= 0.95 * sum(w.values())
             rows.append(
                 {
                     "id": p,
                     "province": districts.PROVINCES[p],
                     "spi6": rnd(v, 2),
-                    "class": drought_class(v),
-                    "area": rnd(sum(a.get(k, 0.0) for k in IN_DROUGHT) / sum(w.values()) * 100, 0),
+                    "class": drought_class_or_none(v),
+                    "area": rnd(sum(a.get(k, 0.0) for k in IN_DROUGHT) / sum(w.values()) * 100, 0) if covered else None,
                     "confidence": None,
                     "updated": iso(m),
                 }
@@ -875,6 +908,13 @@ class DroughtService:
         last = await self.latest("vci")
         months = _months(_d(pd.Timestamp(last) - pd.DateOffset(months=11)), last)
         df = await self.data.monthly("vci")
+        groups = {
+            districts.PROVINCES[p]: {d.code: areas[d.code] for d in districts.in_province(p)}
+            for p in districts.PROVINCES
+        }
+        present = set(df[df["date"].isin(months) & df["value"].notna()]["district"])
+        if short := short_of_coverage(present, groups):
+            self.ctx.explain("values", coverage_reason("VCI in the last 12 months", short, len(groups)))
         values = []
         for p in districts.PROVINCES:
             w = {d.code: areas[d.code] for d in districts.in_province(p)}
@@ -943,15 +983,21 @@ class DroughtService:
             spi = await self.at("spi_6", m)
             scale, unit, date, variables = "drought", "—", m, ["spi_6"]
             if layer == "municipal-class":
-                vals = spi.map(drought_class)
+                vals = spi.map(drought_class_or_none)
                 title = f"Drought classification by district (SPI-6) – {m:%b %Y}"
             else:
                 areas = self.ctx.state.spatial.district_areas()
                 if areas is None:
                     raise unavailable("Province classes need district boundaries", "district boundaries")
+                groups = {
+                    districts.PROVINCES[p]: {d.code: areas[d.code] for d in districts.in_province(p)}
+                    for p in districts.PROVINCES
+                }
+                if short := short_of_coverage(set(spi.dropna().index), groups):
+                    self.ctx.explain("values", coverage_reason(f"SPI-6 for {m:%b %Y}", short, len(groups)))
                 vals = pd.Series(
                     {
-                        p: drought_class(
+                        p: drought_class_or_none(
                             weighted_scalar(spi, {d.code: areas[d.code] for d in districts.in_province(p)})
                         )
                         for p in districts.PROVINCES

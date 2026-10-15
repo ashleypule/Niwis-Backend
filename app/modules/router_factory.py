@@ -44,21 +44,21 @@ def build_router(module: str, svc: type[Any], *, entities: bool = False) -> APIR
 
     @router.get("/summary", response_model=c.KpiSet, responses=ERRORS, **OPTS)
     async def summary(request: Request, ctx: Ctx = Depends(get_ctx)) -> Any:
-        return await cached(request, ctx.state, ctx.state.settings.cache_ttl_summary_s, svc(ctx).summary)
+        return await cached(request, ctx, ctx.state.settings.cache_ttl_summary_s, svc(ctx).summary)
 
     @router.get("/timeseries", response_model=c.SeriesSet, responses=ERRORS, **OPTS)
     async def timeseries(request: Request, metric: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
         ttl = ctx.state.settings.cache_ttl_long_series_s
-        return await cached(request, ctx.state, ttl, lambda: svc(ctx).timeseries(metric))
+        return await cached(request, ctx, ttl, lambda: svc(ctx).timeseries(metric))
 
     @router.get("/forecast", response_model=c.SeriesSet, responses=ERRORS, **OPTS)
     async def forecast(request: Request, metric: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
-        return await check_response(ctx.state, request.url.path, await svc(ctx).forecast(metric))
+        return await check_response(ctx, request.url.path, await svc(ctx).forecast(metric))
 
     @router.get("/breakdown", response_model=c.CategorySet, responses=ERRORS, **OPTS)
     async def breakdown(request: Request, metric: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
         ttl = ctx.state.settings.cache_ttl_summary_s
-        return await cached(request, ctx.state, ttl, lambda: svc(ctx).breakdown(metric))
+        return await cached(request, ctx, ttl, lambda: svc(ctx).breakdown(metric))
 
     @router.get("/table", response_model=c.TableSet, responses=ERRORS, **OPTS)
     async def table(
@@ -68,7 +68,7 @@ def build_router(module: str, svc: type[Any], *, entities: bool = False) -> APIR
         ctx: Ctx = Depends(get_ctx),
     ) -> Any:
         ttl = ctx.state.settings.cache_ttl_summary_s
-        return await cached(request, ctx.state, ttl, lambda: svc(ctx).table(metric, limit))
+        return await cached(request, ctx, ttl, lambda: svc(ctx).table(metric, limit))
 
     @router.get("/matrix", response_model=c.MatrixSet, responses=ERRORS, **OPTS)
     async def matrix(request: Request, metric: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
@@ -76,22 +76,22 @@ def build_router(module: str, svc: type[Any], *, entities: bool = False) -> APIR
         if not hasattr(service, "matrix"):
             raise unknown("metric", metric, [])  # this module defines no matrices in the contract
         ttl = ctx.state.settings.cache_ttl_summary_s
-        return await cached(request, ctx.state, ttl, lambda: service.matrix(metric))
+        return await cached(request, ctx, ttl, lambda: service.matrix(metric))
 
     @router.get("/map", response_model=c.MapLayer, responses=ERRORS, **OPTS)
     async def map_layer(request: Request, layer: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
         ttl = ctx.state.settings.cache_ttl_map_s
-        return await cached(request, ctx.state, ttl, lambda: svc(ctx).map(layer))
+        return await cached(request, ctx, ttl, lambda: svc(ctx).map(layer))
 
     if entities:
 
         @router.get("/entities", response_model=c.EntityList, responses=ERRORS, **OPTS)
         async def entity_list(request: Request, ctx: Ctx = Depends(get_ctx)) -> Any:
-            return await check_response(ctx.state, request.url.path, await svc(ctx).entities())
+            return await check_response(ctx, request.url.path, await svc(ctx).entities())
 
         @router.get("/entities/{code}", response_model=c.EntityDetail, responses=ERRORS, **OPTS)
         async def entity(request: Request, code: str, ctx: Ctx = Depends(get_ctx)) -> Any:
             ttl = ctx.state.settings.cache_ttl_summary_s
-            return await cached(request, ctx.state, ttl, lambda: svc(ctx).entity(code))
+            return await cached(request, ctx, ttl, lambda: svc(ctx).entity(code))
 
     return router

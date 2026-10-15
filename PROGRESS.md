@@ -46,6 +46,25 @@
       = frost nights from `Frost_Day_Flag` (= Tmin < 0 °C in all 52 districts, checked). `tests/test_selectors.py`:
       every value of every selector returns a different response.
 
+- [x] **#5 All-null series without an `unavailable` entry.** Root cause of the reported case: `indicator-trends` plots
+      "% change vs 2020", and in all four frontend scopes the area-weighted SPI-3 never reached −1.5 in 2020 (national
+      minimum −1.06), so the 2020 drought-month count is 0 and every % change divides by zero. The code returned
+      null silently. Generic fix: services register a specific reason where a value can become null
+      (`Ctx.explain`); the response layer attaches it only when that field ends up entirely null
+      (`attach_reasons`, also sets a KPI's `unavailableReason`). Completeness check in the audit: an all-null
+      series / KPI / column / map without an entry fails. Reasons added for: zero or missing base year
+      (indicator-trends), too few years for a trend / 5-year mean (climate summary, national-trend, heat-days,
+      extreme-rain, drought-frequency, temp-trend map, provinces table, runoff statistics), SSI calibration record
+      too short, provinces / WMAs below 95 % area coverage (province tables and breakdowns, veg-heatmap,
+      province-class map, by-wma), and the empty half of positive / negative anomaly bars (Supabase: 12-month rainfall
+      anomaly had no negative month). Supabase audit: 1 004 requests, 0 problems.
+- [x] Found by the same audit (never produce a number the DB can't support): `drought_class(None)` is the
+      "No drought" class, so a missing SPI showed as **No drought** (drought class KPI value 0, SPI / SPEI / SSI KPI
+      pills, rainfall province status and entity card, province-class and municipal-class maps, cascade, affected
+      table) and the affected table showed **0 %** area in drought for provinces without data. Now null
+      (`drought_class_or_none`, `drought_status`). Not visible on Supabase today (all 52 districts report), but would
+      have been for any scope with a missing district.
+
 ### Phase 7 — Hardening (2026-10-14)
 
 - [x] Performance (`docs/PERFORMANCE.md`): summary p95 16–106 ms with warm data caches across 61 scopes per module

@@ -146,3 +146,22 @@ def period_gap(label: str, first: int, last: int, data_first: int | None, data_l
     if data_last < last:
         return f"The database ends in {data_last}; the {label} period needs data to {last}"
     return None
+
+
+def short_of_coverage(present: set[str], groups: dict[str, dict[str, float]]) -> list[str]:
+    """Names of the groups (provinces, WMAs) whose districts with data cover < 95 % of their weight."""
+    out = []
+    for name, w in groups.items():
+        total = sum(w.values())
+        if total <= 0 or sum(v for k, v in w.items() if k in present) < MIN_COVERAGE * total:
+            out.append(name)
+    return out
+
+
+def coverage_reason(what: str, short: list[str], of: int) -> str:
+    """Reason for a by-province / by-WMA value that is null because of the 95 % area-coverage rule."""
+    shown = ", ".join(short[:5]) + (f" and {len(short) - 5} more" if len(short) > 5 else "")
+    return (
+        f"Districts with {what} cover less than {MIN_COVERAGE:.0%} of the area of {len(short)} of {of} "
+        f"({shown}); an area-weighted value needs {MIN_COVERAGE:.0%}"
+    )

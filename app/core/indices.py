@@ -18,6 +18,19 @@ MIN_FIT = 10
 P_CLIP = 1e-6
 
 
+def calibration_gap(monthly: pd.Series, scale: int, calibration: tuple[int, int], name: str) -> str | None:
+    """Why `standardized_index` is all-NaN for this series (too short a calibration record), or None."""
+    s = monthly.sort_index().astype(float).rolling(scale, min_periods=scale).sum()
+    cal = s[(s.index.year >= calibration[0]) & (s.index.year <= calibration[1])].dropna()
+    best = max((int((cal[cal.index.month == m] > 0).sum()) for m in range(1, 13)), default=0)
+    if best >= MIN_FIT:
+        return None
+    return (
+        f"{name} needs at least {MIN_FIT} calibration years per calendar month ({calibration[0]}–{calibration[1]}); "
+        f"this scope's record gives at most {best}"
+    )
+
+
 def standardized_index(monthly: pd.Series, scale: int, calibration: tuple[int, int]) -> pd.Series:
     """SPI-style index of a monthly series (DatetimeIndex at month starts, no gaps assumed)."""
     s = monthly.sort_index().astype(float)

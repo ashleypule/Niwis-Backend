@@ -16,8 +16,9 @@ from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable, NotFound
 from app.core.filters import Filters, parse_compare, parse_scope, parse_window
 from app.core.provenance import is_stale, iso
-from app.core.response_checks import Coverage, all_violations
-from app.schemas.contract import Scope
+from app.core.response_checks import Coverage, attach_reasons, invariant_violations, unexplained_null_violations
+from app.core.thresholds import drought_class_or_none, drought_label
+from app.schemas.contract import Scope, Status
 from app.state import AppState, get_state
 
 log = logging.getLogger("niwis.checks")
@@ -45,6 +46,7 @@ class Ctx:
     filters: Filters
     newest_db: dt.date | None  # newest date anywhere in the DB (staleness reference)
     params: Mapping[str, str] = field(default_factory=dict)  # raw query parameters (for selectors)
+    reasons: dict[str, str] = field(default_factory=dict)  # field path → why it may be null (see `explain`)
 
     @property
     def data(self) -> DataAccess:
@@ -85,6 +87,11 @@ class Ctx:
                 issues=[{"param": sel.name, "value": raw, "invalid": bad, "allowed": list(sel.values)}],
             )
         return list(dict.fromkeys(items))
+
+    def explain(self, field_path: str, reason: str) -> None:
+        """Register why `field_path` (e.g. `series.trend`, `kpis.tempTrend`, `rows.spi6`) may be null. The response
+        layer adds it to `unavailable` only if that field ends up entirely null (app.core.response_checks)."""
+        self.reasons.setdefault(field_path, reason)
 
     def stale(self, as_of: dt.date | None) -> bool:
         return is_stale(as_of, self.newest_db, self.state.settings.stale_after_days)
@@ -133,29 +140,56 @@ async def source_coverage(state: AppState) -> Coverage:
     return out
 
 
-async def check_response(state: AppState, path: str, body: Any) -> Any:
-    """Run app.core.response_checks on a body. `RESPONSE_CHECKS`: `log` (default) logs violations; `raise` fails the
-    request and also checks dates against the source tables' coverage (tests, debugging); `off` skips the checks."""
+async def check_response(ctx: Ctx, path: str, body: Any) -> Any:
+    """Attach the registered null reasons, then run app.core.response_checks on the body.
+
+    `RESPONSE_CHECKS`: `log` (default) logs violations; `raise` (tests, debugging) fails the request on an invariant
+    violation (a field listed in `unavailable` has values, or a value is dated outside its source tables' coverage) and
+    logs completeness violations (an all-null element without a reason; enforced by the conformance audit, because on
+    the 3-district test fixture national aggregates are legitimately null); `off` skips the checks.
+    """
+    attach_reasons(body, ctx.reasons)
+    state = ctx.state
     mode = state.settings.response_checks
-    if mode == "off":
+    if mode == "off" or not isinstance(body, dict):
         return body
     coverage = await source_coverage(state) if mode == "raise" else None
-    violations = all_violations(body, coverage)
+    invariants = invariant_violations(body, coverage)
+    if invariants and mode == "raise":
+        raise AssertionError(f"response check failed for {path}: " + "; ".join(invariants))
+    violations = invariants + unexplained_null_violations(body)
     if violations:
-        if mode == "raise":
-            raise AssertionError(f"response check failed for {path}: " + "; ".join(violations))
         log.warning("response check failed", extra={"path": path, "violations": violations[:20]})
     return body
 
 
-async def cached(request: Request, state: AppState, ttl_s: int, build: Callable[[], Awaitable[Any]]) -> Any:
+async def cached(request: Request, ctx: Ctx, ttl_s: int, build: Callable[[], Awaitable[Any]]) -> Any:
     """Cache a response body by path + sorted query string; bodies are checked once, before they are cached."""
     q = "&".join(f"{k}={v}" for k, v in sorted(request.query_params.multi_items()))
 
     async def checked() -> Any:
-        return await check_response(state, request.url.path, await build())
+        return await check_response(ctx, request.url.path, await build())
 
-    return await state.cache.get_or_set(f"resp:{request.url.path}?{q}", ttl_s, checked)
+    return await ctx.state.cache.get_or_set(f"resp:{request.url.path}?{q}", ttl_s, checked)
+
+
+def drought_status(value: float | None) -> dict[str, Any]:
+    """`status=` keyword for a drought-class pill; nothing when there is no value (never a "No drought" pill)."""
+    cls = drought_class_or_none(value)
+    return {} if cls is None else {"status": Status(scale="drought", id=cls, label=drought_label(cls))}
+
+
+def anomaly_split_reasons(ctx: Ctx, values: list[float | None], what: str = "anomaly") -> None:
+    """Reasons for the empty half of a positive / negative bar split (`series.pos`, `series.neg`)."""
+    have = [v for v in values if v is not None]
+    if not have:
+        for key in ("pos", "neg"):
+            ctx.explain(f"series.{key}", f"No {what} could be computed for this scope and period")
+        return
+    ctx.explain("series.pos", f"No month in this period had a positive {what} (all {len(have)} were below normal)")
+    ctx.explain(
+        "series.neg", f"No month in this period had a negative {what} (all {len(have)} were at or above normal)"
+    )
 
 
 def unknown(kind: str, key: str | None, allowed: list[str]) -> NotFound:

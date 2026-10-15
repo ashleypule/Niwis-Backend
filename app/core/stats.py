@@ -19,13 +19,24 @@ class Trend:
     n: int
 
 
+MIN_TREND_VALUES = 8
+
+
+def trend_gap(values: list[float | None], what: str) -> str | None:
+    """Why `sens_slope(values)` is None (too few values), or None when a trend can be estimated."""
+    n = sum(1 for v in values if v is not None and math.isfinite(float(v)))
+    if n >= MIN_TREND_VALUES:
+        return None
+    return f"A trend needs at least {MIN_TREND_VALUES} years of {what}; this scope and period have {n}"
+
+
 def sens_slope(values: list[float | None]) -> Trend | None:
     """Sen's slope and Mann-Kendall test on an evenly spaced series. None if fewer than 8 values.
 
     Gaps are passed as NaN so step positions are preserved (pymannkendall ignores missing values).
     """
     x = np.array([np.nan if v is None else float(v) for v in values], dtype=float)
-    if int(np.isfinite(x).sum()) < 8:
+    if int(np.isfinite(x).sum()) < MIN_TREND_VALUES:
         return None
     r: Any = mk.original_test(x)
     return Trend(float(r.slope), float(r.intercept), float(r.p), str(r.trend), int(np.isfinite(x).sum()))

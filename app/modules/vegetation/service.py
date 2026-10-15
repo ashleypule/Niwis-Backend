@@ -19,14 +19,14 @@ from typing import Any
 import pandas as pd
 
 from app.core import districts
-from app.core.aggregate import class_areas, weighted, weighted_scalar
+from app.core.aggregate import class_areas, coverage_reason, short_of_coverage, weighted, weighted_scalar
 from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable
 from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import thresholds, veg_class
-from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
+from app.modules.common import Ctx, Selector, anomaly_split_reasons, forecast_unavailable, unknown
 from app.modules.drivers import driver_series
 from app.modules.rainfall.service import RainfallService, _months
 from app.schemas import contract as c
@@ -337,6 +337,8 @@ class VegetationService:
             else None
             for x in ms
         }
+        an = {x: None if a is None or pd.isna(a) else a for x, a in an.items()}
+        anomaly_split_reasons(self.ctx, list(an.values()), "NDVI anomaly")
         return c.SeriesSet(
             id="anomaly",
             title="NDVI anomaly",
@@ -408,6 +410,14 @@ class VegetationService:
             if areas is None:
                 raise DataUnavailable("Province areas need district boundaries", missing=["district boundaries"])
             cls = (await self.at("vhi", m)).dropna().map(veg_class)
+            groups = {
+                districts.PROVINCES[p]: {d.code: areas[d.code] for d in districts.in_province(p)}
+                for p in districts.PROVINCES
+            }
+            if short := short_of_coverage(set(cls.index), groups):
+                reason = coverage_reason(f"VHI for {m:%b %Y}", short, len(groups))
+                for k in VEG_CLASSES:
+                    self.ctx.explain(f"series.{k.lower().replace(' ', '-')}", reason)
             shares = []
             for p in districts.PROVINCES:
                 w = {d.code: areas[d.code] for d in districts.in_province(p)}
@@ -532,6 +542,17 @@ class VegetationService:
             areas = self.ctx.state.spatial.district_areas()
             if areas is None:
                 raise DataUnavailable("Province aggregates need district boundaries", missing=["district boundaries"])
+            groups = {
+                districts.PROVINCES[p]: {d.code: areas[d.code] for d in districts.in_province(p)}
+                for p in districts.PROVINCES
+            }
+            for cols, ser, what in (
+                (("ndvi", "change"), ndvi, f"NDVI for {m:%b %Y}"),
+                (("vci", "status"), vci, f"VCI for {m:%b %Y}"),
+            ):
+                if short := short_of_coverage(set(ser.dropna().index), groups):
+                    for col in cols:
+                        self.ctx.explain(f"rows.{col}", coverage_reason(what, short, len(groups)))
             rows = []
             for p in districts.PROVINCES:
                 w = {d.code: areas[d.code] for d in districts.in_province(p)}

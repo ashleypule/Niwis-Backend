@@ -53,8 +53,11 @@ async def test_withheld_and_station_kpis(client: httpx.AsyncClient) -> None:
     k = kpis(body)
     for kid in ("peak", "normal", "low"):
         assert k[kid]["value"] is None and k[kid]["unavailableReason"]
-    assert {u["field"] for u in body["unavailable"]} == {"kpis.peak", "kpis.normal", "kpis.low"}
+    reasons = {u["field"]: u["reason"] for u in body["unavailable"]}
+    assert set(reasons) == {"kpis.peak", "kpis.normal", "kpis.low", "kpis.ssi6"}
     assert k["ssi6"]["value"] is None  # fixture: < 10 calibration years → no SSI rather than a poor fit
+    assert "status" not in k["ssi6"]  # no "No drought" pill for a missing value
+    assert "10 calibration years" in reasons["kpis.ssi6"] == k["ssi6"]["unavailableReason"]
 
 
 @pytest.mark.parametrize(

@@ -186,10 +186,38 @@ def coverage_violations(body: Mapping[str, Any], coverage: Coverage) -> list[str
     return out
 
 
-def all_violations(body: Any, coverage: Coverage | None = None) -> list[str]:
+def attach_reasons(body: Any, reasons: Mapping[str, str]) -> None:
+    """Add `{field, reason}` to `unavailable` for each registered field whose target ended up entirely null.
+
+    Services register a specific reason where a value can become null (`Ctx.explain`); the reason is attached only
+    if the series / KPI / column really is all-null in the final body, so partial gaps and filled values never get one.
+    """
+    if not isinstance(body, dict) or not reasons:
+        return
+    listed = _listed(body)
+    for field, reason in reasons.items():
+        vals = _target_values(body, field)
+        if field not in listed and vals and _all_null(vals):
+            body.setdefault("unavailable", []).append({"field": field, "reason": reason})
+            listed.add(field)
+            head, _, kid = field.partition(".")
+            for k in body.get("kpis", []) if head == "kpis" else []:
+                if k.get("id") == kid:
+                    k.setdefault("unavailableReason", reason)
+
+
+def invariant_violations(body: Any, coverage: Coverage | None = None) -> list[str]:
+    """Checks that guard against wrong numbers: unavailable-but-valued fields, values outside source coverage."""
     if not isinstance(body, dict):
         return []
     out = unavailable_violations(body)
     if coverage is not None:
         out += coverage_violations(body, coverage)
     return out
+
+
+def all_violations(body: Any, coverage: Coverage | None = None) -> list[str]:
+    """Invariants plus completeness (every all-null element says why)."""
+    if not isinstance(body, dict):
+        return []
+    return invariant_violations(body, coverage) + unexplained_null_violations(body)

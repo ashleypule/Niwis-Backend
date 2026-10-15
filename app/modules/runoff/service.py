@@ -30,12 +30,11 @@ from app.core import districts
 from app.core.aggregate import sum_fractions, weighted, weighted_scalar, window_normal
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable, NotFound
-from app.core.indices import standardized_index
+from app.core.indices import calibration_gap, standardized_index
 from app.core.palettes import NORMAL, OBSERVED, SERIES, YEAR_COLOURS, drought_bands
 from app.core.provenance import iso
-from app.core.stats import rnd, sens_slope
-from app.core.thresholds import drought_class, drought_label
-from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
+from app.core.stats import rnd, sens_slope, trend_gap
+from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
 from app.modules.drivers import driver_series
 from app.modules.rainfall.service import HISTORY_START, MONTHS, RainfallService, _months
 from app.schemas import contract as c
@@ -234,11 +233,14 @@ class RunoffService:
                 **self.kpi_extra(end, Q, "rain_daily"),
             )
         )
-        ssi = standardized_index(await self.scope_monthly_depth(), 6, (HISTORY_START.year, y1))
+        depth = await self.scope_monthly_depth()
+        ssi = standardized_index(depth, 6, (HISTORY_START.year, y1))
         lm = await self.latest_complete_month()
         sv = ssi.get(pd.Timestamp(lm))
         sv = None if sv is None or np.isnan(sv) else float(sv)
-        cls = drought_class(sv)
+        if sv is None:
+            gap = calibration_gap(depth, 6, (HISTORY_START.year, y1), "SSI-6")
+            self.ctx.explain("kpis.ssi6", gap or f"No 6-month runoff total for this scope ending {lm:%b %Y}")
         kpis.append(
             c.Kpi(
                 id="ssi6",
@@ -247,7 +249,7 @@ class RunoffService:
                 sublabel=f"{lm:%b %Y}, computed (gamma, {base})",
                 value=rnd(sv, 2),
                 decimals=2,
-                status=c.Status(scale="drought", id=cls, label=drought_label(cls)),
+                **drought_status(sv),
                 **self.kpi_extra(lm, Q),
             )
         )
@@ -394,6 +396,8 @@ class RunoffService:
         series = []
         for i, k in enumerate((1, 3, 6, 12)):
             idx = standardized_index(s, k, (HISTORY_START.year, y1))
+            if gap := calibration_gap(s, k, (HISTORY_START.year, y1), f"SSI-{k}"):
+                self.ctx.explain(f"series.ssi{k}", gap)
             series.append(
                 c.Series(
                     key=f"ssi{k}",
@@ -669,6 +673,14 @@ class RunoffService:
         depth = await self.window_depth(start, end)
         normal = window_normal(await self.normals(y1), start, end)
         cats, cur, lt = [], [], []
+        missing = [w.name for w in sp.wmas if any(pd.isna(depth.get(k, np.nan)) for k in ov[w.id])]
+        if missing:
+            reason = (
+                f"A WMA volume needs runoff for every district overlapping it; {len(missing)} of {len(sp.wmas)} WMAs "
+                f"miss at least one ({', '.join(sorted(missing)[:5])})"
+            )
+            self.ctx.explain("series.current", reason)
+            self.ctx.explain("series.lt", reason)
         for wma in sorted(sp.wmas, key=lambda r: int(r.id[3:])):
             f = {k: a / 1000 for k, a in ov[wma.id].items()}  # overlap km² / 1000: Mm³ per mm
             cats.append(wma.name)
@@ -736,6 +748,8 @@ class RunoffService:
         ):
             clim = ann[(ann.index >= HISTORY_START.year) & (ann.index <= y1)].mean()
             tr = sens_slope([ann.get(y) for y in yrs])
+            if gap := trend_gap([ann.get(y) for y in yrs], f"annual {name.lower()}"):
+                self.ctx.explain("rows.trend", gap)
             rows.append(
                 {
                     "id": rid,

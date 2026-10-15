@@ -21,15 +21,23 @@ from typing import Any
 import pandas as pd
 
 from app.core import districts
-from app.core.aggregate import is_complete_month, monthly_normals, weighted, weighted_scalar, window_normal
+from app.core.aggregate import (
+    coverage_reason,
+    is_complete_month,
+    monthly_normals,
+    short_of_coverage,
+    weighted,
+    weighted_scalar,
+    window_normal,
+)
 from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable, NotFound
 from app.core.filters import parse_window
 from app.core.palettes import NEGATIVE, NORMAL, POSITIVE, SERIES, YEAR_COLOURS, drought_bands
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope
-from app.core.thresholds import drought_class, drought_label
-from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
+from app.core.thresholds import drought_class_or_none
+from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status, forecast_unavailable, unknown
 from app.schemas import contract as c
 
 MODULE = "rainfall"
@@ -188,7 +196,8 @@ class RainfallService:
         month = await self.latest_complete_month()
         for kid, var, metric, label in (("spi6", "spi_6", "spi", "SPI-6"), ("spei6", "spei_6", "spei", "SPEI-6")):
             v = await self._index_at(var, month, w)
-            cls = drought_class(v)
+            if v is None:
+                self.ctx.explain(f"kpis.{kid}", f"No area-weighted {label} for this scope in {month:%b %Y}")
             kpis.append(
                 c.Kpi(
                     id=kid,
@@ -197,7 +206,7 @@ class RainfallService:
                     sublabel=f"{month:%b %Y} (latest complete month)",
                     value=rnd(v, 2),
                     decimals=2,
-                    status=c.Status(scale="drought", id=cls, label=drought_label(cls)),
+                    **drought_status(v),
                     **self.kpi_extra(month, self.src(var)),
                 )
             )
@@ -341,6 +350,7 @@ class RainfallService:
             nv = [normal[x.month] for x in span]
             ok = all(v is not None and not pd.isna(v) for v in pv) and all(v for v in nv)
             rows.append((m, (sum(pv) - sum(nv)) / sum(nv) * 100 if ok else None))  # type: ignore[arg-type]
+        anomaly_split_reasons(self.ctx, [a for _, a in rows], "rainfall anomaly")
         pos = [[iso(m), rnd(a, 1) if a is not None and a >= 0 else None] for m, a in rows]
         neg = [[iso(m), rnd(a, 1) if a is not None and a < 0 else None] for m, a in rows]
         return c.SeriesSet(
@@ -626,11 +636,18 @@ class RainfallService:
         if sel.level in ("province", "municipality"):
             p = sel.id if sel.level == "province" else districts.by_code(sel.id).province  # type: ignore[union-attr]
             provs = [p]
+        groups = {districts.PROVINCES[p]: {d.code: areas[d.code] for d in districts.in_province(p)} for p in provs}
+        if short := short_of_coverage(set(totals.dropna().index), groups):
+            reason = coverage_reason(f"rainfall on ≥ 95 % of the days {start} – {end}", short, len(groups))
+            self.ctx.explain("rows.total", reason)
+            self.ctx.explain("rows.anomaly", reason)
+        if short := short_of_coverage(set(spi_at.dropna().index), groups):
+            self.ctx.explain("rows.status", coverage_reason(f"SPI-12 for {month:%b %Y}", short, len(groups)))
         rows = []
         for p in provs:
             w = {d.code: areas[d.code] for d in districts.in_province(p)}
             t, n = weighted_scalar(totals, w), weighted_scalar(normal, w)
-            cls = drought_class(weighted_scalar(spi_at, w))
+            cls = drought_class_or_none(weighted_scalar(spi_at, w))
             rows.append(
                 {
                     "id": p,
@@ -936,7 +953,6 @@ class RainfallService:
         areas = self.ctx.state.spatial.district_areas()
         if areas:
             fields.append(c.EntityField(label="Area", value=round(areas[d.code]), unit="km²"))
-        cls = drought_class(spi6)
         return c.EntityDetail(
             id=d.code,
             name=d.official_name,
@@ -944,7 +960,7 @@ class RainfallService:
             province=d.province,
             sub=f"{districts.PROVINCES[d.province]} · MDB {d.code}",
             title=d.official_name,
-            status=c.Status(scale="drought", id=cls, label=drought_label(cls)),
+            **drought_status(spi6),
             fields=fields,
             image="municipality",
             as_of=iso(newest),

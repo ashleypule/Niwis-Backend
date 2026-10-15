@@ -14,7 +14,7 @@ from typing import Any
 
 import httpx
 
-from app.core.response_checks import Coverage, all_violations
+from app.core.response_checks import Coverage, all_violations, invariant_violations
 from app.modules.climate import service as climate
 from app.modules.common import Selector
 from app.modules.drought import service as drought
@@ -89,10 +89,11 @@ async def fetch(client: httpx.AsyncClient, path: str, params: dict[str, str]) ->
 
 
 async def audit(
-    client: httpx.AsyncClient, scopes: list[dict[str, str]], coverage: Coverage | None
+    client: httpx.AsyncClient, scopes: list[dict[str, str]], coverage: Coverage | None, *, completeness: bool = True
 ) -> tuple[int, list[str]]:
     """Request everything in the catalog; return (requests made, problems). A problem is a status other than 200 /
-    501 or a response that fails app.core.response_checks."""
+    501 or a response that fails app.core.response_checks (`completeness=False`: invariants only)."""
+    check = all_violations if completeness else invariant_violations
     problems: list[str] = []
     reqs = await requests(client, scopes)
     for path, params in reqs:
@@ -102,5 +103,5 @@ async def audit(
             problems.append(f"{where}: HTTP {r.status_code} {r.text[:200]}")
             continue
         if r.status_code == 200:
-            problems += [f"{where}: {v}" for v in all_violations(r.json(), coverage)]
+            problems += [f"{where}: {v}" for v in check(r.json(), coverage)]
     return len(reqs), problems
