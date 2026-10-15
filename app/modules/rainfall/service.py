@@ -34,7 +34,7 @@ from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable, NotFound
 from app.core.filters import parse_window
 from app.core.palettes import NEGATIVE, NORMAL, POSITIVE, SERIES, YEAR_COLOURS, drought_bands
-from app.core.provenance import iso
+from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import drought_class_or_none
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status, forecast_unavailable, unknown
@@ -100,8 +100,8 @@ class RainfallService:
     def src(self, *variables: str) -> list[str]:
         return sorted({self.data.table_of(v) for v in variables})
 
-    def kpi_extra(self, as_of: dt.date | None, sources: list[str]) -> dict[str, Any]:
-        return {"asOf": iso(as_of), "source": sources, "isStale": self.ctx.stale(as_of)}
+    def kpi_extra(self, as_of: dt.date | None, sources: list[str], res: Resolution = "daily") -> dict[str, Any]:
+        return {"as_of": iso(as_of), "source": sources, **self.ctx.stamp(as_of, res)}
 
     # ---------------------------------------------------------------- summary
 
@@ -207,7 +207,7 @@ class RainfallService:
                     value=rnd(v, 2),
                     decimals=2,
                     **drought_status(v),
-                    **self.kpi_extra(month, self.src(var)),
+                    **self.kpi_extra(month, self.src(var), res="monthly"),
                 )
             )
         reason = "No rainfall-station data in the database (data are per district municipality)"
@@ -222,7 +222,13 @@ class RainfallService:
         )
         as_of = max(_d(x.as_of) for x in kpis if x.as_of)
         components = [
-            c.Component(key=k.id, as_of=k.as_of, source=k.source or [], is_stale=bool(k.is_stale))
+            c.Component(
+                key=k.id,
+                as_of=k.as_of,
+                source=k.source or [],
+                is_stale=bool(k.is_stale),
+                **({"period_end": k.period_end} if k.period_end else {}),
+            )
             for k in kpis
             if k.as_of
         ]
@@ -369,7 +375,7 @@ class RainfallService:
                 else f"Total of the {n_months} complete months ending each month vs the sum of their 2000–2026 "
                 "monthly means."
             ),
-            **self._prov(last.date(), "rain_daily", "rain_anomaly_mm", baseline=True),
+            **self._prov(last.date(), "rain_daily", "rain_anomaly_mm", baseline=True, res="monthly"),
         )
 
     async def _index_series(self, var: str, first: pd.Timestamp, last: pd.Timestamp) -> list[list[Any]]:
@@ -403,7 +409,7 @@ class RainfallService:
             ref_lines=[c.RefLine(y=0, label="Normal")],
             as_of=iso(last),
             note="Area-weighted mean of district indices (approximation of a regional SPI). Complete months only.",
-            **self._prov(last.date(), *[v for v, _ in specs]),
+            **self._prov(last.date(), *[v for v, _ in specs], res="monthly"),
         )
 
     async def ts_intensity(self) -> c.SeriesSet:
@@ -440,7 +446,7 @@ class RainfallService:
             ],
             as_of=iso(last),
             note="Daily max = highest district daily total in the scope; R20mm days = area-weighted district mean.",
-            **self._prov(last.date(), "rain_daily"),
+            **self._prov(last.date(), "rain_daily", res="monthly"),
         )
 
     async def _annual_window(self) -> tuple[int, int]:
@@ -485,7 +491,7 @@ class RainfallService:
             ],
             as_of=f"{y1}-01-01",
             note="Annual ETCCDI indices, full years only (area-weighted district mean).",
-            **self._prov(dt.date(y1, 12, 31), "cdd", "cwd"),
+            **self._prov(dt.date(y1, 12, 31), "cdd", "cwd", res="annual"),
         )
 
     async def ts_station(self) -> c.SeriesSet:
@@ -538,11 +544,13 @@ class RainfallService:
             ],
             as_of=iso(last),
             note="District values (NIWIS data are per district municipality; no stations).",
-            **{**self._prov(last.date(), "rain_daily", "spi_3", "spi_12"), "aggregation": "district"},
+            **{**self._prov(last.date(), "rain_daily", "spi_3", "spi_12", res="monthly"), "aggregation": "district"},
         )
 
-    def _prov(self, as_of: dt.date, *variables: str, baseline: bool = False) -> dict[str, Any]:
-        p = self.ctx.provenance(as_of, self.src(*variables), baseline=baseline)
+    def _prov(
+        self, as_of: dt.date, *variables: str, baseline: bool = False, res: Resolution = "daily"
+    ) -> dict[str, Any]:
+        p = self.ctx.provenance(as_of, self.src(*variables), baseline=baseline, res=res)
         p.pop("asOf")
         return p
 
@@ -574,7 +582,7 @@ class RainfallService:
                 categories=[str(y) for y in years],
                 series=series,
                 as_of=f"{y1}-01-01",
-                **self._prov(dt.date(y1, 12, 31), "rain_season_djf"),
+                **self._prov(dt.date(y1, 12, 31), "rain_season_djf", res="annual"),
             ).dump()
         if metric == "events":
             kind = self.ctx.select(EVENTS_KIND)
@@ -778,7 +786,7 @@ class RainfallService:
             row_key="id",
             as_of=f"{y1}-01-01",
             **{
-                **self._prov(dt.date(y1, 12, 31), "rain_annual", "rain_daily", "r20mm", "rx1day", "cdd"),
+                **self._prov(dt.date(y1, 12, 31), "rain_annual", "rain_daily", "r20mm", "rx1day", "cdd", res="annual"),
                 "baseline": f"{y0}–{y1} (full years)",
                 "baselineNote": self.ctx.state.registry.baseline.note,
             },
@@ -888,7 +896,11 @@ class RainfallService:
             vals = df[df["date"].dt.year == y1].set_index("district")["value"]
             nd, date, variables = 0, dt.date(y1, 12, 31), ["r20mm"]
         values = {code: rnd(float(v), nd) for code, v in vals.items() if code in w}
-        prov = self.ctx.provenance(date, self.src(*variables), baseline=baseline)
+        annual, monthly = ("rain_annual", "r20mm"), ("spi_", "spei_")
+        map_res: Resolution = (
+            "annual" if variables[0] in annual else "monthly" if variables[0].startswith(monthly) else "daily"
+        )
+        prov = self.ctx.provenance(date, self.src(*variables), baseline=baseline, res=map_res)
         prov["aggregation"] = "district"
         return c.MapLayer(
             id=layer,

@@ -65,6 +65,16 @@
       (`drought_class_or_none`, `drought_status`). Not visible on Supabase today (all 52 districts report), but would
       have been for any scope with a missing district.
 
+- [x] **#7 Annual data flagged stale.** Root cause: `isStale` compared the stamped date with the newest DB date using
+      one rule for every resolution. Annual values were stamped 31 Dec of their year (2025-12-31 → 249 days before
+      2026-09-06 → stale), although 2025 is the last complete year; monthly values were measured from the 1st of the
+      month (up to 30 days too stale). Fix (`app/core/provenance.py`): staleness from the end of the period per
+      resolution (daily = the day, monthly = month end, annual = 31 Dec); the latest complete period relative to the
+      newest record is never stale. Every provenance call now states its resolution; `asOf` is unchanged and an
+      optional `periodEnd` is added to responses, KPIs and components for monthly / annual values.
+      `tests/test_provenance.py`: boundaries per resolution, plus the reported endpoints (2025 → not stale) and the
+      satellite months (2025-12 → still stale).
+
 ### Phase 7 — Hardening (2026-10-14)
 
 - [x] Performance (`docs/PERFORMANCE.md`): summary p95 16–106 ms with warm data caches across 61 scopes per module

@@ -78,7 +78,7 @@ async def driver_series(ctx: Ctx, rain: RainfallService, key: str, sid: str = "d
         agg = weighted(df[["district", "date", "value"]], w).set_index("date")["value"]
         months = _months(min(start.replace(day=1), last), last)
         data = [[iso(m.date()), rnd(agg.get(m), d.decimals)] for m in months]
-    prov: dict[str, Any] = ctx.provenance(last, [ctx.data.table_of(d.var)])
+    prov: dict[str, Any] = ctx.provenance(last, [ctx.data.table_of(d.var)], res="monthly")
     prov.pop("asOf")
     return c.SeriesSet(
         id=sid,

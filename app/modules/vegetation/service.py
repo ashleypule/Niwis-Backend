@@ -23,7 +23,7 @@ from app.core.aggregate import class_areas, coverage_reason, short_of_coverage, 
 from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable
 from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
-from app.core.provenance import iso
+from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import thresholds, veg_class
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, forecast_unavailable, unknown
@@ -98,16 +98,18 @@ class VegetationService:
     def src(self, *variables: str) -> list[str]:
         return self.rain.src(*variables)
 
-    def _prov(self, as_of: dt.date | None, *variables: str, baseline: str | None = None) -> dict[str, Any]:
-        p = self.ctx.provenance(as_of, self.src(*variables))
+    def _prov(
+        self, as_of: dt.date | None, *variables: str, baseline: str | None = None, res: Resolution = "daily"
+    ) -> dict[str, Any]:
+        p = self.ctx.provenance(as_of, self.src(*variables), res=res)
         p.pop("asOf")
         if baseline:
             p["baseline"] = baseline
             p["baselineNote"] = self.ctx.state.registry.baseline.note
         return p
 
-    def kpi_extra(self, as_of: dt.date | None, *variables: str) -> dict[str, Any]:
-        return {"as_of": iso(as_of), "source": self.src(*variables), "is_stale": self.ctx.stale(as_of)}
+    def kpi_extra(self, as_of: dt.date | None, *variables: str, res: Resolution = "daily") -> dict[str, Any]:
+        return {"as_of": iso(as_of), "source": self.src(*variables), **self.ctx.stamp(as_of, res)}
 
     async def last(self, var: str = "ndvi") -> dt.date:
         return _d((await self.data.monthly(var))["date"].max())
@@ -162,7 +164,7 @@ class VegetationService:
                 sublabel=f"{m:%b %Y}",
                 value=rnd(v, 3 if var in ("ndvi", "soil_moisture_surface") else 1),
                 decimals=dec,
-                **self.kpi_extra(m, var),
+                **self.kpi_extra(m, var, res="monthly"),
             )
             if unit:
                 k.unit = unit
@@ -179,7 +181,7 @@ class VegetationService:
                 value=rnd(stress, 1),
                 unit="%",
                 decimals=0,
-                **self.kpi_extra(m, "vhi"),
+                **self.kpi_extra(m, "vhi", res="monthly"),
             )
         )
         cur, nor = (
@@ -195,7 +197,7 @@ class VegetationService:
                 value=rnd((cur - nor) / nor * 100, 1) if cur is not None and nor else None,
                 unit="%",
                 decimals=0,
-                **self.kpi_extra(m, "ndvi"),
+                **self.kpi_extra(m, "ndvi", res="monthly"),
             )
         )
         body = c.KpiSet(
@@ -204,7 +206,14 @@ class VegetationService:
             scope=self.ctx.scope,
             kpis=kpis,
             components=[
-                c.Component(key=k.id, as_of=k.as_of, source=k.source or [], is_stale=bool(k.is_stale)) for k in kpis
+                c.Component(
+                    key=k.id,
+                    as_of=k.as_of,
+                    source=k.source or [],
+                    is_stale=bool(k.is_stale),
+                    **({"period_end": k.period_end} if k.period_end else {}),
+                )
+                for k in kpis
             ],
             **self._prov(
                 m,
@@ -215,6 +224,7 @@ class VegetationService:
                 "lst",
                 "soil_moisture_surface",
                 baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean",
+                res="monthly",
             ),
         )
         return body.dump()
@@ -269,7 +279,7 @@ class VegetationService:
             series=series,
             as_of=iso(m),
             **extra,
-            **self._prov(m, *(variables or ["ndvi"])),
+            **self._prov(m, *(variables or ["ndvi"]), res="monthly"),
         )
 
     async def ts_index_trend(self) -> c.SeriesSet:
@@ -322,7 +332,7 @@ class VegetationService:
             as_of=iso(m),
             note="Contract label '1991–2020' → 2001–2025 (satellite record). Previous year is plotted on "
             "the current year's months.",
-            **self._prov(m, var, baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean ± 1 s.d."),
+            **self._prov(m, var, baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean ± 1 s.d.", res="monthly"),
         )
 
     async def ts_anomaly(self) -> c.SeriesSet:
@@ -363,7 +373,7 @@ class VegetationService:
                 ),
             ],
             as_of=iso(m),
-            **self._prov(m, "ndvi", baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean"),
+            **self._prov(m, "ndvi", baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean", res="monthly"),
         )
 
     async def ts_drivers(self) -> c.SeriesSet:
@@ -403,7 +413,7 @@ class VegetationService:
                     )
                 ],
                 as_of=iso(m),
-                **self._prov(m, "vhi"),
+                **self._prov(m, "vhi", res="monthly"),
             ).dump()
         if metric == "by-province":
             areas = self.ctx.state.spatial.district_areas()
@@ -440,7 +450,7 @@ class VegetationService:
                     for k in VEG_CLASSES
                 ],
                 as_of=iso(m),
-                **{**self._prov(m, "vhi"), "aggregation": "district-area-weighted"},
+                **{**self._prov(m, "vhi", res="monthly"), "aggregation": "district-area-weighted"},
             ).dump()
         if metric == "seasonal":
             ndvi = await self.scope_series("ndvi")
@@ -462,7 +472,7 @@ class VegetationService:
                 categories=[str(y) for y in years],
                 series=series,
                 as_of=iso(m),
-                **self._prov(m, "ndvi"),
+                **self._prov(m, "ndvi", res="monthly"),
             ).dump()
         if metric == "drivers":
             return (await self.drivers()).dump()
@@ -503,7 +513,9 @@ class VegetationService:
                 f = sum if how == "sum" else (lambda xs: sum(xs) / len(xs))
                 vals.append(rnd((f(cur) - f(normal)) / f(normal) * 100, 1))
             comps.append(
-                c.Component(key=var, as_of=iso(end.date()), source=self.src(var), is_stale=self.ctx.stale(end.date()))
+                c.Component(
+                    key=var, as_of=iso(end.date()), source=self.src(var), **self.ctx.stamp(end.date(), "monthly")
+                )
             )
         as_of = max((dt.date.fromisoformat(x.as_of) for x in comps if x.as_of), default=None)
         return c.CategorySet(
@@ -523,6 +535,7 @@ class VegetationService:
                     "gdd",
                     "lst",
                     baseline=f"{CLIM[0]}–{CLIM[1]} same-months mean",
+                    res="monthly",
                 ),
                 "isStale": any(x.is_stale for x in comps),
             },
@@ -594,7 +607,7 @@ class VegetationService:
                 total=len(rows),
                 as_of=iso(m),
                 **{
-                    **self._prov(m, "ndvi", "vci", baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean"),
+                    **self._prov(m, "ndvi", "vci", baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean", res="monthly"),
                     "aggregation": "district-area-weighted",
                 },
             ).dump()
@@ -634,7 +647,7 @@ class VegetationService:
             total=len(rows),
             as_of=iso(m),
             **{
-                **self._prov(m, "ndvi", "vci", baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean"),
+                **self._prov(m, "ndvi", "vci", baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean", res="monthly"),
                 "aggregation": "district",
             },
         ).dump()
@@ -689,7 +702,7 @@ class VegetationService:
                 layer,
                 [*simple, "ndvi-anomaly", "ndvi-trend", *ONLY_IN_5_1, "forecast-ndvi", "forecast-anomaly"],
             )
-        prov = self.ctx.provenance(m, self.src(*variables))
+        prov = self.ctx.provenance(m, self.src(*variables), res="monthly")
         prov["aggregation"] = "district"
         if baseline:
             prov["baseline"], prov["baselineNote"] = baseline, self.ctx.state.registry.baseline.note

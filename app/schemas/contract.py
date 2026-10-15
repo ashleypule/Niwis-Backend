@@ -41,6 +41,7 @@ class Component(ContractModel):
     as_of: str | None = Field(None, alias="asOf")
     source: list[str] = []
     is_stale: bool = Field(False, alias="isStale")
+    period_end: str | None = Field(None, alias="periodEnd")
 
 
 Aggregation = Literal["district", "district-area-weighted", "district-overlap"]
@@ -51,6 +52,7 @@ class Provenance(ContractModel):
 
     source: list[str] | None = None
     is_stale: bool | None = Field(None, alias="isStale")
+    period_end: str | None = Field(None, alias="periodEnd")  # last day of the asOf period (monthly / annual values)
     components: list[Component] | None = None
     baseline: str | None = None
     baseline_note: str | None = Field(None, alias="baselineNote")
@@ -92,6 +94,7 @@ class Kpi(ContractModel):
     as_of: str | None = Field(None, alias="asOf")
     source: list[str] | None = None
     is_stale: bool | None = Field(None, alias="isStale")
+    period_end: str | None = Field(None, alias="periodEnd")
     unavailable_reason: str | None = Field(None, alias="unavailableReason")
 
 

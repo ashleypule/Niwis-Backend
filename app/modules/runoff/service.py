@@ -32,7 +32,7 @@ from app.core.data import DataAccess
 from app.core.errors import DataUnavailable, NotFound
 from app.core.indices import calibration_gap, standardized_index
 from app.core.palettes import NORMAL, OBSERVED, SERIES, YEAR_COLOURS, drought_bands
-from app.core.provenance import iso
+from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope, trend_gap
 from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
 from app.modules.drivers import driver_series
@@ -67,15 +67,17 @@ class RunoffService:
     def src(self, *variables: str) -> list[str]:
         return self.rain.src(*variables)
 
-    def _prov(self, as_of: dt.date | None, *variables: str, baseline: str | None = None) -> dict[str, Any]:
-        p = self.ctx.provenance(as_of, self.src(*variables))
+    def _prov(
+        self, as_of: dt.date | None, *variables: str, baseline: str | None = None, res: Resolution = "daily"
+    ) -> dict[str, Any]:
+        p = self.ctx.provenance(as_of, self.src(*variables), res=res)
         p.pop("asOf")
         if baseline:
             p["baseline"], p["baselineNote"] = baseline, self.ctx.state.registry.baseline.note
         return p
 
-    def kpi_extra(self, as_of: dt.date | None, *variables: str) -> dict[str, Any]:
-        return {"as_of": iso(as_of), "source": self.src(*variables), "is_stale": self.ctx.stale(as_of)}
+    def kpi_extra(self, as_of: dt.date | None, *variables: str, res: Resolution = "daily") -> dict[str, Any]:
+        return {"as_of": iso(as_of), "source": self.src(*variables), **self.ctx.stamp(as_of, res)}
 
     async def newest(self) -> dt.date:
         return await self.data.newest(Q)
@@ -250,7 +252,7 @@ class RunoffService:
                 value=rnd(sv, 2),
                 decimals=2,
                 **drought_status(sv),
-                **self.kpi_extra(lm, Q),
+                **self.kpi_extra(lm, Q, res="monthly"),
             )
         )
         for kid, metric, label in (
@@ -265,7 +267,13 @@ class RunoffService:
             scope=self.ctx.scope,
             kpis=kpis,
             components=[
-                c.Component(key=k.id, as_of=k.as_of, source=k.source or [], is_stale=bool(k.is_stale))
+                c.Component(
+                    key=k.id,
+                    as_of=k.as_of,
+                    source=k.source or [],
+                    is_stale=bool(k.is_stale),
+                    **({"period_end": k.period_end} if k.period_end else {}),
+                )
                 for k in kpis
                 if k.as_of
             ],
@@ -386,7 +394,7 @@ class RunoffService:
                 ),
             ],
             as_of=iso(last),
-            **self._prov(last, Q, baseline=f"{HISTORY_START.year}–{y1} same-month mean"),
+            **self._prov(last, Q, baseline=f"{HISTORY_START.year}–{y1} same-month mean", res="monthly"),
         )
 
     async def ts_ssi(self) -> c.SeriesSet:
@@ -418,7 +426,7 @@ class RunoffService:
             as_of=iso(last),
             note=f"Computed by the API from the scope's monthly runoff depth (gamma fit per calendar month, "
             f"{HISTORY_START.year}–{y1}); the DB's SSI is withheld.",
-            **self._prov(last, Q, baseline=f"{HISTORY_START.year}–{y1} calibration"),
+            **self._prov(last, Q, baseline=f"{HISTORY_START.year}–{y1} calibration", res="monthly"),
         )
 
     async def ts_rainfall_runoff(self) -> c.SeriesSet:
@@ -443,7 +451,7 @@ class RunoffService:
                 ),
             ],
             as_of=iso(last),
-            **self._prov(last, "rain_daily", Q),
+            **self._prov(last, "rain_daily", Q, res="monthly"),
         )
 
     async def ts_water_balance(self) -> c.SeriesSet:
@@ -483,7 +491,7 @@ class RunoffService:
                 ),
             ],
             as_of=iso(last),
-            **self._prov(last, "rain_daily", "aet_daily", Q),
+            **self._prov(last, "rain_daily", "aet_daily", Q, res="monthly"),
         )
 
     async def ts_flood_frequency(self) -> c.SeriesSet:
@@ -545,7 +553,7 @@ class RunoffService:
             note=f"Annual maxima of derived daily mean flow {HISTORY_START.year}–{y1} "
             "(not instantaneous peaks; modelled runoff). Weibull plotting positions; "
             "90 % band from a 500-sample parametric bootstrap.",
-            **self._prov(dt.date(y1, 12, 31), Q),
+            **self._prov(dt.date(y1, 12, 31), Q, res="annual"),
         )
 
     async def ts_fdc(self) -> c.SeriesSet:
@@ -624,7 +632,7 @@ class RunoffService:
             as_of=iso(last),
             note=f"Complete months only; long-term = {HISTORY_START.year}–{y1}. Derived from modelled runoff × real "
             f"district area ({how}).",
-            **self._prov(last, Q, baseline=f"{HISTORY_START.year}–{y1}"),
+            **self._prov(last, Q, baseline=f"{HISTORY_START.year}–{y1}", res="monthly"),
         )
 
     async def ts_seasonal(self) -> c.SeriesSet:
@@ -831,7 +839,7 @@ class RunoffService:
             link_to="/runoff?entityId=",
             total=len(rows),
             as_of=iso(lm.date()),
-            **{**self._prov(lm.date(), Q), "aggregation": "district"},
+            **{**self._prov(lm.date(), Q, res="monthly"), "aggregation": "district"},
         )
 
     async def tbl_events(self, limit: int | None) -> c.TableSet:
@@ -953,7 +961,11 @@ class RunoffService:
                 ],
             )
         nd = 3 if layer == "runoff-coefficient" else 1
-        prov = self.ctx.provenance(date, self.src(Q, *(["rain_daily"] if layer == "runoff-coefficient" else [])))
+        prov = self.ctx.provenance(
+            date,
+            self.src(Q, *(["rain_daily"] if layer == "runoff-coefficient" else [])),
+            res="annual" if layer == "runoff-coefficient" else "daily",
+        )
         prov["aggregation"] = "district"
         if baseline:
             prov["baseline"], prov["baselineNote"] = baseline, self.ctx.state.registry.baseline.note

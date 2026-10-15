@@ -304,6 +304,17 @@
             ],
             "title": "Isstale"
           },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
+          },
           "series": {
             "items": {
               "$ref": "#/components/schemas/CategorySeries"
@@ -504,6 +515,17 @@
           "key": {
             "title": "Key",
             "type": "string"
+          },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
           },
           "source": {
             "default": [],
@@ -916,6 +938,17 @@
             "title": "Items",
             "type": "array"
           },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
+          },
           "source": {
             "anyOf": [
               {
@@ -1132,6 +1165,17 @@
             "title": "Metric",
             "type": "string"
           },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
+          },
           "source": {
             "anyOf": [
               {
@@ -1315,6 +1359,17 @@
           "module": {
             "title": "Module",
             "type": "string"
+          },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
           },
           "scope": {
             "$ref": "#/components/schemas/Scope"
@@ -1518,6 +1573,17 @@
             ],
             "title": "Level",
             "type": "string"
+          },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
           },
           "points": {
             "anyOf": [
@@ -1774,6 +1840,17 @@
               }
             ],
             "title": "Isstale"
+          },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
           },
           "rows": {
             "items": {
@@ -2244,6 +2321,17 @@
             ],
             "title": "Note"
           },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
+          },
           "refLines": {
             "anyOf": [
               {
@@ -2467,6 +2555,17 @@
               }
             ],
             "title": "Linkto"
+          },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
           },
           "rowKey": {
             "anyOf": [

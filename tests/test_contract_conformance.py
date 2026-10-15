@@ -19,9 +19,9 @@ from app.schemas import contract as c
 
 CONTRACT = (Path(__file__).resolve().parent.parent / "reference" / "API_CONTRACT.md").read_text(encoding="utf-8")
 
-PROVENANCE = {"source", "isStale", "components", "baseline", "baselineNote", "aggregation", "unavailable"}
+PROVENANCE = {"source", "isStale", "periodEnd", "components", "baseline", "baselineNote", "aggregation", "unavailable"}
 ADDITIONS: dict[str, set[str]] = {
-    "KpiSchema": {"asOf", "source", "isStale", "unavailableReason"},
+    "KpiSchema": {"asOf", "source", "isStale", "periodEnd", "unavailableReason"},
     "KpiSetSchema": PROVENANCE,
     "SeriesSetSchema": PROVENANCE,
     "CategorySetSchema": PROVENANCE | {"asOf"},

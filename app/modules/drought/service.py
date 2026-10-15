@@ -33,7 +33,7 @@ from app.core.aggregate import (
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
 from app.core.palettes import DROUGHT, NORMAL, OBSERVED, SERIES, drought_bands
-from app.core.provenance import iso
+from app.core.provenance import Resolution, iso
 from app.core.stats import rnd
 from app.core.thresholds import (
     drought_class,
@@ -77,13 +77,15 @@ class DroughtService:
     def src(self, *variables: str) -> list[str]:
         return self.rain.src(*variables)
 
-    def _prov(self, as_of: dt.date | None, *variables: str, baseline: bool = False) -> dict[str, Any]:
-        p = self.ctx.provenance(as_of, self.src(*variables), baseline=baseline)
+    def _prov(
+        self, as_of: dt.date | None, *variables: str, baseline: bool = False, res: Resolution = "daily"
+    ) -> dict[str, Any]:
+        p = self.ctx.provenance(as_of, self.src(*variables), baseline=baseline, res=res)
         p.pop("asOf")
         return p
 
-    def kpi_extra(self, as_of: dt.date | None, *variables: str) -> dict[str, Any]:
-        return {"as_of": iso(as_of), "source": self.src(*variables), "is_stale": self.ctx.stale(as_of)}
+    def kpi_extra(self, as_of: dt.date | None, *variables: str, res: Resolution = "daily") -> dict[str, Any]:
+        return {"as_of": iso(as_of), "source": self.src(*variables), **self.ctx.stamp(as_of, res)}
 
     async def latest(self, var: str) -> dt.date:
         """Latest month of a monthly variable (complete months only for monthly-from-daily rainfall indices)."""
@@ -175,7 +177,7 @@ class DroughtService:
                 value=float(thresholds()["drought"]["rank"][cls]) if cls else None,
                 **({"text": "No drought" if cls == "None" else cls} if cls else {}),
                 **drought_status(spi6),
-                **self.kpi_extra(m, "spi_6"),
+                **self.kpi_extra(m, "spi_6", res="monthly"),
             )
         )
         for kid, var, metric, label in (
@@ -196,7 +198,7 @@ class DroughtService:
                     value=rnd(v, 2),
                     decimals=2,
                     **drought_status(v),
-                    **self.kpi_extra(mm, var),
+                    **self.kpi_extra(mm, var, res="monthly"),
                 )
             )
         mv = await self.latest("vci")
@@ -209,7 +211,7 @@ class DroughtService:
             value=rnd(vci, 1),
             unit="%",
             decimals=0,
-            **self.kpi_extra(mv, "vci"),
+            **self.kpi_extra(mv, "vci", res="monthly"),
         )
         if vci is not None:
             vci_kpi.status = c.Status(scale="vci", id=veg_class(vci), label=veg_class(vci))
@@ -225,7 +227,7 @@ class DroughtService:
                 value=rnd(sma, 1),
                 unit="%",
                 decimals=0,
-                **self.kpi_extra(ms, "soil_moisture_surface"),
+                **self.kpi_extra(ms, "soil_moisture_surface", res="monthly"),
             )
         )
         reason_ssi = "SSI is withheld: it is computed from river discharge that is identical in every district"
@@ -250,7 +252,7 @@ class DroughtService:
                     delta_unit=" pp",
                     delta_label="vs last year",
                     spark=[x for x in (rnd(v, 1) for v in st.sort_values("date")["pct"].tail(12)) if x is not None],
-                    **self.kpi_extra(dmo, "dam_storage", "dam_level_pct"),
+                    **self.kpi_extra(dmo, "dam_storage", "dam_level_pct", res="monthly"),
                 )
             )
         msg = await self.latest("sgi")
@@ -263,7 +265,7 @@ class DroughtService:
                 sublabel=f"{msg:%b %Y}",
                 value=rnd(sgi, 2),
                 decimals=2,
-                **self.kpi_extra(msg, "sgi"),
+                **self.kpi_extra(msg, "sgi", res="monthly"),
             )
         )
         reason_set = "No settlement register in the database"
@@ -286,10 +288,19 @@ class DroughtService:
             scope=self.ctx.scope,
             kpis=kpis,
             components=[
-                c.Component(key=k.id, as_of=k.as_of, source=k.source or [], is_stale=bool(k.is_stale)) for k in dated
+                c.Component(
+                    key=k.id,
+                    as_of=k.as_of,
+                    source=k.source or [],
+                    is_stale=bool(k.is_stale),
+                    **({"period_end": k.period_end} if k.period_end else {}),
+                )
+                for k in dated
             ],
             unavailable=unavail,
-            **self._prov(as_of, "spi_6", "spei_12", "vci", "soil_moisture_surface", "dam_storage", "sgi"),
+            **self._prov(
+                as_of, "spi_6", "spei_12", "vci", "soil_moisture_surface", "dam_storage", "sgi", res="monthly"
+            ),
         )
         out = body.dump()
         out["isStale"] = any(k.is_stale for k in dated)  # some components are stale (satellite / hydrology)
@@ -340,7 +351,7 @@ class DroughtService:
             bands=[c.Band.model_validate(b) for b in drought_bands()],
             as_of=iso(last),
             note=f"Area-weighted mean of district SPI-{k}; complete months only.",
-            **self._prov(last, var),
+            **self._prov(last, var, res="monthly"),
         )
 
     async def ts_rain_spei(self) -> c.SeriesSet:
@@ -373,7 +384,7 @@ class DroughtService:
             ],
             as_of=iso(last),
             note="Contract label '1981–2010' → 2000–2026 mean (data start in 2000). Complete months only.",
-            **self._prov(last, "rain_daily", "rain_anomaly_mm", "spei_3", baseline=True),
+            **self._prov(last, "rain_daily", "rain_anomaly_mm", "spei_3", baseline=True, res="monthly"),
         )
 
     async def ts_rain_anomaly(self) -> c.SeriesSet:
@@ -425,7 +436,7 @@ class DroughtService:
             ],
             as_of=iso(last),
             note="District aggregates of dam storage (not individual dams); data end 2025-12.",
-            **self._prov(last, "dam_storage", "dam_inflow"),
+            **self._prov(last, "dam_storage", "dam_inflow", res="monthly"),
         )
 
     async def ts_gw_sgi(self) -> c.SeriesSet:
@@ -450,7 +461,7 @@ class DroughtService:
             ],
             as_of=iso(last),
             unavailable=[c.UnavailableField(field="series.level", reason=reason)],
-            **self._prov(last, "sgi"),
+            **self._prov(last, "sgi", res="monthly"),
         )
 
     async def ts_soil_moisture(self) -> c.SeriesSet:
@@ -503,7 +514,7 @@ class DroughtService:
             as_of=iso(last),
             note=f"Range and mean per calendar month over {CLIM_YEARS[0]}–{CLIM_YEARS[1]}. Data end 2025-12.",
             **{
-                **self._prov(last, "soil_moisture_surface", "soil_moisture_rootzone"),
+                **self._prov(last, "soil_moisture_surface", "soil_moisture_rootzone", res="monthly"),
                 "baseline": f"{CLIM_YEARS[0]}–{CLIM_YEARS[1]} monthly range",
                 "baselineNote": self.ctx.state.registry.baseline.note,
             },
@@ -545,7 +556,7 @@ class DroughtService:
             as_of=iso(last),
             note="satellite_remote_sensing (single vegetation source for the drought and vegetation pages); "
             "data end 2025-12.",
-            **self._prov(last, "ndvi", "vci", "vhi"),
+            **self._prov(last, "ndvi", "vci", "vhi", res="monthly"),
         )
 
     async def ts_drought_area(self) -> c.SeriesSet:
@@ -582,7 +593,7 @@ class DroughtService:
             series=series,
             as_of=iso(last),
             note=f"Share of the scope's area whose district SPI-{k} falls in each class.",
-            **self._prov(last, var),
+            **self._prov(last, var, res="monthly"),
         )
 
     # ---------------------------------------------------------------- forecast
@@ -619,7 +630,7 @@ class DroughtService:
                 series=[c.CategorySeries(key="area", name="Area", values=vals)],
                 center=c.Center(value=f"{in_d / sum(w.values()) * 100:.0f}%", label="in drought (D1–D4)"),
                 as_of=iso(m),
-                **self._prov(m, "spi_6"),
+                **self._prov(m, "spi_6", res="monthly"),
             ).dump()
         if metric == "province-area":
             areas_all = self.ctx.state.spatial.district_areas()
@@ -647,7 +658,7 @@ class DroughtService:
                 categories=list(districts.PROVINCES.values()),
                 series=[c.CategorySeries(key="area", name="Area in drought (D1–D4)", values=vals)],
                 as_of=iso(m),
-                **{**self._prov(m, "spi_6"), "aggregation": "district-area-weighted"},
+                **{**self._prov(m, "spi_6", res="monthly"), "aggregation": "district-area-weighted"},
             ).dump()
         raise unknown("metric", metric, ["severity", "province-area", "restrictions", "class-probability"])
 
@@ -699,8 +710,8 @@ class DroughtService:
             },
         ]
         components = [
-            c.Component(key="meteorological", as_of=iso(m), source=self.src("spi_6"), is_stale=self.ctx.stale(m)),
-            c.Component(key="agricultural", as_of=iso(mv), source=self.src("vhi"), is_stale=self.ctx.stale(mv)),
+            c.Component(key="meteorological", as_of=iso(m), source=self.src("spi_6"), **self.ctx.stamp(m, "monthly")),
+            c.Component(key="agricultural", as_of=iso(mv), source=self.src("vhi"), **self.ctx.stamp(mv, "monthly")),
         ]
         if not st.empty:
             last = st.iloc[st["date"].argmax()]
@@ -718,7 +729,7 @@ class DroughtService:
             )
             components.append(
                 c.Component(
-                    key="hydrological", as_of=iso(ds), source=self.src("dam_storage"), is_stale=self.ctx.stale(ds)
+                    key="hydrological", as_of=iso(ds), source=self.src("dam_storage"), **self.ctx.stamp(ds, "monthly")
                 )
             )
         reason = "No settlement / population data in the database"
@@ -749,7 +760,7 @@ class DroughtService:
             components=components,
             unavailable=[c.UnavailableField(field="rows.socio-economic", reason=reason)],
             **{
-                **self._prov(as_of, "spi_6", "vhi", "dam_storage"),
+                **self._prov(as_of, "spi_6", "vhi", "dam_storage", res="monthly"),
                 "isStale": any(comp.is_stale for comp in components),
             },
         )
@@ -814,7 +825,7 @@ class DroughtService:
             unavailable=[
                 c.UnavailableField(field="rows.confidence", reason="No forecast / ensemble data to estimate confidence")
             ],
-            **{**self._prov(m, "spi_6"), "aggregation": "district-area-weighted"},
+            **{**self._prov(m, "spi_6", res="monthly"), "aggregation": "district-area-weighted"},
         )
 
     async def tbl_municipalities(self, limit: int | None) -> c.TableSet:
@@ -859,7 +870,7 @@ class DroughtService:
                 c.UnavailableField(field="rows.population", reason=reason),
                 c.UnavailableField(field="rows.risk", reason=reason),
             ],
-            **{**self._prov(m, "spi_6"), "aggregation": "district"},
+            **{**self._prov(m, "spi_6", res="monthly"), "aggregation": "district"},
         )
 
     async def tbl_sources(self, limit: int | None) -> c.TableSet:
@@ -929,7 +940,7 @@ class DroughtService:
             unit="%",
             scale="vci",
             as_of=iso(last),
-            **{**self._prov(last, "vci"), "aggregation": "district-area-weighted"},
+            **{**self._prov(last, "vci", res="monthly"), "aggregation": "district-area-weighted"},
         ).dump()
 
     # ---------------------------------------------------------------- maps
@@ -1035,7 +1046,9 @@ class DroughtService:
             sel = self.ctx.filters.scope
             keep = {districts.by_code(x).province for x in sel.district_codes if districts.by_code(x)}  # type: ignore[union-attr]
             values = {str(k): v for k, v in vals.items() if k in keep}
-        prov = self.ctx.provenance(date, self.src(*variables), baseline=baseline)
+        prov = self.ctx.provenance(
+            date, self.src(*variables), baseline=baseline, res="daily" if layer == "rain-anomaly" else "monthly"
+        )
         prov["aggregation"] = "district" if level == "municipality" else "district-area-weighted"
         return c.MapLayer(
             id=layer,

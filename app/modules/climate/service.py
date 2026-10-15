@@ -24,7 +24,7 @@ from app.core.aggregate import coverage_reason, period_gap, short_of_coverage, w
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
 from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
-from app.core.provenance import iso
+from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope, trend_gap, trend_line
 from app.modules.common import Ctx, Selector, unknown
 from app.modules.rainfall.service import HISTORY_START, RainfallService, _months
@@ -89,13 +89,15 @@ class ClimateService:
     def src(self, *variables: str) -> list[str]:
         return self.rain.src(*variables)
 
-    def _prov(self, as_of: dt.date | None, *variables: str, baseline: bool = False) -> dict[str, Any]:
-        p = self.ctx.provenance(as_of, self.src(*variables), baseline=baseline)
+    def _prov(
+        self, as_of: dt.date | None, *variables: str, baseline: bool = False, res: Resolution = "daily"
+    ) -> dict[str, Any]:
+        p = self.ctx.provenance(as_of, self.src(*variables), baseline=baseline, res=res)
         p.pop("asOf")
         return p
 
-    def kpi_extra(self, as_of: dt.date | None, *variables: str) -> dict[str, Any]:
-        return {"as_of": iso(as_of), "source": self.src(*variables), "is_stale": self.ctx.stale(as_of)}
+    def kpi_extra(self, as_of: dt.date | None, *variables: str, res: Resolution = "daily") -> dict[str, Any]:
+        return {"as_of": iso(as_of), "source": self.src(*variables), **self.ctx.stamp(as_of, res)}
 
     async def last_full_year(self) -> int:
         newest = await self.rain.newest_daily()
@@ -170,7 +172,7 @@ class ClimateService:
                 value=rnd(ta, 2),
                 unit="°C",
                 decimals=1,
-                **self.kpi_extra(last, "temp_anomaly"),
+                **self.kpi_extra(last, "temp_anomaly", res="monthly"),
             )
         )
         tavg = await self.annual_agg(await self.annual_daily("tavg", "mean"), y0, y1)
@@ -186,7 +188,7 @@ class ClimateService:
                 value=rnd(tr.slope * 10, 2) if tr else None,
                 unit="°C/decade",
                 decimals=2,
-                **self.kpi_extra(yr_end, "tavg"),
+                **self.kpi_extra(yr_end, "tavg", res="annual"),
             )
         )
         rain = await self.annual_var("rain_annual", y0, y1)
@@ -200,7 +202,7 @@ class ClimateService:
                 value=rnd((rain.get(y1) - r_mean) / r_mean * 100, 1) if y1 in rain.index and r_mean else None,
                 unit="%",
                 decimals=0,
-                **self.kpi_extra(yr_end, "rain_annual"),
+                **self.kpi_extra(yr_end, "rain_annual", res="annual"),
             )
         )
         et0 = await self.annual_agg(await self.annual_daily("et0_daily", "sum"), y0, y1)
@@ -216,7 +218,7 @@ class ClimateService:
                 delta=rnd(et0.get(y1) - et0.mean(), 0) if y1 in et0.index else None,
                 delta_unit=" mm",
                 delta_label=f"vs {y0}–{y1} mean",
-                **self.kpi_extra(yr_end, "et0_daily"),
+                **self.kpi_extra(yr_end, "et0_daily", res="annual"),
             )
         )
         q = await self.annual_agg(await self.annual_daily("runoff_depth_daily", "sum"), y0, y1)
@@ -230,7 +232,7 @@ class ClimateService:
                 value=rnd((q.get(y1) - q_mean) / q_mean * 100, 1) if y1 in q.index and q_mean else None,
                 unit="%",
                 decimals=0,
-                **self.kpi_extra(yr_end, "runoff_depth_daily"),
+                **self.kpi_extra(yr_end, "runoff_depth_daily", res="annual"),
             )
         )
         for kid, var, metric, label, unit in (
@@ -251,7 +253,7 @@ class ClimateService:
                     delta=rnd(s.get(y1) - s.mean(), 1) if y1 in s.index else None,
                     delta_unit=" days",
                     delta_label=f"vs {y0}–{y1} mean",
-                    **self.kpi_extra(yr_end, var),
+                    **self.kpi_extra(yr_end, var, res="annual"),
                 )
             )
         as_of = max(dt.date.fromisoformat(k.as_of) for k in kpis if k.as_of)
@@ -261,7 +263,13 @@ class ClimateService:
             scope=self.ctx.scope,
             kpis=kpis,
             components=[
-                c.Component(key=k.id, as_of=k.as_of, source=k.source or [], is_stale=bool(k.is_stale))
+                c.Component(
+                    key=k.id,
+                    as_of=k.as_of,
+                    source=k.source or [],
+                    is_stale=bool(k.is_stale),
+                    **({"period_end": k.period_end} if k.period_end else {}),
+                )
                 for k in kpis
                 if k.as_of
             ],
@@ -276,6 +284,7 @@ class ClimateService:
                 "r20mm",
                 "cdd",
                 baseline=True,
+                res="monthly",
             ),
         )
         return body.dump()
@@ -357,7 +366,7 @@ class ClimateService:
             as_of=iso(lt.date()),
             note="Monthly means of daily values; anomaly label '1981–2010' → 2000–2026 (data start in 2000). "
             "Complete months only.",
-            **self._prov(lt.date(), "tmax", "temp_anomaly", baseline=True),
+            **self._prov(lt.date(), "tmax", "temp_anomaly", baseline=True, res="monthly"),
         )
 
     async def trend_var_series(self, var: str, y0: int, y1: int) -> pd.Series:
@@ -431,7 +440,7 @@ class ClimateService:
             )
             if tr
             else f"Full years {y0}–{y1}. {source_note}.",
-            **self._prov(dt.date(y1, 12, 31), source_var),
+            **self._prov(dt.date(y1, 12, 31), source_var, res="annual"),
         )
 
     async def ts_extremes(self) -> c.SeriesSet:
@@ -465,7 +474,7 @@ class ClimateService:
             ],
             as_of=f"{y1}-01-01",
             note="Area-weighted district means of annual indices; full years only.",
-            **self._prov(dt.date(y1, 12, 31), "cdd", "rx1day"),
+            **self._prov(dt.date(y1, 12, 31), "cdd", "rx1day", res="annual"),
         )
 
     async def _count_with_trend(
@@ -507,7 +516,7 @@ class ClimateService:
             as_of=f"{y1}-01-01",
             note=(f"Sen's slope {tr.slope * 10:+.1f} {unit}/decade (p = {tr.p:.3f}). " if tr else "")
             + "Area-weighted district mean; full years only.",
-            **self._prov(dt.date(y1, 12, 31), var),
+            **self._prov(dt.date(y1, 12, 31), var, res="annual"),
         )
 
     async def ts_heat_days(self) -> c.SeriesSet:
@@ -581,7 +590,7 @@ class ClimateService:
                 c.UnavailableField(field="series.pan", reason=reason),
                 c.UnavailableField(field="series.vpd", reason=reason),
             ],
-            **self._prov(dt.date(y1, 12, 31), "et0_daily", "pet_daily", "aet_daily"),
+            **self._prov(dt.date(y1, 12, 31), "et0_daily", "pet_daily", "aet_daily", res="annual"),
         )
 
     async def ts_streamflow_linkage(self) -> c.SeriesSet:
@@ -616,7 +625,7 @@ class ClimateService:
             ],
             as_of=f"{y1}-01-01",
             note=f"Modelled runoff depth (runoff_variables_master); anomaly vs {y0}–{y1} mean. Table 4_6 withheld.",
-            **{**self._prov(dt.date(y1, 12, 31), "runoff_depth_daily"), "baseline": f"{y0}–{y1}"},
+            **{**self._prov(dt.date(y1, 12, 31), "runoff_depth_daily", res="annual"), "baseline": f"{y0}–{y1}"},
         )
 
     async def ts_drought_frequency(self) -> c.SeriesSet:
@@ -649,7 +658,7 @@ class ClimateService:
             ],
             as_of=f"{y1}-01-01",
             note="Months per year in which the scope's area-weighted SPI-3 is ≤ −1.5.",
-            **self._prov(dt.date(y1, 12, 31), "spi_3"),
+            **self._prov(dt.date(y1, 12, 31), "spi_3", res="annual"),
         )
 
     async def ts_indicator_trends(self) -> c.SeriesSet:
@@ -733,7 +742,7 @@ class ClimateService:
             as_of=f"{y1}-01-01",
             note="Mean temperature is plotted as 10 × change in °C (contract convention); others as % change. A "
             "zero base year makes the % change undefined (null).",
-            **self._prov(dt.date(y1, 12, 31), "tavg", "rain_annual", "hot_days", "spi_3", "r20mm"),
+            **self._prov(dt.date(y1, 12, 31), "tavg", "rain_annual", "hot_days", "spi_3", "r20mm", res="annual"),
         )
 
     # ---------------------------------------------------------------- forecast
@@ -777,7 +786,7 @@ class ClimateService:
                 categories=[f"{a}–{b}" for a, b in decades],
                 series=series,
                 as_of=f"{y1}-01-01",
-                **self._prov(dt.date(y1, 12, 31), "rain_annual", "rain_season_djf"),
+                **self._prov(dt.date(y1, 12, 31), "rain_annual", "rain_season_djf", res="annual"),
             ).dump()
         raise unknown("metric", metric, ["seasonal-change", "map-seasonality", "risk-index", "projection-bars"])
 
@@ -795,6 +804,7 @@ class ClimateService:
             t = t[t["date"] <= pd.Timestamp(last)]
             years = t["date"].dt.year
             end_year, variables, unit, nd = last.year, ["tavg"], "°C", 2
+            res: Resolution = "monthly"
             as_of, prov_date = iso(last), last
 
             def season_value(a: int, b: int, months: tuple[int, ...], name: str) -> float | None:
@@ -812,6 +822,7 @@ class ClimateService:
             data_first, data_last = (int(min(have)), int(max(have))) if have else (None, None)
             end_year = min(end_year, data_last) if data_last else end_year
             variables, unit, nd = ["rain_season_djf"], "mm", 0
+            res = "annual"
             as_of, prov_date = f"{end_year}-01-01", dt.date(end_year, 12, 31)
 
             def season_value(a: int, b: int, months: tuple[int, ...], name: str) -> float | None:
@@ -836,7 +847,7 @@ class ClimateService:
             series=series,
             as_of=as_of,
             **extra,
-            **self._prov(prov_date, *variables),
+            **self._prov(prov_date, *variables, res=res),
         )
 
     # ---------------------------------------------------------------- tables
@@ -898,7 +909,9 @@ class ClimateService:
             rows=rows,
             row_key="id",
             as_of=f"{y1}-01-01",
-            **self._prov(dt.date(y1, 12, 31), "tavg", "rain_annual", "hot_days", "temp_anomaly", baseline=True),
+            **self._prov(
+                dt.date(y1, 12, 31), "tavg", "rain_annual", "hot_days", "temp_anomaly", baseline=True, res="annual"
+            ),
         )
 
     async def tbl_provinces(self, limit: int | None) -> c.TableSet:
@@ -1014,7 +1027,7 @@ class ClimateService:
             total=len(rows),
             as_of=iso(last),
             **{
-                **self._prov(last, "temp_anomaly", "tavg", "rain_annual", "hot_days", baseline=True),
+                **self._prov(last, "temp_anomaly", "tavg", "rain_annual", "hot_days", baseline=True, res="monthly"),
                 "aggregation": "district-area-weighted",
             },
         )
@@ -1057,7 +1070,9 @@ class ClimateService:
                     reason="No agreed severity thresholds for these signals (none in thresholds.ts)",
                 )
             ],
-            **self._prov(last, "temp_anomaly", "et0_daily", "rain_annual", "runoff_depth_daily", baseline=True),
+            **self._prov(
+                last, "temp_anomaly", "et0_daily", "rain_annual", "runoff_depth_daily", baseline=True, res="monthly"
+            ),
         )
 
     # ---------------------------------------------------------------- maps
@@ -1137,7 +1152,8 @@ class ClimateService:
                 ],
             )
         title, scale, unit, date, variables = spec
-        prov = self.ctx.provenance(date, self.src(*variables), baseline=baseline)
+        map_res: Resolution = "monthly" if layer == "temp-anomaly" else "annual"
+        prov = self.ctx.provenance(date, self.src(*variables), baseline=baseline, res=map_res)
         prov["aggregation"] = "district"
         return c.MapLayer(
             id=layer,

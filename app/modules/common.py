@@ -15,7 +15,7 @@ from app.core.aggregate import aggregation_label, weights
 from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable, NotFound
 from app.core.filters import Filters, parse_compare, parse_scope, parse_window
-from app.core.provenance import is_stale, iso
+from app.core.provenance import Resolution, is_stale, iso, period_end
 from app.core.response_checks import Coverage, attach_reasons, invariant_violations, unexplained_null_violations
 from app.core.thresholds import drought_class_or_none, drought_label
 from app.schemas.contract import Scope, Status
@@ -93,17 +93,29 @@ class Ctx:
         layer adds it to `unavailable` only if that field ends up entirely null (app.core.response_checks)."""
         self.reasons.setdefault(field_path, reason)
 
-    def stale(self, as_of: dt.date | None) -> bool:
-        return is_stale(as_of, self.newest_db, self.state.settings.stale_after_days)
+    def stale(self, as_of: dt.date | None, res: Resolution = "daily") -> bool:
+        """Staleness measured from the end of the value's period (app.core.provenance)."""
+        return is_stale(as_of, self.newest_db, self.state.settings.stale_after_days, res)
 
-    def provenance(self, as_of: dt.date | None, sources: list[str], *, baseline: bool = False) -> dict[str, Any]:
+    def stamp(self, as_of: dt.date | None, res: Resolution = "daily") -> dict[str, Any]:
+        """`isStale` and, for monthly / annual values, `periodEnd` (python field names, for KPIs and components)."""
+        out: dict[str, Any] = {"is_stale": self.stale(as_of, res)}
+        if as_of is not None and res != "daily":
+            out["period_end"] = iso(period_end(as_of, res))
+        return out
+
+    def provenance(
+        self, as_of: dt.date | None, sources: list[str], *, baseline: bool = False, res: Resolution = "daily"
+    ) -> dict[str, Any]:
         """Top-level provenance fields (additions, see docs/CONTRACT_CHANGES.md §4)."""
         out: dict[str, Any] = {
             "asOf": iso(as_of),
             "source": sorted(set(sources)),
-            "isStale": self.stale(as_of),
+            "isStale": self.stale(as_of, res),
             "aggregation": self.aggregation,
         }
+        if as_of is not None and res != "daily":
+            out["periodEnd"] = iso(period_end(as_of, res))
         if baseline:
             b = self.state.registry.baseline
             out["baseline"] = b.stored_anomalies
