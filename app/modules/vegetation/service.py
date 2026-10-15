@@ -82,7 +82,7 @@ def withheld(var: str) -> DataUnavailable:
     return DataUnavailable(
         f"{ONLY_IN_5_1.get(var, var.upper())} is only provided by "
         "5.1_primary_satellite_vegetation_variables_sansa_master, which failed the NDVI plausibility check and is "
-        "withheld (docs/DATA_GAPS.md §5)",
+        "withheld (it shows the same NDVI cycle in every district)",
         missing=[var],
     )
 
@@ -254,7 +254,7 @@ class VegetationService:
             )
         m = await self.last()
         ms = await self.window_months(m)
-        reason = "Only in the withheld 5.1 source (failed the NDVI plausibility check, docs/DATA_GAPS.md §5)"
+        reason = "Only in the withheld 5.1 source (its NDVI fails the plausibility check: one cycle for every district)"
         series, unavailable, variables = [], [], []
         for i, idx in enumerate(ids):
             unit = LIVE_INDICES[idx][2] if idx in LIVE_INDICES else WITHHELD_UNITS[idx]
@@ -330,8 +330,8 @@ class VegetationService:
                 ),
             ],
             as_of=iso(m),
-            note="Contract label '1991–2020' → 2001–2025 (satellite record). Previous year is plotted on "
-            "the current year's months.",
+            note="Normal: 2001–2025 mean (the satellite record starts in 2001). The previous year is plotted on the "
+            "current year's months.",
             **self._prov(m, var, baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean ± 1 s.d.", res="monthly"),
         )
 

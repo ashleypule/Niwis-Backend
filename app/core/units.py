@@ -126,7 +126,9 @@ LABEL_OVERRIDES: dict[tuple[str, str], Override] = {
         "m³/m³", "name has no unit suffix; spec §3.2: surface soil moisture in m³/m³"
     ),
     ("5.2_meteorological_drivers_saws_master", "Growing_Degree_Days_GDD_C"): Override(
-        "°C·days", "suffix `_C` reads as °C, but the values are degree-day sums (Σ max(Tavg − 10 °C, 0), DATA_GAPS §15)"
+        "°C·days",
+        "suffix `_C` reads as °C, but the values are degree-day sums: Σ max(Tavg − 10 °C, 0), checked against the "
+        "daily temperatures",
     ),
 }
 

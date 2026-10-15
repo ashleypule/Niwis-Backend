@@ -160,7 +160,7 @@ datasets:
       tavg_c:                      {var: tavg, role: duplicate}
       temp_anomaly_c:              {var: temp_anomaly, role: duplicate, repeats: monthly, note: "equals 4_1 to 0.001 °C"}
       pet_mm_day:                  {var: pet_daily, role: canonical}
-      et0_mm_day:                  {var: et0_daily, role: canonical, note: "plausible 1–7.4 mm/day; 4_4 values withheld"}
+      et0_mm_day:                  {var: et0_daily, role: canonical, note: "plausible 1–7.4 mm/day (the 4_4 table's ET₀ is withheld)"}
       relative_humidity_pct:       {var: rh, role: canonical}
       solar_radiation_wm2:         {var: solar_radiation, role: withheld,
                                     reason: "synthetic: one value per calendar day (365 distinct values), identical in all 52 districts and every year; peaks in April (247 W/m²) with the minimum in Sep–Oct (113 W/m²), where the Southern-Hemisphere maximum is in December"}
@@ -186,7 +186,7 @@ datasets:
     time: {kind: date, column: date, resolution: monthly, year: year}
     known_issues: ["ends 2025-12", "lowercase district names; 5 use other spellings"]
     columns:
-      ndvi:                   {var: ndvi, role: canonical, note: "passes D4 plausibility check (docs/DATA_GAPS.md §5)"}
+      ndvi:                   {var: ndvi, role: canonical, note: "passes the NDVI plausibility check (arid west low, wet east high, seasonal cycle follows the rains)"}
       lst:                    {var: lst, role: canonical}
       ndwi:                   {var: ndwi, role: canonical}
       vci:                    {var: vci, role: canonical}
@@ -194,7 +194,7 @@ datasets:
       vhi:                    {var: vhi, role: canonical}
       rootzone_soil_moisture: {var: soil_moisture_rootzone, role: canonical}
       surface_soil_moisture:  {var: soil_moisture_surface, role: canonical}
-      surface_water_extent_km2: {var: surface_water_extent, role: unused, note: "plausibility checked 2026-10-15: ≥ 0 everywhere, district-specific (DATA_GAPS §15)"}
+      surface_water_extent_km2: {var: surface_water_extent, role: unused, note: "plausibility checked 2026-10-15: ≥ 0 everywhere, different in every district"}
       grace_tws:              {var: grace_tws, role: withheld,
                                reason: "values of 70–412 in 2001 and up to 270 in 2002, before GRACE data exist (launch March 2002); about ±10 from 2003; unit undocumented"}
 
@@ -289,8 +289,8 @@ datasets:
       Daily_PET_mm:      {var: pet_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
       Daily_AET_mm:      {var: aet_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
       Daily_Pan_Evap_mm: {var: pan_evap_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
-      Daily_VPD_kPa:     {var: vpd, role: withheld, reason: "table withheld pending data-team review (decision D5)"}
-      SPEI_Daily:        {var: spei_daily, role: withheld, cast: double, reason: "stored as text; table withheld (decision D5)"}
+      Daily_VPD_kPa:     {var: vpd, role: withheld, reason: "the 4_4 table is withheld: its evaporation values are 23–97× smaller than plausible, so the table is under review"}
+      SPEI_Daily:        {var: spei_daily, role: withheld, cast: double, reason: "stored as text, and the 4_4 table is withheld (evaporation values 23–97× too small)"}
 
   "4_5_irrigation_demand_daily_master":
     db_module: 2
@@ -302,8 +302,8 @@ datasets:
       CWR_mm_day:                 {var: cwr, role: withheld, reason: "built on the implausible 4_4 ET₀ (CWR = 0.85 × ET₀)"}
       Irrigation_Water_Demand_mm: {var: irrigation_demand, role: withheld, reason: "built on the implausible 4_4 ET₀"}
       Rainfall_Deficit_mm:        {var: rainfall_deficit, role: withheld, reason: "built on the implausible 4_4 ET₀"}
-      Soil_Moisture_Deficit_m3m3: {var: soil_moisture_deficit, role: withheld, reason: "table withheld (decision D5)"}
-      Growing_Season_Temp_C:      {var: growing_season_temp, role: withheld, reason: "table withheld (decision D5)"}
+      Soil_Moisture_Deficit_m3m3: {var: soil_moisture_deficit, role: withheld, reason: "the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values"}
+      Growing_Season_Temp_C:      {var: growing_season_temp, role: withheld, reason: "the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values"}
       Irrigation_Return_Flow_mm:  {var: irrigation_return, role: withheld, reason: "built on the implausible 4_4 ET₀"}
 
   "4_6_streamflow_and_climate_linkage_annual _master":
@@ -341,7 +341,7 @@ datasets:
       SVI_standardised:               {var: svi, role: withheld, reason: "same source as the failed NDVI"}
       NDWI:                           {var: ndwi, role: withheld, reason: "same source as the failed NDVI"}
       NDII:                           {var: ndii, role: withheld, reason: "perfectly correlated with the failed NDVI (r = 1.000)"}
-      LST_Land_Surface_Temperature_C: {var: lst, role: withheld, reason: "vegetation source withheld (decision D4)"}
+      LST_Land_Surface_Temperature_C: {var: lst, role: withheld, reason: "the 5.1 vegetation source is withheld: its NDVI fails the plausibility check (the same cycle in every district)"}
       Surface_Soil_Moisture_m3m3:     {var: soil_moisture_surface, role: withheld, reason: "constant 0.22"}
 
   "5.2_meteorological_drivers_saws_master":

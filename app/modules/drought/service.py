@@ -424,7 +424,7 @@ class DroughtService:
                 ),
             ],
             as_of=iso(last),
-            note="Contract label '1981–2010' → 2000–2026 mean (data start in 2000). Complete months only.",
+            note="Normal: 2000–2026 mean (data start in 2000). Complete months only.",
             **self._prov(last, "rain_daily", "rain_anomaly_mm", "spei_3", baseline=True, res="monthly"),
         )
 

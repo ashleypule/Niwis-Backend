@@ -324,7 +324,7 @@ class RainfallService:
             axes=[c.Axis(unit="mm", label="Rainfall")],
             series=series,
             as_of=iso(newest),
-            note=f"Contract label '1981–2010 mean' → 2000–2026 mean (data start in 2000).{partial}",
+            note=f"Normal: 2000–2026 mean (data start in 2000).{partial}",
             **self._prov(newest, "rain_daily", "rain_anomaly_mm", baseline=True),
         )
 

@@ -828,6 +828,20 @@
           "unit": {
             "title": "Unit",
             "type": "string"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
           }
         },
         "required": [

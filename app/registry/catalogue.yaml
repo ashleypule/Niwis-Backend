@@ -240,7 +240,7 @@ categories:
     duplicate_of: null
     group: evapotranspiration-mm-day
     default_visible: true
-    note: plausible 1–7.4 mm/day; 4_4 values withheld
+    note: plausible 1–7.4 mm/day (the 4_4 table's ET₀ is withheld)
     unit_override: null
   - column: relative_humidity_pct
     name: Relative Humidity
@@ -508,7 +508,7 @@ categories:
     duplicate_of: null
     group: ndvi-ndwi-index
     default_visible: true
-    note: passes D4 plausibility check (docs/DATA_GAPS.md §5)
+    note: passes the NDVI plausibility check (arid west low, wet east high, seasonal cycle follows the rains)
     unit_override: null
   - column: lst
     name: LST
@@ -620,7 +620,7 @@ categories:
     duplicate_of: null
     group: surface-water-extent-km2
     default_visible: true
-    note: 'plausibility checked 2026-10-15: ≥ 0 everywhere, district-specific (DATA_GAPS §15)'
+    note: 'plausibility checked 2026-10-15: ≥ 0 everywhere, different in every district'
     unit_override: null
   - column: grace_tws
     name: GRACE TWS
@@ -1545,7 +1545,7 @@ categories:
     kind: numeric
     resolution: daily
     status: withheld
-    reason: table withheld pending data-team review (decision D5)
+    reason: 'the 4_4 table is withheld: its evaporation values are 23–97× smaller than plausible, so the table is under review'
     duplicate_of: null
     group: daily-vpd-kpa
     default_visible: true
@@ -1559,7 +1559,7 @@ categories:
     kind: numeric
     resolution: daily
     status: withheld
-    reason: stored as text; table withheld (decision D5)
+    reason: stored as text, and the 4_4 table is withheld (evaporation values 23–97× too small)
     duplicate_of: null
     group: spei-index
     default_visible: true
@@ -1669,7 +1669,7 @@ categories:
     kind: numeric
     resolution: daily
     status: withheld
-    reason: table withheld (decision D5)
+    reason: 'the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values'
     duplicate_of: null
     group: soil-moisture-deficit-m3-m3
     default_visible: true
@@ -1683,7 +1683,7 @@ categories:
     kind: numeric
     resolution: daily
     status: withheld
-    reason: table withheld (decision D5)
+    reason: 'the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values'
     duplicate_of: null
     group: growing-season-temp-c
     default_visible: true
@@ -2078,7 +2078,7 @@ categories:
     kind: numeric
     resolution: daily
     status: withheld
-    reason: vegetation source withheld (decision D4)
+    reason: 'the 5.1 vegetation source is withheld: its NDVI fails the plausibility check (the same cycle in every district)'
     duplicate_of: null
     group: lst-land-surface-temperature-c
     default_visible: true
@@ -2272,7 +2272,7 @@ categories:
     group: growing-degree-days-gdd-c-days
     default_visible: true
     note: '= Σ daily max(Tavg − 10 °C, 0) from 4_1 (624 / 624 district-months of 2015 match): degree-days'
-    unit_override: suffix `_C` reads as °C, but the values are degree-day sums (Σ max(Tavg − 10 °C, 0), DATA_GAPS §15)
+    unit_override: 'suffix `_C` reads as °C, but the values are degree-day sums: Σ max(Tavg − 10 °C, 0), checked against the daily temperatures'
 - id: core-rainfall-variables
   table: 6.1_core_rainfall_variables_master
   label: Core Rainfall Variables

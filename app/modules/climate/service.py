@@ -365,8 +365,8 @@ class ClimateService:
                 ),
             ],
             as_of=iso(lt.date()),
-            note="Monthly means of daily values; anomaly label '1981–2010' → 2000–2026 (data start in 2000). "
-            "Complete months only.",
+            note="Monthly means of daily values; anomaly vs the 2000–2026 mean (data start in 2000). Complete months "
+            "only.",
             **self._prov(lt.date(), "tmax", "temp_anomaly", baseline=True, res="monthly"),
         )
 
@@ -584,9 +584,8 @@ class ClimateService:
                 ),
             ],
             as_of=f"{y1}-01-01",
-            note="ET₀ / PET from meteorological_drought_master (annual sums; that table lacks 31 Dec); AET from "
-            "runoff_variables_master. Contract labels' methods (FAO-56 Hargreaves, Thornthwaite) are not documented "
-            "in the database.",
+            note="ET₀ and PET: annual sums of the daily values (31 December is missing in the source table); AET: "
+            "modelled catchment evapotranspiration. The calculation methods are not documented in the database.",
             unavailable=[
                 c.UnavailableField(field="series.pan", reason=reason),
                 c.UnavailableField(field="series.vpd", reason=reason),

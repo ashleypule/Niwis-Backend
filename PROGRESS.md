@@ -56,7 +56,9 @@ audit fixes B1–B14. One commit per step.
       labelled "(area-weighted mean)". Supabase: KZN = D1 with 85 % in D1–D4; national = No drought (8 %).
 - [x] **B5 Temperatures in °C.** Vegetation drivers: temperature / LST changes in °C, GDD in °C·days, rainfall /
       ET₀ in %, with `units` per category; climate indicator-trends: temperature change in °C on its own axis.
-- [ ] B6–B14 audit fixes
+- [x] **B6 Developer notes removed** from notes, reasons and errors (drought, rainfall, climate, vegetation, registry
+      reasons / notes now shown in the category view); every response is scanned in tests.
+- [ ] B7–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

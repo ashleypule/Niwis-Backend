@@ -67,7 +67,7 @@ Table `meteorological_drought_master` · id `meteorological-drought` · daily ·
 | `tavg_c` | Tavg (°C) | °C | daily | — | duplicate of `4_1_temperature_change_master.Tavg_C` |
 | `temp_anomaly_c` | Temp Anomaly (°C) | °C | monthly | — | duplicate of `4_1_temperature_change_master.Temperature_Anomaly_C` |
 | `pet_mm_day` | PET (mm/day) | mm/day | daily | `evapotranspiration-mm-day` | live |
-| `et0_mm_day` | ET₀ (mm/day) | mm/day | daily | `evapotranspiration-mm-day` | live — plausible 1–7.4 mm/day; 4_4 values withheld |
+| `et0_mm_day` | ET₀ (mm/day) | mm/day | daily | `evapotranspiration-mm-day` | live — plausible 1–7.4 mm/day (the 4_4 table's ET₀ is withheld) |
 | `relative_humidity_pct` | Relative Humidity (%) | % | daily | `relative-humidity-pct` | live |
 | `solar_radiation_wm2` | Solar Radiation (W/m²) | W/m² | daily | `solar-radiation-w-m2` | withheld — synthetic: one value per calendar day (365 distinct values), identical in all 52 districts and every year; peaks in April (247 W/m²) with the minimum in Sep–Oct (113 W/m²), where the Southern-Hemisphere maximum is in December |
 | `wind_speed_2m_ms` | Wind Speed 2m (m/s) | m/s | daily | `wind-speed-2m-m-s` | withheld — constant 2.5 m/s in every row |
@@ -98,7 +98,7 @@ Table `satellite_remote_sensing` · id `satellite-remote-sensing` · monthly · 
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `ndvi` | NDVI | — | monthly | `ndvi-ndwi-index` | live — passes D4 plausibility check (docs/DATA_GAPS.md §5) |
+| `ndvi` | NDVI | — | monthly | `ndvi-ndwi-index` | live — passes the NDVI plausibility check (arid west low, wet east high, seasonal cycle follows the rains) |
 | `lst` | LST (°C) | °C ¹ | monthly | `lst-c` | live |
 | `ndwi` | NDWI | — | monthly | `ndvi-ndwi-index` | live |
 | `vci` | VCI (%) | % ¹ | monthly | `vci-tci-vhi-pct` | live |
@@ -106,7 +106,7 @@ Table `satellite_remote_sensing` · id `satellite-remote-sensing` · monthly · 
 | `vhi` | VHI (%) | % ¹ | monthly | `vci-tci-vhi-pct` | live |
 | `rootzone_soil_moisture` | Rootzone Soil Moisture (m³/m³) | m³/m³ ¹ | monthly | `soil-moisture-m3-m3` | live |
 | `surface_soil_moisture` | Surface Soil Moisture (m³/m³) | m³/m³ ¹ | monthly | `soil-moisture-m3-m3` | live |
-| `surface_water_extent_km2` | Surface Water Extent (km²) | km² | monthly | `surface-water-extent-km2` | live — plausibility checked 2026-10-15: ≥ 0 everywhere, district-specific (DATA_GAPS §15) |
+| `surface_water_extent_km2` | Surface Water Extent (km²) | km² | monthly | `surface-water-extent-km2` | live — plausibility checked 2026-10-15: ≥ 0 everywhere, different in every district |
 | `grace_tws` | GRACE TWS | — | monthly | `grace-tws` | withheld — values of 70–412 in 2001 and up to 270 in 2002, before GRACE data exist (launch March 2002); about ±10 from 2003; unit undocumented |
 
 <a id="hydrological-drought"></a>
@@ -231,8 +231,8 @@ Table `4_4_potential_evaporation_daily_master` · id `potential-evaporation-dail
 | `Daily_PET_mm` | Daily PET (mm) | mm | daily | `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
 | `Daily_AET_mm` | Daily AET (mm) | mm | daily | `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
 | `Daily_Pan_Evap_mm` | Daily Pan Evap (mm) | mm | daily | `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
-| `Daily_VPD_kPa` | Daily VPD (kPa) | kPa | daily | `daily-vpd-kpa` | withheld — table withheld pending data-team review (decision D5) |
-| `SPEI_Daily` | SPEI Daily | — | daily | `spei-index` | withheld — stored as text; table withheld (decision D5) |
+| `Daily_VPD_kPa` | Daily VPD (kPa) | kPa | daily | `daily-vpd-kpa` | withheld — the 4_4 table is withheld: its evaporation values are 23–97× smaller than plausible, so the table is under review |
+| `SPEI_Daily` | SPEI Daily | — | daily | `spei-index` | withheld — stored as text, and the 4_4 table is withheld (evaporation values 23–97× too small) |
 
 <a id="irrigation-demand-daily"></a>
 ## Irrigation Demand Daily · §4.5
@@ -252,8 +252,8 @@ Table `4_5_irrigation_demand_daily_master` · id `irrigation-demand-daily` · da
 | `CWR_mm_day` | CWR (mm/day) | mm/day | daily | `cwr-mm-day` | withheld — built on the implausible 4_4 ET₀ (CWR = 0.85 × ET₀) |
 | `Irrigation_Water_Demand_mm` | Irrigation Water Demand (mm) | mm | daily | `irrigation-mm` | withheld — built on the implausible 4_4 ET₀ |
 | `Rainfall_Deficit_mm` | Rainfall Deficit (mm) | mm | daily | `rainfall-deficit-mm` | withheld — built on the implausible 4_4 ET₀ |
-| `Soil_Moisture_Deficit_m3m3` | Soil Moisture Deficit (m³/m³) | m³/m³ | daily | `soil-moisture-deficit-m3-m3` | withheld — table withheld (decision D5) |
-| `Growing_Season_Temp_C` | Growing Season Temp (°C) | °C | daily | `growing-season-temp-c` | withheld — table withheld (decision D5) |
+| `Soil_Moisture_Deficit_m3m3` | Soil Moisture Deficit (m³/m³) | m³/m³ | daily | `soil-moisture-deficit-m3-m3` | withheld — the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values |
+| `Growing_Season_Temp_C` | Growing Season Temp (°C) | °C | daily | `growing-season-temp-c` | withheld — the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values |
 | `Irrigation_Return_Flow_mm` | Irrigation Return Flow (mm) | mm | daily | `irrigation-mm` | withheld — built on the implausible 4_4 ET₀ |
 
 <a id="streamflow-and-climate-linkage-annual"></a>
@@ -304,7 +304,7 @@ Table `5.1_primary_satellite_vegetation_variables_sansa_master` · id `primary-s
 | `SVI_standardised` | SVI | — | daily | `svi-index` | withheld — same source as the failed NDVI |
 | `NDWI` | NDWI | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — same source as the failed NDVI |
 | `NDII` | NDII | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — perfectly correlated with the failed NDVI (r = 1.000) |
-| `LST_Land_Surface_Temperature_C` | LST Land Surface Temperature (°C) | °C | daily | `lst-land-surface-temperature-c` | withheld — vegetation source withheld (decision D4) |
+| `LST_Land_Surface_Temperature_C` | LST Land Surface Temperature (°C) | °C | daily | `lst-land-surface-temperature-c` | withheld — the 5.1 vegetation source is withheld: its NDVI fails the plausibility check (the same cycle in every district) |
 | `Surface_Soil_Moisture_m3m3` | Surface Soil Moisture (m³/m³) | m³/m³ | daily | `surface-soil-moisture-m3-m3` | withheld — constant 0.22 |
 
 <a id="meteorological-drivers-saws"></a>
@@ -461,7 +461,7 @@ Only where the name carries no unit or the wrong one; never to rename a variable
 | `satellite_remote_sensing` | `vhi` | % | name has no unit suffix; spec §3.2: VHI 0–100 % |
 | `satellite_remote_sensing` | `rootzone_soil_moisture` | m³/m³ | name has no unit suffix; spec §3.2: root-zone soil moisture in m³/m³ |
 | `satellite_remote_sensing` | `surface_soil_moisture` | m³/m³ | name has no unit suffix; spec §3.2: surface soil moisture in m³/m³ |
-| `5.2_meteorological_drivers_saws_master` | `Growing_Degree_Days_GDD_C` | °C·days | suffix `_C` reads as °C, but the values are degree-day sums (Σ max(Tavg − 10 °C, 0), DATA_GAPS §15) |
+| `5.2_meteorological_drivers_saws_master` | `Growing_Degree_Days_GDD_C` | °C·days | suffix `_C` reads as °C, but the values are degree-day sums: Σ max(Tavg − 10 °C, 0), checked against the daily temperatures |
 
 ## Tables in the database that are not registered
 

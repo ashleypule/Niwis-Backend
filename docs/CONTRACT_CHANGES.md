@@ -299,3 +299,9 @@ degree-day sums) in **°C·days**. New `units` (one per category, addition) and 
 (`"Mean temperature (°C)"`); `unit` is `"mixed"` (it was `"%"`). `climate/timeseries?metric=indicator-trends`: the
 `temp` series is the change in °C on a second axis (`axes[1].unit = "°C"`, `axis: 1`); it was 10 × °C on the % axis.
 
+### 12.6 No developer notes in responses (B6)
+
+`note`, `reason` and error texts that addressed developers ("Contract label '1981–2010' → 2000–2026 …", documentation
+paths, decision ids) are rewritten for users, e.g. "Normal: 2000–2026 mean (data start in 2000)". Wording only; no
+keys change. `tests/test_user_facing_text.py` scans every response.
+
