@@ -82,6 +82,35 @@ def _times_area(code: str) -> Callable[[list[tuple[Any, ...]]], Any]:
     return f
 
 
+def series_at(key: str, x: str) -> Callable[[Any], Any]:
+    """Value of series `key` at x (e.g. "2025-01-01")."""
+    return lambda b: next(p[1] for s in b["series"] if s["key"] == key for p in s["data"] if p[0] == x)
+
+
+def series_last(key: str) -> Callable[[Any], Any]:
+    """Last non-null value of series `key`."""
+    return lambda b: [p[1] for s in b["series"] if s["key"] == key for p in s["data"] if p[1] is not None][-1]
+
+
+def category(series_key: str, index: int) -> Callable[[Any], Any]:
+    return lambda b: next(s["values"][index] for s in b["series"] if s["key"] == series_key)
+
+
+def row(row_id: str, key: str) -> Callable[[Any], Any]:
+    return lambda b: next(r[key] for r in b["rows"] if r["id"] == row_id)
+
+
+def at_as_of(b: Any) -> Any:
+    """The pos / neg anomaly bar at the response's asOf month."""
+    return next(p[1] for s in b["series"] for p in s["data"] if p[0] == b["asOf"] and p[1] is not None)
+
+
+LATEST_COMPLETE_MONTH = (
+    """(date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master"))"""
+    """ - interval '1 month')::date"""
+)
+
+
 CHECKS: list[Check] = [
     Check(
         "rainfall",
@@ -293,6 +322,123 @@ WHERE "District_Name" = 'Umgungundlovu' AND "Date" BETWEEN (SELECT max("Date") F
         """SELECT round((sum("Baseflow_Component_m3s") * 86400 / sum("Daily_Surface_Runoff_Volume_m3_day"))::numeric, 2)
 FROM runoff_variables_master WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)""",
         tol=0.006,
+    ),
+    # ---------------------------------------------------------------- integration fixes (docs/ISSUE_FIXES.md)
+    Check(
+        "fixes",
+        "#6 Seasonal change, Namakwa (DC6), 2001–2020 DJF mean temperature (°C) — mean of monthly mean Tavg",
+        "/api/v1/climate/breakdown?metric=seasonal-change&var=temperature&municipality=DC6",
+        category("p1", 0),
+        """WITH m AS (SELECT substr("Date", 1, 7) ym, avg("Tavg_C") v FROM "4_1_temperature_change_master"
+           WHERE "District_Name" = 'Namakwa' AND substr("Date", 1, 4)::int BETWEEN 2001 AND 2020
+             AND substr("Date", 6, 2)::int IN (12, 1, 2) GROUP BY 1)
+SELECT round(avg(v)::numeric, 2) FROM m""",
+        tol=0.005,
+    ),
+    Check(
+        "fixes",
+        "#6 Seasonal change, Namakwa (DC6), var=rainfall, 2001–2020 mean DJF rainfall (mm) — 4_3 Precip_DJF_mm",
+        "/api/v1/climate/breakdown?metric=seasonal-change&var=rainfall&municipality=DC6",
+        category("p1", 0),
+        """SELECT round(avg("Precip_DJF_mm")::numeric, 0) FROM "4_3_mean_annual_precipitation_master"
+WHERE "District_Name" = 'Namakwa' AND "Year" BETWEEN 2001 AND 2020""",
+        tol=0.5,
+    ),
+    Check(
+        "fixes",
+        "#1 Vegetation indices set=vci,vhi,tci, Namakwa (DC6), latest VCI (%)",
+        "/api/v1/vegetation/timeseries?metric=indices&set=vci,vhi,tci&municipality=DC6",
+        series_last("vci"),
+        """SELECT round(vci::numeric, 1) FROM satellite_remote_sensing
+WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)""",
+    ),
+    Check(
+        "fixes",
+        "#1 Vegetation indices set=ndwi,ndii, Namakwa (DC6), latest NDWI",
+        "/api/v1/vegetation/timeseries?metric=indices&set=ndwi,ndii&municipality=DC6",
+        series_last("ndwi"),
+        """SELECT round(ndwi::numeric, 3) FROM satellite_remote_sensing
+WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)""",
+        tol=0.0005,
+    ),
+    Check(
+        "fixes",
+        "#1 heat-days kind=cold, Joe Gqabi (DC14), frost nights 2025 — Σ Frost_Day_Flag",
+        "/api/v1/climate/timeseries?metric=heat-days&kind=cold&municipality=DC14",
+        series_at("annual", "2025-01-01"),
+        """SELECT sum("Frost_Day_Flag") FROM "4_1_temperature_change_master"
+WHERE "District_Name" = 'Joe Gqabi' AND "Date" LIKE '2025-%'""",
+    ),
+    Check(
+        "fixes",
+        "#1 extreme-rain kind=rx1, Namakwa (DC6), Rx1day 2025 (mm)",
+        "/api/v1/climate/timeseries?metric=extreme-rain&kind=rx1&municipality=DC6",
+        series_at("annual", "2025-01-01"),
+        """SELECT round("Rx1day_mm"::numeric, 1) FROM "4_2_wet_dry_spells_master"
+WHERE "District_Name" = 'Namakwa' AND "Year" = 2025""",
+    ),
+    Check(
+        "fixes",
+        "#1 national-trend var=rainfall, City of Cape Town, 2025 annual rainfall (mm) — 4_3 MAP_mm",
+        "/api/v1/climate/timeseries?metric=national-trend&var=rainfall&municipality=CPT",
+        series_at("annual", "2025-01-01"),
+        """SELECT round("MAP_mm"::numeric, 1) FROM "4_3_mean_annual_precipitation_master"
+WHERE "District_Name" = 'City of Cape Town' AND "Year" = 2025""",
+    ),
+    Check(
+        "fixes",
+        "#1 rainfall anomaly window=3, City of Cape Town, latest complete month (%) — 3-month total vs Σ normals",
+        "/api/v1/rainfall/timeseries?metric=anomaly&window=3&municipality=CPT",
+        at_as_of,
+        f"""WITH e AS (SELECT {LATEST_COMPLETE_MONTH} AS m),
+mon AS (SELECT generate_series(e.m - interval '2 month', e.m, interval '1 month')::date AS m FROM e),
+p AS (SELECT sum("Daily_Rainfall_Total_mm") AS p FROM "6.1_core_rainfall_variables_master", e
+      WHERE "District_Name" = 'City of Cape Town'
+        AND "Date"::date BETWEEN e.m - interval '2 month' AND e.m + interval '1 month' - interval '1 day'),
+nm AS (SELECT "Month" AS mo, max("Monthly_Total_Precipitation_mm" - "Monthly_Anomaly_mm") AS n
+       FROM "6.1_core_rainfall_variables_master" WHERE "District_Name" = 'City of Cape Town' GROUP BY 1),
+n AS (SELECT sum(nm.n) AS n FROM mon JOIN nm ON nm.mo = extract(month FROM mon.m))
+SELECT round(((p - n) / n * 100)::numeric, 1) FROM p, n""",
+    ),
+    Check(
+        "fixes",
+        "#1 rainfall events kind=max, national, highest daily rainfall in the latest year (mm)",
+        "/api/v1/rainfall/breakdown?metric=events&kind=max",
+        lambda b: b["series"][0]["values"][-1],
+        """SELECT round(max("Daily_Rainfall_Total_mm")::numeric, 1) FROM "6.1_core_rainfall_variables_master"
+WHERE substr("Date", 1, 4) = (SELECT substr(max("Date"), 1, 4) FROM "6.1_core_rainfall_variables_master")""",
+    ),
+    Check(
+        "fixes",
+        "#2 Drought cascade, Namakwa (DC6): meteorological valueNum = SPI-6, latest complete month",
+        "/api/v1/drought/table?metric=cascade&municipality=DC6",
+        row("meteorological", "valueNum"),
+        f"""SELECT round("SPI_6_Medium_Term_Hydrological_Impacts"::numeric, 2)
+FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE "District_Name" = 'Namakwa' AND make_date("Year"::int, "Month"::int, 1) = {LATEST_COMPLETE_MONTH}""",
+        tol=0.005,
+    ),
+    Check(
+        "fixes",
+        "#2 Drought cascade, Namakwa (DC6): meteorological bar = class rank × 20 (None 0 … D4 100)",
+        "/api/v1/drought/table?metric=cascade&municipality=DC6",
+        row("meteorological", "bar"),
+        f"""WITH s AS (SELECT round("SPI_6_Medium_Term_Hydrological_Impacts"::numeric, 2) AS v
+           FROM "6.2_rainfall_derived_drought_indices_master"
+           WHERE "District_Name" = 'Namakwa' AND make_date("Year"::int, "Month"::int, 1) = {LATEST_COMPLETE_MONTH})
+SELECT CASE WHEN v <= -2.0 THEN 100 WHEN v <= -1.6 THEN 80 WHEN v <= -1.3 THEN 60
+            WHEN v <= -0.8 THEN 40 WHEN v <= -0.5 THEN 20 ELSE 0 END FROM s""",
+    ),
+    Check(
+        "fixes",
+        "#2 Drought cascade, national: hydrological valueNum = Σ volume / Σ capacity (% FSC), latest month",
+        "/api/v1/drought/table?metric=cascade",
+        row("hydrological", "valueNum"),
+        """WITH cap AS (SELECT district_name, percentile_cont(0.5) WITHIN GROUP (ORDER BY dam_storage_million_m3 / dam_level_pct_fsc * 100) AS fsc
+             FROM hydrological_drought_master WHERE dam_level_pct_fsc > 0.5 GROUP BY 1),
+     cur AS (SELECT district_name, dam_storage_million_m3 AS v FROM hydrological_drought_master
+             WHERE date = (SELECT max(date) FROM hydrological_drought_master))
+SELECT round((sum(cur.v) / sum(cap.fsc) * 100)::numeric, 1) FROM cur JOIN cap USING (district_name)""",
     ),
 ]
 

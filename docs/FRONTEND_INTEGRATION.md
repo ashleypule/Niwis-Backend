@@ -39,15 +39,18 @@ Status from `/api/v1/health`. "Unavailable" keys return 501 unless marked *null*
 
 | Module | Live | Unavailable (501 unless noted) |
 | --- | --- | --- |
-| `rainfall` | summary (7 of 8 KPIs), timeseries `monthly`, `anomaly`, `spi-spei`, `intensity`, `dry-wet`, `station` (needs `entityId`); breakdown `seasonal`, `events`; tables `provinces`, `extremes`, `statistics`, `sources`; maps `total`, `anomaly`, `monthly`, `map`, `spi1/3/6/12`, `spei6`, `cdd`, `r20`, `municipal-total`; entities (52 districts) | KPI `activeStations` (*null*); `sources.stations` (*null*); forecasts `rainfall`, `spi`; maps `forecast-1/2/3` |
-| `drought` | summary (8 of 10 KPIs); timeseries `spi`, `rain-spei`, `rain-anomaly`, `dam-flows`, `gw-sgi` (SGI only), `soil-moisture`, `vegetation`, `drought-area`; breakdown `severity`, `province-area`; tables `cascade`, `affected`, `municipalities`, `sources`; matrix `veg-heatmap`; maps `drought-class`, `municipal-class`, `province-class`, `spi1/3/6/12/24`, `spei3/12`, `rain-anomaly`, `soil-moisture`, `ndvi`, `vci` | KPIs `ssi` (withheld), `settlementsAtRisk` (*null*); `gw-sgi` borehole level (*null* series); timeseries `storage-vs-spi`, `population-at-risk`, `recovery-province`; breakdown `restrictions`, `class-probability`; tables `early-warning`, `forecast-indicators`, `recovery`, `forecast-kpis`; matrix `province-risk`; maps `catchment-class`, `dams`, `boreholes`, `settlements`, `outlook-1/2/3`, `forecast-6`; all forecasts |
-| `climate` | summary (8 KPIs); timeseries `temperature-long`, `national-trend`, `extremes`, `heat-days`, `extreme-rain`, `evaporation` (ET₀, PET, AET), `streamflow-linkage`, `drought-frequency`, `indicator-trends`; breakdown `seasonal-change`, `map-seasonality`; tables `statistics`, `provinces`, `signal-chain`; maps `temp-trend`, `temp-anomaly`, `mean-temp`, `rain-trend`, `hot-days`, `cdd`, `et0` | pan evaporation and VPD series (*null*); `seasonal-change` 1981–2000 (*null*); `signal-chain` severity (*null*); timeseries `projections`, `irrigation`; breakdown `risk-index`, `projection-bars`; tables `forecast-summary`, `risk-outlook`; maps `vulnerability`, `proj-*`; `forecast` has no keys (404) |
-| `vegetation` | summary (8 KPIs); timeseries `indices` (NDVI), `index-trend`, `anomaly`, `drivers`; breakdown `classification`, `by-province`, `seasonal`, `drivers`; tables `provinces`, `hotspots`; maps `ndvi`, `vci`, `vhi`, `tci`, `ndwi`, `lst`, `sm`, `ndvi-anomaly`, `ndvi-trend` | EVI / SAVI / MSAVI2 series (*null*); maps `evi`, `savi`, `msavi2`, `vpi`, `asi`, `svi`, `ndii`; breakdown `land-cover`; table `forecast-indicators`; forecasts and forecast maps |
-| `runoff` | summary (5 of 8 KPIs); timeseries `discharge`, `runoff-anomaly`, `ssi`, `rainfall-runoff`, `water-balance`, `flood-frequency`, `fdc`, `seasonal`, `national-volume`, `drivers`; breakdown `by-wma`; tables `statistics`, `top-stations` (districts), `events`; maps `annual-runoff`, `runoff-anomaly`, `monthly-runoff`, `runoff-coefficient`; entities (52 districts) | KPIs `peakFlow`, `stationsHighFlow`, `stationsLowFlow` (*null*); `events` severity (*null*); breakdown `by-province`; maps `catchment-runoff`, `stations`, `flow-status`, `flow-anomaly`, `ssi`; forecasts |
+| `rainfall` | summary (7 of 8 KPIs), timeseries `monthly`, `anomaly` (`window` 1/3/6/12), `spi-spei`, `intensity`, `dry-wet`, `station` (needs `entityId`); breakdown `seasonal`, `events` (`kind` count / max); tables `provinces`, `extremes` (`kind` wettest / driest), `statistics`, `sources`; maps `total`, `anomaly`, `monthly`, `map`, `spi1/3/6/12`, `spei6`, `cdd`, `r20`, `municipal-total`; entities (52 districts) | KPI `activeStations` (*null*); `sources.stations` (*null*); forecasts `rainfall`, `spi`; maps `forecast-1/2/3` |
+| `drought` | summary (8 of 10 KPIs); timeseries `spi` (`scale` 1/3/6/12/24), `rain-spei`, `rain-anomaly` (`window`), `dam-flows`, `gw-sgi` (SGI only), `soil-moisture`, `vegetation`, `drought-area` (`scale`); breakdown `severity`, `province-area`; tables `cascade` (contract keys), `affected` (`level=province`), `municipalities`, `sources`; matrix `veg-heatmap`; maps `drought-class`, `municipal-class`, `province-class`, `spi1/3/6/12/24`, `spei3/12`, `rain-anomaly`, `soil-moisture`, `ndvi`, `vci` | KPIs `ssi` (withheld), `settlementsAtRisk` (*null*); `gw-sgi` borehole level (*null* series); `affected?level=catchment`; timeseries `storage-vs-spi`, `population-at-risk`, `recovery-province`; breakdown `restrictions`, `class-probability`; tables `early-warning`, `forecast-indicators`, `recovery`, `forecast-kpis`; matrix `province-risk`; maps `catchment-class`, `dams`, `boreholes`, `settlements`, `outlook-1/2/3`, `forecast-6`; all forecasts |
+| `climate` | summary (8 KPIs); timeseries `temperature-long`, `national-trend` (`var` temperature / rainfall / et / streamflow), `extremes`, `heat-days` (`kind` hot / cold), `extreme-rain` (`kind` r20 / rx1), `evaporation` (ET₀, PET, AET), `streamflow-linkage`, `drought-frequency`, `indicator-trends` (observed, no `scenario`); breakdown `seasonal-change` (`var` temperature / rainfall), `map-seasonality`; tables `statistics`, `provinces`, `signal-chain` (contract keys); maps `temp-trend`, `temp-anomaly`, `mean-temp`, `rain-trend`, `hot-days`, `cdd`, `et0` | pan evaporation and VPD series (*null*); `seasonal-change` 1981–2000 (*null*); `signal-chain` severity / `cls` / `bar` (*null*); `indicator-trends` drought series (*null*: zero drought months in the 2020 base year); `indicator-trends?scenario=…` (no projections); timeseries `projections`, `irrigation`; breakdown `risk-index`, `projection-bars`; tables `forecast-summary`, `risk-outlook`; maps `vulnerability`, `proj-*`; `forecast` has no keys (404) |
+| `vegetation` | summary (8 KPIs); timeseries `indices` (`set`: NDVI, VCI, VHI, TCI, NDWI, LST, SM), `index-trend` (`index`, same live indices), `anomaly`, `drivers` (`var` rain / temp / pet / sm); breakdown `classification`, `by-province`, `seasonal`, `drivers`; tables `provinces`, `hotspots`; maps `ndvi`, `vci`, `vhi`, `tci`, `ndwi`, `lst`, `sm`, `ndvi-anomaly`, `ndvi-trend` | EVI / SAVI / MSAVI2 / VPI / ASI / SVI / NDII in `indices` (*null* series); `index-trend` for those indices; maps `evi`, `savi`, `msavi2`, `vpi`, `asi`, `svi`, `ndii`; breakdown `land-cover`; table `forecast-indicators`; forecasts and forecast maps |
+| `runoff` | summary (5 of 8 KPIs); timeseries `discharge`, `runoff-anomaly`, `ssi`, `rainfall-runoff`, `water-balance`, `flood-frequency`, `fdc`, `seasonal`, `national-volume`, `drivers` (`var` rain / aet / sm); breakdown `by-wma`; tables `statistics`, `top-stations` (districts, `order` highest / lowest), `events`; maps `annual-runoff`, `runoff-anomaly`, `monthly-runoff`, `runoff-coefficient`; entities (52 districts) | KPIs `peakFlow`, `stationsHighFlow`, `stationsLowFlow` (*null*); `events` severity (*null*); breakdown `by-province`; maps `catchment-runoff`, `stations`, `flow-status`, `flow-anomaly`, `ssi`; forecasts |
 | all other modules | — | not served by this backend yet (404); keep them on mock data |
 
 Cross-module: `/reference/provinces`, `/reference/wmas`, `/reference/municipalities` (52 districts) are live;
 `/reference/catchments` → 501. `/alerts` and `/search` are not implemented yet (404).
+
+Selectors are listed in `CONTRACT_CHANGES.md` §10; every one is honoured (until 2026-10-15 all were ignored), and
+an unknown value is a `400` with `issues[0].allowed`.
 
 ## 4. Filters
 
@@ -79,7 +82,26 @@ Every response may carry `asOf`, `source` (tables), `isStale`, `components` (per
 - Runoff flows and volumes are derived from modelled depth × real district area (not gauged).
 - `entities` `type` is `"district"`; entity cards use `image: "municipality"` (rainfall) or `"river"` (runoff).
 
-## 7. Checklist
+## 7. Changes on 2026-10-15 (`../Niwis Frontend/docs/backend/BACKEND_ISSUES.md`; details in `docs/ISSUE_FIXES.md`)
+
+- **Vegetation tabs (#1):** `indices?set=vci,vhi,tci` / `set=ndwi,ndii` now return the requested indices (NDII as a
+  null series with an `unavailable` entry), so the "Condition" and "Water content" tabs' set check passes and they
+  render on their own. Every other selector is honoured too (§3 above); tabs that relied on them (SPI scale, anomaly
+  window, wettest / driest, hot / cold days, R20 / Rx1day, national-trend variable, drivers variable, highest /
+  lowest) now change the data.
+- **Cascade (#2, #3):** rows carry `{stage, metric, value, cls, scale, bar}`; `CascadeFlow`'s adapter still works and
+  can be reduced to the contract shape. Drought `value` is now text (`SPI-6 0.88`, `VHI 87 %`, `63.6 % FSC`), the
+  number is `valueNum`; `bar` is 0–100 like the mock.
+- **Rate limit (#4):** 600 / min per IP by default; `/health` exempt. The client's `Retry-After` back-off can stay.
+- **Nulls (#5, #6):** every all-null series / KPI / column / map has an `unavailable` entry (KPIs also
+  `unavailableReason`); a field listed in `unavailable` is always null, so "hide what is listed" and "hide what is
+  all-null" now agree. `seasonal-change` p0 is null.
+- **Staleness (#7):** measured from the end of the period; annual values for the last complete year (2025) are no
+  longer stale. New optional `periodEnd` (monthly / annual values) for "Data to Dec 2025"-style labels.
+- **"No drought" for missing data:** removed; a missing SPI now has no class / pill (only visible on scopes with a
+  missing district).
+
+## 8. Checklist
 
 - [ ] `VITE_DATA_SOURCE=api`, `VITE_API_BASE_URL` set; backend `CORS_ORIGINS` includes the frontend origin
 - [ ] API client maps `501 DATA_UNAVAILABLE` → "Sample" state

@@ -50,7 +50,10 @@ Check it works: `GET /api/v1/health` should report `"status": "ok"` and `"readOn
 | `NIWIS_SUPABASE_TABLES_MODULE_<n>` | — | Tables the data team has registered; a test checks they match `app/registry/datasets.yaml`. |
 | `CORS_ORIGINS` | `http://localhost:5173,http://localhost:5174` | Comma-separated frontend origins. |
 | `STALE_AFTER_DAYS` | `90` | A value is `isStale` when its `asOf` lags the newest DB date by more than this. |
-| `RATE_LIMIT_PER_MINUTE` | `120` | Per client IP; `0` disables. |
+| `RATE_LIMIT_PER_MINUTE` | `600` | Per client IP; `0` disables. `/api/v1/health` is exempt. |
+| `RATE_LIMIT_TRUSTED_CIDRS` | *(empty)* | Comma-separated networks that are never limited (e.g. the DWS network). |
+| `TRUST_PROXY_HEADERS` | `false` | Read the client IP from `X-Forwarded-For` (right-most entry). Only behind a reverse proxy that sets it. |
+| `RESPONSE_CHECKS` | `log` | Response invariants (`app/core/response_checks.py`): `log`, `raise` (tests / debugging), `off`. |
 | `DB_POOL_MAX`, `DB_STATEMENT_TIMEOUT_MS` | `5`, `10000` | Pool size and per-statement timeout. |
 | `CACHE_TTL_SUMMARY_S`, `CACHE_TTL_MAP_S`, `CACHE_TTL_LONG_SERIES_S`, `CACHE_TTL_META_S` | 900, 900, 3600, 3600 | Cache lifetimes. |
 | `LOG_LEVEL` | `INFO` | JSON logs to stdout; secrets are scrubbed. |
@@ -77,6 +80,7 @@ pytest                                        # unit, contract-conformance and A
 pytest -m integration                         # opt-in, read-only checks against the real Supabase DB
 python scripts/export_openapi.py              # refresh docs/openapi.json (a test fails if it is stale)
 python scripts/verify.py                      # API values vs independent SQL on Supabase → docs/VERIFICATION.md
+python scripts/audit_responses.py             # every endpoint × selector × scope vs app/core/response_checks
 python scripts/bench.py                       # summary latency on Supabase → docs/PERFORMANCE.md
 python scripts/inventory.py                   # re-profile the database → docs/DB_INVENTORY.md
 python -m pip_audit -r requirements.txt       # dependency vulnerability check

@@ -72,6 +72,20 @@ Only where the contract allows `null` (`Kpi.value`, `CategorySet` values, table 
 
 `unavailable` (top level, optional) and `unavailableReason` (on a KPI, optional) are additions.
 
+Rules, checked on every response (`app/core/response_checks.py`; 2026-10-15, BACKEND_ISSUES #5 / #6):
+
+- A field listed in `unavailable` is `null` (all-null for a series / column). Field paths: `kpis.<id>`,
+  `series.<key>`, `rows.<column>` (that cell in every row), `rows.<rowId>` (every non-text cell of that row),
+  `rows.<rowId>.<key>`, `values` (every map / matrix value).
+- Conversely, a series, KPI, table column or map that is entirely `null` has an `unavailable` entry (KPIs also
+  `unavailableReason`) with a specific reason computed from the data, e.g. "The number of drought months (SPI-3 ≤
+  −1.5) was 0 in 2020 (the base year) in this scope (lowest area-weighted SPI-3 that year: -1.06), so a % change
+  from 2020 is undefined". A partially null series has no entry.
+- No non-null value is dated before the first or after the last record of its source tables (time-series x values,
+  `YYYY` / `YYYY–YYYY` category and series labels, map `date`, `date` columns, `asOf`).
+- A missing value never gets a class: no "No drought" (`None` class) pill, status or map class for a missing SPI,
+  and no `0` area in drought for a province without data.
+
 ## 4. Provenance on every response
 
 Optional fields added to every top-level response (`KpiSet`, `SeriesSet`, `CategorySet`, `TableSet`, `MatrixSet`,
@@ -81,15 +95,16 @@ Optional fields added to every top-level response (`KpiSet`, `SeriesSet`, `Categ
 | --- | --- | --- |
 | `asOf` | string (ISO date) | Date of the newest record actually used. Already in `KpiSet` / `SeriesSet`; **added** to `CategorySet`, `TableSet`, `MatrixSet`, `MapLayer`, `EntityDetail`. Monthly data are stamped `YYYY-MM-01`. |
 | `source` | string[] | Database tables the values came from. |
-| `isStale` | boolean | `true` when `asOf` is more than **90 days** (configurable: `STALE_AFTER_DAYS`) older than the newest date in the database. |
+| `isStale` | boolean | `true` when the value's period **ended** more than **90 days** (configurable: `STALE_AFTER_DAYS`) before the newest date in the database. The latest complete period is never stale (with data to 2026-09-06: August 2026, and the year 2025). Changed 2026-10-15 (BACKEND_ISSUES #7): it used to be measured from the stamped date, so annual values for the last complete year were flagged stale. |
+| `periodEnd` | string (ISO date) | **Added 2026-10-15.** Last day of the `asOf` period for monthly (`YYYY-MM-31`) and annual (`YYYY-12-31`) values; absent for daily values. `asOf` keeps the period-start stamp. |
 | `components` | `{key, asOf, source, isStale}[]` | Per-component dates for panels that combine sources (drought cascade, headline drought class, mixed KPI sets). |
 | `baseline` | string | Reference period of anomalies / normals, e.g. `"2000–2026 monthly mean"`. |
 | `baselineNote` | string | `"Baseline shorter than the WMO 30-year standard (1981–2010 data not available)."` |
 | `aggregation` | `"district"` \| `"district-area-weighted"` \| `"district-overlap"` | How values were aggregated to the requested scope. |
 | `unavailable` | `{field, reason}[]` | See §3. |
 
-Per value: `Kpi` gains optional `asOf`, `source`, `isStale` (each KPI may come from a different table, e.g. SPI to
-2026-09, VCI to 2025-12). `EntityDetail.fields[]` gains optional `asOf`, `isStale`. Table rows may carry an `asOf`
+Per value: `Kpi` gains optional `asOf`, `source`, `isStale`, `periodEnd` (each KPI may come from a different table,
+e.g. SPI to 2026-09, VCI to 2025-12); `components[]` entries carry `periodEnd` too. `EntityDetail.fields[]` gains optional `asOf`, `isStale`. Table rows may carry an `asOf`
 cell when rows have different dates.
 
 **Baseline labels.** Panel titles in the contract that say "1981–2010" are served with the real baseline in `baseline`
@@ -99,9 +114,9 @@ and a `note`; the backend does not pretend the data cover 1981–2010.
 
 | Status | Body | When |
 | --- | --- | --- |
-| 400 | `{"error", "code": "BAD_REQUEST", "issues": [...]}` | Bad query parameter (FastAPI's 422 is mapped to 400) |
+| 400 | `{"error", "code": "BAD_REQUEST", "issues": [...]}` | Bad query parameter (FastAPI's 422 is mapped to 400); unknown selector value (§10): `issues[0] = {param, value, allowed}` |
 | 404 | `{"error", "code"?: "NOT_FOUND", "issues"?}` | Unknown module, metric, layer, entity or reference list |
-| 429 | `{"error": "Too many requests", "code": "RATE_LIMITED"}` + `Retry-After` | Per-IP rate limit (default 120/min) |
+| 429 | `{"error": "Too many requests", "code": "RATE_LIMITED"}` + `Retry-After` | Per-IP rate limit, default **600/min** (was 120; `RATE_LIMIT_PER_MINUTE`). `/api/v1/health` and `RATE_LIMIT_TRUSTED_CIDRS` networks are exempt; `X-Forwarded-For` is used only with `TRUST_PROXY_HEADERS=true` |
 | 501 | `DATA_UNAVAILABLE` body (§3) | Data not in the database |
 | 500 | `{"error": "Internal server error", "requestId"}` | Unexpected error; details only in server logs |
 
@@ -138,9 +153,14 @@ column is `null` with an `unavailable` entry. `matrix` has no rainfall datasets 
 **Climate (live).** Annual indicators are for the last full year (currently 2025); trends are `null` with fewer
 than 8 years. `evaporation` pan / VPD series and `signal-chain` severity are `null` + `unavailable`; projections,
 irrigation, risk index, vulnerability and forecast-summary / risk-outlook → 501. `/climate/forecast` → 404 (no keys).
+`seasonal-change`: a period is computed only when the data cover all of it, so `p0` "1981–2000" is `null` +
+`unavailable` (it used to hold the year 2000 alone); `var=rainfall` returns mean seasonal totals in mm from `4_3`
+(it used to return temperatures). `indicator-trends` with a `scenario` → 501 (no projections; without `scenario`, the
+observed series as before).
 
 **Vegetation (live).** All indices come from `satellite_remote_sensing` (same values as the drought page) and
-are dated 2025-12 (`isStale: true`). EVI / SAVI / MSAVI2 series in `indices` are `null` + `unavailable`; maps `evi`,
+are dated 2025-12 (`isStale: true`). `indices?set=` returns the requested indices (default NDVI, EVI, SAVI, MSAVI2;
+VCI / VHI / TCI / NDWI / LST / SM live; EVI / SAVI / MSAVI2 / VPI / ASI / SVI / NDII `null` + `unavailable`); maps `evi`,
 `savi`, `msavi2`, `vpi`, `asi`, `svi`, `ndii`, the land-cover breakdown and all forecasts → 501.
 
 **Runoff (live).** Modelled, not gauged: entities are districts (`image: "river"`); flows and volumes are derived
@@ -155,3 +175,47 @@ severity `null` + `unavailable`; station maps, by-province station counts, catch
 | Runoff volume (Mm³) | runoff depth (mm) × **real district area** (km²) / 1000. Labelled derived. The table's own volumes use a constant 6 500 km² for every district and are not served. |
 | Mean daily flow (m³/s) | derived volume / 86 400 s. Peak flows from the table (scaled to 6 500 km²) are withheld. |
 | Province / national / WMA values | Area-weighted from districts (§2); never plain means. |
+
+## 9. Cascade tables (2026-10-15, BACKEND_ISSUES #2, #3)
+
+`drought/table?metric=cascade` and `climate/table?metric=signal-chain` rows carry the contract's cascade keys **in
+addition to** their own, and the contract's columns are added next to the existing ones:
+
+| Key | Drought cascade | Climate signal chain |
+| --- | --- | --- |
+| `stage` | stage label (as before) | = `signal` |
+| `metric` | `spi`, `vhi`, `storagePct`, `settlementsAtRisk` | `tmean`, `et0`, `rainfall`, `runoff` |
+| `value` | **text** with unit: `SPI-6 -1.23`, `VHI 45 %`, `63.6 % FSC` | = `change` (text) |
+| `valueNum` | the number (**new**; it was `value`) | — |
+| `cls` | class id on `scale`: drought `D0`…`D4` / `No drought`, VCI classes (`Healthy` …), storage bands (`low` …) | `null` + `unavailable` |
+| `scale` | `drought`, `vci`, `storage`, `risk` (palettes in thresholds.json / the frontend) | `risk` |
+| `bar` | 0–100 from the class rank on its scale (least severe 0, most severe 100, evenly spaced: drought None…D4 = 0, 20 … 100; VCI classes and storage bands = 0, 25, 50, 75, 100) | `null` + `unavailable` |
+
+Kept: drought `class` (label), `severity` (% area in drought / under stress, 100 − storage %), `asOf`; climate
+`signal`, `change`, `severity` (`null` + `unavailable`). **One retype:** the drought cascade's `value` was the number
+and is now the contract's text; the number is `valueNum`. The frontend's `CascadeFlow` adapter accepts both, and
+with the contract keys present it can be simplified to read `{stage, metric, value, cls, scale, bar}` only. A stage
+without data has `value`, `valueNum`, `cls`, `bar`, `severity` = `null` (it used to report severity 0 %).
+
+## 10. Selectors (2026-10-15, BACKEND_ISSUES #1)
+
+Panel selectors are validated and honoured (they were all ignored). An unknown value → 400 listing the valid ones.
+
+| Endpoint | Selector | Values (default first) |
+| --- | --- | --- |
+| `rainfall/timeseries?metric=anomaly`, `drought/timeseries?metric=rain-anomaly` | `window` | `1`, `3`, `6`, `12` months summed before comparing with the normal |
+| `rainfall/table?metric=extremes` | `kind` | `wettest`, `driest` |
+| `rainfall/breakdown?metric=events` | `kind` | `count` (events > 50 mm/day), `max` (highest daily rainfall, mm) |
+| `drought/timeseries?metric=spi` | `scale` | `3`, `1`, `6`, `12`, `24` |
+| `drought/timeseries?metric=drought-area` | `scale` | `6`, `1`, `3`, `12`, `24` (SPI used for the classes) |
+| `drought/table?metric=affected` | `level` | `province`, `catchment` (→ 501) |
+| `climate/timeseries?metric=national-trend` | `var` | `temperature` (°C), `rainfall`, `et` (ET₀), `streamflow` (modelled runoff depth) — annual totals in mm |
+| `climate/breakdown?metric=seasonal-change` | `var` | `temperature` (°C), `rainfall` (mm) |
+| `climate/timeseries?metric=heat-days` | `kind` | `hot` (Tmax > 35 °C), `cold` (frost nights, Tmin < 0 °C) |
+| `climate/timeseries?metric=extreme-rain` | `kind` | `r20` (days ≥ 20 mm), `rx1` (Rx1day, mm) |
+| `climate/timeseries?metric=indicator-trends` | `scenario` | absent / `observed`; `rcp45`, `rcp85` → 501 |
+| `vegetation/timeseries?metric=indices` | `set` | comma-separated: `ndvi`, `vci`, `vhi`, `tci`, `ndwi`, `lst`, `sm` (live); `evi`, `savi`, `msavi2`, `vpi`, `asi`, `svi`, `ndii` (null + `unavailable`); default `ndvi,evi,savi,msavi2`; at most two units |
+| `vegetation/timeseries?metric=index-trend` | `index` | as `set`, one value; withheld indices → 501 |
+| `vegetation/timeseries?metric=drivers` | `var` | `rain` (mm), `temp` (Tmax °C), `pet` (ET₀, mm/day), `sm` (m³/m³) |
+| `runoff/timeseries?metric=drivers` | `var` | `rain`, `aet` (mm, complete months), `sm` |
+| `runoff/table?metric=top-stations` | `order` | `highest`, `lowest` |

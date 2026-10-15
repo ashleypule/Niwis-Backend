@@ -14,7 +14,7 @@
 | Error leakage | ✅ | Contract error bodies only; unexpected errors → generic 500 with a request id (details in server logs, scrubbed) |
 | Input validation | ✅ | Every filter / key is matched against allow-lists (provinces, WMAs, MDB codes, periods, metric / layer keys); `limit` 1–500; bad input → 400 / 404 |
 | CORS | ✅ | Origins from config (defaults: localhost:5173 / 5174); `GET` / `OPTIONS` only; no credentials |
-| Rate limiting | ✅ basic | 120 requests / minute / IP (configurable); in-process, memory-bounded; use the gateway or Redis when scaled out |
+| Rate limiting | ✅ basic | 600 requests / minute / IP (configurable; was 120, too low for a dashboard behind one office NAT); `/health` exempt; trusted networks via `RATE_LIMIT_TRUSTED_CIDRS`; `X-Forwarded-For` only with `TRUST_PROXY_HEADERS=true` (right-most entry), so the IP cannot be spoofed; in-process, memory-bounded; use the gateway or Redis when scaled out; `client_key` hook for per-user limits once auth exists |
 | Resource exhaustion | ✅ | 10 s statement timeout; bounded caches (2 048 entries per TTL); large daily slices aggregated or filtered in SQL; long series downsampled to ≤ 2 000 points |
 | Authentication | ⏳ hook in place | `get_current_user` on every router allows all requests today; roles can be added without changing the contract |
 | Dependencies | ✅ | `pip-audit -r requirements.txt`: no known vulnerabilities (2026-10-14) |

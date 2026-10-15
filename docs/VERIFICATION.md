@@ -4,7 +4,7 @@
 > value from the API and recomputes it with independent SQL. Area weights for province values come from
 > `reference/geo/districts.json` (the only non-SQL input).
 
-## climate — 2026-10-14
+## climate — 2026-10-15
 
 ### ✅ Hot days (Tmax > 35 °C), Vhembe (DC34), last full year — map layer hot-days vs count of daily Tmax > 35 °C
 
@@ -52,7 +52,7 @@ SELECT round(avg(a)::numeric, 2) FROM (SELECT a FROM m
   WHERE ym < (SELECT left(max("Date"), 7) FROM "6.1_core_rainfall_variables_master") ORDER BY ym DESC LIMIT 12) s
 ```
 
-## drought — 2026-10-14
+## drought — 2026-10-15
 
 ### ✅ SPI-3, KwaZulu-Natal, latest complete month — area-weighted from the 11 KZN districts
 
@@ -101,7 +101,145 @@ WITH cur AS (SELECT date, surface_soil_moisture AS v FROM satellite_remote_sensi
 SELECT round(((v - n) / n * 100)::numeric, 1) FROM cur, clim
 ```
 
-## rainfall — 2026-10-14
+## fixes — 2026-10-15
+
+### ✅ #6 Seasonal change, Namakwa (DC6), 2001–2020 DJF mean temperature (°C) — mean of monthly mean Tavg
+
+- API: `GET /api/v1/climate/breakdown?metric=seasonal-change&var=temperature&municipality=DC6` → **23.4**
+- SQL result: **23.40** (tolerance ± 0.005)
+
+```sql
+WITH m AS (SELECT substr("Date", 1, 7) ym, avg("Tavg_C") v FROM "4_1_temperature_change_master"
+           WHERE "District_Name" = 'Namakwa' AND substr("Date", 1, 4)::int BETWEEN 2001 AND 2020
+             AND substr("Date", 6, 2)::int IN (12, 1, 2) GROUP BY 1)
+SELECT round(avg(v)::numeric, 2) FROM m
+```
+
+### ✅ #6 Seasonal change, Namakwa (DC6), var=rainfall, 2001–2020 mean DJF rainfall (mm) — 4_3 Precip_DJF_mm
+
+- API: `GET /api/v1/climate/breakdown?metric=seasonal-change&var=rainfall&municipality=DC6` → **45.0**
+- SQL result: **45** (tolerance ± 0.5)
+
+```sql
+SELECT round(avg("Precip_DJF_mm")::numeric, 0) FROM "4_3_mean_annual_precipitation_master"
+WHERE "District_Name" = 'Namakwa' AND "Year" BETWEEN 2001 AND 2020
+```
+
+### ✅ #1 Vegetation indices set=vci,vhi,tci, Namakwa (DC6), latest VCI (%)
+
+- API: `GET /api/v1/vegetation/timeseries?metric=indices&set=vci,vhi,tci&municipality=DC6` → **74.9**
+- SQL result: **74.9** (tolerance ± 0.05)
+
+```sql
+SELECT round(vci::numeric, 1) FROM satellite_remote_sensing
+WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)
+```
+
+### ✅ #1 Vegetation indices set=ndwi,ndii, Namakwa (DC6), latest NDWI
+
+- API: `GET /api/v1/vegetation/timeseries?metric=indices&set=ndwi,ndii&municipality=DC6` → **-0.336**
+- SQL result: **-0.336** (tolerance ± 0.0005)
+
+```sql
+SELECT round(ndwi::numeric, 3) FROM satellite_remote_sensing
+WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)
+```
+
+### ✅ #1 heat-days kind=cold, Joe Gqabi (DC14), frost nights 2025 — Σ Frost_Day_Flag
+
+- API: `GET /api/v1/climate/timeseries?metric=heat-days&kind=cold&municipality=DC14` → **29.0**
+- SQL result: **29** (tolerance ± 0.05)
+
+```sql
+SELECT sum("Frost_Day_Flag") FROM "4_1_temperature_change_master"
+WHERE "District_Name" = 'Joe Gqabi' AND "Date" LIKE '2025-%'
+```
+
+### ✅ #1 extreme-rain kind=rx1, Namakwa (DC6), Rx1day 2025 (mm)
+
+- API: `GET /api/v1/climate/timeseries?metric=extreme-rain&kind=rx1&municipality=DC6` → **12.9**
+- SQL result: **12.9** (tolerance ± 0.05)
+
+```sql
+SELECT round("Rx1day_mm"::numeric, 1) FROM "4_2_wet_dry_spells_master"
+WHERE "District_Name" = 'Namakwa' AND "Year" = 2025
+```
+
+### ✅ #1 national-trend var=rainfall, City of Cape Town, 2025 annual rainfall (mm) — 4_3 MAP_mm
+
+- API: `GET /api/v1/climate/timeseries?metric=national-trend&var=rainfall&municipality=CPT` → **454.9**
+- SQL result: **454.9** (tolerance ± 0.05)
+
+```sql
+SELECT round("MAP_mm"::numeric, 1) FROM "4_3_mean_annual_precipitation_master"
+WHERE "District_Name" = 'City of Cape Town' AND "Year" = 2025
+```
+
+### ✅ #1 rainfall anomaly window=3, City of Cape Town, latest complete month (%) — 3-month total vs Σ normals
+
+- API: `GET /api/v1/rainfall/timeseries?metric=anomaly&window=3&municipality=CPT` → **-66.8**
+- SQL result: **-66.8** (tolerance ± 0.05)
+
+```sql
+WITH e AS (SELECT (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date AS m),
+mon AS (SELECT generate_series(e.m - interval '2 month', e.m, interval '1 month')::date AS m FROM e),
+p AS (SELECT sum("Daily_Rainfall_Total_mm") AS p FROM "6.1_core_rainfall_variables_master", e
+      WHERE "District_Name" = 'City of Cape Town'
+        AND "Date"::date BETWEEN e.m - interval '2 month' AND e.m + interval '1 month' - interval '1 day'),
+nm AS (SELECT "Month" AS mo, max("Monthly_Total_Precipitation_mm" - "Monthly_Anomaly_mm") AS n
+       FROM "6.1_core_rainfall_variables_master" WHERE "District_Name" = 'City of Cape Town' GROUP BY 1),
+n AS (SELECT sum(nm.n) AS n FROM mon JOIN nm ON nm.mo = extract(month FROM mon.m))
+SELECT round(((p - n) / n * 100)::numeric, 1) FROM p, n
+```
+
+### ✅ #1 rainfall events kind=max, national, highest daily rainfall in the latest year (mm)
+
+- API: `GET /api/v1/rainfall/breakdown?metric=events&kind=max` → **157.8**
+- SQL result: **157.8** (tolerance ± 0.05)
+
+```sql
+SELECT round(max("Daily_Rainfall_Total_mm")::numeric, 1) FROM "6.1_core_rainfall_variables_master"
+WHERE substr("Date", 1, 4) = (SELECT substr(max("Date"), 1, 4) FROM "6.1_core_rainfall_variables_master")
+```
+
+### ✅ #2 Drought cascade, Namakwa (DC6): meteorological valueNum = SPI-6, latest complete month
+
+- API: `GET /api/v1/drought/table?metric=cascade&municipality=DC6` → **0.88**
+- SQL result: **0.88** (tolerance ± 0.005)
+
+```sql
+SELECT round("SPI_6_Medium_Term_Hydrological_Impacts"::numeric, 2)
+FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE "District_Name" = 'Namakwa' AND make_date("Year"::int, "Month"::int, 1) = (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date
+```
+
+### ✅ #2 Drought cascade, Namakwa (DC6): meteorological bar = class rank × 20 (None 0 … D4 100)
+
+- API: `GET /api/v1/drought/table?metric=cascade&municipality=DC6` → **0.0**
+- SQL result: **0** (tolerance ± 0.05)
+
+```sql
+WITH s AS (SELECT round("SPI_6_Medium_Term_Hydrological_Impacts"::numeric, 2) AS v
+           FROM "6.2_rainfall_derived_drought_indices_master"
+           WHERE "District_Name" = 'Namakwa' AND make_date("Year"::int, "Month"::int, 1) = (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date)
+SELECT CASE WHEN v <= -2.0 THEN 100 WHEN v <= -1.6 THEN 80 WHEN v <= -1.3 THEN 60
+            WHEN v <= -0.8 THEN 40 WHEN v <= -0.5 THEN 20 ELSE 0 END FROM s
+```
+
+### ✅ #2 Drought cascade, national: hydrological valueNum = Σ volume / Σ capacity (% FSC), latest month
+
+- API: `GET /api/v1/drought/table?metric=cascade` → **63.6**
+- SQL result: **63.6** (tolerance ± 0.05)
+
+```sql
+WITH cap AS (SELECT district_name, percentile_cont(0.5) WITHIN GROUP (ORDER BY dam_storage_million_m3 / dam_level_pct_fsc * 100) AS fsc
+             FROM hydrological_drought_master WHERE dam_level_pct_fsc > 0.5 GROUP BY 1),
+     cur AS (SELECT district_name, dam_storage_million_m3 AS v FROM hydrological_drought_master
+             WHERE date = (SELECT max(date) FROM hydrological_drought_master))
+SELECT round((sum(cur.v) / sum(cap.fsc) * 100)::numeric, 1) FROM cur JOIN cap USING (district_name)
+```
+
+## rainfall — 2026-10-15
 
 ### ✅ Total rainfall, last 12 months, City of Cape Town (mm)
 
@@ -163,7 +301,7 @@ SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainf
 WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month'
 ```
 
-## runoff — 2026-10-14
+## runoff — 2026-10-15
 
 ### ✅ Runoff depth, last 12 months, City of Cape Town (mm) — model volume / 6 500 km²
 
@@ -207,7 +345,7 @@ SELECT round((sum("Baseflow_Component_m3s") * 86400 / sum("Daily_Surface_Runoff_
 FROM runoff_variables_master WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)
 ```
 
-## vegetation — 2026-10-14
+## vegetation — 2026-10-15
 
 ### ✅ NDVI, Western Cape, latest month — area-weighted from the 6 WC districts (satellite_remote_sensing)
 

@@ -1,6 +1,6 @@
 # Progress
 
-## Status: all phases complete (2026-10-14). Five modules live; hardening done. Waiting on the data team (below).
+## Status: all phases complete (2026-10-14); frontend integration issues #1–#7 fixed (2026-10-15). Waiting on the data team (below).
 
 ### Blocking / waiting on others
 
@@ -90,6 +90,11 @@
       class rank (contract / mock unit; the prompt's 0–1 would draw every bar at the 4 % minimum in `CascadeFlow`).
       Climate `cls` / `bar` / `severity` are null + `unavailable` (no agreed thresholds). Also fixed: the drought
       `severity` of a stage without data was 0 %, now null. `tests/test_cascade_shape.py`.
+
+- [x] Verification: ruff + mypy (strict) clean; 489 tests; 4 / 4 integration tests on Supabase (incl. the full
+      response audit); `docs/VERIFICATION.md` 33 / 33 (12 new checks on the values touched here); Docker rebuilt,
+      healthy, caches warmed. Frontend (unchanged): `fixtures:record` 627 / 627, `contract:check` 0 schema failures,
+      0 errors (structural differences 12 → 8). Before / after responses: `docs/ISSUE_FIXES.md`.
 
 ### Phase 7 — Hardening (2026-10-14)
 
