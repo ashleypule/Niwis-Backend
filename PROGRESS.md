@@ -23,12 +23,20 @@ audit fixes B1–B14. One commit per step.
       Passed → live: relative humidity, surface-water extent, soil moisture prior, the `4_1` / `4_2` / `4_3` derived
       columns, GDD, RAI, CHIRPS / TAMSAT / intensity (with notes: derived from the gauge series). Registry corrected:
       heatwave duration is annual, TAMSAT is one value per month.
-- [ ] A1 Catalogue generator (`scripts/build_catalogue.py`, `app/core/units.py`, `app/registry/catalogue.yaml`)
+- [x] **A1 Catalogue generated from the database schema.** `scripts/build_catalogue.py` reads
+      `information_schema.columns` (read-only) and writes `app/registry/catalogue.yaml` and
+      `docs/CATEGORY_CATALOGUE.md`: 14 categories (tables, label + spec section), 151 variables (63 live, 59 withheld,
+      29 duplicate), 71 chart groups; key columns listed separately. Units from one suffix table
+      (`app/core/units.py`), labels from the names (acronyms kept, ET0 → ET₀); 7 unit overrides, each with its reason
+      (satellite columns without a unit suffix, GDD in °C·days). New columns appear withheld until reviewed; new
+      tables are listed as unregistered (13 today). `--check` fails when the committed files are stale.
+      `tests/test_catalogue.py`: every suffix, the label rules, every column exactly once, statuses = registry roles,
+      the axis rule, rebuild = committed file, the fixture DB has the catalogued columns.
 - [ ] A2 / A3 Category endpoints and the axis rule
 - [ ] B1–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
-Also found: 14 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue
+Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue
 (`DATA_GAPS.md` §16).
 
 ### Frontend integration fixes (2026-10-15) — `../Niwis Frontend/docs/backend/BACKEND_ISSUES.md`

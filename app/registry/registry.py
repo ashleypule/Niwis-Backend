@@ -47,11 +47,15 @@ class Column(_Strict):
     cast: Literal["double"] | None = None
     transform: Literal["model_volume_to_depth_mm"] | None = None
     use: Literal["ratio_only"] | None = None
+    # why the raw column is withheld from the database view although the API serves a value derived from it
+    raw_reason: str | None = None
 
     @model_validator(mode="after")
     def _withheld_needs_reason(self) -> Column:
         if self.role == "withheld" and not self.reason:
             raise ValueError("withheld columns need a reason")
+        if (self.transform or self.use) and not self.raw_reason:
+            raise ValueError("columns served only after a transform need a raw_reason for the database view")
         return self
 
 
@@ -86,6 +90,8 @@ class Dataset(_Strict):
     columns: dict[str, Column]
     known_issues: list[str] = []
     model_area_km2: float | None = None
+    spec: str | None = None  # spec section (e.g. "3.1"); defaults to the table name's number prefix (4_1 → 4.1)
+    category_modules: list[ModuleId] = []  # module pages that show this table in the database view ([module])
 
     @property
     def fq(self) -> str:
@@ -168,6 +174,7 @@ class Registry(_Strict):
             if isinstance(ds, dict):
                 ds.setdefault("table", name)
                 ds.setdefault("serves", [ds.get("module")])
+                ds.setdefault("category_modules", [ds.get("module")])
         return data
 
     @model_validator(mode="after")

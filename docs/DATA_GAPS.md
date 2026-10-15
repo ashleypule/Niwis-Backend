@@ -30,7 +30,7 @@
 | 13 | The same data stored in several tables; canonical source chosen per variable | 9 tables | P3 |
 | 14 | Partial current month: anomaly and SPI compare a few days with a full-month normal | `6.1`, `6.2`, `meteorological`, `5.2` | P2 |
 | 15 | Plausibility checks for the database view (2026-10-15): **reservoir columns, solar radiation, GRACE, the `4_3` record statistics and `4_6` fail and are withheld** | `hydrological_drought_master`, `meteorological_drought_master`, `satellite_remote_sensing`, `4_3`, `4_6` | P1 |
-| 16 | 14 new tables (§8–§12: reservoirs, surface water, groundwater, water quality) appeared on 2026-10-15; not registered, not served | `8_1` … `12.4` | P2 |
+| 16 | 13 new tables (§8–§12: reservoirs, surface water, groundwater, water quality) appeared on 2026-10-15; not registered, not served | `8_1` … `12.4` | P2 |
 
 ---
 
@@ -275,7 +275,7 @@ scaling; only the baseflow index, a ratio, is served).
 
 ## 16. New tables not registered yet (P2) — found 2026-10-15
 
-The database now holds **28** tables. 14 appeared after the Phase 0 inventory (2026-10-14):
+The database now holds **27** tables. 13 appeared after the Phase 0 inventory (2026-10-14):
 `8_1_reservoir_operational_master`, `9_1_hydrological_station_master`, `9_2_catchment_master`,
 `9_3_sansa_earth_observation_master`, `10_1_borehole_and_aquifer_master` (long format: `variable_name` / `value` /
 `unit`), `10_2_recharge_supporting _master`, `11_1_hydrogeological`, `11.2_recharge_and_discharge`,

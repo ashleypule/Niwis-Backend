@@ -7,6 +7,10 @@
 #   unused     – plausible but not needed by the contract yet
 # `module` is the DB module that owns the table; `serves` lists the contract modules whose endpoints read it.
 # `repeats` marks monthly/annual values stored on every daily row: read one row per period, never sum them.
+# Database view (docs/CATEGORY_CATALOGUE.md): `category_modules` = module pages that show the table as a category
+# (default [module]); `spec` = spec section when the table name has no number prefix; `raw_reason` = why a raw column is
+# kept out of the view although the API serves a value derived from it. Regenerate the catalogue after any change here:
+# python scripts/build_catalogue.py
 # Adding a module = add its tables here (+ variables in the catalogue) and a package under app/modules/.
 # Evidence for every role: docs/DATA_MAPPING.md, docs/DATA_GAPS.md, scripts/*.sql. Validated by app/registry/registry.py.
 
@@ -137,7 +141,9 @@ datasets:
   meteorological_drought_master:
     db_module: 1
     module: drought
+    spec: "3.1"
     serves: [drought, rainfall, climate]
+    category_modules: [drought]
     location: {column: district_name}
     time: {kind: date, column: date, resolution: daily, year: year, month: month}
     known_issues: ["31 December missing every year"]
@@ -173,7 +179,9 @@ datasets:
   satellite_remote_sensing:
     db_module: 1
     module: drought
+    spec: "3.2"
     serves: [drought, vegetation]
+    category_modules: [drought, vegetation]
     location: {column: district_name}
     time: {kind: date, column: date, resolution: monthly, year: year}
     known_issues: ["ends 2025-12", "lowercase district names; 5 use other spellings"]
@@ -193,7 +201,9 @@ datasets:
   hydrological_drought_master:
     db_module: 1
     module: drought
+    spec: "3.3"
     serves: [drought]
+    category_modules: [drought, runoff]
     location: {column: district_name}
     time: {kind: date, column: date, resolution: monthly}
     known_issues: ["ends 2025-12", "lowercase district names"]
@@ -233,6 +243,7 @@ datasets:
     db_module: 2
     module: climate
     serves: [climate, rainfall]
+    category_modules: [climate, rainfall]
     location: {column: District_Name}
     time: {kind: year, column: Year, resolution: annual}
     known_issues: ["2026 is a partial year"]
@@ -250,6 +261,7 @@ datasets:
     db_module: 2
     module: climate
     serves: [climate, rainfall]
+    category_modules: [climate, rainfall]
     location: {column: District_Name}
     time: {kind: year, column: Year, resolution: annual}
     known_issues: ["2026 is a partial year", "Nino34_Annual_Mean 2026 = −41.28 (excluded with the partial year)"]
@@ -357,6 +369,7 @@ datasets:
     db_module: 4
     module: rainfall
     serves: [rainfall, drought, vegetation, runoff]
+    category_modules: [rainfall]
     location: {column: District_Name}
     time: {kind: text_date, column: Date, resolution: daily, year: Year, month: Month}
     known_issues: ["Date stored as text", "Seasonal_Total_OND_mm stored as text", "no primary key or index"]
@@ -381,6 +394,7 @@ datasets:
     db_module: 4
     module: rainfall
     serves: [rainfall, drought, climate]
+    category_modules: [rainfall, drought]
     location: {column: District_Name}
     time: {kind: year_month, year: Year, month: Month, resolution: monthly}
     columns:
@@ -397,7 +411,9 @@ datasets:
   runoff_variables_master:
     db_module: 5
     module: runoff
+    spec: "7.1"
     serves: [runoff, climate]
+    category_modules: [runoff]
     location: {column: District_Name}
     time: {kind: date, column: Date, resolution: daily, year: Year, month: Month}
     model_area_km2: 6500   # the area the table's volumes were computed with (same for every district)
@@ -407,13 +423,15 @@ datasets:
       Mean_Catchment_Rainfall_mm:             {var: rain_daily, role: duplicate}
       Actual_ET_from_Catchment_mm:            {var: aet_daily, role: canonical}
       Daily_Surface_Runoff_Volume_m3_day:     {var: runoff_depth_daily, role: canonical, transform: model_volume_to_depth_mm,
-                                               note: "depth (mm) = volume / model_area_km2; volumes are re-derived as depth × real district area"}
+                                               note: "depth (mm) = volume / model_area_km2; volumes are re-derived as depth × real district area",
+                                               raw_reason: "volume computed with the constant 6 500 km² area for every district; the runoff page serves depth × real district area instead"}
       Monthly_Runoff_Totals_Million_m3_month: {var: runoff_volume_monthly, role: withheld, repeats: monthly, reason: "volume computed with the constant 6 500 km² area"}
       Runoff_Coefficient_dimensionless:       {var: runoff_coefficient, role: canonical}
       Soil_Moisture_Prior_m3m3:               {var: soil_moisture_prior, role: unused, note: "plausibility checked 2026-10-15: 0.025–0.475 m³/m³, varying"}
       Curve_Number_CN:                        {var: curve_number, role: withheld, reason: "constant 72.9"}
       Peak_Flow_Rates_m3s:                    {var: peak_flow, role: withheld, reason: "flow scaled to the constant 6 500 km² area"}
       Baseflow_Component_m3s:                 {var: baseflow_component, role: canonical, use: ratio_only,
-                                               note: "only the baseflow index (ratio to total flow, same area scaling) is served"}
+                                               note: "only the baseflow index (ratio to total flow, same area scaling) is served",
+                                               raw_reason: "flow scaled to the constant 6 500 km² area for every district; only the baseflow index (a ratio) is served"}
       Dominant_LandCover_Class:               {var: land_cover, role: withheld, reason: "one constant class for every district"}
       Impervious_Surface_Fraction_percent:    {var: impervious_fraction, role: withheld, reason: "constant 4.5 %"}
