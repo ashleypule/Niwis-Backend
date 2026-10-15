@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import os
 import re
 from functools import lru_cache
@@ -28,7 +29,11 @@ class Settings(BaseSettings):
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:5173", "http://localhost:5174"]
     )
-    rate_limit_per_minute: int = 120  # per client IP; 0 disables
+    rate_limit_per_minute: int = 600  # per client IP (one dashboard visit makes ~45 requests); 0 disables
+    # networks never rate-limited, comma-separated CIDRs (e.g. the DWS network); default none
+    rate_limit_trusted_cidrs: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    # read the client IP from X-Forwarded-For; only behind a reverse proxy that sets it (else it can be spoofed)
+    trust_proxy_headers: bool = False
     environment: str = "development"
     # app.core.response_checks on every module response: "log" (warn), "raise" (fail the request; tests), "off"
     response_checks: Literal["off", "log", "raise"] = "log"
@@ -42,11 +47,18 @@ class Settings(BaseSettings):
     cache_ttl_long_series_s: int = 60 * 60
     cache_ttl_meta_s: int = 60 * 60
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", "rate_limit_trusted_cidrs", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
         if isinstance(v, str):
             return [o.strip() for o in v.split(",") if o.strip()]
+        return v
+
+    @field_validator("rate_limit_trusted_cidrs")
+    @classmethod
+    def _valid_cidrs(cls, v: list[str]) -> list[str]:
+        for cidr in v:
+            ipaddress.ip_network(cidr, strict=False)  # ValueError → refuse to start on a malformed network
         return v
 
     @property

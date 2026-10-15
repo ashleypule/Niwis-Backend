@@ -106,7 +106,12 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         redoc_url=None,
     )
 
-    app.add_middleware(RateLimitMiddleware, per_minute=settings.rate_limit_per_minute)
+    app.add_middleware(
+        RateLimitMiddleware,
+        per_minute=settings.rate_limit_per_minute,
+        trusted=settings.rate_limit_trusted_cidrs,
+        trust_proxy_headers=settings.trust_proxy_headers,
+    )
     app.add_middleware(RequestLogMiddleware)
     app.add_middleware(
         CORSMiddleware,

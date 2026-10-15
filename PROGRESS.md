@@ -75,6 +75,13 @@
       `tests/test_provenance.py`: boundaries per resolution, plus the reported endpoints (2025 → not stale) and the
       satellite months (2025-12 → still stale).
 
+- [x] **#4 Rate limit too low.** Default 600 / min per client IP (was 120; one `/drought` visit ≈ 45 requests),
+      still `RATE_LIMIT_PER_MINUTE`. `/api/v1/health` exempt. `RATE_LIMIT_TRUSTED_CIDRS` (default empty, validated at
+      startup) exempts networks such as the DWS network. `X-Forwarded-For` is read only with
+      `TRUST_PROXY_HEADERS=true` (default false), and then only its right-most entry (the address the proxy saw), so
+      clients cannot spoof their IP or a trusted one. `RateLimitMiddleware.client_key` is the hook to key the limit by
+      user / token once authentication exists. `tests/test_rate_limit.py`.
+
 ### Phase 7 — Hardening (2026-10-14)
 
 - [x] Performance (`docs/PERFORMANCE.md`): summary p95 16–106 ms with warm data caches across 61 scopes per module
