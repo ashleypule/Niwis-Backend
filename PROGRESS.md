@@ -32,7 +32,14 @@ audit fixes B1–B14. One commit per step.
       tables are listed as unregistered (13 today). `--check` fails when the committed files are stale.
       `tests/test_catalogue.py`: every suffix, the label rules, every column exactly once, statuses = registry roles,
       the axis rule, rebuild = committed file, the fixture DB has the catalogued columns.
-- [ ] A2 / A3 Category endpoints and the axis rule
+- [x] **A2 / A3 Category endpoints** (`app/modules/categories.py`, all five modules): `GET /{module}/categories` and
+      `GET /{module}/category/{tableId}/{groupId}?vars=…` (SeriesSet: one series per column with unit, `asOf` /
+      `isStale`, `source` = table.column; withheld = null + reason; 404 / 400 with the valid ids / columns). Values
+      read straight from the column in SQL: area-weighted mean (≥ 95 %) or a sum for volumes / flows / areas;
+      repeated monthly / annual values read once per period; incomplete periods never served; daily > 2 000 points
+      → monthly means. One axis per group (axis rule). `Ctx.for_entity`: `entityId` selects one district. Added to
+      the response audit. `tests/test_categories.py` (every group of every table, values vs SQL, defaults, errors,
+      entity, withheld).
 - [ ] B1–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 

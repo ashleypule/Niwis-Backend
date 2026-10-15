@@ -29,7 +29,9 @@ import yaml
 from pydantic import BaseModel, ConfigDict
 
 from app.core import units
-from app.registry.registry import Dataset, ModuleId, Registry, Resolution
+from app.core.provenance import Resolution
+from app.registry.registry import Dataset, ModuleId, Registry
+from app.registry.registry import Resolution as TableResolution
 
 CATALOGUE_PATH = Path(__file__).with_name("catalogue.yaml")
 Status = Literal["live", "withheld", "duplicate"]
@@ -98,7 +100,7 @@ class Category(_Strict):
     label: str
     spec: str | None
     modules: list[ModuleId]
-    resolution: Resolution
+    resolution: TableResolution
     keys: list[str]
     groups: list[CatGroup]
     columns: list[CatColumn]
@@ -216,7 +218,10 @@ def _resolution(ds: Dataset, column: str | None) -> Resolution:
         return "monthly"
     if rep in ("annual", "record"):
         return "annual"
-    return ds.time.resolution
+    res = ds.time.resolution
+    if res == "dekadal":
+        raise ValueError(f"{ds.table}: dekadal tables are not supported by the database view yet")
+    return res
 
 
 def _status(reg: Registry, ds: Dataset, column: str) -> tuple[Status, str | None, str | None]:

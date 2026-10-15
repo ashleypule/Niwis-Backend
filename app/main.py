@@ -25,6 +25,9 @@ from app.logging_config import configure_logging
 from app.meta.router import router as meta_router
 from app.meta.service import MetaService
 from app.middleware import RateLimitMiddleware, RequestLogMiddleware
+from app.modules import IMPLEMENTED_MODULES
+from app.modules.categories import build_category_router
+from app.modules.categories import prewarm as prewarm_categories
 from app.modules.climate.router import router as climate_router
 from app.modules.climate.service import prewarm as prewarm_climate
 from app.modules.drought.router import router as drought_router
@@ -36,6 +39,7 @@ from app.modules.runoff.service import prewarm as prewarm_runoff
 from app.modules.vegetation.router import router as vegetation_router
 from app.modules.vegetation.service import prewarm as prewarm_vegetation
 from app.refdata.router import router as reference_router
+from app.registry.catalogue import get_catalogue
 from app.registry.registry import get_registry
 from app.state import AppState
 
@@ -64,6 +68,8 @@ async def _warm(state: AppState) -> None:
         log.info("data cache warmed")
         await state.meta.table_stats()
         log.info("meta cache warmed")
+        await prewarm_categories(state)
+        log.info("category cache warmed")
     except Exception:
         log.exception("meta cache warm-up failed")
 
@@ -75,6 +81,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         registry = get_registry()  # raises on an invalid registry: refuse to start
+        get_catalogue()  # raises on an invalid catalogue (app/registry/catalogue.yaml)
         database = db or Database(settings)
         try:
             await database.connect()
@@ -151,6 +158,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(climate_router)
     app.include_router(vegetation_router)
     app.include_router(runoff_router)
+    for module in IMPLEMENTED_MODULES:
+        app.include_router(build_category_router(module))
     return app
 
 

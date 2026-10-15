@@ -119,6 +119,14 @@ class Series(ContractModel):
     smooth: bool | None = None
     symbol: bool | None = None
     data: list[list[XVal | None]]
+    # additions (database category charts): the series' own unit, provenance and source column
+    unit: str | None = None
+    as_of: str | None = Field(None, alias="asOf")
+    is_stale: bool | None = Field(None, alias="isStale")
+    period_end: str | None = Field(None, alias="periodEnd")
+    source: list[str] | None = None  # ["table.column"]
+    resolution: Literal["daily", "monthly", "annual"] | None = None
+    status: Literal["live", "withheld", "duplicate"] | None = None
 
 
 class Axis(ContractModel):
@@ -298,6 +306,62 @@ class EntityDetail(Entity):
     # additions
     as_of: str | None = Field(None, alias="asOf")
     source: list[str] | None = None
+
+
+# ------------------------------------------------------------------ database category view (addition)
+
+
+class CatalogueVariable(ContractModel):
+    """One database column (docs/CATEGORY_CATALOGUE.md)."""
+
+    column: str  # exact database column name (the `vars` value)
+    label: str  # from the column name, with the unit: "Daily Rainfall (mm/day)"
+    name: str  # the label without the unit
+    unit: str | None = None
+    kind: Literal["numeric", "categorical"]
+    resolution: Literal["daily", "monthly", "annual"]
+    status: Literal["live", "withheld", "duplicate"]
+    reason: str | None = None  # withheld: why
+    duplicate_of: str | None = Field(None, alias="duplicateOf")  # duplicate: "table.column" that is shown instead
+    group: str | None = None  # chart group id (None for duplicates)
+    default_visible: bool = Field(alias="defaultVisible")
+    as_of: str | None = Field(None, alias="asOf")
+    is_stale: bool | None = Field(None, alias="isStale")
+    period_end: str | None = Field(None, alias="periodEnd")
+    source: str  # "table.column"
+    note: str | None = None
+    unit_override: str | None = Field(None, alias="unitOverride")  # why the unit differs from the name's suffix
+
+
+class CatalogueGroup(ContractModel):
+    id: str
+    label: str
+    unit: str  # the group's single axis unit ("index" for unitless indices, "—" for other unitless columns)
+    resolution: Literal["daily", "monthly", "annual"]
+    columns: list[str]
+    default_visible: list[str] = Field(alias="defaultVisible")
+    path: str  # the series endpoint for this group
+
+
+class CatalogueTable(ContractModel):
+    id: str
+    table: str
+    label: str
+    spec: str | None = None  # spec section, e.g. "3.1"
+    spec_tag: str | None = Field(None, alias="specTag")  # "§3.1"
+    modules: list[str]
+    resolution: Literal["daily", "dekadal", "monthly", "annual"]
+    as_of: str | None = Field(None, alias="asOf")
+    is_stale: bool | None = Field(None, alias="isStale")
+    counts: dict[str, int]  # live / withheld / duplicate
+    groups: list[CatalogueGroup]
+    variables: list[CatalogueVariable]
+
+
+class CategoryList(Provenance):
+    module: str
+    as_of: str | None = Field(None, alias="asOf")
+    tables: list[CatalogueTable]
 
 
 # ------------------------------------------------------------------ alerts, search, reference

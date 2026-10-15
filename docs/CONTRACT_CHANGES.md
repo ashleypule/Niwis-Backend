@@ -219,3 +219,29 @@ Panel selectors are validated and honoured (they were all ignored). An unknown v
 | `vegetation/timeseries?metric=drivers` | `var` | `rain` (mm), `temp` (Tmax °C), `pet` (ET₀, mm/day), `sm` (m³/m³) |
 | `runoff/timeseries?metric=drivers` | `var` | `rain`, `aet` (mm, complete months), `sm` |
 | `runoff/table?metric=top-stations` | `order` | `highest`, `lowest` |
+
+## 11. Database category charts (2026-10-15) — new endpoints, additions only
+
+The database view: every registered table is a **category**, every column a **variable**, labelled from its own
+column name (docs/CATEGORY_CATALOGUE.md). Two new endpoints per module (`rainfall`, `drought`, `climate`,
+`vegetation`, `runoff`); nothing existing changes.
+
+| Endpoint | Response | Notes |
+| --- | --- | --- |
+| `GET /api/v1/{module}/categories` | `CategoryList` (new) | The module's tables (table → module mapping: `category_modules` in `app/registry/datasets.yaml`), each with `id`, `table`, `label`, `spec` / `specTag` (`"§3.1"`), `resolution`, `asOf` / `isStale`, `counts` (live / withheld / duplicate), `groups` (chart groups: `id`, `label`, `unit`, `resolution`, `columns`, `defaultVisible`, `path`) and `variables` (every column: `column`, `label`, `name`, `unit`, `kind`, `resolution`, `status`, `reason`, `duplicateOf`, `group`, `defaultVisible`, `asOf` / `isStale` / `periodEnd`, `source` = `table.column`, `note`, `unitOverride`). |
+| `GET /api/v1/{module}/category/{tableId}/{groupId}` | `SeriesSet` | One series per requested column: `vars=col1,col2` (exact column names), `vars=all`, default the group's `defaultVisible`. Global filters as everywhere (`province`, `wma`, `municipality`, `period`, `from`, `to`); `entityId` selects one district. Unknown table / group → 404 (lists the valid ids); unknown column → 400 (lists the group's columns). |
+
+Additions to `Series` (all optional, set on category series): `unit` (the column's unit; absent for unitless
+indices), `asOf`, `isStale`, `periodEnd`, `source` (`["table.column"]`), `resolution` (`daily` / `monthly` /
+`annual`), `status` (`live` / `withheld`). `key` = the exact column name, `name` = the catalogue label.
+
+Rules the frontend can rely on:
+- **Axis rule:** a group never mixes units, so a category chart always has **one** axis (`axes[0].unit` = the
+  group's unit; `index` for unitless SPI/SPEI/SSI/SGI/RAI/SVI or NDVI/NDWI/… groups, which are separate groups).
+- **Withheld** columns are all-null series with an `unavailable` entry (`series.<column>`, the reason). Duplicates are
+  not requestable (they are listed in `/categories` with `duplicateOf`).
+- **Aggregation** (`aggregation` as elsewhere): area-weighted district mean with ≥ 95 % area coverage; volumes, flows
+  and areas (Mm³, m³/s, m³/day, m³/year, km²) are summed over the scope's districts (all districts needed).
+- **Periods:** monthly groups show whole months ending with the latest complete month the table has; annual groups
+  the whole record (or `from` / `to`, `5Y`, `10Y`); incomplete months / years are never served. Daily groups longer
+  than 2 000 points are downsampled to monthly means (`note` says so).

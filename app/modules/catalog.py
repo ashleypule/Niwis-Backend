@@ -21,6 +21,7 @@ from app.modules.drought import service as drought
 from app.modules.rainfall import service as rainfall
 from app.modules.runoff import service as runoff
 from app.modules.vegetation import service as vegetation
+from app.registry.catalogue import get_catalogue
 
 SERVICE_MODULES: dict[str, ModuleType] = {
     "rainfall": rainfall,
@@ -72,6 +73,12 @@ async def requests(client: httpx.AsyncClient, scopes: list[dict[str, str]]) -> l
             for key in await keys(client, module, kind):
                 for variant, scope in product(list(selector_variants(sels.get((kind, key), ()))), scopes):
                     out.append((f"{base}/{kind}", {param: key, **variant, **scope}))
+        out += [(f"{base}/categories", dict(scope)) for scope in scopes]
+    # database view: every chart group of every table with all its columns, under the table's first module page
+    for cat in get_catalogue().categories:
+        for g in cat.groups:
+            path = f"/api/v1/{cat.modules[0]}/category/{cat.id}/{g.id}"
+            out += [(path, {"vars": "all", **scope}) for scope in scopes]
     return out
 
 

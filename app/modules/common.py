@@ -6,15 +6,16 @@ from __future__ import annotations
 import datetime as dt
 import logging
 from collections.abc import Awaitable, Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from fastapi import Depends, Query, Request
 
+from app.core import districts
 from app.core.aggregate import aggregation_label, weights
 from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable, NotFound
-from app.core.filters import Filters, parse_compare, parse_scope, parse_window
+from app.core.filters import Filters, ScopeSel, parse_compare, parse_scope, parse_window
 from app.core.provenance import Resolution, is_stale, iso, period_end
 from app.core.response_checks import Coverage, attach_reasons, invariant_violations, unexplained_null_violations
 from app.core.thresholds import drought_class_or_none, drought_label
@@ -64,6 +65,25 @@ class Ctx:
 
     def weights(self) -> dict[str, float]:
         return weights(self.filters.scope, self.state.spatial)
+
+    def for_entity(self) -> Ctx:
+        """This context with the scope narrowed to the `entityId` district (entity datasets), or itself without one.
+
+        Entity datasets describe the selected entity, so `entityId` wins over every scope filter (province, wma,
+        municipality): the same district gives the same series whatever page scope is selected. The copy shares
+        `reasons`, so null explanations still reach the response. Unknown codes → 404.
+        """
+        code = (self.filters.entity_id or "").strip()
+        if not code:
+            return self
+        d = districts.by_code(code)
+        if d is None:
+            raise NotFound(
+                f"Unknown entity {code!r}",
+                issues=[{"param": "entityId", "value": code, "hint": "a district or metro MDB code, e.g. DC44"}],
+            )
+        scope = ScopeSel("municipality", d.code, d.official_name, (d.code,))
+        return replace(self, filters=replace(self.filters, scope=scope))
 
     def select(self, sel: Selector) -> str:
         """The validated value of a single-valued selector (its default when absent)."""
