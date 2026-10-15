@@ -21,12 +21,13 @@ import pandas as pd
 from app.core import districts
 from app.core.aggregate import class_areas, weighted, weighted_scalar
 from app.core.data import DataAccess
-from app.core.errors import DataUnavailable
+from app.core.errors import BadRequest, DataUnavailable
 from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import thresholds, veg_class
-from app.modules.common import Ctx, forecast_unavailable, unknown
+from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
+from app.modules.drivers import driver_series
 from app.modules.rainfall.service import RainfallService, _months
 from app.schemas import contract as c
 
@@ -50,6 +51,26 @@ ONLY_IN_5_1 = {
     "ndii": "NDII",
 }
 SEASONS = {"DJF": (12, 1, 2), "MAM": (3, 4, 5), "JJA": (6, 7, 8), "SON": (9, 10, 11)}
+# Indices served from satellite_remote_sensing (D4): id → (variable, label, unit, decimals)
+LIVE_INDICES: dict[str, tuple[str, str, str, int]] = {
+    "ndvi": ("ndvi", "NDVI", "—", 3),
+    "vci": ("vci", "VCI", "%", 1),
+    "vhi": ("vhi", "VHI", "%", 1),
+    "tci": ("tci", "TCI", "%", 1),
+    "ndwi": ("ndwi", "NDWI", "—", 3),
+    "lst": ("lst", "LST", "°C", 1),
+    "sm": ("soil_moisture_surface", "Soil moisture", "m³/m³", 3),
+}
+WITHHELD_UNITS = {"evi": "—", "savi": "—", "msavi2": "—", "vpi": "%", "asi": "%", "svi": "—", "ndii": "—"}
+INDEX_IDS = (*LIVE_INDICES, *ONLY_IN_5_1)
+INDEX_SET = Selector("set", INDEX_IDS, "ndvi,evi,savi,msavi2", multi=True)
+INDEX = Selector("index", INDEX_IDS, "ndvi")
+DRIVER_VAR = Selector("var", ("rain", "temp", "pet", "sm"), "rain")
+SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
+    ("timeseries", "indices"): (INDEX_SET,),
+    ("timeseries", "index-trend"): (INDEX,),
+    ("timeseries", "drivers"): (DRIVER_VAR,),
+}
 
 
 def _d(ts: Any) -> dt.date:
@@ -212,48 +233,60 @@ class VegetationService:
         return (await handlers[metric]()).dump()
 
     async def ts_indices(self) -> c.SeriesSet:
+        """The indices in `set` (default NDVI, EVI, SAVI, MSAVI2). Indices only the withheld 5.1 table provides are
+        null series with an `unavailable` entry; at most two units per request (one per axis)."""
+        ids = self.ctx.select_many(INDEX_SET)
+        units = list(dict.fromkeys(LIVE_INDICES[i][2] if i in LIVE_INDICES else WITHHELD_UNITS[i] for i in ids))
+        if len(units) > 2:
+            raise BadRequest(
+                f"`set` mixes {len(units)} units ({', '.join(units)}); a chart has at most two axes",
+                issues=[{"param": "set", "value": ",".join(ids), "units": units}],
+            )
         m = await self.last()
         ms = await self.window_months(m)
-        ndvi = await self.scope_series("ndvi")
-        missing = ["evi", "savi", "msavi2"]
-        series = [
-            c.Series(
-                key="ndvi",
-                name="NDVI",
-                kind="line",
-                color=SERIES[1],
-                data=[[iso(x.date()), rnd(ndvi.get(x), 3)] for x in ms],
+        reason = "Only in the withheld 5.1 source (failed the NDVI plausibility check, docs/DATA_GAPS.md §5)"
+        series, unavailable, variables = [], [], []
+        for i, idx in enumerate(ids):
+            unit = LIVE_INDICES[idx][2] if idx in LIVE_INDICES else WITHHELD_UNITS[idx]
+            axis = units.index(unit)
+            if idx in LIVE_INDICES:
+                var, label, _, nd = LIVE_INDICES[idx]
+                s = await self.scope_series(var)
+                data = [[iso(x.date()), rnd(s.get(x), nd)] for x in ms]
+                variables.append(var)
+            else:
+                label, data = ONLY_IN_5_1[idx], [[iso(x.date()), None] for x in ms]
+                unavailable.append(c.UnavailableField(field=f"series.{idx}", reason=reason))
+            series.append(
+                c.Series(key=idx, name=label, kind="line", axis=axis, color=SERIES[i % len(SERIES)], data=data)
             )
-        ]
-        series += [
-            c.Series(
-                key=v, name=ONLY_IN_5_1[v], kind="line", color=SERIES[i + 2], data=[[iso(x.date()), None] for x in ms]
-            )
-            for i, v in enumerate(missing)
-        ]
-        reason = "Only in the withheld 5.1 source (failed the NDVI plausibility check)"
+        extra: dict[str, Any] = {"unavailable": unavailable} if unavailable else {}
         return c.SeriesSet(
             id="indices",
             title="Vegetation indices",
             x_type="time",
-            axes=[c.Axis(unit="—", label="Index value")],
+            axes=[c.Axis(unit=u, label="Index value" if u in ("—", "%") else u) for u in units],
             series=series,
             as_of=iso(m),
-            unavailable=[c.UnavailableField(field=f"series.{v}", reason=reason) for v in missing],
-            **self._prov(m, "ndvi"),
+            **extra,
+            **self._prov(m, *(variables or ["ndvi"])),
         )
 
     async def ts_index_trend(self) -> c.SeriesSet:
-        m = await self.last()
+        idx = self.ctx.select(INDEX)
+        if idx in ONLY_IN_5_1:
+            raise withheld(idx)
+        var, label, unit, nd = LIVE_INDICES[idx]
+        m = await self.last(var)
         ms = _months(_d(pd.Timestamp(m) - pd.DateOffset(months=11)), m)
-        ndvi = await self.scope_series("ndvi")
+        ndvi = await self.scope_series(var)
         clim = ndvi[(ndvi.index.year >= CLIM[0]) & (ndvi.index.year <= CLIM[1])]
         by = clim.groupby(clim.index.month).agg(["mean", "std"])
         return c.SeriesSet(
             id="index-trend",
-            title="NDVI vs normal",
+            title=f"{label} vs normal",
             x_type="time",
-            axes=[c.Axis(unit="—", label="NDVI")],
+            axes=[c.Axis(unit=unit, label=label)],
             series=[
                 c.Series(
                     key="band",
@@ -263,33 +296,33 @@ class VegetationService:
                     data=[
                         [
                             iso(x.date()),
-                            rnd(by["mean"].get(x.month) - by["std"].get(x.month), 3),
-                            rnd(by["mean"].get(x.month) + by["std"].get(x.month), 3),
+                            rnd(by["mean"].get(x.month) - by["std"].get(x.month), nd),
+                            rnd(by["mean"].get(x.month) + by["std"].get(x.month), nd),
                         ]
                         for x in ms
                     ],
                 ),
                 c.Series(
                     key="current",
-                    name="NDVI (current)",
+                    name=f"{label} (current)",
                     kind="line",
                     color=OBSERVED,
                     symbol=True,
-                    data=[[iso(x.date()), rnd(ndvi.get(x), 3)] for x in ms],
+                    data=[[iso(x.date()), rnd(ndvi.get(x), nd)] for x in ms],
                 ),
                 c.Series(
                     key="previous",
-                    name="NDVI (previous year)",
+                    name=f"{label} (previous year)",
                     kind="line",
                     color=SERIES[0],
                     dash=True,
-                    data=[[iso(x.date()), rnd(ndvi.get(x - pd.DateOffset(years=1)), 3)] for x in ms],
+                    data=[[iso(x.date()), rnd(ndvi.get(x - pd.DateOffset(years=1)), nd)] for x in ms],
                 ),
             ],
             as_of=iso(m),
             note="Contract label '1991–2020' → 2001–2025 (satellite record). Previous year is plotted on "
             "the current year's months.",
-            **self._prov(m, "ndvi", baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean ± 1 s.d."),
+            **self._prov(m, var, baseline=f"{CLIM[0]}–{CLIM[1]} same-month mean ± 1 s.d."),
         )
 
     async def ts_anomaly(self) -> c.SeriesSet:
@@ -332,17 +365,7 @@ class VegetationService:
         )
 
     async def ts_drivers(self) -> c.SeriesSet:
-        rain = await self.rain.ts_monthly_series()
-        last = await self.rain.latest_complete_month()
-        return c.SeriesSet(
-            id="drivers",
-            title="Rainfall",
-            x_type="time",
-            axes=[c.Axis(unit="mm", label="Rainfall")],
-            series=[c.Series(key="rain", name="Rainfall", kind="bar", color=SERIES[0], data=rain["rain"])],
-            as_of=iso(last),
-            **self._prov(last, "rain_daily"),
-        )
+        return await driver_series(self.ctx, self.rain, self.ctx.select(DRIVER_VAR))
 
     # ---------------------------------------------------------------- forecast
 

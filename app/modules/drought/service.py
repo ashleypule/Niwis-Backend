@@ -28,14 +28,23 @@ from app.core.palettes import DROUGHT, NORMAL, OBSERVED, SERIES, drought_bands
 from app.core.provenance import iso
 from app.core.stats import rnd
 from app.core.thresholds import drought_class, drought_label, storage_alert_level, thresholds, veg_class
-from app.modules.common import Ctx, forecast_unavailable, unknown
-from app.modules.rainfall.service import MONTHS, RainfallService, _months
+from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
+from app.modules.rainfall.service import MONTHS, WINDOW, RainfallService, _months
 from app.schemas import contract as c
 
 MODULE = "drought"
 CLASSES = ["None", "D0", "D1", "D2", "D3", "D4"]
 IN_DROUGHT = {"D1", "D2", "D3", "D4"}
 CLIM_YEARS = (2001, 2025)  # satellite climatology (full years available)
+SPI_SCALE = Selector("scale", ("1", "3", "6", "12", "24"), "3")  # SPI accumulation period, months
+AREA_SCALE = Selector("scale", ("1", "3", "6", "12", "24"), "6")  # SPI used to classify the area in drought
+AFFECTED_LEVEL = Selector("level", ("province", "catchment"), "province")
+SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
+    ("timeseries", "spi"): (SPI_SCALE,),
+    ("timeseries", "drought-area"): (AREA_SCALE,),
+    ("timeseries", "rain-anomaly"): (WINDOW,),
+    ("table", "affected"): (AFFECTED_LEVEL,),
+}
 
 
 def unavailable(what: str, missing: str) -> DataUnavailable:
@@ -293,25 +302,27 @@ class DroughtService:
         return (await handlers[metric]()).dump()
 
     async def ts_spi(self) -> c.SeriesSet:
-        last = await self.latest("spi_3")
+        k = self.ctx.select(SPI_SCALE)
+        var = f"spi_{k}"
+        last = await self.latest(var)
         return c.SeriesSet(
             id="spi",
-            title="SPI-3",
+            title=f"SPI-{k}",
             x_type="time",
-            axes=[c.Axis(unit="—", label="SPI-3")],
+            axes=[c.Axis(unit="—", label=f"SPI-{k}")],
             series=[
                 c.Series(
-                    key="spi3",
-                    name="SPI-3",
-                    kind="line",
+                    key=f"spi{k}",
+                    name=f"SPI-{k}",
+                    kind="bar" if k == "1" else "line",
                     color=OBSERVED,
-                    data=await self._monthly_series("spi_3", last),
+                    data=await self._monthly_series(var, last),
                 )
             ],
             bands=[c.Band.model_validate(b) for b in drought_bands()],
             as_of=iso(last),
-            note="Area-weighted mean of district SPI-3; complete months only.",
-            **self._prov(last, "spi_3"),
+            note=f"Area-weighted mean of district SPI-{k}; complete months only.",
+            **self._prov(last, var),
         )
 
     async def ts_rain_spei(self) -> c.SeriesSet:
@@ -520,10 +531,12 @@ class DroughtService:
         )
 
     async def ts_drought_area(self) -> c.SeriesSet:
+        k = self.ctx.select(AREA_SCALE)
+        var = f"spi_{k}"
         w = self.ctx.weights()
-        last = await self.latest("spi_6")
+        last = await self.latest(var)
         first, lt = await self.first_last(last)
-        df = await self.data.monthly("spi_6")
+        df = await self.data.monthly(var)
         df = df[(df["date"] >= first) & (df["date"] <= lt)]
         total = sum(w.values())
         rows: dict[pd.Timestamp, dict[str, float]] = {}
@@ -545,13 +558,13 @@ class DroughtService:
         ]
         return c.SeriesSet(
             id="drought-area",
-            title="Area in drought (SPI-6 classes)",
+            title=f"Area in drought (SPI-{k} classes)",
             x_type="time",
             axes=[c.Axis(unit="%", label="Area", min=0, max=100)],
             series=series,
             as_of=iso(last),
-            note="Share of the scope's area whose district SPI-6 falls in each class.",
-            **self._prov(last, "spi_6"),
+            note=f"Share of the scope's area whose district SPI-{k} falls in each class.",
+            **self._prov(last, var),
         )
 
     # ---------------------------------------------------------------- forecast
@@ -718,6 +731,12 @@ class DroughtService:
         )
 
     async def tbl_affected(self, limit: int | None) -> c.TableSet:
+        if self.ctx.select(AFFECTED_LEVEL) == "catchment":
+            raise unavailable(
+                "Drought by catchment is not available: the database is per district, and districts are far coarser "
+                "than catchments (no catchment data or boundaries)",
+                "catchment",
+            )
         areas = self.ctx.state.spatial.district_areas()
         if areas is None:
             raise unavailable("Province areas need district boundaries", "district boundaries")

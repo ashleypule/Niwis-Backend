@@ -32,6 +32,20 @@
       aggregate), `vegetation/breakdown?metric=drivers` (NaT date), runoff daily-flow series (`discharge`,
       `flood-frequency`, `seasonal`) → now null + reason or a specific 501.
 
+- [x] **#1 `set` ignored on vegetation indices.** Root cause: the shared router passed only `metric` / `layer` to the
+      services, and no service read any other parameter, so **every** panel selector the frontend sends was silently
+      dropped, not only `set`. Found by the same audit (all selectors in `src/api/liveManifest.ts`): rainfall
+      `anomaly?window`, `extremes?kind`, `events?kind`; drought `spi?scale`, `drought-area?scale`,
+      `rain-anomaly?window`, `affected?level`; climate `national-trend?var`, `seasonal-change?var`, `heat-days?kind`,
+      `extreme-rain?kind`, `indicator-trends?scenario`; vegetation `indices?set`, `index-trend?index`, `drivers?var`;
+      runoff `drivers?var`, `top-stations?order`. Fix: `Selector` + `Ctx.select` (app/modules/common.py) validate
+      every selector (unknown value → 400 listing the valid ones); each service declares its `SELECTORS`, which the
+      audit enumerates. Withheld indices (EVI, SAVI, MSAVI2, VPI, ASI, SVI, NDII) → null series + `unavailable`
+      (`index-trend` → 501). `level=catchment` and `scenario=rcp45|rcp85` → 501 (no catchment data / projections;
+      `indicator-trends` with a scenario used to return observed values on the projections page). `heat-days?kind=cold`
+      = frost nights from `Frost_Day_Flag` (= Tmin < 0 °C in all 52 districts, checked). `tests/test_selectors.py`:
+      every value of every selector returns a different response.
+
 ### Phase 7 — Hardening (2026-10-14)
 
 - [x] Performance (`docs/PERFORMANCE.md`): summary p95 16–106 ms with warm data caches across 61 scopes per module

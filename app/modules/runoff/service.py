@@ -35,7 +35,8 @@ from app.core.palettes import NORMAL, OBSERVED, SERIES, YEAR_COLOURS, drought_ba
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import drought_class, drought_label
-from app.modules.common import Ctx, forecast_unavailable, unknown
+from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
+from app.modules.drivers import driver_series
 from app.modules.rainfall.service import HISTORY_START, MONTHS, RainfallService, _months
 from app.schemas import contract as c
 
@@ -43,6 +44,12 @@ MODULE = "runoff"
 Q = "runoff_depth_daily"
 RETURN_PERIODS = [1.25, 2, 5, 10, 25, 50, 100]
 NO_STATIONS = "No gauging-station data in the database (runoff is modelled per district municipality)"
+DRIVER_VAR = Selector("var", ("rain", "aet", "sm"), "rain")
+TOP_ORDER = Selector("order", ("highest", "lowest"), "highest")
+SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
+    ("timeseries", "drivers"): (DRIVER_VAR,),
+    ("table", "top-stations"): (TOP_ORDER,),
+}
 
 
 def _d(ts: Any) -> dt.date:
@@ -638,17 +645,7 @@ class RunoffService:
         )
 
     async def ts_drivers(self) -> c.SeriesSet:
-        rain = await self.rain.ts_monthly_series()
-        last = await self.rain.latest_complete_month()
-        return c.SeriesSet(
-            id="drivers",
-            title="Catchment rainfall",
-            x_type="time",
-            axes=[c.Axis(unit="mm", label="Catchment rainfall")],
-            series=[c.Series(key="rain", name="Rainfall", kind="bar", color=SERIES[0], data=rain["rain"])],
-            as_of=iso(last),
-            **self._prov(last, "rain_daily"),
-        )
+        return await driver_series(self.ctx, self.rain, self.ctx.select(DRIVER_VAR))
 
     # ---------------------------------------------------------------- forecast / breakdown
 
@@ -769,6 +766,7 @@ class RunoffService:
 
     async def tbl_top(self, limit: int | None) -> c.TableSet:
         """Districts (D1: stand-ins for stations) by mean derived flow in the latest complete month."""
+        order = self.ctx.select(TOP_ORDER)
         sel = self.ctx.filters.scope
         a = self.areas()
         lm = pd.Timestamp(await self.latest_complete_month())
@@ -793,12 +791,12 @@ class RunoffService:
                     "vsLastYear": rnd(flow - pflow, 1) if pflow is not None else None,
                 }
             )
-        rows.sort(key=lambda r: -float(r["flow"] or 0))
+        rows.sort(key=lambda r: float(r["flow"] or 0), reverse=order == "highest")
         for i, r in enumerate(rows, 1):
             r["rank"] = i
         return c.TableSet(
             id="top-stations",
-            title=f"Highest-flow districts, {lm:%b %Y} (derived mean flow)",
+            title=f"{order.capitalize()}-flow districts, {lm:%b %Y} (derived mean flow)",
             columns=[
                 c.Column(key="rank", label="#", type="rank", align="center"),
                 c.Column(key="station", label="Station", type="text"),

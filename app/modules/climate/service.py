@@ -34,8 +34,38 @@ MODULE = "climate"
 SEASONS = {"DJF": (12, 1, 2), "MAM": (3, 4, 5), "JJA": (6, 7, 8), "SON": (9, 10, 11)}
 DROUGHT_SPI3 = -1.5  # contract: "Months with SPI-3 ≤ −1.5"
 SEASONAL_VAR = Selector("var", ("temperature", "rainfall"), "temperature")
+TREND_VAR = Selector("var", ("temperature", "rainfall", "et", "streamflow"), "temperature")
+HEAT_KIND = Selector("kind", ("hot", "cold"), "hot")
+RAIN_KIND = Selector("kind", ("r20", "rx1"), "r20")
+# indicator-trends is observed; a scenario asks for projections, which the database does not have (→ 501)
+SCENARIO = Selector("scenario", ("observed", "rcp45", "rcp85"), "observed")
 SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
     ("breakdown", "seasonal-change"): (SEASONAL_VAR,),
+    ("timeseries", "national-trend"): (TREND_VAR,),
+    ("timeseries", "heat-days"): (HEAT_KIND,),
+    ("timeseries", "extreme-rain"): (RAIN_KIND,),
+    ("timeseries", "indicator-trends"): (SCENARIO,),
+}
+# national-trend `var` → (title, axis label, unit, decimals, source variable, note on the source)
+TREND_VARS: dict[str, tuple[str, str, str, int, str, str]] = {
+    "temperature": ("Mean annual temperature", "Mean temperature", "°C", 2, "tavg", "Daily Tavg (4_1)"),
+    "rainfall": ("Annual rainfall", "Annual total", "mm", 1, "rain_annual", "Mean annual precipitation (4_3)"),
+    "et": (
+        "Annual reference evapotranspiration (ET₀)",
+        "Annual total",
+        "mm",
+        1,
+        "et0_daily",
+        "Sum of daily ET₀ (meteorological_drought_master; the table lacks 31 December)",
+    ),
+    "streamflow": (
+        "Annual runoff",
+        "Annual total",
+        "mm",
+        1,
+        "runoff_depth_daily",
+        "Modelled runoff depth (runoff_variables_master), not gauged streamflow",
+    ),
 }
 
 
@@ -328,21 +358,32 @@ class ClimateService:
             **self._prov(lt.date(), "tmax", "temp_anomaly", baseline=True),
         )
 
+    async def trend_var_series(self, var: str, y0: int, y1: int) -> pd.Series:
+        if var == "temperature":
+            return await self.annual_agg(await self.annual_daily("tavg", "mean"), y0, y1)
+        if var == "rainfall":
+            return await self.annual_var("rain_annual", y0, y1)
+        daily = "et0_daily" if var == "et" else "runoff_depth_daily"
+        return await self.annual_agg(await self.annual_daily(daily, "sum"), y0, y1)
+
     async def ts_national_trend(self) -> c.SeriesSet:
+        var = self.ctx.select(TREND_VAR)
+        title, axis_label, unit, nd, source_var, source_note = TREND_VARS[var]
         y0, y1 = await self.years()
         yrs = range(y0, y1 + 1)
-        t = await self.annual_agg(await self.annual_daily("tavg", "mean"), y0, y1)
+        t = await self.trend_var_series(var, y0, y1)
         vals = [t.get(y) for y in yrs]
         line = trend_line(vals)
         resid = [v - f for v, f in zip(vals, line, strict=True) if v is not None and f is not None]
         sd = float(np.std(resid, ddof=1)) if len(resid) > 2 else None
         ma = pd.Series(vals, index=list(yrs), dtype=float).rolling(5, min_periods=5).mean()
         tr = sens_slope(vals)
+        per = f"{unit}/decade"
         return c.SeriesSet(
             id="national-trend",
-            title="Mean annual temperature",
+            title=title,
             x_type="time",
-            axes=[c.Axis(unit="°C", label="Mean temperature")],
+            axes=[c.Axis(unit=unit, label=axis_label)],
             series=[
                 c.Series(
                     key="band",
@@ -352,14 +393,19 @@ class ClimateService:
                     data=[
                         [
                             f"{y}-01-01",
-                            rnd(f - sd, 2) if f is not None and sd else None,
-                            rnd(f + sd, 2) if f is not None and sd else None,
+                            rnd(f - sd, nd) if f is not None and sd else None,
+                            rnd(f + sd, nd) if f is not None and sd else None,
                         ]
                         for y, f in zip(yrs, line, strict=True)
                     ],
                 ),
                 c.Series(
-                    key="annual", name="Annual", kind="line", color=OBSERVED, symbol=True, data=self.series(yrs, t)
+                    key="annual",
+                    name="Annual",
+                    kind="line",
+                    color=OBSERVED,
+                    symbol=True,
+                    data=self.series(yrs, t, nd),
                 ),
                 c.Series(
                     key="ma5",
@@ -367,17 +413,17 @@ class ClimateService:
                     kind="line",
                     color=SERIES[3],
                     smooth=True,
-                    data=[[f"{y}-01-01", rnd(ma.get(y), 2)] for y in yrs],
+                    data=[[f"{y}-01-01", rnd(ma.get(y), nd)] for y in yrs],
                 ),
             ],
             as_of=f"{y1}-01-01",
             note=(
-                f"Sen's slope {tr.slope * 10:+.2f} °C/decade (Mann-Kendall p = {tr.p:.3f}, {tr.trend}); "
-                f"full years {y0}–{y1}."
+                f"Sen's slope {tr.slope * 10:+.{nd}f} {per} (Mann-Kendall p = {tr.p:.3f}, {tr.trend}); "
+                f"full years {y0}–{y1}. {source_note}."
             )
             if tr
-            else f"Full years {y0}–{y1}.",
-            **self._prov(dt.date(y1, 12, 31), "tavg"),
+            else f"Full years {y0}–{y1}. {source_note}.",
+            **self._prov(dt.date(y1, 12, 31), source_var),
         )
 
     async def ts_extremes(self) -> c.SeriesSet:
@@ -414,16 +460,29 @@ class ClimateService:
             **self._prov(dt.date(y1, 12, 31), "cdd", "rx1day"),
         )
 
-    async def _count_with_trend(self, var: str, sid: str, title: str, label: str, axis_label: str) -> c.SeriesSet:
+    async def _count_with_trend(
+        self,
+        var: str,
+        sid: str,
+        title: str,
+        label: str,
+        axis_label: str,
+        unit: str = "days",
+        from_daily: bool = False,
+    ) -> c.SeriesSet:
+        """Annual values of `var` (an annual variable, or the yearly sum of a daily one) with their Sen's-slope line."""
         y0, y1 = await self.years()
         yrs = range(y0, y1 + 1)
-        s = await self.annual_var(var, y0, y1)
+        if from_daily:
+            s = await self.annual_agg(await self.annual_daily(var, "sum"), y0, y1)
+        else:
+            s = await self.annual_var(var, y0, y1)
         tr = sens_slope([s.get(y) for y in yrs])
         return c.SeriesSet(
             id=sid,
             title=title,
             x_type="time",
-            axes=[c.Axis(unit="days", label=axis_label)],
+            axes=[c.Axis(unit=unit, label=axis_label)],
             series=[
                 c.Series(key="annual", name=label, kind="bar", color=SERIES[0], data=self.series(yrs, s, 1)),
                 c.Series(
@@ -436,17 +495,30 @@ class ClimateService:
                 ),
             ],
             as_of=f"{y1}-01-01",
-            note=(f"Sen's slope {tr.slope * 10:+.1f} days/decade (p = {tr.p:.3f}). " if tr else "")
+            note=(f"Sen's slope {tr.slope * 10:+.1f} {unit}/decade (p = {tr.p:.3f}). " if tr else "")
             + "Area-weighted district mean; full years only.",
             **self._prov(dt.date(y1, 12, 31), var),
         )
 
     async def ts_heat_days(self) -> c.SeriesSet:
+        if self.ctx.select(HEAT_KIND) == "cold":
+            return await self._count_with_trend(
+                "frost_day",
+                "heat-days",
+                "Frost nights (Tmin < 0 °C)",
+                "Annual count",
+                "Nights with Tmin < 0 °C",
+                from_daily=True,
+            )
         return await self._count_with_trend(
             "hot_days", "heat-days", "Hot days (Tmax > 35 °C)", "Annual count", "Days with Tmax > 35 °C"
         )
 
     async def ts_extreme_rain(self) -> c.SeriesSet:
+        if self.ctx.select(RAIN_KIND) == "rx1":
+            return await self._count_with_trend(
+                "rx1day", "extreme-rain", "Maximum 1-day rainfall (Rx1day)", "Rx1day", "Max 1-day rainfall", unit="mm"
+            )
         return await self._count_with_trend(
             "r20mm", "extreme-rain", "Heavy rain days (R20mm)", "Heavy rain days (R20mm)", "Days ≥ 20 mm"
         )
@@ -568,6 +640,13 @@ class ClimateService:
         )
 
     async def ts_indicator_trends(self) -> c.SeriesSet:
+        scenario = self.ctx.select(SCENARIO)
+        if scenario != "observed":
+            raise unavailable(
+                f"No climate projections ({scenario.upper()}) in the database: indicator trends are observed only "
+                "(request them without a scenario)",
+                f"projections:{scenario}",
+            )
         _, y1 = await self.years()
         base = 2020
         if y1 <= base:

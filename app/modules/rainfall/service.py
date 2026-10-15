@@ -29,7 +29,7 @@ from app.core.palettes import NEGATIVE, NORMAL, POSITIVE, SERIES, YEAR_COLOURS, 
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import drought_class, drought_label
-from app.modules.common import Ctx, forecast_unavailable, unknown
+from app.modules.common import Ctx, Selector, forecast_unavailable, unknown
 from app.schemas import contract as c
 
 MODULE = "rainfall"
@@ -39,6 +39,14 @@ HISTORY_START = dt.date(2000, 1, 1)
 EVENT_MM = 50.01  # "> 50 mm/day": the data have 2 decimals, so ≥ 50.01 ≡ > 50
 CDD_LOOKBACK_DAYS = 730
 DRY_DAY_MM = 1.0
+WINDOW = Selector("window", ("1", "3", "6", "12"), "1")  # months summed before comparing with the normal
+EXTREMES_KIND = Selector("kind", ("wettest", "driest"), "wettest")
+EVENTS_KIND = Selector("kind", ("count", "max"), "count")
+SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
+    ("timeseries", "anomaly"): (WINDOW,),
+    ("table", "extremes"): (EXTREMES_KIND,),
+    ("breakdown", "events"): (EVENTS_KIND,),
+}
 
 
 def _d(ts: Any) -> dt.date:
@@ -316,22 +324,28 @@ class RainfallService:
         }
 
     async def ts_anomaly(self) -> c.SeriesSet:
+        """Anomaly of the rolling `window`-month total (1 = each month) vs the sum of the same months' normals."""
+        n_months = int(self.ctx.select(WINDOW))
         w = self.ctx.weights()
         first, last = await self._complete_months_in_window()
         ms = (await self.monthly_stats()).rename(columns={"sum": "value"})
         p = weighted(ms, w).set_index("date")["value"]
         norm = await self.normals()
+        normal = {
+            mo: weighted_scalar(norm[norm["month"] == mo].set_index("district")["normal"], w) for mo in range(1, 13)
+        }
         rows = []
         for m in _months(first.date(), last.date()):
-            nm = norm[norm["month"] == m.month].set_index("district")["normal"]
-            n = weighted_scalar(nm, w)
-            pv = p.get(m)
-            rows.append((m, (pv - n) / n * 100 if pv is not None and n else None))
+            span = [m - pd.DateOffset(months=k) for k in range(n_months)]
+            pv = [p.get(x) for x in span]
+            nv = [normal[x.month] for x in span]
+            ok = all(v is not None and not pd.isna(v) for v in pv) and all(v for v in nv)
+            rows.append((m, (sum(pv) - sum(nv)) / sum(nv) * 100 if ok else None))  # type: ignore[arg-type]
         pos = [[iso(m), rnd(a, 1) if a is not None and a >= 0 else None] for m, a in rows]
         neg = [[iso(m), rnd(a, 1) if a is not None and a < 0 else None] for m, a in rows]
         return c.SeriesSet(
             id="anomaly",
-            title="Monthly rainfall anomaly",
+            title="Monthly rainfall anomaly" if n_months == 1 else f"{n_months}-month rainfall anomaly",
             x_type="time",
             axes=[c.Axis(unit="%", label="Anomaly")],
             series=[
@@ -339,7 +353,12 @@ class RainfallService:
                 c.Series(key="neg", name="Negative anomaly", kind="bar", color=NEGATIVE, stack="a", data=neg),
             ],
             as_of=iso(last),
-            note="Complete months only; anomaly vs the 2000–2026 monthly mean.",
+            note=(
+                "Complete months only; anomaly vs the 2000–2026 monthly mean."
+                if n_months == 1
+                else f"Total of the {n_months} complete months ending each month vs the sum of their 2000–2026 "
+                "monthly means."
+            ),
             **self._prov(last.date(), "rain_daily", "rain_anomaly_mm", baseline=True),
         )
 
@@ -548,23 +567,30 @@ class RainfallService:
                 **self._prov(dt.date(y1, 12, 31), "rain_season_djf"),
             ).dump()
         if metric == "events":
+            kind = self.ctx.select(EVENTS_KIND)
             newest = await self.newest_daily()
             years = list(range(newest.year - 9, newest.year + 1))
             ms = await self.monthly_stats()
             col = f"ge_{EVENT_MM:g}"
             scoped = ms[ms["district"].isin(w)]
-            counts = scoped.groupby(scoped["date"].dt.year)[col].sum()
+            by_year = scoped.groupby(scoped["date"].dt.year)
+            if kind == "count":
+                vals, unit, name = by_year[col].sum(), "events", "Events > 50 mm/day (all districts)"
+                title = f"Heavy rainfall events ({years[-1]} to {newest:%d %b})"
+            else:
+                vals, unit, name = by_year["max"].max(), "mm", "Highest daily rainfall (any district)"
+                title = f"Highest daily rainfall per year ({years[-1]} to {newest:%d %b})"
             return c.CategorySet(
                 id="events",
-                title=f"Heavy rainfall events ({years[-1]} to {newest:%d %b})",
-                unit="events",
+                title=title,
+                unit=unit,
                 categories=[str(y) for y in years],
                 series=[
                     c.CategorySeries(
-                        key="events",
-                        name="Events > 50 mm/day (all districts)",
+                        key="events" if kind == "count" else "max",
+                        name=name,
                         color=SERIES[0],
-                        values=[rnd(counts.get(y), 0) for y in years],
+                        values=[rnd(vals.get(y), 0 if kind == "count" else 1) for y in years],
                     )
                 ],
                 as_of=iso(newest),
@@ -646,10 +672,11 @@ class RainfallService:
         )
 
     async def tbl_extremes(self, limit: int | None) -> c.TableSet:
+        kind = self.ctx.select(EXTREMES_KIND)
         w = self.ctx.weights()
         start, end = await self.window()
         totals = (await self.window_totals(start, end)).dropna()
-        totals = totals[totals.index.isin(w)].sort_values(ascending=False)
+        totals = totals[totals.index.isin(w)].sort_values(ascending=kind == "driest")
         rows = []
         for i, (code, v) in enumerate(totals.items(), 1):
             d = districts.by_code(str(code))
@@ -666,7 +693,7 @@ class RainfallService:
         n = limit or 10
         return c.TableSet(
             id="extremes",
-            title=f"Wettest districts, {start:%d %b %Y} – {end:%d %b %Y}",
+            title=f"{kind.capitalize()} districts, {start:%d %b %Y} – {end:%d %b %Y}",
             columns=[
                 c.Column(key="rank", label="#", type="rank", align="center"),
                 c.Column(key="location", label="Location", type="text"),
