@@ -22,6 +22,8 @@ import pandas as pd
 
 from app.core import districts
 from app.core.aggregate import (
+    AreaClass,
+    area_class,
     class_areas,
     coverage_reason,
     short_of_coverage,
@@ -112,7 +114,15 @@ class DroughtService:
         return df[df["date"] == pd.Timestamp(month)].set_index("district")["value"]
 
     async def spi6_classes(self, month: dt.date) -> pd.Series:
-        return (await self.at("spi_6", month)).map(drought_class)
+        return (await self.at("spi_6", month)).dropna().map(drought_class)
+
+    def area_class(self, classes: pd.Series, w: dict[str, float]) -> AreaClass:
+        """Scope drought class from the area in each class (headline rule, configurable %)."""
+        return area_class(classes, w, self.ctx.state.settings.drought_class_area_pct)
+
+    def mean_label(self, label: str) -> str:
+        """Averaged indices say so on aggregated scopes (one district: the district's own value)."""
+        return label if self.ctx.filters.scope.level == "municipality" else f"{label} (area-weighted mean)"
 
     async def capacities(self) -> pd.Series:
         """District full-supply capacity (Mm³) = volume / %FSC × 100 (constant per district; median over months)."""
@@ -176,19 +186,25 @@ class DroughtService:
         unavail: list[c.UnavailableField] = []
 
         m = await self.latest("spi_6")
-        spi6 = weighted_scalar(await self.at("spi_6", m), w)
-        cls = drought_class_or_none(spi6)
+        ac = self.area_class(await self.spi6_classes(m), w)
+        cls = ac.cls
+        thr = self.ctx.state.settings.drought_class_area_pct
         if cls is None:
-            self.ctx.explain("kpis.class", f"No area-weighted SPI-6 for this scope in {m:%b %Y} (≥ 95 % area needed)")
+            self.ctx.explain("kpis.class", f"No SPI-6 for districts covering ≥ 95 % of this scope's area in {m:%b %Y}")
         kpis.append(
             c.Kpi(
                 id="class",
                 metric="droughtClass",
                 label="Drought Class",
-                sublabel=f"from SPI-6, {m:%b %Y}",
+                sublabel=(
+                    f"{ac.in_drought:.0f} % of area in D1–D4 · worst class on ≥ {thr:g} % of the area "
+                    f"(SPI-6, {m:%b %Y})"
+                    if ac.in_drought is not None
+                    else f"from district SPI-6 classes, {m:%b %Y}"
+                ),
                 value=float(thresholds()["drought"]["rank"][cls]) if cls else None,
-                **({"text": "No drought" if cls == "None" else cls} if cls else {}),
-                **drought_status(spi6),
+                **({"text": ac.rank_text} if cls else {}),
+                **({"status": c.Status(scale="drought", id=cls, label=drought_label(cls))} if cls else {}),
                 **self.kpi_extra(m, "spi_6", res="monthly"),
             )
         )
@@ -205,7 +221,7 @@ class DroughtService:
                 c.Kpi(
                     id=kid,
                     metric=metric,
-                    label=label,
+                    label=self.mean_label(label),
                     sublabel=f"{mm:%b %Y}",
                     value=rnd(v, 2),
                     decimals=2,
@@ -897,7 +913,7 @@ class DroughtService:
                     "id": p,
                     "province": districts.PROVINCES[p],
                     "spi6": rnd(v, 2),
-                    "class": drought_class_or_none(v),
+                    "class": self.area_class(classes, w).cls,  # area rule, not the class of the mean SPI-6
                     "area": rnd(sum(a.get(k, 0.0) for k in IN_DROUGHT) / sum(w.values()) * 100, 0) if covered else None,
                     "confidence": None,
                     "updated": iso(m),
@@ -912,7 +928,14 @@ class DroughtService:
             columns=[
                 c.Column(key="rank", label="#", type="rank", align="center"),
                 c.Column(key="province", label="Province", type="text"),
-                c.Column(key="spi6", label="SPI-6", type="number", decimals=2, scale="spi", align="right"),
+                c.Column(
+                    key="spi6",
+                    label="SPI-6 (area-weighted mean)",
+                    type="number",
+                    decimals=2,
+                    scale="spi",
+                    align="right",
+                ),
                 c.Column(key="class", label="Drought class", type="class", scale="drought"),
                 c.Column(key="area", label="Area affected", type="bar", unit="%", decimals=0),
                 c.Column(key="confidence", label="Confidence", type="text"),
@@ -1106,15 +1129,14 @@ class DroughtService:
                 }
                 if short := short_of_coverage(set(spi.dropna().index), groups):
                     self.ctx.explain("values", coverage_reason(f"SPI-6 for {m:%b %Y}", short, len(groups)))
+                classes = spi.dropna().map(drought_class)
                 vals = pd.Series(
                     {
-                        p: drought_class_or_none(
-                            weighted_scalar(spi, {d.code: areas[d.code] for d in districts.in_province(p)})
-                        )
+                        p: self.area_class(classes, {d.code: areas[d.code] for d in districts.in_province(p)}).cls
                         for p in districts.PROVINCES
                     }
                 )
-                level, title = "province", f"Drought classification by province (SPI-6) – {m:%b %Y}"
+                level, title = "province", f"Drought classification by province (SPI-6 area rule) – {m:%b %Y}"
         elif layer == "rain-anomaly":
             newest = await self.rain.newest_daily()
             start = _d(pd.Timestamp(newest) - pd.DateOffset(months=3) + pd.Timedelta(days=1))

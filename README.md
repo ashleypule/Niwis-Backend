@@ -50,6 +50,7 @@ Check it works: `GET /api/v1/health` should report `"status": "ok"` and `"readOn
 | `NIWIS_SUPABASE_TABLES_MODULE_<n>` | — | Tables the data team has registered; a test checks they match `app/registry/datasets.yaml`. |
 | `CORS_ORIGINS` | `http://localhost:5173,http://localhost:5174` | Comma-separated frontend origins. |
 | `STALE_AFTER_DAYS` | `90` | A value is `isStale` when its `asOf` lags the newest DB date by more than this. |
+| `DROUGHT_CLASS_AREA_PCT` | `20` | Headline drought class = the worst class that, with all worse classes, covers at least this % of the area (spec §3.4 classes per district). |
 | `RATE_LIMIT_PER_MINUTE` | `600` | Per client IP; `0` disables. `/api/v1/health` is exempt. |
 | `RATE_LIMIT_TRUSTED_CIDRS` | *(empty)* | Comma-separated networks that are never limited (e.g. the DWS network). |
 | `TRUST_PROXY_HEADERS` | `false` | Read the client IP from `X-Forwarded-For` (right-most entry). Only behind a reverse proxy that sets it. |

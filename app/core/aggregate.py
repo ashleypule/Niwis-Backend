@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import calendar
 import datetime as dt
+from dataclasses import dataclass
 
 import pandas as pd
 
@@ -58,6 +59,45 @@ def class_areas(classes: pd.Series, w: dict[str, float]) -> dict[str, float]:
         if code in w and isinstance(cls, str):
             out[cls] = out.get(cls, 0.0) + w[str(code)]
     return out
+
+
+DROUGHT_ORDER = ("D4", "D3", "D2", "D1", "D0")  # worst first
+
+
+@dataclass(frozen=True)
+class AreaClass:
+    """Drought class of a scope from the area of its districts in each class (not from an averaged index)."""
+
+    cls: str | None  # D0–D4, "None" (no drought), or None when < 95 % of the area has data
+    pct: dict[str, float]  # % of the covered area per class id ("None", "D0" … "D4")
+    in_drought: float | None  # % of the covered area in D1–D4
+
+    @property
+    def rank_text(self) -> str | None:
+        return None if self.cls is None else ("No drought" if self.cls == "None" else self.cls)
+
+
+def area_class(classes: pd.Series, w: dict[str, float], min_pct: float) -> AreaClass:
+    """The worst class that, together with every worse class, covers ≥ `min_pct` % of the area with data.
+
+    `classes`: district-indexed class ids (D0–D4 / "None"). Averaging an index over a scope cancels regional drought
+    (KZN 85 % in D1 while its mean SPI-6 says "No drought"); counting areas does not. Cumulative ("D2 or worse"), so
+    15 % in D3 plus 10 % in D4 is reported as D3. Needs districts covering ≥ 95 % of the scope's area.
+    """
+    total = sum(w.values())
+    areas = class_areas(classes, w)
+    covered = sum(areas.values())
+    if total <= 0 or covered < MIN_COVERAGE * total:
+        return AreaClass(None, {}, None)
+    pct = {k: areas.get(k, 0.0) / covered * 100 for k in ("None", *reversed(DROUGHT_ORDER))}
+    cum = 0.0
+    found = "None"
+    for k in DROUGHT_ORDER:
+        cum += pct[k]
+        if cum >= min_pct:
+            found = k
+            break
+    return AreaClass(found, pct, sum(pct[k] for k in ("D1", "D2", "D3", "D4")))
 
 
 def aggregation_label(scope: ScopeSel) -> str:

@@ -278,3 +278,16 @@ the full year. Series: `d2`, `d3`, `d4` (new; stacked bars, % of the scope's are
 D2–D4 share, axis 0), `months` (**redefined**: the number of district-months in D2 or worse, now on axis 1, unit
 `district-months`). Axes: `%` and `district-months`. `indicator-trends` → `drought` is now the % change of the
 yearly D2–D4 area share vs 2020 (was the count of months with mean SPI-3 ≤ −1.5).
+
+### 12.4 Drought class from areas, not from averaged SPI (B4)
+
+The Drought Class KPI (`drought/summary` → `class`) took the class of the **area-weighted mean** SPI-6, which hides
+regional drought (KZN 85 % in D1 while the national KPI said "No drought" — and it still says so: 8 % of the country
+is in D1–D4). Now each district's SPI-6 is classified (spec §3.4) and the headline is the **worst class that, together
+with all worse classes, covers ≥ 20 % of the scope's area** (`DROUGHT_CLASS_AREA_PCT`, default 20; cumulative, so
+15 % D3 + 10 % D4 → D3). `value` = class rank (unchanged), `text` / `status` = that class, `sublabel` gives the
+sub-value: "85 % of area in D1–D4 · worst class on ≥ 20 % of the area (SPI-6, Aug 2026)". Null when districts with
+data cover < 95 % of the area. The same rule now gives the class per province on `drought/map?layer=province-class`
+and in `drought/table?metric=affected` (`class`), so the pages agree; the averaged indices stay, labelled
+"(area-weighted mean)": the SPI-3 / SPI-6 / SPEI-12 KPIs on aggregated scopes and the affected table's `spi6` column.
+

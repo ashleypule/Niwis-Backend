@@ -76,3 +76,38 @@ def test_period_gap_requires_the_whole_period() -> None:
         "The database ends in 2015; the 2001–2020 period needs data to 2020"
     )
     assert period_gap("2001–2020", 2001, 2020, None, None) == "No data for this scope in 2001–2020"
+
+
+# ---------------------------------------------------------------- area-based drought class (B4)
+
+
+def _classes(**areas: tuple[str, float]) -> tuple[pd.Series, dict[str, float]]:
+    """district → (class, area km²)."""
+    return pd.Series({k: v[0] for k, v in areas.items()}), {k: v[1] for k, v in areas.items()}
+
+
+def test_area_class_regional_drought_is_not_averaged_away() -> None:
+    from app.core.aggregate import area_class
+
+    cls, w = _classes(a=("D1", 85.0), b=("None", 15.0))  # KZN: 85 % in D1, mean SPI may say "No drought"
+    ac = area_class(cls, w, 20)
+    assert (ac.cls, ac.rank_text, round(ac.in_drought or 0)) == ("D1", "D1", 85)
+
+
+def test_area_class_is_cumulative_worst_first() -> None:
+    from app.core.aggregate import area_class
+
+    cls, w = _classes(a=("D3", 15.0), b=("D4", 10.0), c=("None", 75.0))
+    assert area_class(cls, w, 20).cls == "D3"  # 10 % D4 alone < 20 %, D3 or worse = 25 %
+    assert area_class(cls, w, 10).cls == "D4"
+    assert area_class(cls, w, 30).cls == "None"  # nothing reaches 30 %, not even D0 or worse (25 %)
+
+
+def test_area_class_no_drought_and_coverage() -> None:
+    from app.core.aggregate import area_class
+
+    cls, w = _classes(a=("D2", 10.0), b=("None", 90.0))
+    ac = area_class(cls, w, 20)
+    assert (ac.cls, ac.rank_text, ac.in_drought) == ("None", "No drought", 10.0)
+    cls, w = _classes(a=("D2", 50.0))
+    assert area_class(cls, {**w, "missing": 50.0}, 20).cls is None  # < 95 % of the area has data
