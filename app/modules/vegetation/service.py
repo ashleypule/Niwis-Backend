@@ -453,6 +453,10 @@ class VegetationService:
         comps: list[c.Component] = []
         for name, var, how, df in specs:
             agg = weighted(df[["district", "date", "value"]], w).set_index("date")["value"].dropna()
+            cats.append(name)
+            if agg.empty:  # no month with ≥ 95 % area coverage in this scope
+                vals.append(None)
+                continue
             end = min(agg.index.max(), pd.Timestamp(complete)) if var != "lst" else agg.index.max()
             months = [end - pd.DateOffset(months=i) for i in range(6)]
             cur = [agg.get(x) for x in months]
@@ -465,11 +469,10 @@ class VegetationService:
             else:
                 f = sum if how == "sum" else (lambda xs: sum(xs) / len(xs))
                 vals.append(rnd((f(cur) - f(normal)) / f(normal) * 100, 1))
-            cats.append(name)
             comps.append(
                 c.Component(key=var, as_of=iso(end.date()), source=self.src(var), is_stale=self.ctx.stale(end.date()))
             )
-        as_of = max(dt.date.fromisoformat(x.as_of) for x in comps if x.as_of)
+        as_of = max((dt.date.fromisoformat(x.as_of) for x in comps if x.as_of), default=None)
         return c.CategorySet(
             id="drivers",
             title="Drivers: change vs normal (last 6 months)",

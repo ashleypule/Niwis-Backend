@@ -153,7 +153,8 @@ class DataAccess:
 
         async def load() -> pd.Series:
             rows = await self.db.fetch(sql, *ds.range_args(start, end), names, facs)
-            s = pd.Series({pd.Timestamp(r["day"]): float(r["v"]) for r in rows if r["n"] == need}, dtype=float)
+            vals = {pd.Timestamp(r["day"]): float(r["v"]) for r in rows if r["n"] == need}
+            s = pd.Series(list(vals.values()), index=pd.DatetimeIndex(list(vals.keys())), dtype=float)
             return s.sort_index()
 
         out: pd.Series = await self.cache.get_or_set(key, self.settings.cache_ttl_long_series_s, load)

@@ -20,19 +20,23 @@ import numpy as np
 import pandas as pd
 
 from app.core import districts
-from app.core.aggregate import weighted, weighted_scalar
+from app.core.aggregate import period_gap, weighted, weighted_scalar
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
 from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope, trend_line
-from app.modules.common import Ctx, unknown
+from app.modules.common import Ctx, Selector, unknown
 from app.modules.rainfall.service import HISTORY_START, RainfallService, _months
 from app.schemas import contract as c
 
 MODULE = "climate"
 SEASONS = {"DJF": (12, 1, 2), "MAM": (3, 4, 5), "JJA": (6, 7, 8), "SON": (9, 10, 11)}
 DROUGHT_SPI3 = -1.5  # contract: "Months with SPI-3 ≤ −1.5"
+SEASONAL_VAR = Selector("var", ("temperature", "rainfall"), "temperature")
+SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
+    ("breakdown", "seasonal-change"): (SEASONAL_VAR,),
+}
 
 
 def unavailable(what: str, missing: str) -> DataUnavailable:
@@ -618,29 +622,7 @@ class ClimateService:
         if metric in ("risk-index", "projection-bars"):
             raise unavailable("No climate risk index or projections in the database", metric)
         if metric == "seasonal-change":
-            w = self.ctx.weights()
-            last = await self.rain.latest_complete_month()
-            t = weighted(await self.monthly_mean("tavg"), w)
-            t = t[t["date"] <= pd.Timestamp(last)]
-            periods = [("1981–2000", 1981, 2000), ("2001–2020", 2001, 2020), (f"2021–{last.year}", 2021, last.year)]
-            series = []
-            for i, (name, a, b) in enumerate(periods):
-                sub = t[(t["date"].dt.year >= a) & (t["date"].dt.year <= b)]
-                vals = [
-                    rnd(sub[sub["date"].dt.month.isin(ms)]["value"].mean(), 2) if not sub.empty else None
-                    for ms in SEASONS.values()
-                ]
-                series.append(c.CategorySeries(key=f"p{i}", name=name, values=vals, color=SERIES[i]))
-            return c.CategorySet(
-                id="seasonal-change",
-                title="Seasonal mean temperature by period",
-                unit="°C",
-                categories=list(SEASONS),
-                series=series,
-                as_of=iso(last),
-                unavailable=[c.UnavailableField(field="series.p0", reason="No data before 2000 in the database")],
-                **self._prov(last, "tavg"),
-            ).dump()
+            return (await self.bd_seasonal_change()).dump()
         if metric == "map-seasonality":
             y1 = await self.last_full_year()
             decades = [(2000, 2009), (2010, 2019), (2020, y1)]
@@ -672,6 +654,64 @@ class ClimateService:
                 **self._prov(dt.date(y1, 12, 31), "rain_annual", "rain_season_djf"),
             ).dump()
         raise unknown("metric", metric, ["seasonal-change", "map-seasonality", "risk-index", "projection-bars"])
+
+    async def bd_seasonal_change(self) -> c.CategorySet:
+        """Seasonal mean temperature (°C) or mean seasonal rainfall total (mm) per period.
+
+        A period is computed only when the scope's data cover all of it (`period_gap`); otherwise its values are null
+        and the `unavailable` entry says why. Both come from the same check, so they cannot disagree.
+        """
+        var = self.ctx.select(SEASONAL_VAR)
+        w = self.ctx.weights()
+        if var == "temperature":
+            last = await self.rain.latest_complete_month()
+            t = weighted(await self.monthly_mean("tavg"), w).dropna(subset=["value"])
+            t = t[t["date"] <= pd.Timestamp(last)]
+            years = t["date"].dt.year
+            end_year, variables, unit, nd = last.year, ["tavg"], "°C", 2
+            as_of, prov_date = iso(last), last
+
+            def season_value(a: int, b: int, months: tuple[int, ...], name: str) -> float | None:
+                sub = t[(years >= a) & (years <= b) & t["date"].dt.month.isin(months)]
+                return rnd(sub["value"].mean(), nd) if not sub.empty else None
+
+            data_first, data_last = (int(years.min()), int(years.max())) if not t.empty else (None, None)
+        else:
+            end_year = await self.last_full_year()
+            seasonal = {}
+            for name in SEASONS:
+                s = await self.annual_var(f"rain_season_{name.lower()}", HISTORY_START.year, end_year)
+                seasonal[name] = s.dropna()
+            have = [y for s in seasonal.values() for y in s.index]
+            data_first, data_last = (int(min(have)), int(max(have))) if have else (None, None)
+            end_year = min(end_year, data_last) if data_last else end_year
+            variables, unit, nd = ["rain_season_djf"], "mm", 0
+            as_of, prov_date = f"{end_year}-01-01", dt.date(end_year, 12, 31)
+
+            def season_value(a: int, b: int, months: tuple[int, ...], name: str) -> float | None:
+                s = seasonal[name]
+                sub = s[(s.index >= a) & (s.index <= b)]
+                return rnd(sub.mean(), nd) if not sub.empty else None
+
+        periods = [("1981–2000", 1981, 2000), ("2001–2020", 2001, 2020), (f"2021–{end_year}", 2021, end_year)]
+        series, unavailable = [], []
+        for i, (label, a, b) in enumerate(periods):
+            gap = period_gap(label, a, b, data_first, data_last)
+            vals = [None if gap else season_value(a, b, months, name) for name, months in SEASONS.items()]
+            if gap:
+                unavailable.append(c.UnavailableField(field=f"series.p{i}", reason=gap))
+            series.append(c.CategorySeries(key=f"p{i}", name=label, values=vals, color=SERIES[i]))
+        extra: dict[str, Any] = {"unavailable": unavailable} if unavailable else {}
+        return c.CategorySet(
+            id="seasonal-change",
+            title="Seasonal mean temperature by period" if var == "temperature" else "Mean seasonal rainfall by period",
+            unit=unit,
+            categories=list(SEASONS),
+            series=series,
+            as_of=as_of,
+            **extra,
+            **self._prov(prov_date, *variables),
+        )
 
     # ---------------------------------------------------------------- tables
 

@@ -138,3 +138,28 @@ async def test_no_withheld_tables_in_any_response(client: httpx.AsyncClient) -> 
     for metric in ("evaporation", "streamflow-linkage"):
         body = (await client.get(f"{B}/timeseries", params={"metric": metric, "municipality": "DC6"})).json()
         assert not withheld & set(body["source"])
+
+
+@pytest.mark.parametrize("var", ["temperature", "rainfall"])
+async def test_seasonal_change_never_fills_periods_before_the_data(client: httpx.AsyncClient, var: str) -> None:
+    """BACKEND_ISSUES #6: p0 "1981–2000" was the year 2000 alone (inclusive window, data start 2000-01)."""
+    body = (await client.get(f"{B}/breakdown", params={"metric": "seasonal-change", "var": var})).json()
+    c.CategorySet.model_validate(body)
+    p = {s["key"]: s for s in body["series"]}
+    listed = {u["field"]: u["reason"] for u in body.get("unavailable", [])}
+    assert p["p0"]["values"] == [None, None, None, None]
+    assert "1981" in listed["series.p0"]
+    for key, s in p.items():  # a period is either computed or listed as unavailable, never both
+        assert (f"series.{key}" in listed) == all(v is None for v in s["values"]), key
+
+
+async def test_seasonal_change_var_selects_the_variable(client: httpx.AsyncClient) -> None:
+    q = {"metric": "seasonal-change", "municipality": "DC6"}
+    t = (await client.get(f"{B}/breakdown", params={**q, "var": "temperature"})).json()
+    r = (await client.get(f"{B}/breakdown", params={**q, "var": "rainfall"})).json()
+    assert (t["unit"], r["unit"]) == ("°C", "mm")
+    assert r["source"] == ["4_3_mean_annual_precipitation_master"] and t["source"] == ["4_1_temperature_change_master"]
+    assert all(v is not None for v in r["series"][1]["values"])  # 2001–2020 rainfall: 4_3 covers 2000–2025
+    assert [s["values"] for s in t["series"]] != [s["values"] for s in r["series"]]
+    bad = await client.get(f"{B}/breakdown", params={"metric": "seasonal-change", "var": "snow"})
+    assert bad.status_code == 400 and bad.json()["issues"][0]["allowed"] == ["temperature", "rainfall"]

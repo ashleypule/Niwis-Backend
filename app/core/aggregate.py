@@ -69,8 +69,11 @@ def weighted(df: pd.DataFrame, w: dict[str, float], by: str | list[str] = "date"
     keys = [by] if isinstance(by, str) else list(by)
     sub = df[df["district"].isin(w.keys()) & df[value].notna()].copy()
     total_w = sum(w.values())
-    if sub.empty or total_w <= 0:
-        return pd.DataFrame(columns=[*keys, value, "coverage"])
+    if sub.empty or total_w <= 0:  # keep the key dtypes (e.g. datetime `date`) so callers can use .dt on it
+        empty = sub[keys].iloc[0:0].copy() if set(keys) <= set(sub.columns) else pd.DataFrame(columns=keys)
+        empty[value] = pd.Series(dtype=float)
+        empty["coverage"] = pd.Series(dtype=float)
+        return empty.reset_index(drop=True)
     sub["_w"] = sub["district"].map(w)
     sub["_wx"] = sub["_w"] * sub[value]
     g = sub.groupby(keys, as_index=False).agg(_wx=("_wx", "sum"), _w=("_w", "sum"))
@@ -129,3 +132,17 @@ def is_complete_month(month: dt.date, newest_daily: dt.date) -> bool:
     """True when the month ends on or before the newest daily record."""
     last = month.replace(day=calendar.monthrange(month.year, month.month)[1])
     return last <= newest_daily
+
+
+def period_gap(label: str, first: int, last: int, data_first: int | None, data_last: int | None) -> str | None:
+    """Why a statistic over the years [first, last] cannot be computed from data covering [data_first, data_last], or
+    None when the data cover the whole period. A period the data only partly cover is not computed: averaging the
+    covered years would present, say, one year (2000) as a 1981–2000 climatology.
+    """
+    if data_first is None or data_last is None:
+        return f"No data for this scope in {label}"
+    if data_first > first:
+        return f"The database starts in {data_first}; the {label} period needs data from {first}"
+    if data_last < last:
+        return f"The database ends in {data_last}; the {label} period needs data to {last}"
+    return None

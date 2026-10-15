@@ -8,6 +8,30 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Frontend integration fixes (2026-10-15) — `../Niwis Frontend/docs/backend/BACKEND_ISSUES.md`
+
+- [x] **#6 Seasonal change values for 1981–2000 (critical).** Root cause: `climate/breakdown?metric=seasonal-change`
+      averaged every month whose year fell in each period's *inclusive* range, guarded only by "is the slice
+      non-empty". The database starts on 2000-01-01, so the "1981–2000" slice held the 12 months of **year 2000**
+      and p0 was year 2000 alone, labelled as a 20-year climatology (recomputing year 2000 alone gives exactly
+      `[21.58, 16.81, 12.66, 17.88]`). Not a fallback, default, extrapolation or template value: real 2000 data,
+      mislabelled. The `unavailable` entry was a hard-coded string, never derived from the values, so the two
+      disagreed. `var` was also ignored: `var=rainfall` returned the same temperatures in °C.
+      Fix: `period_gap` (app/core/aggregate.py) computes a period only when the data cover all of it, and the same
+      check produces the `unavailable` entry; `var=rainfall` serves mean seasonal totals (mm) from `4_3`.
+- [x] Response checks (`app/core/response_checks.py`), run on every module response (`RESPONSE_CHECKS=log` by
+      default, `raise` in tests): a field listed in `unavailable` must be null; no non-null value may be dated outside
+      its source tables' first / last record. Audit over every endpoint, key and selector value
+      (`app/modules/catalog.py`): `tests/test_response_audit.py` (fixture DB, 5 scopes),
+      `tests/integration/test_response_audit_live.py` and `scripts/audit_responses.py` (Supabase / running server /
+      recorded responses).
+- [x] Audit results. Recorded frontend fixtures (627 responses, pre-fix): 16 violations, all `seasonal-change` (both
+      `var`s × 4 scopes: p0 listed unavailable but valued, and dated before 2000). Supabase after the fix: 716
+      requests, 0 violations. Fixture DB: also caught `2021–2026` averaged from data that start in 2024 (same bug,
+      fixed by `period_gap`), and three empty-scope crashes (500): `climate/table?metric=provinces` (untyped empty
+      aggregate), `vegetation/breakdown?metric=drivers` (NaT date), runoff daily-flow series (`discharge`,
+      `flood-frequency`, `seasonal`) → now null + reason or a specific 501.
+
 ### Phase 7 — Hardening (2026-10-14)
 
 - [x] Performance (`docs/PERFORMANCE.md`): summary p95 16–106 ms with warm data caches across 61 scopes per module

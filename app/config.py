@@ -6,7 +6,7 @@ import os
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     )
     rate_limit_per_minute: int = 120  # per client IP; 0 disables
     environment: str = "development"
+    # app.core.response_checks on every module response: "log" (warn), "raise" (fail the request; tests), "off"
+    response_checks: Literal["off", "log", "raise"] = "log"
     log_level: str = "INFO"
 
     # --- data behaviour ------------------------------------------------------------------------------------------

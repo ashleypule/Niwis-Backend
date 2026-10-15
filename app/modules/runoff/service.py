@@ -140,8 +140,16 @@ class RunoffService:
         g = await self.data.daily_window_stats(Q, start, end)
         return g["sum"].where(g["days"] >= 0.95 * ((end - start).days + 1))
 
-    async def daily_flow(self, start: dt.date, end: dt.date) -> pd.Series:
-        return await self.data.daily_scope_sum(Q, start, end, self.flow_factors())
+    async def daily_flow(self, start: dt.date, end: dt.date, *, required: bool = True) -> pd.Series:
+        """Scope daily flow (m³/s); an empty window is a 501 unless `required=False` (the caller reports it)."""
+        flow = await self.data.daily_scope_sum(Q, start, end, self.flow_factors())
+        if flow.empty and required:
+            raise DataUnavailable(
+                f"No day between {start} and {end} has runoff for every district in this scope "
+                "(a scope-wide daily flow needs all of them)",
+                missing=["runoff_depth_daily"],
+            )
+        return flow
 
     # ---------------------------------------------------------------- summary
 
@@ -543,10 +551,13 @@ class RunoffService:
             ("lt", "Long-term (2011–2020)", dt.date(2011, 1, 1), dt.date(2020, 12, 31)),
         ]
         pcts = np.linspace(0, 100, 101)
-        series = []
+        series, unavailable = [], []
         for i, (key, name, a, b) in enumerate(curves):
-            flow = (await self.daily_flow(a, b)).to_numpy()
+            flow = (await self.daily_flow(a, b, required=False)).to_numpy()
             vals = np.percentile(flow, 100 - pcts) if len(flow) else [None] * len(pcts)
+            if not len(flow):
+                reason = f"No day between {a} and {b} has runoff for every district in this scope"
+                unavailable.append(c.UnavailableField(field=f"series.{key}", reason=reason))
             series.append(
                 c.Series(
                     key=key,
@@ -566,6 +577,7 @@ class RunoffService:
             series=series,
             as_of=iso(newest),
             note="Derived daily flow (modelled depth × real district area).",
+            **({"unavailable": unavailable} if unavailable else {}),
             **self._prov(newest, Q),
         )
 

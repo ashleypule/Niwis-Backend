@@ -40,6 +40,7 @@ def make_settings(**overrides: Any) -> Settings:
         "rate_limit_per_minute": 0,
         "log_level": "WARNING",
         "environment": "test",
+        "response_checks": "raise",  # every response in the test suite must pass app.core.response_checks
     }
     base.update(overrides)
     return Settings(_env_file=None, **base)  # type: ignore[call-arg]

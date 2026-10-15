@@ -12,7 +12,7 @@ from typing import Any, Protocol
 from fastapi import APIRouter, Depends, Query, Request
 
 from app.auth import get_current_user
-from app.modules.common import Ctx, cached, get_ctx, unknown
+from app.modules.common import Ctx, cached, check_response, get_ctx, unknown
 from app.schemas import contract as c
 
 OPTS: dict[str, Any] = {"response_model_exclude_unset": True, "response_model_by_alias": True}
@@ -52,8 +52,8 @@ def build_router(module: str, svc: type[Any], *, entities: bool = False) -> APIR
         return await cached(request, ctx.state, ttl, lambda: svc(ctx).timeseries(metric))
 
     @router.get("/forecast", response_model=c.SeriesSet, responses=ERRORS, **OPTS)
-    async def forecast(metric: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
-        return await svc(ctx).forecast(metric)
+    async def forecast(request: Request, metric: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
+        return await check_response(ctx.state, request.url.path, await svc(ctx).forecast(metric))
 
     @router.get("/breakdown", response_model=c.CategorySet, responses=ERRORS, **OPTS)
     async def breakdown(request: Request, metric: str = Query(...), ctx: Ctx = Depends(get_ctx)) -> Any:
@@ -86,8 +86,8 @@ def build_router(module: str, svc: type[Any], *, entities: bool = False) -> APIR
     if entities:
 
         @router.get("/entities", response_model=c.EntityList, responses=ERRORS, **OPTS)
-        async def entity_list(ctx: Ctx = Depends(get_ctx)) -> Any:
-            return await svc(ctx).entities()
+        async def entity_list(request: Request, ctx: Ctx = Depends(get_ctx)) -> Any:
+            return await check_response(ctx.state, request.url.path, await svc(ctx).entities())
 
         @router.get("/entities/{code}", response_model=c.EntityDetail, responses=ERRORS, **OPTS)
         async def entity(request: Request, code: str, ctx: Ctx = Depends(get_ctx)) -> Any:
