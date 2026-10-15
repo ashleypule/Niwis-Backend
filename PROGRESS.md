@@ -54,7 +54,9 @@ audit fixes B1–B14. One commit per step.
 - [x] **B4 Area-based drought class**: worst class covering ≥ 20 % of the area, cumulative (`DROUGHT_CLASS_AREA_PCT`);
       sub-value = % in D1–D4; same rule for the province-class map and the affected table; averaged SPI KPIs
       labelled "(area-weighted mean)". Supabase: KZN = D1 with 85 % in D1–D4; national = No drought (8 %).
-- [ ] B5–B14 audit fixes
+- [x] **B5 Temperatures in °C.** Vegetation drivers: temperature / LST changes in °C, GDD in °C·days, rainfall /
+      ET₀ in %, with `units` per category; climate indicator-trends: temperature change in °C on its own axis.
+- [ ] B6–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

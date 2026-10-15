@@ -25,7 +25,7 @@ ADDITIONS: dict[str, set[str]] = {
     "KpiSetSchema": PROVENANCE,
     "SeriesSchema": {"unit", "asOf", "isStale", "periodEnd", "source", "resolution", "status"},  # category charts
     "SeriesSetSchema": PROVENANCE,
-    "CategorySetSchema": PROVENANCE | {"asOf"},
+    "CategorySetSchema": PROVENANCE | {"asOf", "units"},
     "TableSetSchema": PROVENANCE | {"asOf"},
     "MatrixSetSchema": PROVENANCE | {"asOf"},
     "MapLayerSchema": PROVENANCE | {"asOf", "geometry"},

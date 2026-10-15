@@ -291,3 +291,11 @@ data cover < 95 % of the area. The same rule now gives the class per province on
 and in `drought/table?metric=affected` (`class`), so the pages agree; the averaged indices stay, labelled
 "(area-weighted mean)": the SPI-3 / SPI-6 / SPEI-12 KPIs on aggregated scopes and the affected table's `spi6` column.
 
+### 12.5 Temperature-type changes in their own unit (B5)
+
+A % change of a temperature depends on where zero is, so it is meaningless. `vegetation/breakdown?metric=drivers`:
+rainfall and ET₀ stay % changes; mean temperature and LST are absolute changes in **°C**, growing degree days (verified
+degree-day sums) in **°C·days**. New `units` (one per category, addition) and the unit in each category name
+(`"Mean temperature (°C)"`); `unit` is `"mixed"` (it was `"%"`). `climate/timeseries?metric=indicator-trends`: the
+`temp` series is the change in °C on a second axis (`axes[1].unit = "°C"`, `axis: 1`); it was 10 × °C on the % axis.
+

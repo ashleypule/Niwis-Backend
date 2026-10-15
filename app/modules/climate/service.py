@@ -754,16 +754,18 @@ class ClimateService:
             id="indicator-trends",
             title=f"Change vs {base}",
             x_type="time",
-            axes=[c.Axis(unit="%", label=f"Change vs {base}")],
+            axes=[
+                c.Axis(unit="%", label=f"Change vs {base}"),
+                c.Axis(unit="°C", label=f"Temperature change vs {base}"),
+            ],
             series=[
                 c.Series(
                     key="temp",
-                    name="Mean temperature (×10 %/°C)",
+                    name="Mean temperature (°C change)",
                     kind="line",
+                    axis=1,
                     color=SERIES[3],
-                    data=[
-                        [f"{y}-01-01", rnd((t.get(y) - t.get(base)) * 10, 1) if base in t.index else None] for y in yrs
-                    ],
+                    data=[[f"{y}-01-01", rnd(t.get(y) - t.get(base), 2) if base in t.index else None] for y in yrs],
                 ),
                 c.Series(
                     key="rain", name="Annual rainfall", kind="line", color=SERIES[0], data=pct(rain, "rain", "rainfall")
@@ -791,8 +793,8 @@ class ClimateService:
                 ),
             ],
             as_of=f"{y1}-01-01",
-            note="Mean temperature is plotted as 10 × change in °C (contract convention); others as % change. A "
-            "zero base year makes the % change undefined (null).",
+            note="Mean temperature: change in °C on the right axis (a % change of a temperature is meaningless); the "
+            "others: % change. A zero base year makes the % change undefined (null).",
             **self._prov(dt.date(y1, 12, 31), "tavg", "rain_annual", "hot_days", "spi_3", "r20mm", res="annual"),
         )
 

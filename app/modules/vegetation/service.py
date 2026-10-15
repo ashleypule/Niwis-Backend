@@ -479,24 +479,32 @@ class VegetationService:
         raise unknown("metric", metric, ["land-cover", "classification", "by-province", "seasonal", "drivers"])
 
     async def drivers(self) -> c.CategorySet:
-        """% change vs the same 6 months' 2001–2025 mean, each driver over its own latest 6 complete months."""
+        """Change vs the same 6 months' 2001–2025 mean, each driver over its own latest 6 complete months.
+
+        Amounts (rainfall, ET₀) change in %; temperature-type drivers change in their own unit (mean temperature and
+        LST in °C, growing degree days in °C·days): a % change of a temperature depends on the zero of the scale.
+        `units` gives each category's unit (B5).
+        """
         w = self.ctx.weights()
         complete = await self.rain.latest_complete_month()
-        specs: list[tuple[str, str, str, pd.DataFrame]] = []
+        # (name, variable, 6-month aggregate, unit of the change, data)
+        specs: list[tuple[str, str, str, str, pd.DataFrame]] = []
         rain_dm = (await self.rain.monthly_stats()).rename(columns={"sum": "value"})
-        specs.append(("Rainfall", "rain_daily", "sum", rain_dm[["district", "date", "value"]]))
+        specs.append(("Rainfall", "rain_daily", "sum", "%", rain_dm[["district", "date", "value"]]))
         tdm = await self.data.daily_monthly_stats("tavg", ())
-        specs.append(("Mean temperature", "tavg", "mean", tdm.assign(value=tdm["sum"] / tdm["days"])))
+        specs.append(("Mean temperature", "tavg", "mean", "°C", tdm.assign(value=tdm["sum"] / tdm["days"])))
         edm = await self.data.daily_monthly_stats("et0_daily", ())
-        specs.append(("Reference ET₀", "et0_daily", "sum", edm.rename(columns={"sum": "value"})))
-        specs.append(("Growing degree days", "gdd", "sum", await self.data.monthly("gdd")))
-        specs.append(("Land surface temperature", "lst", "mean", await self.data.monthly("lst")))
+        specs.append(("Reference ET₀", "et0_daily", "sum", "%", edm.rename(columns={"sum": "value"})))
+        specs.append(("Growing degree days", "gdd", "sum", "°C·days", await self.data.monthly("gdd")))
+        specs.append(("Land surface temperature", "lst", "mean", "°C", await self.data.monthly("lst")))
         cats: list[str] = []
+        units: list[str] = []
         vals: list[float | None] = []
         comps: list[c.Component] = []
-        for name, var, how, df in specs:
+        for name, var, how, unit, df in specs:
             agg = weighted(df[["district", "date", "value"]], w).set_index("date")["value"].dropna()
-            cats.append(name)
+            cats.append(f"{name} ({unit})")
+            units.append(unit)
             if agg.empty:  # no month with ≥ 95 % area coverage in this scope
                 vals.append(None)
                 continue
@@ -511,7 +519,8 @@ class VegetationService:
                 vals.append(None)
             else:
                 f = sum if how == "sum" else (lambda xs: sum(xs) / len(xs))
-                vals.append(rnd((f(cur) - f(normal)) / f(normal) * 100, 1))
+                diff = f(cur) - f(normal)
+                vals.append(rnd(diff / f(normal) * 100, 1) if unit == "%" else rnd(diff, 2 if unit == "°C" else 1))
             comps.append(
                 c.Component(
                     key=var, as_of=iso(end.date()), source=self.src(var), **self.ctx.stamp(end.date(), "monthly")
@@ -521,7 +530,8 @@ class VegetationService:
         return c.CategorySet(
             id="drivers",
             title="Drivers: change vs normal (last 6 months)",
-            unit="%",
+            unit="mixed",
+            units=units,
             categories=cats,
             series=[c.CategorySeries(key="change", name="Change vs normal (6 months)", values=vals)],
             as_of=iso(as_of),

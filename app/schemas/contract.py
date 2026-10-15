@@ -188,6 +188,7 @@ class CategorySet(Provenance):
     id: str
     title: str | None = None
     unit: str
+    units: list[str] | None = None  # addition: one unit per category when they differ (`unit` is then "mixed")
     categories: list[str]
     colors: list[str] | None = None
     series: list[CategorySeries]

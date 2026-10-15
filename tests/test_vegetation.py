@@ -107,3 +107,42 @@ async def test_withheld_5_1_never_served(client: httpx.AsyncClient) -> None:
         params = {"metric": key} if kind == "timeseries" else ({"layer": key} if kind == "map" else {})
         body = (await client.get(f"{B}/{kind}", params=params)).json()
         assert "5.1_primary_satellite_vegetation_variables_sansa_master" not in body.get("source", [])
+
+
+async def test_temperature_drivers_change_in_their_own_unit(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """B5: temperature-type drivers are absolute changes (°C, °C·days), never % of a temperature."""
+    body = (await client.get(f"{B}/breakdown", params={"metric": "drivers", "municipality": "DC44"})).json()
+    units = dict(zip(body["categories"], body["units"], strict=True))
+    assert body["unit"] == "mixed"
+    assert units == {
+        "Rainfall (%)": "%",
+        "Mean temperature (°C)": "°C",
+        "Reference ET₀ (%)": "%",
+        "Growing degree days (°C·days)": "°C·days",
+        "Land surface temperature (°C)": "°C",
+    }
+    got = dict(zip(body["categories"], body["series"][0]["values"], strict=True))["Mean temperature (°C)"]
+    rows = fixture_db(
+        """SELECT left("Date", 7) AS m, avg("Tavg_C") FROM "4_1_temperature_change_master"
+           WHERE "District_Name" = 'Alfred Nzo' GROUP BY 1"""
+    )
+    monthly = {m: float(v) for m, v in rows}
+    last6 = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08"]  # latest complete months
+    normal = [
+        sum(v for m, v in monthly.items() if m[5:] == k[5:] and "2001" <= m[:4] <= "2025")
+        / sum(1 for m in monthly if m[5:] == k[5:] and "2001" <= m[:4] <= "2025")
+        for k in last6
+    ]
+    expected = sum(monthly[k] for k in last6) / 6 - sum(normal) / 6
+    assert got == pytest.approx(expected, abs=0.006)
+
+
+async def test_indicator_trends_temperature_in_degrees(client: httpx.AsyncClient) -> None:
+    body = (
+        await client.get("/api/v1/climate/timeseries", params={"metric": "indicator-trends", "municipality": "CPT"})
+    ).json()
+    temp = next(s for s in body["series"] if s["key"] == "temp")
+    assert temp["axis"] == 1 and body["axes"][1]["unit"] == "°C"
+    assert all(s.get("axis", 0) == 0 for s in body["series"] if s["key"] != "temp")
