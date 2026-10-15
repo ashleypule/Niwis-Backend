@@ -58,7 +58,10 @@ audit fixes B1–B14. One commit per step.
       ET₀ in %, with `units` per category; climate indicator-trends: temperature change in °C on its own axis.
 - [x] **B6 Developer notes removed** from notes, reasons and errors (drought, rainfall, climate, vegetation, registry
       reasons / notes now shown in the category view); every response is scanned in tests.
-- [ ] B7–B14 audit fixes
+- [x] **B7 7-stage cascade** (precipitation → soil moisture → vegetation → streamflow → reservoir → groundwater →
+      socio-economic): soil moisture (surface anomaly) and groundwater (SGI, borehole status classes) from data;
+      streamflow, reservoir (withheld) and socio-economic null with reasons; original row ids kept, `stageId` / `order`.
+- [ ] B8–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

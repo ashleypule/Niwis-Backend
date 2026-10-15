@@ -38,6 +38,7 @@ from app.core.palettes import DROUGHT, NORMAL, OBSERVED, SERIES, drought_bands
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd
 from app.core.thresholds import (
+    borehole_status,
     drought_class,
     drought_class_or_none,
     drought_label,
@@ -721,31 +722,41 @@ class DroughtService:
         return (await handlers[metric](limit)).dump()
 
     async def tbl_cascade(self, limit: int | None) -> c.TableSet:
-        """Meteorological → agricultural → hydrological → socio-economic stages.
+        """The spec's 7-stage drought cascade (§3, §25.1): precipitation deficit → soil moisture → vegetation →
+        streamflow → reservoir → groundwater → socio-economic impact.
 
-        Rows carry the backend's keys (`stage`, `value`, `class`, `severity`, `asOf`) and the contract's cascade keys
-        (`metric`, `value` as text with its unit, `cls` = class id on the stage's palette `scale`, `bar` = 0–100 from
-        the class rank, `severity_bar`). The number is kept as `valueNum`. docs/CONTRACT_CHANGES.md §9.
+        Rows carry `stageId` and `order` (1–7), the backend's keys (`stage`, `value`, `class`, `severity`, `asOf`) and
+        the contract's cascade keys (`metric`, `value` as text with its unit, `cls` = class id on the stage's palette
+        `scale`, `bar` = 0–100 from the class rank). The number is `valueNum`. Row ids of the original four stages are
+        kept (`meteorological`, `agricultural`, `hydrological` = reservoir, `socio-economic`). Stages the database
+        cannot fill are null with the reason: streamflow (no gauged discharge), reservoir (storage withheld after the
+        plausibility check), socio-economic (no settlement data).
         """
         w = self.ctx.weights()
         total = sum(w.values())
-        m = await self.latest("spi_6")
-        spi = weighted_scalar(await self.at("spi_6", m), w)
-        met_cls = drought_class_or_none(spi)
-        met_area = class_areas(await self.spi6_classes(m), w)
-        mv = await self.latest("vhi")
-        vhi_d = (await self.at("vhi", mv)).dropna()
-        vhi = weighted_scalar(vhi_d, w)
-        veg_cls = veg_class(vhi) if vhi is not None else None
-        stressed = sum(w[k] for k, v in vhi_d.items() if k in w and v < thresholds()["vegetation"]["stress_below"])
-        reason_st = self.withheld("dam_storage")
-        st = pd.DataFrame() if reason_st else await self.storage_series()
+        unavailable: list[c.UnavailableField] = []
+        components: list[c.Component] = []
+        stress = thresholds()["vegetation"]["stress_below"]
 
         def stage(
-            rid: str, label: str, metric: str, scale: str, num: float | None, text: str | None, cls_id: str | None
+            order: int,
+            rid: str,
+            stage_id: str,
+            label: str,
+            metric: str,
+            scale: str,
+            num: float | None,
+            text: str | None,
+            cls_id: str | None,
+            *,
+            cls_label: str | None = None,
+            severity: float | None = None,
+            as_of: dt.date | None = None,
         ) -> dict[str, Any]:
             return {
                 "id": rid,
+                "stageId": stage_id,
+                "order": order,
                 "stage": label,
                 "metric": metric,
                 "value": text if num is not None else None,
@@ -753,106 +764,178 @@ class DroughtService:
                 "cls": ("No drought" if cls_id == "None" else cls_id) if cls_id else None,
                 "scale": scale,
                 "bar": severity_bar(scale, cls_id),
+                "class": cls_label,
+                "severity": rnd(severity, 0),
+                "asOf": iso(as_of),
             }
 
-        rows: list[dict[str, Any]] = [
-            {
-                **stage(
-                    "meteorological",
-                    "Meteorological (SPI-6)",
-                    "spi",
-                    "drought",
-                    rnd(spi, 2),
-                    f"SPI-6 {spi:.2f}" if spi is not None else None,
-                    met_cls,
-                ),
-                "class": drought_label(met_cls) if met_cls else None,
-                "severity": rnd(sum(met_area.get(k, 0) for k in IN_DROUGHT) / total * 100, 0)
-                if sum(met_area.values()) >= 0.95 * total
-                else None,
-                "asOf": iso(m),
-            },
-            {
-                **stage(
-                    "agricultural",
-                    "Agricultural (VHI %)",
-                    "vhi",
-                    "vci",
-                    rnd(vhi, 1),
-                    f"VHI {vhi:.0f} %" if vhi is not None else None,
-                    veg_cls,
-                ),
-                "class": veg_cls,
-                "severity": rnd(stressed / total * 100, 0) if vhi is not None else None,
-                "asOf": iso(mv),
-            },
-        ]
-        components = [
-            c.Component(key="meteorological", as_of=iso(m), source=self.src("spi_6"), **self.ctx.stamp(m, "monthly")),
-            c.Component(key="agricultural", as_of=iso(mv), source=self.src("vhi"), **self.ctx.stamp(mv, "monthly")),
-        ]
+        def component(key: str, as_of: dt.date, *variables: str) -> None:
+            components.append(
+                c.Component(key=key, as_of=iso(as_of), source=self.src(*variables), **self.ctx.stamp(as_of, "monthly"))
+            )
+
+        rows: list[dict[str, Any]] = []
+        # 1 precipitation deficit: class by the area rule (as the Drought Class KPI), value = area-weighted mean SPI-6
+        m = await self.latest("spi_6")
+        spi = weighted_scalar(await self.at("spi_6", m), w)
+        ac = self.area_class(await self.spi6_classes(m), w)
+        rows.append(
+            stage(
+                1,
+                "meteorological",
+                "precipitation",
+                "Precipitation deficit (SPI-6)",
+                "spi",
+                "drought",
+                rnd(spi, 2),
+                f"SPI-6 {spi:.2f}" if spi is not None else None,
+                ac.cls,
+                cls_label=drought_label(ac.cls) if ac.cls else None,
+                severity=ac.in_drought,
+                as_of=m,
+            )
+        )
+        component("meteorological", m, "spi_6")
+        # 2 soil moisture: surface soil-moisture anomaly vs the same month 2001–2025 (no agreed classes)
+        ms = await self.latest("soil_moisture_surface")
+        sma, _ = await self.sm_anomaly(ms)
+        rows.append(
+            stage(
+                2,
+                "soil-moisture",
+                "soil-moisture",
+                "Soil moisture (surface, anomaly)",
+                "soilMoistureAnomaly",
+                "anomalyPct",
+                rnd(sma, 1),
+                f"{sma:+.0f} % vs {CLIM_YEARS[0]}–{CLIM_YEARS[1]}" if sma is not None else None,
+                None,
+                as_of=ms,
+            )
+        )
+        no_sm_classes = "No agreed soil-moisture anomaly classes yet: the anomaly is shown without a class"
+        if sma is not None:
+            for key in ("cls", "bar", "class", "severity"):
+                unavailable.append(c.UnavailableField(field=f"rows.soil-moisture.{key}", reason=no_sm_classes))
+        component("soil-moisture", ms, "soil_moisture_surface")
+        # 3 vegetation: VHI class; severity = % of area under stress
+        mv = await self.latest("vhi")
+        vhi_d = (await self.at("vhi", mv)).dropna()
+        vhi = weighted_scalar(vhi_d, w)
+        veg_cls = veg_class(vhi) if vhi is not None else None
+        stressed = sum(w[k] for k, v in vhi_d.items() if k in w and v < stress)
+        rows.append(
+            stage(
+                3,
+                "agricultural",
+                "vegetation",
+                "Vegetation (VHI %)",
+                "vhi",
+                "vci",
+                rnd(vhi, 1),
+                f"VHI {vhi:.0f} %" if vhi is not None else None,
+                veg_cls,
+                cls_label=veg_cls,
+                severity=stressed / total * 100 if vhi is not None else None,
+                as_of=mv,
+            )
+        )
+        component("agricultural", mv, "vhi")
+        # 4 streamflow: no gauged discharge in the database
+        rows.append(stage(4, "streamflow", "streamflow", "Streamflow", "discharge", "drought", None, None, None))
+        unavailable.append(
+            c.UnavailableField(
+                field="rows.streamflow",
+                reason="No gauged streamflow in the database: the river discharge column holds the same placeholder "
+                "value in every district. The SSI shown on this page is computed from modelled runoff, not streamflow.",
+            )
+        )
+        # 5 reservoir: dam storage (withheld after the plausibility check)
+        reason_st = self.withheld("dam_storage")
+        st = pd.DataFrame() if reason_st else await self.storage_series()
         if not st.empty:
             last = st.iloc[st["date"].argmax()]
             ds = _d(last["date"])
             pct = float(last["pct"])
             lvl = storage_alert_level(pct)
             rows.append(
-                {
-                    **stage(
-                        "hydrological",
-                        "Hydrological (dam storage % FSC)",
-                        "storagePct",
-                        "storage",
-                        rnd(pct, 1),
-                        f"{pct:.1f} % FSC",
-                        storage_band(pct),
-                    ),
-                    "class": "No alert" if lvl == "None" else f"Alert {lvl}",
-                    "severity": rnd(100 - pct, 0),
-                    "asOf": iso(ds),
-                }
-            )
-            components.append(
-                c.Component(
-                    key="hydrological", as_of=iso(ds), source=self.src("dam_storage"), **self.ctx.stamp(ds, "monthly")
+                stage(
+                    5,
+                    "hydrological",
+                    "reservoir",
+                    "Reservoir (dam storage % FSC)",
+                    "storagePct",
+                    "storage",
+                    rnd(pct, 1),
+                    f"{pct:.1f} % FSC",
+                    storage_band(pct),
+                    cls_label="No alert" if lvl == "None" else f"Alert {lvl}",
+                    severity=100 - pct,
+                    as_of=ds,
                 )
             )
-        if reason_st:
+            component("hydrological", ds, "dam_storage")
+        else:
             rows.append(
-                {
-                    **stage(
-                        "hydrological",
-                        "Hydrological (dam storage % FSC)",
-                        "storagePct",
-                        "storage",
-                        None,
-                        None,
-                        None,
-                    ),
-                    "class": None,
-                    "severity": None,
-                    "asOf": None,
-                }
+                stage(
+                    5,
+                    "hydrological",
+                    "reservoir",
+                    "Reservoir (dam storage % FSC)",
+                    "storagePct",
+                    "storage",
+                    None,
+                    None,
+                    None,
+                )
             )
-        reason = "No settlement / population data in the database"
+            unavailable.append(
+                c.UnavailableField(field="rows.hydrological", reason=reason_st or "No dam storage data for this scope")
+            )
+        # 6 groundwater: SGI with the spec's borehole status classes; severity = % of area at Low or worse (≤ −1.0)
+        mg = await self.latest("sgi")
+        sgi_d = (await self.at("sgi", mg)).dropna()
+        sgi = weighted_scalar(sgi_d, w)
+        gw_cls = borehole_status(sgi) if sgi is not None else None
+        low = sum(w[k] for k, v in sgi_d.items() if k in w and borehole_status(float(v)) in ("Low", "Critical"))
+        covered = sum(w[k] for k in sgi_d.index if k in w)
         rows.append(
-            {
-                **stage(
-                    "socio-economic",
-                    "Socio-economic (settlements at risk)",
-                    "settlementsAtRisk",
-                    "risk",
-                    None,
-                    None,
-                    None,
-                ),
-                "class": None,
-                "severity": None,
-                "asOf": None,
-            }
+            stage(
+                6,
+                "groundwater",
+                "groundwater",
+                "Groundwater (SGI)",
+                "sgi",
+                "status",
+                rnd(sgi, 2),
+                f"SGI {sgi:.2f}" if sgi is not None else None,
+                gw_cls,
+                cls_label=gw_cls,
+                severity=low / covered * 100 if sgi is not None and covered else None,
+                as_of=mg,
+            )
         )
-        for r in rows:  # a stage without a value says why (withheld / socio-economic stages have their own entry)
-            if r["valueNum"] is None and r["id"] not in ("socio-economic", "hydrological"):
+        component("groundwater", mg, "sgi")
+        # 7 socio-economic impact
+        rows.append(
+            stage(
+                7,
+                "socio-economic",
+                "socio-economic",
+                "Socio-economic (settlements at risk)",
+                "settlementsAtRisk",
+                "risk",
+                None,
+                None,
+                None,
+            )
+        )
+        unavailable.append(
+            c.UnavailableField(field="rows.socio-economic", reason="No settlement / population data in the database")
+        )
+        explained = {u.field for u in unavailable}
+        for r in rows:  # a stage without a value for this scope says why
+            if r["valueNum"] is None and f"rows.{r['id']}" not in explained:
                 self.ctx.explain(f"rows.{r['id']}", f"No area-weighted value for this scope ({r['stage']})")
         as_of = max(dt.date.fromisoformat(x["asOf"]) for x in rows if x["asOf"])
         return c.TableSet(
@@ -871,12 +954,9 @@ class DroughtService:
             row_key="id",
             as_of=iso(as_of),
             components=components,
-            unavailable=[
-                c.UnavailableField(field="rows.socio-economic", reason=reason),
-                *([c.UnavailableField(field="rows.hydrological", reason=reason_st)] if reason_st else []),
-            ],
+            unavailable=unavailable,
             **{
-                **self._prov(as_of, "spi_6", "vhi", "dam_storage", res="monthly"),
+                **self._prov(as_of, "spi_6", "soil_moisture_surface", "vhi", "dam_storage", "sgi", res="monthly"),
                 "isStale": any(comp.is_stale for comp in components),
             },
         )

@@ -915,9 +915,7 @@ class RunoffService:
             total=len(rows),
             as_of=iso(end),
             unavailable=[
-                c.UnavailableField(
-                    field="rows.severity", reason="No flow-event severity thresholds defined (none in thresholds.ts)"
-                )
+                c.UnavailableField(field="rows.severity", reason="No agreed flow-event severity thresholds yet")
             ],
             **{
                 **self._prov(end, Q, baseline=f"Q10 of daily flow {HISTORY_START.year}–{y1}"),

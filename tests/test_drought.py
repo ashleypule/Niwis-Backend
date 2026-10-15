@@ -90,7 +90,7 @@ async def test_cascade_components(client: httpx.AsyncClient) -> None:
     assert rows["agricultural"]["asOf"] == "2025-12-01" and rows["hydrological"]["asOf"] is None
     assert rows["socio-economic"]["value"] is None and rows["hydrological"]["value"] is None
     stale = {x["key"]: x["isStale"] for x in body["components"]}
-    assert stale == {"meteorological": False, "agricultural": True}
+    assert stale == {"meteorological": False, "soil-moisture": True, "agricultural": True, "groundwater": True}
 
 
 async def test_gw_sgi_level_unavailable(client: httpx.AsyncClient) -> None:

@@ -1124,7 +1124,7 @@ class ClimateService:
             signal("rain", "Rainfall", "rainfall", pct(rain)),
             signal("runoff", "Runoff", "runoff", pct(q)),
         ]
-        no_thresholds = "No agreed severity thresholds for these signals (none in thresholds.ts)"
+        no_thresholds = "No agreed severity thresholds for these signals yet"
         return c.TableSet(
             id="signal-chain",
             title="Climate signal chain",

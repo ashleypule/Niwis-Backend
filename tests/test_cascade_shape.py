@@ -77,3 +77,55 @@ async def test_climate_signal_chain_rows(client: httpx.AsyncClient) -> None:
     assert [r["metric"] for r in body["rows"]] == ["tmean", "et0", "rainfall", "runoff"]
     reasons = {u["field"]: u["reason"] for u in body["unavailable"]}
     assert set(reasons) == {"rows.severity", "rows.cls", "rows.bar"} and len(set(reasons.values())) == 1
+
+
+async def test_drought_cascade_has_the_specs_seven_stages(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """B7: precipitation deficit → soil moisture → vegetation → streamflow → reservoir → groundwater → socio-economic
+    (spec §3, §25.1). Soil moisture and groundwater from data; streamflow, reservoir, socio-economic null + reason."""
+    body = (await client.get("/api/v1/drought/table", params={"metric": "cascade", "municipality": "DC6"})).json()
+    rows = body["rows"]
+    assert [r["stageId"] for r in rows] == [
+        "precipitation",
+        "soil-moisture",
+        "vegetation",
+        "streamflow",
+        "reservoir",
+        "groundwater",
+        "socio-economic",
+    ]
+    assert [r["order"] for r in rows] == [1, 2, 3, 4, 5, 6, 7]
+    by = {r["stageId"]: r for r in rows}
+    assert by["precipitation"]["id"] == "meteorological" and by["vegetation"]["id"] == "agricultural"
+    assert by["reservoir"]["id"] == "hydrological"  # original ids kept
+    reasons = {u["field"]: u["reason"] for u in body["unavailable"]}
+    for sid in ("streamflow", "reservoir", "socio-economic"):
+        assert by[sid]["valueNum"] is None and f"rows.{by[sid]['id']}" in reasons, sid
+    assert "placeholder" in reasons["rows.streamflow"]
+
+    gw = by["groundwater"]
+    ((sgi,),) = fixture_db(
+        "SELECT round(sgi_dimensionless::numeric, 2) FROM hydrological_drought_master "
+        "WHERE district_name = 'namakwa' AND date = '2025-12-01'"
+    )
+    assert gw["valueNum"] == float(sgi) and gw["scale"] == "status"
+    expected = "Critical" if sgi <= -1.6 else "Low" if sgi <= -1.0 else "Watch" if sgi <= -0.5 else "Normal"
+    assert gw["cls"] == expected and gw["bar"] == severity_bar("status", expected)
+    assert gw["severity"] == (100 if expected in ("Low", "Critical") else 0)
+
+    sm = by["soil-moisture"]
+    summary = (await client.get("/api/v1/drought/summary", params={"municipality": "DC6"})).json()
+    sm_kpi = next(k for k in summary["kpis"] if k["id"] == "soilMoisture")
+    assert sm["valueNum"] == sm_kpi["value"] and sm["value"].endswith("vs 2001–2025")
+    assert sm["cls"] is None and "rows.soil-moisture.cls" in reasons
+    comps = {x["key"] for x in body["components"]}
+    assert comps == {"meteorological", "soil-moisture", "agricultural", "groundwater"}
+
+
+async def test_cascade_precipitation_class_matches_the_headline(client: httpx.AsyncClient) -> None:
+    for params in ({"municipality": "DC44"}, {"municipality": "CPT"}):
+        cas = (await client.get("/api/v1/drought/table", params={"metric": "cascade", **params})).json()
+        summ = (await client.get("/api/v1/drought/summary", params=params)).json()
+        head = next(k for k in summ["kpis"] if k["id"] == "class")
+        assert cas["rows"][0]["cls"] == head["text"], params

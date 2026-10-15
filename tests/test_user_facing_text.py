@@ -12,7 +12,7 @@ from app.modules import catalog
 from tests.conftest import requires_db
 
 pytestmark = [pytest.mark.db, requires_db]
-DEV_WORDING = re.compile(r"Contract label|contract convention|docs/|DATA_GAPS|\.md\b|decision D\d|\(D\d\)", re.I)
+DEV_WORDING = re.compile(r"Contract label|contract convention|docs/|DATA_GAPS|\.md\b|\.ts\b|decision D\d|\(D\d\)", re.I)
 
 
 async def test_no_developer_wording_in_responses(client: httpx.AsyncClient) -> None:

@@ -103,6 +103,7 @@ SEVERITY_ORDER: dict[str, list[str]] = {
     "drought": ["None", "D0", "D1", "D2", "D3", "D4"],
     "vci": ["Very Healthy", "Healthy", "Moderate", "Stressed", "Very Stressed"],
     "storage": ["very-high", "high", "moderate", "low", "very-low"],
+    "status": ["Normal", "Watch", "Low", "Critical"],  # borehole SGI status (thresholds.ts boreholeStatus)
 }
 
 

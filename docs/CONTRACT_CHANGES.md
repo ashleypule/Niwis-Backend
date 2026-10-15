@@ -305,3 +305,15 @@ degree-day sums) in **°C·days**. New `units` (one per category, addition) and 
 paths, decision ids) are rewritten for users, e.g. "Normal: 2000–2026 mean (data start in 2000)". Wording only; no
 keys change. `tests/test_user_facing_text.py` scans every response.
 
+### 12.7 Drought cascade: the spec's 7 stages (B7)
+
+`drought/table?metric=cascade` returns the 7 stages of spec §3 / §25.1, in order: precipitation deficit → soil
+moisture → vegetation → streamflow → reservoir → groundwater → socio-economic. Each row adds `stageId` and `order`
+(1–7); the four original row ids are kept (`meteorological` = precipitation, `agricultural` = vegetation,
+`hydrological` = reservoir, `socio-economic`). New rows: `soil-moisture` (surface soil-moisture anomaly % vs
+2001–2025; `cls` / `bar` / `class` / `severity` null with a reason: no agreed classes), `streamflow` (null: no gauged
+discharge), `groundwater` (SGI, `scale: "status"`, `cls` = borehole status Normal / Watch / Low / Critical from
+thresholds.ts, `severity` = % of area at Low or worse). The reservoir row is null with the plausibility reason
+(§15 of DATA_GAPS). The precipitation `cls` / `class` now follow the area rule of the Drought Class KPI (12.4) and its
+`severity` is the % of area in D1–D4.
+
