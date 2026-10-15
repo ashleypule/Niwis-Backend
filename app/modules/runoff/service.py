@@ -49,6 +49,14 @@ SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
     ("timeseries", "drivers"): (DRIVER_VAR,),
     ("table", "top-stations"): (TOP_ORDER,),
 }
+# entity datasets: with `entityId` they describe that district, whatever the page scope (Ctx.for_entity)
+ENTITY_DATASETS = {
+    ("timeseries", "discharge"),
+    ("timeseries", "fdc"),
+    ("timeseries", "flood-frequency"),
+    ("timeseries", "seasonal"),
+    ("table", "statistics"),
+}
 
 
 def _d(ts: Any) -> dt.date:
@@ -66,6 +74,16 @@ class RunoffService:
 
     def src(self, *variables: str) -> list[str]:
         return self.rain.src(*variables)
+
+    def use_entity(self, kind: str, key: str) -> None:
+        """Narrow this request to the `entityId` district for entity datasets. Before this, every runoff series was
+        computed from the page scope (national / province) and `entityId` was silently ignored."""
+        if (kind, key) in ENTITY_DATASETS and self.ctx.filters.entity_id:
+            self.ctx = self.ctx.for_entity()
+            self.rain = RainfallService(self.ctx)
+
+    def entity_title(self, title: str) -> str:
+        return f"{title} — {self.ctx.filters.scope.name}" if self.ctx.filters.entity_id else title
 
     def _prov(
         self, as_of: dt.date | None, *variables: str, baseline: str | None = None, res: Resolution = "daily"
@@ -303,6 +321,7 @@ class RunoffService:
         }
         if metric not in handlers:
             raise unknown("metric", metric, list(handlers))
+        self.use_entity("timeseries", metric)
         return (await handlers[metric]()).dump()
 
     async def _window_months(self) -> list[pd.Timestamp]:
@@ -325,7 +344,7 @@ class RunoffService:
         )
         return c.SeriesSet(
             id="discharge",
-            title="Discharge (derived)",
+            title=self.entity_title("Discharge (derived)"),
             x_type="time",
             axes=[c.Axis(unit="m³/s", label="Discharge")],
             series=[
@@ -521,7 +540,7 @@ class RunoffService:
         obs_t = [(len(ranked) + 1) / (i + 1) for i in range(len(ranked))]
         return c.SeriesSet(
             id="flood-frequency",
-            title="Flood frequency (Log-Pearson III)",
+            title=self.entity_title("Flood frequency (Log-Pearson III)"),
             x_type="value",
             x_unit="years",
             x_log=True,
@@ -589,7 +608,7 @@ class RunoffService:
             )
         return c.SeriesSet(
             id="fdc",
-            title="Flow-duration curves",
+            title=self.entity_title("Flow-duration curves"),
             x_type="value",
             x_unit="% of time exceeded",
             axes=[c.Axis(unit="m³/s", label="Discharge", log=True)],
@@ -625,7 +644,7 @@ class RunoffService:
         last = complete_last.date()
         return c.SeriesSet(
             id=sid,
-            title=title,
+            title=self.entity_title(title),
             x_type="category",
             axes=[c.Axis(unit=unit, label=label)],
             series=series,
@@ -716,6 +735,7 @@ class RunoffService:
         handlers = {"statistics": self.tbl_statistics, "top-stations": self.tbl_top, "events": self.tbl_events}
         if metric not in handlers:
             raise unknown("metric", metric, list(handlers))
+        self.use_entity("table", metric)
         return (await handlers[metric](limit)).dump()
 
     async def tbl_statistics(self, limit: int | None) -> c.TableSet:
@@ -770,7 +790,7 @@ class RunoffService:
             )
         return c.TableSet(
             id="statistics",
-            title=f"Runoff statistics, 12 months to {end:%d %b %Y}",
+            title=self.entity_title(f"Runoff statistics, 12 months to {end:%d %b %Y}"),
             columns=[
                 c.Column(key="variable", label="Variable", type="text"),
                 c.Column(key="current", label="Current (12 m)", type="number", align="right"),

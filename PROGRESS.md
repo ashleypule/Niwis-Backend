@@ -40,7 +40,12 @@ audit fixes B1–B14. One commit per step.
       → monthly means. One axis per group (axis rule). `Ctx.for_entity`: `entityId` selects one district. Added to
       the response audit. `tests/test_categories.py` (every group of every table, values vs SQL, defaults, errors,
       entity, withheld).
-- [ ] B1–B14 audit fixes
+- [x] **B1 `entityId`.** Root cause: `RunoffService` computed every series from the page scope
+      (`ctx.filters.scope`) and never read `filters.entity_id`; only rainfall's station series did. Entity datasets
+      (`ENTITY_DATASETS` per service: runoff discharge / fdc / flood-frequency / seasonal / statistics, rainfall
+      station, every category chart) now narrow the request to the district (`Ctx.for_entity`). Audit
+      (`tests/entity_audit.py`, fixture + Supabase): two districts differ, scope filters change nothing.
+- [ ] B2–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

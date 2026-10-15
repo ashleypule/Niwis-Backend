@@ -245,3 +245,17 @@ Rules the frontend can rely on:
 - **Periods:** monthly groups show whole months ending with the latest complete month the table has; annual groups
   the whole record (or `from` / `to`, `5Y`, `10Y`); incomplete months / years are never served. Daily groups longer
   than 2 000 points are downsampled to monthly means (`note` says so).
+
+## 12. Spec-audit fixes (2026-10-15)
+
+Behaviour and additions from the audit of the live dashboard against the spec (`docs/ISSUE_FIXES.md`). Nothing is
+renamed or removed unless stated.
+
+### 12.1 `entityId` selects the district (B1)
+
+Entity datasets now describe the `entityId` district, whatever the page scope (`province`, `wma`, `municipality`):
+`runoff/timeseries?metric=discharge|fdc|flood-frequency|seasonal`, `runoff/table?metric=statistics`, every
+`/{module}/category/…` chart, and (as before) `rainfall/timeseries?metric=station`. They used to return the scope
+aggregate (national, or another area with `province=WC`). With `entityId` the response has
+`aggregation: "district"` and the title ends with the district name. Without `entityId` nothing changes. An unknown
+code → 404 (`issues[0].param = "entityId"`).

@@ -57,6 +57,10 @@ SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
 }
 
 
+# entity datasets: `entityId` selects the district they describe (the station series requires it)
+ENTITY_DATASETS = {("timeseries", "station")}
+
+
 def _d(ts: Any) -> dt.date:
     d: dt.date = pd.Timestamp(ts).date()
     return d
