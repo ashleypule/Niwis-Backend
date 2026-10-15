@@ -77,7 +77,17 @@ class DroughtService:
     # ---------------------------------------------------------------- helpers
 
     def src(self, *variables: str) -> list[str]:
-        return self.rain.src(*variables)
+        """Source tables of the variables that are served (withheld variables have no source)."""
+        return self.rain.src(*(v for v in variables if self.withheld(v) is None))
+
+    def withheld(self, var: str) -> str | None:
+        """Why `var` is not served (its registry reason), or None when it has a canonical source."""
+        reg = self.ctx.state.registry
+        if reg.canonical_source(var) is not None:
+            return None
+        reasons = reg.withheld_reasons(var)
+        label = reg.variables[var].label
+        return f"{label} is withheld: " + (reasons[0].split(": ", 1)[-1] if reasons else "not in the database")
 
     def _prov(
         self, as_of: dt.date | None, *variables: str, baseline: bool = False, res: Resolution = "daily"
@@ -236,8 +246,21 @@ class DroughtService:
         kpis.append(c.Kpi(id="ssi3", metric="ssi", label="SSI-3", value=None, unavailable_reason=reason_ssi))
         unavail.append(c.UnavailableField(field="kpis.ssi3", reason=reason_ssi))
 
-        st = await self.storage_series()
-        if not st.empty:
+        reason_st = self.withheld("dam_storage")
+        st = pd.DataFrame() if reason_st else await self.storage_series()
+        if reason_st:
+            kpis.append(
+                c.Kpi(
+                    id="storage",
+                    metric="storagePct",
+                    label="Dam Storage",
+                    value=None,
+                    unit="% FSC",
+                    unavailable_reason=reason_st,
+                )
+            )
+            unavail.append(c.UnavailableField(field="kpis.storage", reason=reason_st))
+        elif not st.empty:
             last = st.iloc[st["date"].argmax()]
             prev = st[st["date"] == last["date"] - pd.DateOffset(years=1)]
             dmo = _d(last["date"])
@@ -699,7 +722,8 @@ class DroughtService:
         vhi = weighted_scalar(vhi_d, w)
         veg_cls = veg_class(vhi) if vhi is not None else None
         stressed = sum(w[k] for k, v in vhi_d.items() if k in w and v < thresholds()["vegetation"]["stress_below"])
-        st = await self.storage_series()
+        reason_st = self.withheld("dam_storage")
+        st = pd.DataFrame() if reason_st else await self.storage_series()
 
         def stage(
             rid: str, label: str, metric: str, scale: str, num: float | None, text: str | None, cls_id: str | None
@@ -777,6 +801,23 @@ class DroughtService:
                     key="hydrological", as_of=iso(ds), source=self.src("dam_storage"), **self.ctx.stamp(ds, "monthly")
                 )
             )
+        if reason_st:
+            rows.append(
+                {
+                    **stage(
+                        "hydrological",
+                        "Hydrological (dam storage % FSC)",
+                        "storagePct",
+                        "storage",
+                        None,
+                        None,
+                        None,
+                    ),
+                    "class": None,
+                    "severity": None,
+                    "asOf": None,
+                }
+            )
         reason = "No settlement / population data in the database"
         rows.append(
             {
@@ -794,8 +835,8 @@ class DroughtService:
                 "asOf": None,
             }
         )
-        for r in rows:  # a stage without a value says why (the socio-economic stage has its own entry below)
-            if r["valueNum"] is None and r["id"] != "socio-economic":
+        for r in rows:  # a stage without a value says why (withheld / socio-economic stages have their own entry)
+            if r["valueNum"] is None and r["id"] not in ("socio-economic", "hydrological"):
                 self.ctx.explain(f"rows.{r['id']}", f"No area-weighted value for this scope ({r['stage']})")
         as_of = max(dt.date.fromisoformat(x["asOf"]) for x in rows if x["asOf"])
         return c.TableSet(
@@ -814,7 +855,10 @@ class DroughtService:
             row_key="id",
             as_of=iso(as_of),
             components=components,
-            unavailable=[c.UnavailableField(field="rows.socio-economic", reason=reason)],
+            unavailable=[
+                c.UnavailableField(field="rows.socio-economic", reason=reason),
+                *([c.UnavailableField(field="rows.hydrological", reason=reason_st)] if reason_st else []),
+            ],
             **{
                 **self._prov(as_of, "spi_6", "vhi", "dam_storage", res="monthly"),
                 "isStale": any(comp.is_stale for comp in components),
@@ -1134,8 +1178,6 @@ async def prewarm(data: DataAccess) -> None:
         "vhi",
         "ndvi",
         "soil_moisture_surface",
-        "dam_storage",
-        "dam_level_pct",
         "sgi",
     ):
         await data.monthly(var)

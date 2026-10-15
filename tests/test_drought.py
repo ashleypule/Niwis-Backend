@@ -24,16 +24,16 @@ async def test_summary_per_component_dates(client: httpx.AsyncClient) -> None:
     c.KpiSet.model_validate(body)
     k = kpis(body)
     assert k["spi6"]["asOf"] == "2026-08-01" and k["spi6"]["isStale"] is False
-    for kid in ("vci", "soilMoisture", "storage", "sgi"):  # satellite / hydrology end 2025-12
+    for kid in ("vci", "soilMoisture", "sgi"):  # satellite / hydrology end 2025-12
         assert k[kid]["asOf"] == "2025-12-01" and k[kid]["isStale"] is True, kid
     assert body["isStale"] is True  # at least one component is stale
     comps = {x["key"]: x for x in body["components"]}
     assert comps["vci"]["source"] == ["satellite_remote_sensing"]
     assert comps["spi6"]["source"] == ["6.2_rainfall_derived_drought_indices_master"]
     assert k["class"]["status"]["scale"] == "drought"
-    for kid in ("ssi3", "settlements"):
+    for kid in ("ssi3", "settlements", "storage"):
         assert k[kid]["value"] is None and k[kid]["unavailableReason"]
-    assert {u["field"] for u in body["unavailable"]} == {"kpis.ssi3", "kpis.settlements"}
+    assert {u["field"] for u in body["unavailable"]} == {"kpis.ssi3", "kpis.settlements", "kpis.storage"}
 
 
 async def test_vci_matches_sql(client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]) -> None:
@@ -45,15 +45,14 @@ async def test_vci_matches_sql(client: httpx.AsyncClient, fixture_db: Callable[[
     assert kpis(body)["vci"]["value"] == float(v)
 
 
-async def test_dam_storage_is_volume_over_capacity(
-    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
-) -> None:
+async def test_dam_storage_withheld_after_plausibility_check(client: httpx.AsyncClient) -> None:
+    """Reservoir columns failed the 2026-10-15 plausibility check (DATA_GAPS §15): never served, always explained."""
     body = (await client.get(f"{B}/summary", params={"municipality": "DC44"})).json()
-    ((pct,),) = fixture_db(
-        "SELECT round(dam_level_pct_fsc::numeric, 1) FROM hydrological_drought_master "
-        "WHERE lower(district_name) = 'alfred nzo' AND date = '2025-12-01'"
-    )
-    assert kpis(body)["storage"]["value"] == pytest.approx(float(pct), abs=0.11)
+    storage = kpis(body)["storage"]
+    assert storage["value"] is None and "plausibility" in storage["unavailableReason"]
+    assert "hydrological_drought_master" in body["source"]  # SGI still comes from the table
+    r = await client.get(f"{B}/timeseries", params={"metric": "dam-flows", "municipality": "DC44"})
+    assert r.status_code == 501 and "plausibility" in r.json()["error"]
 
 
 @pytest.mark.parametrize(
@@ -62,7 +61,6 @@ async def test_dam_storage_is_volume_over_capacity(
         ("timeseries", "spi", c.SeriesSet),
         ("timeseries", "rain-spei", c.SeriesSet),
         ("timeseries", "rain-anomaly", c.SeriesSet),
-        ("timeseries", "dam-flows", c.SeriesSet),
         ("timeseries", "gw-sgi", c.SeriesSet),
         ("timeseries", "soil-moisture", c.SeriesSet),
         ("timeseries", "vegetation", c.SeriesSet),
@@ -89,10 +87,10 @@ async def test_cascade_components(client: httpx.AsyncClient) -> None:
     body = (await client.get(f"{B}/table", params={"metric": "cascade", "municipality": "DC6"})).json()
     rows = {r["id"]: r for r in body["rows"]}
     assert rows["meteorological"]["asOf"] == "2026-08-01"
-    assert rows["agricultural"]["asOf"] == "2025-12-01" and rows["hydrological"]["asOf"] == "2025-12-01"
-    assert rows["socio-economic"]["value"] is None
+    assert rows["agricultural"]["asOf"] == "2025-12-01" and rows["hydrological"]["asOf"] is None
+    assert rows["socio-economic"]["value"] is None and rows["hydrological"]["value"] is None
     stale = {x["key"]: x["isStale"] for x in body["components"]}
-    assert stale == {"meteorological": False, "agricultural": True, "hydrological": True}
+    assert stale == {"meteorological": False, "agricultural": True}
 
 
 async def test_gw_sgi_level_unavailable(client: httpx.AsyncClient) -> None:

@@ -29,6 +29,8 @@
 | 12 | ~~No district boundaries~~ — resolved: official district boundaries supplied 2026-10-14 | `reference/geo/districts.json` | done |
 | 13 | The same data stored in several tables; canonical source chosen per variable | 9 tables | P3 |
 | 14 | Partial current month: anomaly and SPI compare a few days with a full-month normal | `6.1`, `6.2`, `meteorological`, `5.2` | P2 |
+| 15 | Plausibility checks for the database view (2026-10-15): **reservoir columns, solar radiation, GRACE, the `4_3` record statistics and `4_6` fail and are withheld** | `hydrological_drought_master`, `meteorological_drought_master`, `satellite_remote_sensing`, `4_3`, `4_6` | P1 |
+| 16 | 14 new tables (§8–§12: reservoirs, surface water, groundwater, water quality) appeared on 2026-10-15; not registered, not served | `8_1` … `12.4` | P2 |
 
 ---
 
@@ -231,3 +233,56 @@ than it is.
 by days for window totals. **Ask:** either publish monthly indices only for complete months, or add a
 `days_in_record` / `is_complete` column so consumers can tell.
 
+## 15. Plausibility checks before serving columns in the database view (P1) — 2026-10-15
+
+Every column becomes a chart variable in the dashboard's database view (`/api/v1/{module}/categories`,
+`docs/CATEGORY_CATALOGUE.md`). Before any column not yet served went live, it was checked for physical plausibility;
+so were the derived columns the dashboard now reads directly. All checks are read-only SQL against Supabase on
+2026-10-15 (`scripts/plausibility_checks.sql`, runnable with `python scripts/run_checks.py scripts/plausibility_checks.sql`).
+A column that fails is **withheld** everywhere (registry role in `app/registry/datasets.yaml`) with the reason below.
+
+### Failed → withheld
+
+| Table · column | Evidence | Effect on the dashboard |
+| --- | --- | --- |
+| `hydrological_drought_master` · `dam_storage_million_m3`, `dam_level_pct_fsc`, `dam_inflow_m3_s`, `dam_outflow_m3_s` | **Frozen since December 2021**: every district's storage equals its final value from 2021-12 onwards (52 / 52), so the national total stays at 17 715 Mm³ (58.9 % mean FSC) every month; inflow = outflow in 2 496 of 2 600 district-months since Nov 2021. **Before that, implausible swings**: national storage 421 Mm³ (Jun 2021) → 16 617 Mm³ (Aug 2021); mean % FSC 69 % (Jul 2002) → 0.5 % (Jul 2003); eThekwini 74.5 % → 0 % in one month (May 2016); 1 212 district-months at exactly 0 % FSC. The month-to-month change equals (inflow − outflow) × time: a self-consistent bucket model, not observed storage. | Drought: the Dam Storage KPI and the reservoir stage of the cascade are null with this reason; the dam-flows chart returns 501. |
+| `meteorological_drought_master` · `solar_radiation_wm2` | 365 distinct values in 470 058 rows: one value per calendar day, **identical in all 52 districts and every year** (Cape Town = Johannesburg = Namakwa = eThekwini: January 198.8, April 247.1, September 113.2 W/m²). The cycle peaks in April and is lowest in September–October; Southern-Hemisphere radiation peaks in December and is lowest in June. r = 0.02 with Tmax. | Never served. |
+| `meteorological_drought_master` · `seasonal_rainfall_mm_season` | One value per district-**year**, equal to the calendar-year total (Alfred Nzo 2014 = 825.67 mm = Σ of its 12 monthly totals, 31 Dec missing): not a seasonal total. | Never served. Seasons come from `6.1` (OND/JFM/AMJ/JAS) and `4_3` (DJF/MAM/JJA/SON). |
+| `satellite_remote_sensing` · `grace_tws` | 70–412 in 2001 and up to 270 in 2002, but GRACE data start in April 2002; from 2003 the values are about ±10 and smooth (mean month-to-month step 2.6). Unit undocumented (cm, mm or anomaly?). | Never served. **Ask:** remove the values before 2002-04 and document the unit. |
+| `4_3_mean_annual_precipitation_master` · `Precip_CV_Percent`, `MK_Sens_Slope_mm_yr`, `MK_p_value`, `MK_Trend`, `ENSO_Nino34_Correlation` | Whole-record statistics computed over **2000–2026, including the partial year 2026** (Alfred Nzo MAP 2026 = 547 mm for 8 months). Reproduced exactly with `app/core/stats.py` on 2000–2026 (Alfred Nzo −1.028 mm/yr, p = 0.6465). Over the complete years 2000–2025 the slope is **+0.219 mm/yr** (p = 0.96); eThekwini +6.6 vs +3.2 stored; Cape Town −2.9 vs −3.9. CV: Alfred Nzo 17.05 % stored, 14.70 % for 2000–2025. ENSO: 2026's Niño 3.4 value is −41.28, which flips the correlation (Alfred Nzo +0.48 stored, −0.43 over 2000–2025; Namakwa +0.03 vs −0.45). | Never served. The climate statistics table recomputes the ENSO correlation over the complete years. **Ask:** compute record statistics on complete years only. |
+| `4_6_streamflow_and_climate_linkage_annual _master` · all columns | Already withheld (D5). New evidence: `Streamflow_Anomaly_percent` = the MAP anomaly (r = 0.999), with a mean that includes 2026; `Climate_Streamflow_Elasticity` ≈ 1.05 in most districts (0.31–2.23), i.e. runoff ∝ rainfall, while published SA elasticities are about 2–3.5; `Q90_LowFlow_m3_year` and `Q10_FloodFlow_m3_year` are one value per district repeated every year, on the implausible MAR basis (§4). | Never served. |
+
+### Passed → served (live)
+
+| Table · column | Evidence |
+| --- | --- |
+| `meteorological_drought_master` · `relative_humidity_pct` | 42.1–97.9 % (nothing outside 0–100), no nulls; district-specific seasonal cycles (Johannesburg 73 % in January, 60 % in August; Cape Town 76–79 % with its maximum in the winter-rain months); daily r = 0.49 with rainfall. |
+| `satellite_remote_sensing` · `surface_water_extent_km2` | ≥ 0 everywhere (min 0.0015 km²); district-specific (uMkhanyakude ≈ 1 100 km² with Lake St Lucia, falling to 375 km² in the May 2016 drought; Xhariep ≈ 225 km² with the Gariep Dam; eThekwini ≈ 20 km²). |
+| `6.1` · `Hourly_Rainfall_Intensity_mm_h` (and its duplicate `rainfall_intensity_mm_h`) | Not constant (4 305 distinct values, 0–36.8 mm/h) and 0 on dry days. **Note:** it equals the daily total × 0.15–0.20 (r = 1.000), i.e. a proxy derived from daily rainfall, not gauge-measured hourly intensity. |
+| `6.1` · `CHIRPS_Daily_Rainfall_Estimate_mm_day` | Plausible, but = `Daily_Rainfall_Total_mm` × 0.95–1.05 (r = 1.000; never > 0 on a dry day): derived from the gauge series, not an independent satellite estimate. **Ask:** confirm the source. |
+| `6.1` · `TAMSAT_Satellite_Rainfall_Estimate_mm_dekad` | One value per district-**month** (exactly 1 distinct value per month), ≈ monthly total ÷ 3 (ratio 0.986, r = 0.998): a monthly value expressed per dekad, repeated on every daily row. Served as a **monthly** variable (the spec expects dekadal). |
+| `6.1` · `Seasonal_Total_OND/JFM/AMJ/JAS_mm` | One value per district-year; each equals the sum of the daily totals of its three calendar months in the same year (mean absolute difference 0.00 mm over 1 352 district-years). OND 2026 is 0 (not observed yet); partial years are never served. |
+| `4_1` · `Heatwave_Frequency_Days`, `Heatwave_Duration_Max_Consecutive_Days`, `LST_Day_C`, `LST_Night_C`, `Frost_Day_Flag` | Frequency = count of days with Tmax > 35 °C in the year (1 404 / 1 404). Duration = longest run of days with Tmax > 35 °C in the **year** (1 404 / 1 404; the registry said monthly, corrected to annual). LST day −7.6 … 56.9 °C, r = 0.81 with Tmax, mean LST day − Tmax = +2.5 °C; LST night − Tmin = +0.2 °C; day < night on 0.3 % of rows. Frost flag = Tmin < 0 °C (checked in issue #1). |
+| `4_2` · `R10mm_Days`, `R20mm_Days`, `PRCPTOT_mm`, `Rx1day_mm`, `SDII_mm_per_wet_day`, `CDD_Days`, `CWD_Days` | Recomputed from `6.1` daily rainfall for 1 300 district-years (2001–2025): R10mm, R20mm, PRCPTOT and Rx1day equal in 1 300 / 1 300, SDII within 0.003 mm; CDD equal in 1 269 and CWD in 1 208 (the rest are runs that cross 1 January). |
+| `4_3` · `MAP_mm`, `Precip_DJF/MAM/JJA/SON_mm`, `Nino34_Annual_Mean` | MAP and the seasonal totals equal the sums of `6.1` daily rainfall (0.00 mm). **DJF = January + February + December of the same calendar year**, not the season across the year boundary. Niño 3.4: −0.85 … +1.55 for 2000–2025 (2015 El Niño +1.55); 2026 (−41.28) is a partial year and never served. |
+| `5.2` · `Growing_Degree_Days_GDD_C` | = Σ daily max(Tavg − 10 °C, 0) from `4_1` in 624 / 624 district-months of 2015 (0.00 difference): degree-days, unit °C·days (the column suffix says °C). |
+| `6.2` · `RAI_Rainfall_Anomaly_Index` | −3.42 … +4.00 (van Rooy scale), r = 0.96 with SPI-1 and 0.89 with the monthly total. |
+| `runoff_variables_master` · `Soil_Moisture_Prior_m3m3` | 0.025–0.475 m³/m³, 4 352 distinct values. |
+
+Raw columns kept out of the database view although the API uses them: `Daily_Surface_Runoff_Volume_m3_day` (volume
+on the constant 6 500 km² area; the runoff page serves depth × real district area) and `Baseflow_Component_m3s` (same
+scaling; only the baseflow index, a ratio, is served).
+
+## 16. New tables not registered yet (P2) — found 2026-10-15
+
+The database now holds **28** tables. 14 appeared after the Phase 0 inventory (2026-10-14):
+`8_1_reservoir_operational_master`, `9_1_hydrological_station_master`, `9_2_catchment_master`,
+`9_3_sansa_earth_observation_master`, `10_1_borehole_and_aquifer_master` (long format: `variable_name` / `value` /
+`unit`), `10_2_recharge_supporting _master`, `11_1_hydrogeological`, `11.2_recharge_and_discharge`,
+`11.3_aquifer_sustainability` and the four `12.x` water-quality tables. They cover spec §8–§12, for which the backend
+has no module yet. They are **not served**: each needs a page, its keys and time columns registered, and a
+plausibility check. First observations: `8_1` and `10_1` hold rows dated up to **2026-12-31**, after the newest record
+in every other table (2026-09-06), and future-dated rows cannot be observations; `10_1` units are stored with broken
+encoding (`m�/day`); `10_1` has two variables called hydraulic head with different units (`hydraulic_head_amsl_m` in
+m amsl, `hydraulic_head_m_amsl` in m bgl). The catalogue generator lists them (`app/registry/catalogue.yaml` →
+`unregistered`, and `docs/CATEGORY_CATALOGUE.md`) so nothing in the database is hidden.

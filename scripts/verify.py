@@ -38,6 +38,8 @@ class Check:
     sql: str
     tol: float = 0.05  # absolute tolerance (API values are rounded)
     sql_post: Callable[[list[tuple[Any, ...]]], Any] = lambda rows: rows[0][0]
+    # withheld values: the check passes when the API value is null AND the SQL evidence still shows the failure
+    expect_null: Callable[[Any], bool] | None = None
 
 
 def kpi(kid: str) -> Callable[[Any], Any]:
@@ -177,14 +179,13 @@ WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max(
     ),
     Check(
         "drought",
-        "Dam storage, national, latest month (% FSC) — Σ volume / Σ capacity, capacity = volume / %FSC × 100 per district",
+        "Dam storage, national (% FSC) — withheld: null while national storage stays frozen since Dec 2021 "
+        "(SQL = number of distinct national totals since then; 1 = frozen)",
         "/api/v1/drought/summary",
         kpi("storage"),
-        """WITH cap AS (SELECT district_name, percentile_cont(0.5) WITHIN GROUP (ORDER BY dam_storage_million_m3 / dam_level_pct_fsc * 100) AS fsc
-             FROM hydrological_drought_master WHERE dam_level_pct_fsc > 0.5 GROUP BY 1),
-     cur AS (SELECT district_name, dam_storage_million_m3 AS v FROM hydrological_drought_master
-             WHERE date = (SELECT max(date) FROM hydrological_drought_master))
-SELECT round((sum(cur.v) / sum(cap.fsc) * 100)::numeric, 1) FROM cur JOIN cap USING (district_name)""",
+        """SELECT count(DISTINCT round(v::numeric, 3)) FROM (SELECT date, sum(dam_storage_million_m3) AS v
+FROM hydrological_drought_master WHERE date >= '2021-12-01' GROUP BY 1) s""",
+        expect_null=lambda v: v == 1,
     ),
     Check(
         "drought",
@@ -431,14 +432,13 @@ SELECT CASE WHEN v <= -2.0 THEN 100 WHEN v <= -1.6 THEN 80 WHEN v <= -1.3 THEN 6
     ),
     Check(
         "fixes",
-        "#2 Drought cascade, national: hydrological valueNum = Σ volume / Σ capacity (% FSC), latest month",
+        "#2 Drought cascade, national: hydrological stage null — reservoir columns withheld (storage frozen since "
+        "Dec 2021; SQL = distinct national totals since then)",
         "/api/v1/drought/table?metric=cascade",
         row("hydrological", "valueNum"),
-        """WITH cap AS (SELECT district_name, percentile_cont(0.5) WITHIN GROUP (ORDER BY dam_storage_million_m3 / dam_level_pct_fsc * 100) AS fsc
-             FROM hydrological_drought_master WHERE dam_level_pct_fsc > 0.5 GROUP BY 1),
-     cur AS (SELECT district_name, dam_storage_million_m3 AS v FROM hydrological_drought_master
-             WHERE date = (SELECT max(date) FROM hydrological_drought_master))
-SELECT round((sum(cur.v) / sum(cap.fsc) * 100)::numeric, 1) FROM cur JOIN cap USING (district_name)""",
+        """SELECT count(DISTINCT round(v::numeric, 3)) FROM (SELECT date, sum(dam_storage_million_m3) AS v
+FROM hydrological_drought_master WHERE date >= '2021-12-01' GROUP BY 1) s""",
+        expect_null=lambda v: v == 1,
     ),
 ]
 
@@ -458,7 +458,10 @@ async def run(modules: list[str]) -> list[dict[str, Any]]:
                 r.raise_for_status()
                 api = ch.pick(r.json())
                 sql_val = ch.sql_post(conn.execute(ch.sql).fetchall())  # type: ignore[arg-type]
-                ok = api is not None and sql_val is not None and abs(float(api) - float(sql_val)) <= ch.tol
+                if ch.expect_null is not None:
+                    ok = api is None and ch.expect_null(sql_val)
+                else:
+                    ok = api is not None and sql_val is not None and abs(float(api) - float(sql_val)) <= ch.tol
                 results.append({**ch.__dict__, "api": api, "sql_val": sql_val, "ok": ok})
                 print(f"{'PASS' if ok else 'FAIL'}  {ch.what}: API {api} vs SQL {sql_val}")
     return results

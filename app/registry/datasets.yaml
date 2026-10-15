@@ -21,7 +21,7 @@ baseline:
 variables:
   rain_daily:            {label: Daily rainfall, unit: mm, metric: rainfall}
   rain_daily_chirps:     {label: CHIRPS daily rainfall estimate, unit: mm}
-  rain_dekad_tamsat:     {label: TAMSAT dekadal rainfall estimate, unit: mm}
+  rain_dekad_tamsat:     {label: "TAMSAT rainfall estimate (one value per month, per dekad)", unit: mm/dekad}
   rain_intensity:        {label: Rainfall intensity, unit: mm/h}
   rain_monthly:          {label: Monthly rainfall, unit: mm, metric: rainfallMonthly}
   rain_anomaly_mm:       {label: Monthly rainfall anomaly, unit: mm}
@@ -73,7 +73,7 @@ variables:
   lst_day:               {label: Land surface temperature (day), unit: "°C"}
   lst_night:             {label: Land surface temperature (night), unit: "°C"}
   growing_season_temp:   {label: Growing-season temperature, unit: "°C"}
-  gdd:                   {label: Growing degree days, unit: "°C·days"}
+  gdd:                   {label: Growing degree days (base 10 °C), unit: "°C·days"}
   et0_daily:             {label: Reference ET₀, unit: mm, metric: et0}
   pet_daily:             {label: Potential evapotranspiration, unit: mm, metric: pet}
   aet_daily:             {label: Actual evapotranspiration, unit: mm}
@@ -144,7 +144,8 @@ datasets:
     columns:
       daily_rainfall_mm_day:       {var: rain_daily, role: duplicate}
       monthly_rainfall_mm_month:   {var: rain_monthly, role: duplicate, repeats: monthly, note: "December totals miss 31 Dec"}
-      seasonal_rainfall_mm_season: {var: rain_seasonal_met, role: unused, repeats: monthly, note: "season definition undocumented"}
+      seasonal_rainfall_mm_season: {var: rain_seasonal_met, role: withheld, repeats: annual,
+                                    reason: "holds the calendar-year total, not a season: one value per district-year (Alfred Nzo 2014 = 825.67 mm = sum of its 12 monthly totals, 31 Dec missing)"}
       rainfall_anomaly_mm:         {var: rain_anomaly_mm, role: duplicate, repeats: monthly}
       rainfall_anomaly_pct:        {var: rain_anomaly_pct, role: duplicate, repeats: monthly}
       rainfall_intensity_mm_h:     {var: rain_intensity, role: duplicate}
@@ -155,7 +156,8 @@ datasets:
       pet_mm_day:                  {var: pet_daily, role: canonical}
       et0_mm_day:                  {var: et0_daily, role: canonical, note: "plausible 1–7.4 mm/day; 4_4 values withheld"}
       relative_humidity_pct:       {var: rh, role: canonical}
-      solar_radiation_wm2:         {var: solar_radiation, role: unused}
+      solar_radiation_wm2:         {var: solar_radiation, role: withheld,
+                                    reason: "synthetic: one value per calendar day (365 distinct values), identical in all 52 districts and every year; peaks in April (247 W/m²) with the minimum in Sep–Oct (113 W/m²), where the Southern-Hemisphere maximum is in December"}
       wind_speed_2m_ms:            {var: wind_2m, role: withheld, reason: "constant 2.5 m/s in every row"}
       spi_1:                       {var: spi_1, role: duplicate, repeats: monthly}
       spi_3:                       {var: spi_3, role: duplicate, repeats: monthly}
@@ -184,8 +186,9 @@ datasets:
       vhi:                    {var: vhi, role: canonical}
       rootzone_soil_moisture: {var: soil_moisture_rootzone, role: canonical}
       surface_soil_moisture:  {var: soil_moisture_surface, role: canonical}
-      surface_water_extent_km2: {var: surface_water_extent, role: unused}
-      grace_tws:              {var: grace_tws, role: unused, note: "unit undocumented"}
+      surface_water_extent_km2: {var: surface_water_extent, role: unused, note: "plausibility checked 2026-10-15: ≥ 0 everywhere, district-specific (DATA_GAPS §15)"}
+      grace_tws:              {var: grace_tws, role: withheld,
+                               reason: "values of 70–412 in 2001 and up to 270 in 2002, before GRACE data exist (launch March 2002); about ±10 from 2003; unit undocumented"}
 
   hydrological_drought_master:
     db_module: 1
@@ -198,10 +201,10 @@ datasets:
       river_discharge_m3_s:       {var: river_discharge, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
       fdc_percentiles_m3_s:       {var: fdc_percentile, role: withheld, reason: "constant 0.01"}
       ssi_dimensionless:          {var: ssi, role: withheld, reason: "computed from the placeholder discharge"}
-      dam_storage_million_m3:     {var: dam_storage, role: canonical, note: "district aggregates; implied national FSC ≈ 27.8 bn m³ to confirm"}
-      dam_level_pct_fsc:          {var: dam_level_pct, role: canonical}
-      dam_inflow_m3_s:            {var: dam_inflow, role: canonical}
-      dam_outflow_m3_s:           {var: dam_outflow, role: canonical}
+      dam_storage_million_m3:     {var: dam_storage, role: withheld, reason: "failed plausibility: frozen since Dec 2021 in all 52 districts (national 17 715 Mm³ every month) and implausible swings before (national 421 Mm³ in Jun 2021, 16 617 Mm³ in Aug 2021)"}
+      dam_level_pct_fsc:          {var: dam_level_pct, role: withheld, reason: "failed plausibility: frozen since Dec 2021; 1 212 district-months at 0 % FSC (national mean 69 % in Jul 2002, 0.5 % in Jul 2003)"}
+      dam_inflow_m3_s:            {var: dam_inflow, role: withheld, reason: "failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)"}
+      dam_outflow_m3_s:           {var: dam_outflow, role: withheld, reason: "failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)"}
       borehole_water_level_m_bgl: {var: gw_level, role: withheld, reason: "range −0.18…+0.20: not a depth below ground level"}
       sgi_dimensionless:          {var: sgi, role: canonical}
       surface_runoff_m3_s:        {var: surface_runoff_flow, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
@@ -221,7 +224,7 @@ datasets:
       Tavg_C:                                 {var: tavg, role: canonical}
       Temperature_Anomaly_C:                  {var: temp_anomaly, role: canonical, repeats: monthly}
       Heatwave_Frequency_Days:                {var: hot_days, role: canonical, repeats: annual, note: "= count of days Tmax > 35 °C in the year (verified)"}
-      Heatwave_Duration_Max_Consecutive_Days: {var: heatwave_duration, role: canonical, repeats: monthly}
+      Heatwave_Duration_Max_Consecutive_Days: {var: heatwave_duration, role: canonical, repeats: annual, note: "= longest run of days with Tmax > 35 °C in the year (1 404 / 1 404 district-years verified)"}
       Frost_Day_Flag:                         {var: frost_day, role: canonical}
       LST_Day_C:                              {var: lst_day, role: canonical}
       LST_Night_C:                            {var: lst_night, role: canonical}
@@ -256,12 +259,12 @@ datasets:
       Precip_MAM_mm:           {var: rain_season_mam, role: canonical}
       Precip_JJA_mm:           {var: rain_season_jja, role: canonical}
       Precip_SON_mm:           {var: rain_season_son, role: canonical}
-      Nino34_Annual_Mean:      {var: nino34_annual, role: canonical}
-      Precip_CV_Percent:       {var: rain_cv, role: canonical, repeats: record}
-      MK_Sens_Slope_mm_yr:     {var: rain_trend_sen, role: canonical, repeats: record}
-      MK_p_value:              {var: rain_trend_mk_p, role: canonical, repeats: record}
-      MK_Trend:                {var: rain_trend_mk, role: canonical, repeats: record}
-      ENSO_Nino34_Correlation: {var: enso_correlation, role: canonical, repeats: record}
+      Nino34_Annual_Mean:      {var: nino34_annual, role: canonical, note: "−0.85 … +1.55 for 2000–2025; the 2026 value (−41.28) belongs to the partial year, which is never served"}
+      Precip_CV_Percent:       {var: rain_cv, role: withheld, repeats: record, reason: "computed over 2000–2026 including the partial year 2026 (Alfred Nzo 17.05 %; 14.70 % over 2000–2025)"}
+      MK_Sens_Slope_mm_yr:     {var: rain_trend_sen, role: withheld, repeats: record, reason: "computed over 2000–2026 including the partial year 2026: Alfred Nzo −1.03 mm/yr stored, +0.22 mm/yr over the full years 2000–2025 (app.core.stats)"}
+      MK_p_value:              {var: rain_trend_mk_p, role: withheld, repeats: record, reason: "computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr)"}
+      MK_Trend:                {var: rain_trend_mk, role: withheld, repeats: record, reason: "computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr)"}
+      ENSO_Nino34_Correlation: {var: enso_correlation, role: withheld, repeats: record, reason: "includes 2026, whose Niño 3.4 value is −41.28: Alfred Nzo +0.48 stored, −0.43 over 2000–2025"}
 
   "4_4_potential_evaporation_daily_master":
     db_module: 2
@@ -275,7 +278,7 @@ datasets:
       Daily_AET_mm:      {var: aet_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
       Daily_Pan_Evap_mm: {var: pan_evap_daily, role: withheld, reason: "same magnitude problem as Daily_ET0_mm"}
       Daily_VPD_kPa:     {var: vpd, role: withheld, reason: "table withheld pending data-team review (decision D5)"}
-      SPEI_Daily:        {var: spei_daily, role: withheld, reason: "stored as text; table withheld (decision D5)"}
+      SPEI_Daily:        {var: spei_daily, role: withheld, cast: double, reason: "stored as text; table withheld (decision D5)"}
 
   "4_5_irrigation_demand_daily_master":
     db_module: 2
@@ -299,11 +302,11 @@ datasets:
     time: {kind: year, column: Year, resolution: annual}
     columns:
       MAR_m3_year:                   {var: mar_volume, role: withheld, reason: "national sum ≈ 7× South Africa's MAR"}
-      Streamflow_Anomaly_percent:    {var: streamflow_anomaly, role: withheld, reason: "table withheld (decision D5)"}
-      Q90_LowFlow_m3_year:           {var: q90_low_flow, role: withheld, reason: "table withheld (decision D5)"}
-      Q10_FloodFlow_m3_year:         {var: q10_flood_flow, role: withheld, reason: "table withheld (decision D5)"}
-      Rainfall_Runoff_Ratio:         {var: rainfall_runoff_ratio, role: withheld, reason: "0.49–0.98, implausible for SA"}
-      Climate_Streamflow_Elasticity: {var: streamflow_elasticity, role: withheld, reason: "table withheld (decision D5)"}
+      Streamflow_Anomaly_percent:    {var: streamflow_anomaly, role: withheld, reason: "the rainfall anomaly, not a streamflow signal (r = 0.999 with the MAP anomaly); its mean includes the partial year 2026"}
+      Q90_LowFlow_m3_year:           {var: q90_low_flow, role: withheld, reason: "a volume on the implausible MAR basis; one value per district repeated every year"}
+      Q10_FloodFlow_m3_year:         {var: q10_flood_flow, role: withheld, reason: "a volume on the implausible MAR basis; one value per district repeated every year"}
+      Rainfall_Runoff_Ratio:         {var: rainfall_runoff_ratio, role: withheld, reason: "0.49–0.98, implausible for SA (runoff coefficients 0.02–0.2; runoff_variables_master 0.10–0.26)"}
+      Climate_Streamflow_Elasticity: {var: streamflow_elasticity, role: withheld, reason: "about 1.05 in most districts (0.31–2.23), i.e. runoff proportional to rainfall; published SA elasticities are about 2–3.5"}
 
   # ------------------------------------------------------------------ DB Module 3 — Vegetation (spec §5)
   "5.1_primary_satellite_vegetation_variables_sansa_master":
@@ -347,7 +350,7 @@ datasets:
       SPEI_6_month:                        {var: spei_6, role: duplicate, note: "rounding differences ≤ 0.05"}
       Mean_Temperature_C:                  {var: tavg, role: duplicate, note: "= monthly mean of daily Tavg"}
       Potential_Evapotranspiration_ET0_mm: {var: et0_daily, role: duplicate, note: "= monthly sum of meteorological et0_mm_day"}
-      Growing_Degree_Days_GDD_C:           {var: gdd, role: canonical}
+      Growing_Degree_Days_GDD_C:           {var: gdd, role: canonical, note: "= Σ daily max(Tavg − 10 °C, 0) from 4_1 (624 / 624 district-months of 2015 match): degree-days"}
 
   # ------------------------------------------------------------------ DB Module 4 — Rainfall (spec §6)
   "6.1_core_rainfall_variables_master":
@@ -369,9 +372,10 @@ datasets:
       Seasonal_Total_JAS_mm:                       {var: rain_season_jas, role: canonical, repeats: annual}
       Annual_Total_Precipitation_mm:               {var: rain_annual, role: duplicate, repeats: annual}
       Gridded_Rainfall_Product_1km_mm:             {var: rain_daily, role: duplicate}
-      CHIRPS_Daily_Rainfall_Estimate_mm_day:       {var: rain_daily_chirps, role: canonical}
-      TAMSAT_Satellite_Rainfall_Estimate_mm_dekad: {var: rain_dekad_tamsat, role: canonical}
-      Hourly_Rainfall_Intensity_mm_h:              {var: rain_intensity, role: canonical}
+      CHIRPS_Daily_Rainfall_Estimate_mm_day:       {var: rain_daily_chirps, role: canonical, note: "= Daily_Rainfall_Total_mm × 0.95–1.05 (r = 1.000): derived from the gauge series, not an independent estimate"}
+      TAMSAT_Satellite_Rainfall_Estimate_mm_dekad: {var: rain_dekad_tamsat, role: canonical, repeats: monthly,
+                                                    note: "one value per district-month (mm per dekad, ≈ monthly total ÷ 3, r = 0.998), repeated on every daily row"}
+      Hourly_Rainfall_Intensity_mm_h:              {var: rain_intensity, role: canonical, note: "= daily total × 0.15–0.20 (r = 1.000): a proxy, not gauge-measured hourly intensity"}
 
   "6.2_rainfall_derived_drought_indices_master":
     db_module: 4
@@ -404,9 +408,9 @@ datasets:
       Actual_ET_from_Catchment_mm:            {var: aet_daily, role: canonical}
       Daily_Surface_Runoff_Volume_m3_day:     {var: runoff_depth_daily, role: canonical, transform: model_volume_to_depth_mm,
                                                note: "depth (mm) = volume / model_area_km2; volumes are re-derived as depth × real district area"}
-      Monthly_Runoff_Totals_Million_m3_month: {var: runoff_volume_monthly, role: withheld, reason: "volume computed with the constant 6 500 km² area"}
+      Monthly_Runoff_Totals_Million_m3_month: {var: runoff_volume_monthly, role: withheld, repeats: monthly, reason: "volume computed with the constant 6 500 km² area"}
       Runoff_Coefficient_dimensionless:       {var: runoff_coefficient, role: canonical}
-      Soil_Moisture_Prior_m3m3:               {var: soil_moisture_prior, role: unused}
+      Soil_Moisture_Prior_m3m3:               {var: soil_moisture_prior, role: unused, note: "plausibility checked 2026-10-15: 0.025–0.475 m³/m³, varying"}
       Curve_Number_CN:                        {var: curve_number, role: withheld, reason: "constant 72.9"}
       Peak_Flow_Rates_m3s:                    {var: peak_flow, role: withheld, reason: "flow scaled to the constant 6 500 km² area"}
       Baseflow_Component_m3s:                 {var: baseflow_component, role: canonical, use: ratio_only,

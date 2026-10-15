@@ -1,12 +1,35 @@
 # Progress
 
-## Status: all phases complete (2026-10-14); frontend integration issues #1–#7 fixed (2026-10-15). Waiting on the data team (below).
+## Status: all phases complete (2026-10-14); frontend integration issues #1–#7 fixed (2026-10-15); database category view + spec-audit fixes in progress (2026-10-15). Waiting on the data team (below).
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Database category view + spec-audit fixes (2026-10-15) — in progress
+
+Goal: every registered table = a category, every column = a variable with label and unit from its name
+(`docs/CATEGORY_CATALOGUE.md`), served by `/api/v1/{module}/categories` and `/category/{tableId}/{groupId}`; then the
+audit fixes B1–B14. One commit per step.
+
+- [x] **A4 Plausibility before live** (`docs/DATA_GAPS.md` §15, `scripts/plausibility_checks.sql`). Failed → withheld
+      everywhere: reservoir storage / % FSC / inflow / outflow (frozen since Dec 2021, implausible swings before —
+      the drought Dam Storage KPI, dam-flows chart and cascade reservoir stage are now null / 501 with the reason),
+      solar radiation (one synthetic curve for every district, wrong phase), GRACE (values before GRACE existed),
+      `seasonal_rainfall_mm_season` (a calendar-year total), the `4_3` record statistics (computed with the partial
+      year 2026; the climate statistics table recomputes the ENSO correlation over full years), `4_6` (new evidence).
+      Passed → live: relative humidity, surface-water extent, soil moisture prior, the `4_1` / `4_2` / `4_3` derived
+      columns, GDD, RAI, CHIRPS / TAMSAT / intensity (with notes: derived from the gauge series). Registry corrected:
+      heatwave duration is annual, TAMSAT is one value per month.
+- [ ] A1 Catalogue generator (`scripts/build_catalogue.py`, `app/core/units.py`, `app/registry/catalogue.yaml`)
+- [ ] A2 / A3 Category endpoints and the axis rule
+- [ ] B1–B14 audit fixes
+- [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
+
+Also found: 14 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue
+(`DATA_GAPS.md` §16).
 
 ### Frontend integration fixes (2026-10-15) — `../Niwis Frontend/docs/backend/BACKEND_ISSUES.md`
 

@@ -57,9 +57,10 @@ async def test_drought_cascade_rows(client: httpx.AsyncClient, fixture_db: Calla
     assert (agr["metric"], agr["scale"], agr["cls"]) == ("vhi", "vci", veg_class(agr["valueNum"]))
     assert agr["value"] == f"VHI {agr['valueNum']:.0f} %" and agr["bar"] == severity_bar("vci", agr["cls"])
 
-    hyd = rows["hydrological"]
-    assert (hyd["metric"], hyd["scale"], hyd["cls"]) == ("storagePct", "storage", storage_band(hyd["valueNum"]))
-    assert hyd["value"].endswith("% FSC") and hyd["bar"] == severity_bar("storage", hyd["cls"])
+    hyd = rows["hydrological"]  # reservoir columns withheld after the plausibility check (DATA_GAPS §15)
+    assert (hyd["metric"], hyd["scale"]) == ("storagePct", "storage")
+    assert hyd["value"] is hyd["valueNum"] is hyd["cls"] is hyd["bar"] is None
+    assert "rows.hydrological" in {u["field"] for u in body["unavailable"]}
 
     soc = rows["socio-economic"]
     assert soc["value"] is soc["valueNum"] is soc["cls"] is soc["bar"] is None

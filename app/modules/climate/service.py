@@ -896,9 +896,17 @@ class ClimateService:
             f"{ht.slope * 10:+.1f} days/decade (p = {ht.p:.3f}, {ht.trend})" if ht else None,
         )
         if self.ctx.filters.scope.level == "municipality":
-            enso = await self.data.annual("enso_correlation")
-            v = enso[enso["district"] == self.ctx.filters.scope.id]["value"]
-            add("enso", "Rainfall–Niño 3.4 correlation (DB)", f"{v.iloc[0]:.2f}" if not v.empty else None)
+            # the DB's ENSO_Nino34_Correlation is withheld (its record includes 2026's Niño 3.4 of −41.28):
+            # recomputed over the full years from the district's MAP and the annual Niño 3.4 mean
+            code = self.ctx.filters.scope.id
+            pair = (await self.data.annual("rain_annual")).merge(
+                await self.data.annual("nino34_annual"), on=["district", "date"], suffixes=("_p", "_n")
+            )
+            pair = pair[(pair["district"] == code) & pair["date"].dt.year.between(y0, y1)].dropna()
+            r = float(pair["value_p"].corr(pair["value_n"])) if len(pair) >= 8 else None
+            if r is None:
+                self.ctx.explain("rows.enso", f"A correlation needs 8 full years; this district has {len(pair)}")
+            add("enso", f"Rainfall–Niño 3.4 correlation {y0}–{y1}", f"{r:+.2f}" if r is not None else None)
         return c.TableSet(
             id="statistics",
             title="Climate statistics",
