@@ -88,3 +88,28 @@ def borehole_status(sgi: float) -> str:
         if sgi <= c["max"]:
             return str(c["id"])
     return str(cfg["otherwise"])
+
+
+def storage_band(pct_fsc: float) -> str:
+    """% FSC → storage palette class id (`very-low` … `very-high`), < comparisons as in thresholds.ts."""
+    for b in thresholds()["storage_bands"]:
+        if b["max"] is None or pct_fsc < b["max"]:
+            return str(b["id"])
+    raise AssertionError("unreachable")
+
+
+# Classes of each palette scale, least to most severe (cascade `bar`)
+SEVERITY_ORDER: dict[str, list[str]] = {
+    "drought": ["None", "D0", "D1", "D2", "D3", "D4"],
+    "vci": ["Very Healthy", "Healthy", "Moderate", "Stressed", "Very Stressed"],
+    "storage": ["very-high", "high", "moderate", "low", "very-low"],
+}
+
+
+def severity_bar(scale: str, class_id: str | None) -> float | None:
+    """Bar length 0–100 from a class: its rank on the scale, least severe = 0, most severe = 100 (evenly spaced:
+    drought None/D0…D4 = 0/20/…/100; VCI/VHI classes and storage bands = 0/25/50/75/100). None without a class."""
+    order = SEVERITY_ORDER.get(scale, [])
+    if class_id is None or class_id not in order:
+        return None
+    return round(order.index(class_id) / (len(order) - 1) * 100, 1)

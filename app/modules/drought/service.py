@@ -39,7 +39,9 @@ from app.core.thresholds import (
     drought_class,
     drought_class_or_none,
     drought_label,
+    severity_bar,
     storage_alert_level,
+    storage_band,
     thresholds,
     veg_class,
 )
@@ -680,6 +682,12 @@ class DroughtService:
         return (await handlers[metric](limit)).dump()
 
     async def tbl_cascade(self, limit: int | None) -> c.TableSet:
+        """Meteorological → agricultural → hydrological → socio-economic stages.
+
+        Rows carry the backend's keys (`stage`, `value`, `class`, `severity`, `asOf`) and the contract's cascade keys
+        (`metric`, `value` as text with its unit, `cls` = class id on the stage's palette `scale`, `bar` = 0–100 from
+        the class rank, `severity_bar`). The number is kept as `valueNum`. docs/CONTRACT_CHANGES.md §9.
+        """
         w = self.ctx.weights()
         total = sum(w.values())
         m = await self.latest("spi_6")
@@ -687,25 +695,55 @@ class DroughtService:
         met_cls = drought_class_or_none(spi)
         met_area = class_areas(await self.spi6_classes(m), w)
         mv = await self.latest("vhi")
-        vhi_d = await self.at("vhi", mv)
+        vhi_d = (await self.at("vhi", mv)).dropna()
         vhi = weighted_scalar(vhi_d, w)
-        stressed = sum(w[k] for k, v in vhi_d.items() if k in w and v is not None and v < 40)
+        veg_cls = veg_class(vhi) if vhi is not None else None
+        stressed = sum(w[k] for k, v in vhi_d.items() if k in w and v < thresholds()["vegetation"]["stress_below"])
         st = await self.storage_series()
+
+        def stage(
+            rid: str, label: str, metric: str, scale: str, num: float | None, text: str | None, cls_id: str | None
+        ) -> dict[str, Any]:
+            return {
+                "id": rid,
+                "stage": label,
+                "metric": metric,
+                "value": text if num is not None else None,
+                "valueNum": num,
+                "cls": ("No drought" if cls_id == "None" else cls_id) if cls_id else None,
+                "scale": scale,
+                "bar": severity_bar(scale, cls_id),
+            }
+
         rows: list[dict[str, Any]] = [
             {
-                "id": "meteorological",
-                "stage": "Meteorological (SPI-6)",
-                "value": rnd(spi, 2),
+                **stage(
+                    "meteorological",
+                    "Meteorological (SPI-6)",
+                    "spi",
+                    "drought",
+                    rnd(spi, 2),
+                    f"SPI-6 {spi:.2f}" if spi is not None else None,
+                    met_cls,
+                ),
                 "class": drought_label(met_cls) if met_cls else None,
-                "severity": rnd(sum(met_area.get(k, 0) for k in IN_DROUGHT) / total * 100, 0),
+                "severity": rnd(sum(met_area.get(k, 0) for k in IN_DROUGHT) / total * 100, 0)
+                if sum(met_area.values()) >= 0.95 * total
+                else None,
                 "asOf": iso(m),
             },
             {
-                "id": "agricultural",
-                "stage": "Agricultural (VHI %)",
-                "value": rnd(vhi, 1),
-                "class": veg_class(vhi) if vhi is not None else None,
-                "severity": rnd(stressed / total * 100, 0),
+                **stage(
+                    "agricultural",
+                    "Agricultural (VHI %)",
+                    "vhi",
+                    "vci",
+                    rnd(vhi, 1),
+                    f"VHI {vhi:.0f} %" if vhi is not None else None,
+                    veg_cls,
+                ),
+                "class": veg_cls,
+                "severity": rnd(stressed / total * 100, 0) if vhi is not None else None,
                 "asOf": iso(mv),
             },
         ]
@@ -716,14 +754,21 @@ class DroughtService:
         if not st.empty:
             last = st.iloc[st["date"].argmax()]
             ds = _d(last["date"])
-            lvl = storage_alert_level(float(last["pct"]))
+            pct = float(last["pct"])
+            lvl = storage_alert_level(pct)
             rows.append(
                 {
-                    "id": "hydrological",
-                    "stage": "Hydrological (dam storage % FSC)",
-                    "value": rnd(last["pct"], 1),
+                    **stage(
+                        "hydrological",
+                        "Hydrological (dam storage % FSC)",
+                        "storagePct",
+                        "storage",
+                        rnd(pct, 1),
+                        f"{pct:.1f} % FSC",
+                        storage_band(pct),
+                    ),
                     "class": "No alert" if lvl == "None" else f"Alert {lvl}",
-                    "severity": rnd(100 - float(last["pct"]), 0),
+                    "severity": rnd(100 - pct, 0),
                     "asOf": iso(ds),
                 }
             )
@@ -735,24 +780,35 @@ class DroughtService:
         reason = "No settlement / population data in the database"
         rows.append(
             {
-                "id": "socio-economic",
-                "stage": "Socio-economic (settlements at risk)",
-                "value": None,
+                **stage(
+                    "socio-economic",
+                    "Socio-economic (settlements at risk)",
+                    "settlementsAtRisk",
+                    "risk",
+                    None,
+                    None,
+                    None,
+                ),
                 "class": None,
                 "severity": None,
                 "asOf": None,
             }
         )
+        for r in rows:  # a stage without a value says why (the socio-economic stage has its own entry below)
+            if r["valueNum"] is None and r["id"] != "socio-economic":
+                self.ctx.explain(f"rows.{r['id']}", f"No area-weighted value for this scope ({r['stage']})")
         as_of = max(dt.date.fromisoformat(x["asOf"]) for x in rows if x["asOf"])
         return c.TableSet(
             id="cascade",
             title="Drought impact cascade",
             columns=[
                 c.Column(key="stage", label="Stage", type="text"),
-                c.Column(key="value", label="Value", type="number", align="right"),
+                c.Column(key="value", label="Value", type="text", align="right"),
                 c.Column(key="class", label="Class", type="text"),
                 c.Column(key="severity", label="Severity", type="bar", unit="%", decimals=0),
                 c.Column(key="asOf", label="As of", type="date"),
+                c.Column(key="cls", label="Class", type="class"),
+                c.Column(key="bar", label="Severity (class)", type="bar", unit="%", decimals=0),
             ],
             rows=rows,
             row_key="id",

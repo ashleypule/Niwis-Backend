@@ -82,6 +82,15 @@
       clients cannot spoof their IP or a trusted one. `RateLimitMiddleware.client_key` is the hook to key the limit by
       user / token once authentication exists. `tests/test_rate_limit.py`.
 
+- [x] **#2 / #3 Cascade row keys.** Both tables now carry the contract's `{stage, metric, value, cls, scale, bar}`
+      next to their own keys (drought `class`, `severity`, `asOf`; climate `signal`, `change`, `severity`), plus
+      the contract's columns. `value` is the formatted text with its unit (drought: `SPI-6 -1.23`, `VHI 45 %`,
+      `63.6 % FSC`); the number moves to `valueNum` (the one retyped key, see CONTRACT_CHANGES §9). `cls` = class id
+      on the stage's palette `scale` (`drought` / `vci` / `storage`, ids from thresholds.json); `bar` = 0–100 from the
+      class rank (contract / mock unit; the prompt's 0–1 would draw every bar at the 4 % minimum in `CascadeFlow`).
+      Climate `cls` / `bar` / `severity` are null + `unavailable` (no agreed thresholds). Also fixed: the drought
+      `severity` of a stage without data was 0 %, now null. `tests/test_cascade_shape.py`.
+
 ### Phase 7 — Hardening (2026-10-14)
 
 - [x] Performance (`docs/PERFORMANCE.md`): summary p95 16–106 ms with warm data caches across 61 scopes per module

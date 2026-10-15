@@ -1042,17 +1042,29 @@ class ClimateService:
         def pct(s: pd.Series) -> str | None:
             return f"{(s.get(y1) - s.mean()) / s.mean() * 100:+.0f} % ({y1} vs {y0}–{y1})" if y1 in s.index else None
 
-        rows: list[dict[str, Any]] = [
-            {
-                "id": "temp",
-                "signal": "Temperature",
-                "change": f"{ta:+.2f} °C (12 months)" if ta is not None else None,
+        def signal(rid: str, label: str, metric: str, change: str | None) -> dict[str, Any]:
+            # backend keys (signal, change, severity) + the contract's cascade keys (stage, metric, value, cls, scale,
+            # bar); cls / bar / severity are null: no agreed thresholds for these signals
+            return {
+                "id": rid,
+                "signal": label,
+                "change": change,
                 "severity": None,
-            },
-            {"id": "et0", "signal": "Evaporative demand (ET₀)", "change": pct(et0), "severity": None},
-            {"id": "rain", "signal": "Rainfall", "change": pct(rain), "severity": None},
-            {"id": "runoff", "signal": "Runoff", "change": pct(q), "severity": None},
+                "stage": label,
+                "metric": metric,
+                "value": change,
+                "cls": None,
+                "scale": "risk",
+                "bar": None,
+            }
+
+        rows: list[dict[str, Any]] = [
+            signal("temp", "Temperature", "tmean", f"{ta:+.2f} °C (12 months)" if ta is not None else None),
+            signal("et0", "Evaporative demand (ET₀)", "et0", pct(et0)),
+            signal("rain", "Rainfall", "rainfall", pct(rain)),
+            signal("runoff", "Runoff", "runoff", pct(q)),
         ]
+        no_thresholds = "No agreed severity thresholds for these signals (none in thresholds.ts)"
         return c.TableSet(
             id="signal-chain",
             title="Climate signal chain",
@@ -1060,15 +1072,15 @@ class ClimateService:
                 c.Column(key="signal", label="Signal", type="text"),
                 c.Column(key="change", label="Change", type="text"),
                 c.Column(key="severity", label="Severity", type="class", scale="risk"),
+                c.Column(key="stage", label="Signal", type="text"),
+                c.Column(key="value", label="Change", type="text"),
+                c.Column(key="cls", label="Severity", type="class", scale="risk"),
             ],
             rows=rows,
             row_key="id",
             as_of=iso(last),
             unavailable=[
-                c.UnavailableField(
-                    field="rows.severity",
-                    reason="No agreed severity thresholds for these signals (none in thresholds.ts)",
-                )
+                c.UnavailableField(field=f"rows.{k}", reason=no_thresholds) for k in ("severity", "cls", "bar")
             ],
             **self._prov(
                 last, "temp_anomaly", "et0_daily", "rain_annual", "runoff_depth_daily", baseline=True, res="monthly"
