@@ -166,3 +166,18 @@ async def test_unknown_keys(client: httpx.AsyncClient, path: str, params: dict[s
 
 async def test_no_entities_route(client: httpx.AsyncClient) -> None:
     assert (await client.get(f"{B}/entities")).status_code == 404  # the contract defines no drought entities
+
+
+async def test_ssi_is_the_same_rule_on_both_pages(client: httpx.AsyncClient) -> None:
+    """B8: SSI comes from the modelled runoff depth on the drought and runoff pages; the DB's SSI column is withheld."""
+    for scope in ({"municipality": "DC44"}, {"municipality": "DC6"}):
+        d = (await client.get(f"{B}/summary", params=scope)).json()
+        k = next(x for x in d["kpis"] if x["id"] == "ssi3")
+        assert k["label"] == "SSI-3 (modelled runoff)"
+        ts = (await client.get("/api/v1/runoff/timeseries", params={"metric": "ssi", **scope})).json()
+        s3 = next(s for s in ts["series"] if s["key"] == "ssi3")
+        assert s3["name"] == "SSI-3 (modelled runoff)" and ts["title"] == "SSI (modelled runoff)"
+        last = dict(map(tuple, s3["data"])).get(k.get("asOf"))
+        assert k["value"] == last
+        if k["value"] is None:  # the fixture holds < 10 calibration years: same reason on both pages
+            assert "calibration" in k["unavailableReason"]

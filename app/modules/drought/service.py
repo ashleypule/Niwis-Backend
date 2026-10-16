@@ -34,6 +34,7 @@ from app.core.aggregate import (
 )
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
+from app.core.indices import calibration_gap, standardized_index
 from app.core.palettes import DROUGHT, NORMAL, OBSERVED, SERIES, drought_bands
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd
@@ -49,7 +50,8 @@ from app.core.thresholds import (
     veg_class,
 )
 from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
-from app.modules.rainfall.service import MONTHS, WINDOW, RainfallService, _months
+from app.modules.rainfall.service import HISTORY_START, MONTHS, WINDOW, RainfallService, _months
+from app.modules.runoff.service import RunoffService
 from app.schemas import contract as c
 
 MODULE = "drought"
@@ -259,9 +261,29 @@ class DroughtService:
                 **self.kpi_extra(ms, "soil_moisture_surface", res="monthly"),
             )
         )
-        reason_ssi = "SSI is withheld: it is computed from river discharge that is identical in every district"
-        kpis.append(c.Kpi(id="ssi3", metric="ssi", label="SSI-3", value=None, unavailable_reason=reason_ssi))
-        unavail.append(c.UnavailableField(field="kpis.ssi3", reason=reason_ssi))
+        # SSI: one rule on every page (B8) — computed from the scope's modelled monthly runoff depth (runoff page);
+        # the database's SSI column is withheld (computed from placeholder discharge)
+        ro = RunoffService(self.ctx)
+        y1 = await ro.last_full_year()
+        depth = await ro.scope_monthly_depth()
+        lm = await ro.latest_complete_month()
+        ssi = standardized_index(depth, 3, (HISTORY_START.year, y1)).get(pd.Timestamp(lm))
+        sv = None if ssi is None or pd.isna(ssi) else float(ssi)
+        if sv is None:
+            gap = calibration_gap(depth, 3, (HISTORY_START.year, y1), "SSI-3")
+            self.ctx.explain("kpis.ssi3", gap or f"No 3-month runoff total for this scope ending {lm:%b %Y}")
+        kpis.append(
+            c.Kpi(
+                id="ssi3",
+                metric="ssi",
+                label="SSI-3 (modelled runoff)",
+                sublabel=f"{lm:%b %Y}, gamma fit {HISTORY_START.year}–{y1}",
+                value=rnd(sv, 2),
+                decimals=2,
+                **drought_status(sv),
+                **self.kpi_extra(lm, "runoff_depth_daily", res="monthly"),
+            )
+        )
 
         reason_st = self.withheld("dam_storage")
         st = pd.DataFrame() if reason_st else await self.storage_series()
@@ -341,7 +363,15 @@ class DroughtService:
             ],
             unavailable=unavail,
             **self._prov(
-                as_of, "spi_6", "spei_12", "vci", "soil_moisture_surface", "dam_storage", "sgi", res="monthly"
+                as_of,
+                "spi_6",
+                "spei_12",
+                "vci",
+                "soil_moisture_surface",
+                "runoff_depth_daily",
+                "dam_storage",
+                "sgi",
+                res="monthly",
             ),
         )
         out = body.dump()

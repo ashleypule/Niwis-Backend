@@ -265,7 +265,7 @@ class RunoffService:
             c.Kpi(
                 id="ssi6",
                 metric="ssi",
-                label="SSI-6",
+                label="SSI-6 (modelled runoff)",
                 sublabel=f"{lm:%b %Y}, computed (gamma, {base})",
                 value=rnd(sv, 2),
                 decimals=2,
@@ -428,7 +428,7 @@ class RunoffService:
             series.append(
                 c.Series(
                     key=f"ssi{k}",
-                    name=f"SSI-{k}",
+                    name=f"SSI-{k} (modelled runoff)",
                     kind="line",
                     color=SERIES[i],
                     data=[[iso(m.date()), rnd(idx.get(m), 2)] for m in ms],
@@ -437,7 +437,7 @@ class RunoffService:
         last = ms[-1].date()
         return c.SeriesSet(
             id="ssi",
-            title="Standardised Streamflow Index",
+            title="SSI (modelled runoff)",
             x_type="time",
             axes=[c.Axis(unit="—", label="SSI")],
             series=series,

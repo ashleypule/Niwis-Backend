@@ -317,3 +317,11 @@ thresholds.ts, `severity` = % of area at Low or worse). The reservoir row is nul
 (§15 of DATA_GAPS). The precipitation `cls` / `class` now follow the area rule of the Drought Class KPI (12.4) and its
 `severity` is the % of area in D1–D4.
 
+### 12.8 One SSI rule (B8)
+
+SSI is computed by the API from the scope's **modelled monthly runoff depth** (`runoff_variables_master`, gamma fit
+per calendar month, 2000–last full year) on **both** pages, labelled "SSI (modelled runoff)": `drought/summary` →
+`ssi3` (was always null) and `runoff/summary` → `ssi6`, `runoff/timeseries?metric=ssi`. The database's own
+`ssi_dimensionless` stays withheld everywhere (computed from the placeholder discharge). A null SSI says why
+(e.g. fewer than 10 calibration years). Labels change; keys do not.
+
