@@ -572,7 +572,9 @@ class RainfallService:
         _, y1 = await self._annual_window()
         if metric == "seasonal":
             years = list(range(y1 - 6, y1 + 1))
-            seasons = [("djf", "DJF"), ("mam", "MAM"), ("jja", "JJA"), ("son", "SON")]
+            # the rainfall table's own seasons (6.1, spec §6.1): totals of the 3 calendar months in the same year;
+            # the climate page serves 4_3's DJF / MAM / JJA / SON (B11)
+            seasons = [("jfm", "JFM"), ("amj", "AMJ"), ("jas", "JAS"), ("ond", "OND")]
             series = []
             for i, (s, name) in enumerate(seasons):
                 agg = await self._annual_agg(f"rain_season_{s}", years[0], years[-1])
@@ -581,12 +583,12 @@ class RainfallService:
                 )
             return c.CategorySet(
                 id="seasonal",
-                title="Seasonal rainfall",
+                title="Seasonal rainfall (JFM, AMJ, JAS, OND)",
                 unit="mm",
                 categories=[str(y) for y in years],
                 series=series,
                 as_of=f"{y1}-01-01",
-                **self._prov(dt.date(y1, 12, 31), "rain_season_djf", res="annual"),
+                **self._prov(dt.date(y1, 12, 31), "rain_season_jfm", "rain_season_ond", res="annual"),
             ).dump()
         if metric == "events":
             kind = self.ctx.select(EVENTS_KIND)

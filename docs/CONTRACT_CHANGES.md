@@ -335,3 +335,10 @@ per calendar month, 2000–last full year) on **both** pages, labelled "SSI (mod
 `runoff/timeseries?metric=fdc`: the long-term curve (`lt`) uses all days 2000–(last full year), i.e. 2000–2025, like
 every other long-term value; it used 2011–2020. The series name and `note` give the period.
 
+### 12.11 Each page's seasons from its own table (B11)
+
+`rainfall/breakdown?metric=seasonal`: series `jfm`, `amj`, `jas`, `ond` (spec §6.1) read from `6.1`'s stored seasonal
+totals (each the sum of three calendar months of the same year); it served DJF / MAM / JJA / SON (`djf`, `mam`,
+`jja`, `son` keys are gone from this panel). The climate page keeps `4_3`'s DJF / MAM / JJA / SON (spec §4.3; DJF =
+January + February + December of the same calendar year, as stored).
+

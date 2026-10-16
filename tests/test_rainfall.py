@@ -178,3 +178,27 @@ async def test_custom_window(client: httpx.AsyncClient, fixture_db: Callable[[st
 async def test_health_reports_rainfall_live(client: httpx.AsyncClient) -> None:
     mods = {m["module"]: m for m in (await client.get("/api/v1/health")).json()["modules"]}
     assert mods["rainfall"]["status"] == "live"
+
+
+async def test_seasonal_breakdown_uses_the_rainfall_tables_own_seasons(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """B11: OND / JFM / AMJ / JAS from 6.1 (spec §6.1), read from the stored columns, not recomputed."""
+    body = (await client.get(f"{B}/breakdown", params={"metric": "seasonal", "municipality": "DC44"})).json()
+    s = {x["key"]: dict(zip(body["categories"], x["values"], strict=True)) for x in body["series"]}
+    assert list(s) == ["jfm", "amj", "jas", "ond"]
+    assert body["source"] == ["6.1_core_rainfall_variables_master"]
+    ((ond, jfm),) = fixture_db(
+        """SELECT round(max(NULLIF("Seasonal_Total_OND_mm", '')::numeric), 1),
+                  round(max("Seasonal_Total_JFM_mm")::numeric, 1)
+           FROM "6.1_core_rainfall_variables_master" WHERE "District_Name" = 'Alfred Nzo' AND "Year" = 2025"""
+    )
+    assert (s["ond"]["2025"], s["jfm"]["2025"]) == (float(ond), float(jfm))
+
+
+async def test_climate_seasons_stay_djf_mam_jja_son(client: httpx.AsyncClient) -> None:
+    body = (
+        await client.get("/api/v1/climate/breakdown", params={"metric": "map-seasonality", "municipality": "DC44"})
+    ).json()
+    assert [x["name"] for x in body["series"]] == ["Annual", "DJF", "MAM", "JJA", "SON"]
+    assert "4_3_mean_annual_precipitation_master" in body["source"]
