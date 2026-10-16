@@ -377,3 +377,8 @@ when the group holds a min / max pair, else `mixed`) and, for bands, `band: [min
 `["Tmin_C", "Tmax_C"]`). Category series carry the column's `chart` and `kind: "bar"` for bar types (was always
 `line`); the SeriesSet carries the group's `chart` / `band`.
 
+### 13.3 No null `asOf` (BACKEND_ISSUES #10)
+
+Optional `asOf` / `periodEnd` are omitted when there is no date (e.g. category groups whose columns are all withheld),
+never sent as `null`; table cells are unchanged (a cascade row's `asOf` cell is still null when the stage has no data).
+

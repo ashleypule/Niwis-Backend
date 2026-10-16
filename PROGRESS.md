@@ -23,7 +23,8 @@
       registry variable present in a page's tables has a live chart on that page.
 - [x] **Item 3 Chart types (#8)**: `chart` per column (bar / diverging-bar / line from name, unit, resolution),
       per group (band for Tmin / Tmax, mixed), on series (`kind: bar` for bar types) and series sets.
-- [ ] Item 4 #10 / #11 / #12 · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+- [x] **#10** null `asOf` / `periodEnd` omitted in the response layer (every endpoint); tested over every response.
+- [ ] Item 4 #11 / #12 · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
       frontend / docs
 
 ### Database category view + spec-audit fixes (2026-10-15 / 16)

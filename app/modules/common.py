@@ -172,6 +172,25 @@ async def source_coverage(state: AppState) -> Coverage:
     return out
 
 
+OPTIONAL_DATES = ("asOf", "periodEnd")
+
+
+def drop_null_dates(body: Any) -> Any:
+    """Remove optional `asOf` / `periodEnd` keys that are null, at every level except table rows (where `asOf` is a
+    column): the contract omits optional fields, it never sends them as null (BACKEND_ISSUES #10)."""
+    if isinstance(body, dict):
+        for k in OPTIONAL_DATES:
+            if k in body and body[k] is None:
+                del body[k]
+        for k, v in body.items():
+            if k != "rows":
+                drop_null_dates(v)
+    elif isinstance(body, list):
+        for v in body:
+            drop_null_dates(v)
+    return body
+
+
 async def check_response(ctx: Ctx, path: str, body: Any) -> Any:
     """Attach the registered null reasons, then run app.core.response_checks on the body.
 
@@ -181,6 +200,7 @@ async def check_response(ctx: Ctx, path: str, body: Any) -> Any:
     the 3-district test fixture national aggregates are legitimately null); `off` skips the checks.
     """
     attach_reasons(body, ctx.reasons)
+    drop_null_dates(body)
     state = ctx.state
     mode = state.settings.response_checks
     if mode == "off" or not isinstance(body, dict):
