@@ -164,3 +164,10 @@ def test_flood_frequency_uses_the_spec_return_periods() -> None:
     from app.modules.runoff.service import RETURN_PERIODS
 
     assert RETURN_PERIODS == [2, 5, 10, 20, 50, 100]
+
+
+async def test_fdc_long_term_is_the_common_period(client: httpx.AsyncClient) -> None:
+    """B10: the long-term flow-duration curve uses 2000–(last full year) like every other long-term value."""
+    body = (await client.get(f"{B}/timeseries", params={"metric": "fdc", "municipality": "DC44"})).json()
+    lt = next(s for s in body["series"] if s["key"] == "lt")
+    assert lt["name"] == "Long-term (2000–2025)" and "2000–2025" in body["note"]

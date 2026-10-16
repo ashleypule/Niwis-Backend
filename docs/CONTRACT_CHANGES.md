@@ -330,3 +330,8 @@ per calendar month, 2000–last full year) on **both** pages, labelled "SSI (mod
 `runoff/timeseries?metric=flood-frequency`: the fit and confidence band are given at the spec §7.2 return periods
 **2, 5, 10, 20, 50, 100 years** (1.25 and 25 dropped).
 
+### 12.10 One long-term period (B10)
+
+`runoff/timeseries?metric=fdc`: the long-term curve (`lt`) uses all days 2000–(last full year), i.e. 2000–2025, like
+every other long-term value; it used 2011–2020. The series name and `note` give the period.
+

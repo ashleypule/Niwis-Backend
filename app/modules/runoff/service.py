@@ -577,6 +577,7 @@ class RunoffService:
 
     async def ts_fdc(self) -> c.SeriesSet:
         newest = await self.newest()
+        y1 = await self.last_full_year()  # long-term = the same full-year period as every other long-term value (B10)
         y_ago = _d(pd.Timestamp(newest) - pd.DateOffset(years=1))
         curves = [
             ("last", "Last 12 months", y_ago + dt.timedelta(days=1), newest),
@@ -586,7 +587,7 @@ class RunoffService:
                 _d(pd.Timestamp(y_ago) - pd.DateOffset(years=1)) + dt.timedelta(days=1),
                 y_ago,
             ),
-            ("lt", "Long-term (2011–2020)", dt.date(2011, 1, 1), dt.date(2020, 12, 31)),
+            ("lt", f"Long-term ({HISTORY_START.year}–{y1})", HISTORY_START, dt.date(y1, 12, 31)),
         ]
         pcts = np.linspace(0, 100, 101)
         series, unavailable = [], []
@@ -614,7 +615,8 @@ class RunoffService:
             axes=[c.Axis(unit="m³/s", label="Discharge", log=True)],
             series=series,
             as_of=iso(newest),
-            note="Derived daily flow (modelled depth × real district area).",
+            note=f"Derived daily flow (modelled depth × real district area). Long-term curve: all days "
+            f"{HISTORY_START.year}–{y1}.",
             **({"unavailable": unavailable} if unavailable else {}),
             **self._prov(newest, Q),
         )
