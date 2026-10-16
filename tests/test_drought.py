@@ -50,7 +50,8 @@ async def test_dam_storage_withheld_after_plausibility_check(client: httpx.Async
     body = (await client.get(f"{B}/summary", params={"municipality": "DC44"})).json()
     storage = kpis(body)["storage"]
     assert storage["value"] is None and "plausibility" in storage["unavailableReason"]
-    assert "hydrological_drought_master" not in body["source"]  # storage and SGI are both withheld
+    assert "hydrological_drought_master" not in body["source"]  # storage withheld, SGI too old for a KPI
+    assert kpis(body)["sgi"]["unavailableReason"] == "Latest valid SGI is Aug 2024 (more than 90 days old)"
     r = await client.get(f"{B}/timeseries", params={"metric": "dam-flows", "municipality": "DC44"})
     assert r.status_code == 501 and "plausibility" in r.json()["error"]
 
@@ -92,10 +93,45 @@ async def test_cascade_components(client: httpx.AsyncClient) -> None:
     assert stale == {"meteorological": False, "soil-moisture": True, "agricultural": True}
 
 
-async def test_gw_sgi_unavailable(client: httpx.AsyncClient) -> None:
-    """Borehole level (not a depth) and SGI (frozen since Sep 2024) are both withheld: the chart is 501."""
-    r = await client.get(f"{B}/timeseries", params={"metric": "gw-sgi", "municipality": "DC6"})
-    assert r.status_code == 501 and "frozen" in r.json()["error"]
+async def test_sgi_served_to_aug_2024_only(client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]) -> None:
+    """SGI repeats its Aug 2024 value from Sep 2024: the series is served May 2002 – Aug 2024, marked stale with
+    periodEnd 2024-08-31 and a note; the borehole level stays withheld."""
+    body = (await client.get(f"{B}/timeseries", params={"metric": "gw-sgi", "municipality": "DC6"})).json()
+    sgi = next(s for s in body["series"] if s["key"] == "sgi")
+    pts = dict(map(tuple, sgi["data"]))
+    assert max(pts) == "2024-08-01" and len(pts) == 12  # the page's 12 months, ending with the last valid month
+    assert (sgi["asOf"], sgi["isStale"], sgi["periodEnd"]) == ("2024-08-01", True, "2024-08-31")
+    assert (body["asOf"], body["isStale"], body["periodEnd"]) == ("2024-08-01", True, "2024-08-31")
+    assert body["note"] == "Values after Aug 2024 repeat Aug 2024 and are withheld."
+    assert sgi["source"] == ["hydrological_drought_master.sgi_dimensionless"]
+    ((v,),) = fixture_db(
+        "SELECT round(sgi_dimensionless::numeric, 2) FROM hydrological_drought_master "
+        "WHERE district_name = 'namakwa' AND date = '2024-08-01'"
+    )
+    assert pts["2024-08-01"] == float(v)
+    level = next(s for s in body["series"] if s["key"] == "level")
+    assert all(p[1] is None for p in level["data"]) and body["unavailable"][0]["field"] == "series.level"
+    # the repeated values after Aug 2024 are never read, on any page
+    state = client._transport.app.state.niwis  # type: ignore[attr-defined]
+    df = await state.data.monthly("sgi")
+    assert str(df["date"].max().date()) == "2024-08-01" and str(df["date"].min().date()) >= "2002-05-01"
+
+
+async def test_sgi_in_the_category_view(client: httpx.AsyncClient) -> None:
+    cats = (await client.get("/api/v1/drought/categories")).json()
+    hyd = next(t for t in cats["tables"] if t["table"] == "hydrological_drought_master")
+    v = next(x for x in hyd["variables"] if x["column"] == "sgi_dimensionless")
+    assert v["status"] == "live" and v["asOf"] == "2024-08-01" and v["isStale"] is True
+    assert "Served May 2002 – Aug 2024 only" in v["note"]
+    p = f"/api/v1/drought/category/hydrological-drought/{v['group']}"
+    q = {"vars": "sgi_dimensionless", "municipality": "DC6"}
+    hist = (await client.get(p, params={**q, "period": "historical"})).json()
+    s = hist["series"][0]
+    assert max(x[0] for x in s["data"] if x[1] is not None) == "2024-08-01" and s["periodEnd"] == "2024-08-31"
+    assert "served May 2002 – Aug 2024 only" in hist["note"]
+    cur = (await client.get(p, params={"vars": "sgi_dimensionless", "municipality": "DC6"})).json()
+    assert all(x[1] is None for x in cur["series"][0]["data"])  # default window (2025) is after the cut-off
+    assert "served up to Aug 2024 only" in cur["unavailable"][0]["reason"]
 
 
 async def test_vegetation_same_source_as_vegetation_page(client: httpx.AsyncClient) -> None:

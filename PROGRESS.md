@@ -32,6 +32,11 @@
       cache expires, ≤ pool − 1 queries at once (43 groups, ≈ 20 s on Supabase, then ms); one table scan per group
       instead of per column (DC32 temperature 4.2 s → 2.1 s cold). Test: after the pre-warm every group answers with
       the database switched off.
+- [x] **SGI decision** (2026-10-16): served May 2002 – Aug 2024 only (new registry `valid_until`, used by every
+      loader, the category scan / asOf and the constancy check): `gw-sgi` 200 again with the series marked stale,
+      `periodEnd` 2024-08-31 and the note; category view live with the cut-off in its note and reasons; SGI KPI and
+      cascade groundwater stage null — "Latest valid SGI is Aug 2024 (more than 90 days old)". Tests in
+      `tests/test_drought.py` (`test_sgi_served_to_aug_2024_only`, `test_sgi_in_the_category_view`).
 - [x] **Verification** (2026-10-16): ruff + mypy clean; 753 tests (was 694); integration on Supabase 5 / 5;
       `docs/VERIFICATION.md` 42 / 42; Docker rebuilt, healthy, 43 / 43 category groups warmed at startup; frontend
       `fixtures:record` 1 052 fixtures (1 054 URLs, 2 share a key; no failures), `contract:check` 0 schema failures,

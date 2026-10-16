@@ -903,12 +903,12 @@ categories:
     db_type: double precision
     kind: numeric
     resolution: monthly
-    status: withheld
-    reason: 'failed plausibility: frozen since Sep 2024 (all 52 districts repeat their Aug 2024 value for 16 months) and from Jan 2001 to Apr 2002; Johannesburg, Ekurhuleni, Sedibeng and West Rand share
-      one identical series, as do Sisonke and uMgungundlovu'
+    status: live
+    reason: null
     duplicate_of: null
     chart: line
-    note: null
+    note: 'Served May 2002 – Aug 2024 only: values after Aug 2024 repeat Aug 2024 and are withheld; Jan 2001 – Apr 2002 is a constant spin-up. Johannesburg, Ekurhuleni, Sedibeng and West Rand share one
+      identical series, as do Sisonke and uMgungundlovu'
     unit_override: null
   - column: surface_runoff_m3_s
     name: Surface Runoff
@@ -963,7 +963,6 @@ categories:
       - ssi_dimensionless
       - sgi_dimensionless
       default_visible:
-      - ssi_dimensionless
       - sgi_dimensionless
       chart: line
       band: null
@@ -1035,7 +1034,6 @@ categories:
       - ssi_dimensionless
       - sgi_dimensionless
       default_visible:
-      - ssi_dimensionless
       - sgi_dimensionless
       chart: line
       band: null

@@ -407,3 +407,17 @@ queries at a time, so requests always get a connection): 43 groups in ≈ 20 s o
 All columns of a group are now read in one table scan, so uncached scopes are faster too (`temperature-c` for DC32:
 4.2 s → 2.1 s cold).
 
+### 13.7 SGI served May 2002 – Aug 2024 only
+
+SGI repeats its Aug 2024 value in every district from Sep 2024, so it is served for May 2002 – Aug 2024 only (registry
+`valid_from` / `valid_until`; a new `valid_until` sits next to `valid_from`):
+- `drought/timeseries?metric=gw-sgi` is **200 again** (was 501 in 13.x): the `sgi` series covers the page period
+  ending Aug 2024, with `asOf` 2024-08-01, `isStale: true`, `periodEnd` 2024-08-31 and `source`; the response has the
+  same `asOf` / `isStale` / `periodEnd` and `note` "Values after Aug 2024 repeat Aug 2024 and are withheld." The
+  borehole level stays null + `unavailable`.
+- Category view: `sgi_dimensionless` is `live` with `asOf` 2024-08-01, `isStale: true` and the note "Served May 2002 –
+  Aug 2024 only: …"; series stop at Aug 2024 (`periodEnd` 2024-08-31) and the SeriesSet `note` says so. A period
+  entirely after Aug 2024 (the default 12M) gives a null series whose `unavailable` reason names the cut-off.
+- `drought/summary` → `sgi` KPI and `drought/table?metric=cascade` → groundwater stage stay **null**, reason
+  "Latest valid SGI is Aug 2024 (more than 90 days old)" (they come back once a current SGI exists).
+

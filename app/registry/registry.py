@@ -50,8 +50,10 @@ class Column(_Strict):
     use: Literal["ratio_only"] | None = None
     # why the raw column is withheld from the database view although the API serves a value derived from it
     raw_reason: str | None = None
-    # first period with real values: earlier rows (a fill / spin-up) are never read; `valid_reason` says why
+    # first / last period with real values (start dates of the periods, inclusive): rows outside (a fill, a spin-up,
+    # repeated values) are never read; `valid_reason` says why
     valid_from: dt.date | None = None
+    valid_until: dt.date | None = None
     valid_reason: str | None = None
 
     @model_validator(mode="after")
@@ -60,8 +62,8 @@ class Column(_Strict):
             raise ValueError("withheld columns need a reason")
         if (self.transform or self.use) and not self.raw_reason:
             raise ValueError("columns served only after a transform need a raw_reason for the database view")
-        if self.valid_from and not self.valid_reason:
-            raise ValueError("valid_from needs a valid_reason")
+        if (self.valid_from or self.valid_until) and not self.valid_reason:
+            raise ValueError("valid_from / valid_until need a valid_reason")
         return self
 
 
@@ -158,11 +160,17 @@ class Dataset(_Strict):
         return expr
 
     def valid_sql(self, column: str) -> str:
-        """SQL condition keeping only the column's valid periods (`valid_from`); "TRUE" when it has none."""
+        """SQL condition keeping only the column's valid periods (`valid_from` / `valid_until`); "TRUE" when it has
+        none."""
         col = self.columns.get(column)
-        if col is None or col.valid_from is None:
+        if col is None or (col.valid_from is None and col.valid_until is None):
             return "TRUE"
-        return f"{self.date_sql()} >= DATE '{col.valid_from.isoformat()}'"
+        parts = []
+        if col.valid_from:
+            parts.append(f"{self.date_sql()} >= DATE '{col.valid_from.isoformat()}'")
+        if col.valid_until:
+            parts.append(f"{self.date_sql()} <= DATE '{col.valid_until.isoformat()}'")
+        return " AND ".join(parts)
 
     def served_columns(self) -> dict[str, Column]:
         return {name: c for name, c in self.columns.items() if c.role == "canonical"}

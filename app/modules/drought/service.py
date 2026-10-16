@@ -36,7 +36,7 @@ from app.core.data import DataAccess
 from app.core.errors import DataUnavailable
 from app.core.indices import calibration_gap, standardized_index
 from app.core.palettes import DROUGHT, NORMAL, OBSERVED, SERIES, drought_bands
-from app.core.provenance import Resolution, iso
+from app.core.provenance import Resolution, iso, period_end
 from app.core.stats import rnd
 from app.core.thresholds import (
     borehole_status,
@@ -183,8 +183,27 @@ class DroughtService:
         lt = pd.Timestamp(last)
         return (min(first, lt), lt)
 
-    async def _monthly_series(self, var: str, last: dt.date, nd: int = 2) -> list[list[Any]]:
-        first, lt = await self.first_last(last)
+    async def sgi_unavailable(self) -> str | None:
+        """Why the SGI KPI / cascade stage are null: SGI withheld, or its latest valid month (it is served only up to
+        `valid_until`) is older than the staleness limit. None when a current SGI exists."""
+        if reason := self.withheld("sgi"):
+            return reason
+        last = await self.latest("sgi")
+        if self.ctx.stale(last, "monthly"):
+            days = self.ctx.state.settings.stale_after_days
+            return f"Latest valid SGI is {last:%b %Y} (more than {days} days old)"
+        return None
+
+    def page_window_ending(self, last: dt.date) -> tuple[pd.Timestamp, pd.Timestamp]:
+        """Months of the page period (12M by default) ending with `last` — for a series that stops long before the
+        other data (SGI ends Aug 2024), so the chart shows its own last year rather than one month."""
+        start, _ = self.ctx.filters.window.resolve(period_end(last, "monthly"), dt.date(2000, 1, 1))
+        return pd.Timestamp(start.replace(day=1)), pd.Timestamp(last)
+
+    async def _monthly_series(
+        self, var: str, last: dt.date, nd: int = 2, *, own_window: bool = False
+    ) -> list[list[Any]]:
+        first, lt = self.page_window_ending(last) if own_window else await self.first_last(last)
         df = await self.data.monthly(var)
         df = df[(df["date"] >= first) & (df["date"] <= lt)]
         agg = weighted(df, self.ctx.weights()).set_index("date")["value"]
@@ -328,7 +347,7 @@ class DroughtService:
                     **self.kpi_extra(dmo, "dam_storage", "dam_level_pct", res="monthly"),
                 )
             )
-        if reason_sgi := self.withheld("sgi"):
+        if reason_sgi := await self.sgi_unavailable():
             kpis.append(c.Kpi(id="sgi", metric="sgi", label="SGI", value=None, unavailable_reason=reason_sgi))
             unavail.append(c.UnavailableField(field="kpis.sgi", reason=reason_sgi))
         else:
@@ -383,7 +402,7 @@ class DroughtService:
                 "soil_moisture_surface",
                 "runoff_depth_daily",
                 "dam_storage",
-                "sgi",
+                *([] if reason_sgi else ["sgi"]),  # a source only when the SGI KPI has a value
                 res="monthly",
             ),
         )
@@ -527,9 +546,12 @@ class DroughtService:
         )
 
     async def ts_gw_sgi(self) -> c.SeriesSet:
-        last = await self.latest("sgi")
-        sgi = await self._monthly_series("sgi", last)
+        last = await self.latest("sgi")  # the last valid month (registry valid_until)
+        sgi = await self._monthly_series("sgi", last, own_window=True)
         reason = "Borehole water level is withheld: values (−0.18 … +0.20) are not depths below ground"
+        col = self.ctx.state.registry.datasets["hydrological_drought_master"].columns["sgi_dimensionless"]
+        cut = col.valid_until
+        note = f"Values after {cut:%b %Y} repeat {cut:%b %Y} and are withheld." if cut else None
         return c.SeriesSet(
             id="gw-sgi",
             title="Groundwater",
@@ -544,9 +566,20 @@ class DroughtService:
                     color=SERIES[0],
                     data=[[x, None] for x, _ in sgi],
                 ),
-                c.Series(key="sgi", name="SGI", kind="line", axis=1, color=SERIES[3], data=sgi),
+                c.Series(
+                    key="sgi",
+                    name="SGI",
+                    kind="line",
+                    axis=1,
+                    color=SERIES[3],
+                    data=sgi,
+                    as_of=iso(last),
+                    **self.ctx.stamp(last, "monthly"),
+                    **self.ctx.col_source("sgi"),
+                ),
             ],
             as_of=iso(last),
+            **({"note": note} if note else {}),
             unavailable=[c.UnavailableField(field="series.level", reason=reason)],
             **self._prov(last, "sgi", res="monthly"),
         )
@@ -944,7 +977,7 @@ class DroughtService:
                 c.UnavailableField(field="rows.hydrological", reason=reason_st or "No dam storage data for this scope")
             )
         # 6 groundwater: SGI with the spec's borehole status classes; severity = % of area at Low or worse (≤ −1.0)
-        if reason_sgi := self.withheld("sgi"):
+        if reason_sgi := await self.sgi_unavailable():
             rows.append(stage(6, "groundwater", "groundwater", "Groundwater (SGI)", "sgi", "status", None, None, None))
             unavailable.append(c.UnavailableField(field="rows.groundwater", reason=reason_sgi))
         else:

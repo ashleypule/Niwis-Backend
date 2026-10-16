@@ -303,12 +303,16 @@ def _status(reg: Registry, ds: Dataset, column: str) -> tuple[Status, str | None
 
 
 def _note(col: Column | None) -> str | None:
-    """Registry note, plus the first served period when earlier rows are a fill (`valid_from`)."""
+    """Registry note, plus the served period when rows outside it are not real values (`valid_from` / `until`)."""
     if col is None:
         return None
     parts = [col.note] if col.note else []
-    if col.valid_from:
+    if col.valid_from and col.valid_until:
+        parts.append(f"Served {col.valid_from:%b %Y} – {col.valid_until:%b %Y} only: {col.valid_reason}")
+    elif col.valid_from:
         parts.append(f"Served from {col.valid_from:%b %Y}: {col.valid_reason}")
+    elif col.valid_until:
+        parts.append(f"Served up to {col.valid_until:%b %Y}: {col.valid_reason}")
     return "; ".join(parts) or None
 
 

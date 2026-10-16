@@ -29,7 +29,7 @@
 | --- | --- | --- | ---: | ---: | ---: | --- |
 | [Meteorological Drought](#meteorological-drought) (`meteorological_drought_master`) | §3.1 | drought | 8 | 3 | 14 | 12 |
 | [Satellite Remote Sensing](#satellite-remote-sensing) (`satellite_remote_sensing`) | §3.2 | drought, vegetation | 9 | 1 | 0 | 12 |
-| [Hydrological Drought](#hydrological-drought) (`hydrological_drought_master`) | §3.3 | drought, runoff | 0 | 11 | 0 | 12 |
+| [Hydrological Drought](#hydrological-drought) (`hydrological_drought_master`) | §3.3 | drought, runoff | 1 | 10 | 0 | 12 |
 | [Temperature Change](#temperature-change) (`4_1_temperature_change_master`) | §4.1 | climate | 9 | 0 | 0 | 5 |
 | [Wet Dry Spells](#wet-dry-spells) (`4_2_wet_dry_spells_master`) | §4.2 | climate, rainfall | 8 | 0 | 0 | 6 |
 | [Mean Annual Precipitation](#mean-annual-precipitation) (`4_3_mean_annual_precipitation_master`) | §4.3 | climate, rainfall | 6 | 5 | 0 | 16 |
@@ -41,7 +41,7 @@
 | [Core Rainfall Variables](#core-rainfall-variables) (`6.1_core_rainfall_variables_master`) | §6.1 | rainfall | 12 | 0 | 2 | 8 |
 | [Rainfall Derived Drought Indices](#rainfall-derived-drought-indices) (`6.2_rainfall_derived_drought_indices_master`) | §6.2 | rainfall, drought | 6 | 0 | 2 | 2 |
 | [Runoff Variables](#runoff-variables) (`runoff_variables_master`) | §7.1 | runoff | 3 | 8 | 1 | 10 |
-| **Total** | | | **62** | **60** | **29** | **105** |
+| **Total** | | | **63** | **59** | **29** | **105** |
 
 <a id="meteorological-drought"></a>
 ## Meteorological Drought · §3.1
@@ -136,14 +136,14 @@ Table `satellite_remote_sensing` · id `satellite-remote-sensing` · monthly · 
 <a id="hydrological-drought"></a>
 ## Hydrological Drought · §3.3
 
-Table `hydrological_drought_master` · id `hydrological-drought` · monthly · pages: drought, runoff · 0 live, 11 withheld, 0 duplicate · keys: `id`, `date`, `district_name`
+Table `hydrological_drought_master` · id `hydrological-drought` · monthly · pages: drought, runoff · 1 live, 10 withheld, 0 duplicate · keys: `id`, `date`, `district_name`
 
 **Drought page**
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
 | River Discharge / FDC Percentiles / Surface Runoff / Baseflow Separation (m³/s) | `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | m³/s | monthly | line | `river_discharge_m3_s` ★, `fdc_percentiles_m3_s` ★, `surface_runoff_m3_s` ★, `baseflow_separation_m3_s` |
-| SSI / SGI (index) | `ssi-sgi-index` | index | monthly | line | `ssi_dimensionless` ★, `sgi_dimensionless` ★ |
+| SSI / SGI (index) | `ssi-sgi-index` | index | monthly | line | `ssi_dimensionless`, `sgi_dimensionless` ★ |
 | Dam Storage (Mm³) | `dam-storage-mm3` | Mm³ | monthly | bar | `dam_storage_million_m3` ★ |
 | Dam Level (% FSC) | `dam-level-pct-fsc` | % FSC | monthly | line | `dam_level_pct_fsc` ★ |
 | Dam Inflow / Dam Outflow (m³/s) | `dam-inflow-dam-outflow-m3-s` | m³/s | monthly | line | `dam_inflow_m3_s` ★, `dam_outflow_m3_s` ★ |
@@ -154,7 +154,7 @@ Table `hydrological_drought_master` · id `hydrological-drought` · monthly · p
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
 | River Discharge / FDC Percentiles / Surface Runoff / Baseflow Separation (m³/s) | `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | m³/s | monthly | line | `river_discharge_m3_s` ★, `fdc_percentiles_m3_s` ★, `surface_runoff_m3_s` ★, `baseflow_separation_m3_s` |
-| SSI / SGI (index) | `ssi-sgi-index` | index | monthly | line | `ssi_dimensionless` ★, `sgi_dimensionless` ★ |
+| SSI / SGI (index) | `ssi-sgi-index` | index | monthly | line | `ssi_dimensionless`, `sgi_dimensionless` ★ |
 | Dam Storage (Mm³) | `dam-storage-mm3` | Mm³ | monthly | bar | `dam_storage_million_m3` ★ |
 | Dam Level (% FSC) | `dam-level-pct-fsc` | % FSC | monthly | line | `dam_level_pct_fsc` ★ |
 | Dam Inflow / Dam Outflow (m³/s) | `dam-inflow-dam-outflow-m3-s` | m³/s | monthly | line | `dam_inflow_m3_s` ★, `dam_outflow_m3_s` ★ |
@@ -170,7 +170,7 @@ Table `hydrological_drought_master` · id `hydrological-drought` · monthly · p
 | `dam_inflow_m3_s` | Dam Inflow (m³/s) | m³/s | monthly | line | drought: `dam-inflow-dam-outflow-m3-s`; runoff: `dam-inflow-dam-outflow-m3-s` | withheld — failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen) |
 | `dam_outflow_m3_s` | Dam Outflow (m³/s) | m³/s | monthly | line | drought: `dam-inflow-dam-outflow-m3-s`; runoff: `dam-inflow-dam-outflow-m3-s` | withheld — failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen) |
 | `borehole_water_level_m_bgl` | Borehole Water Level (m bgl) | m bgl | monthly | line | drought: `borehole-water-level-m-bgl`; runoff: `borehole-water-level-m-bgl` | withheld — range −0.18…+0.20: not a depth below ground level |
-| `sgi_dimensionless` | SGI | — | monthly | line | drought: `ssi-sgi-index`; runoff: `ssi-sgi-index` | withheld — failed plausibility: frozen since Sep 2024 (all 52 districts repeat their Aug 2024 value for 16 months) and from Jan 2001 to Apr 2002; Johannesburg, Ekurhuleni, Sedibeng and West Rand share one identical series, as do Sisonke and uMgungundlovu |
+| `sgi_dimensionless` | SGI | — | monthly | line | drought: `ssi-sgi-index`; runoff: `ssi-sgi-index` | live — Served May 2002 – Aug 2024 only: values after Aug 2024 repeat Aug 2024 and are withheld; Jan 2001 – Apr 2002 is a constant spin-up. Johannesburg, Ekurhuleni, Sedibeng and West Rand share one identical series, as do Sisonke and uMgungundlovu |
 | `surface_runoff_m3_s` | Surface Runoff (m³/s) | m³/s | monthly | line | drought: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s`; runoff: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
 | `baseflow_separation_m3_s` | Baseflow Separation (m³/s) | m³/s | monthly | line | drought: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s`; runoff: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
 

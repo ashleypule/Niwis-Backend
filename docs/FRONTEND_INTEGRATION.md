@@ -206,7 +206,9 @@ All additions unless marked; details in `docs/CONTRACT_CHANGES.md` §11–§12.
 18. **No null `asOf` / `periodEnd`** anywhere (they are omitted; #10).
 19. **`source: ["table.column"]`** on summary series that plot one stored column (#11).
 20. **Vegetation classes** Excellent / Good / Fair / Poor / Very Poor (#12): `normalizeVegClasses()` can go.
-21. **SGI withheld** (frozen since Sep 2024): SGI KPI null, `gw-sgi` → 501, cascade groundwater stage null; satellite soil moisture served from Mar 2015 (labelled 2015–2025).
+21. **SGI served May 2002 – Aug 2024 only** (values after repeat Aug 2024): `gw-sgi` and the category view serve it
+    marked `isStale`, `periodEnd` 2024-08-31, with a note; the SGI KPI and cascade groundwater stage stay null
+    ("Latest valid SGI is Aug 2024 (more than 90 days old)"). satellite soil moisture served from Mar 2015 (labelled 2015–2025).
 
 ## 9. Checklist
 

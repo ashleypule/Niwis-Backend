@@ -85,6 +85,13 @@ def _to_date(ds: Dataset, v: Any) -> dt.date | None:
     return dt.date.fromisoformat(str(v)[:10])
 
 
+def _span(col: Any) -> str:
+    """The valid range of a registry column, e.g. "May 2002 – Aug 2024", "from Mar 2015"."""
+    if col.valid_from and col.valid_until:
+        return f"{col.valid_from:%b %Y} – {col.valid_until:%b %Y}"
+    return f"from {col.valid_from:%b %Y}" if col.valid_from else f"up to {col.valid_until:%b %Y}"
+
+
 def _period_start(d: dt.date, res: Resolution) -> dt.date:
     if res == "monthly":
         return d.replace(day=1)
@@ -159,8 +166,12 @@ class CategoryService:
         ds = self.dataset(cat)
         live = [x for x in cat.columns if x.status != "withheld"]
         p = _raw_period_sql(ds)
-        exprs = [_value_sql(ds, x.column) if x.kind == "numeric" else ident(x.column) for x in live]
-        filtered = (f"max({p}) FILTER (WHERE {e} IS NOT NULL) AS c{i}" for i, e in enumerate(exprs))
+        exprs = [
+            f"{_value_sql(ds, x.column) if x.kind == 'numeric' else ident(x.column)} IS NOT NULL "
+            f"AND {ds.valid_sql(x.column)}"
+            for x in live
+        ]
+        filtered = (f"max({p}) FILTER (WHERE {e}) AS c{i}" for i, e in enumerate(exprs))
         parts = [f"max({p}) AS c_all", *filtered]
         sql = f"SELECT {', '.join(parts)} FROM {ds.fq}"
 
@@ -444,6 +455,13 @@ class CategoryService:
                 if (x.unit or "") in EXTENSIVE_UNITS
                 else f" (an area-weighted value needs districts covering ≥ {MIN_COVERAGE:.0%} of the area)"
             )
+            reg = ds.columns.get(x.column)
+            if reg is not None and reg.valid_until and start > period_end(reg.valid_until, "monthly"):
+                self.ctx.explain(  # the selected period lies after the column's last valid month
+                    f"series.{x.column}",
+                    f"{x.label}: served up to {reg.valid_until:%b %Y} only ({reg.valid_reason}); choose a period "
+                    f"ending by {reg.valid_until:%b %Y}",
+                )
             self.ctx.explain(f"series.{x.column}", f"No {x.label} for this scope in the selected period{rule}")
         xs = sorted({t for s in values.values() for t in s.index}) or [
             t for t in self.grid(g.resolution, start, end, downsample) if cap is None or t <= pd.Timestamp(cap)
@@ -496,10 +514,16 @@ class CategoryService:
             if (g.unit in EXTENSIVE_UNITS)
             else f"area-weighted mean of district values (≥ {MIN_COVERAGE:.0%} of the area)"
         )
+        limited = [
+            f"{x.label}: served {_span(reg)} only ({str(reg.valid_reason).split(';')[0]})."
+            for x in cols
+            if (reg := ds.columns.get(x.column)) is not None and (reg.valid_from or reg.valid_until)
+        ]
         note = (
             f"Values as stored in {cat.table} ({how}). "
             + ("Daily values downsampled to monthly means. " if downsample else "")
-            + ("Incomplete periods are not shown." if g.resolution != "daily" else "")
+            + ("Incomplete periods are not shown. " if g.resolution != "daily" else "")
+            + " ".join(limited)
         ).strip()
         body = c.SeriesSet(
             id=f"{cat.id}/{g.id}",

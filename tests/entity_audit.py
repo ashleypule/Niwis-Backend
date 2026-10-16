@@ -10,6 +10,7 @@ import httpx
 
 from app.modules.catalog import SERVICE_MODULES
 from app.registry.catalogue import get_catalogue
+from app.registry.registry import get_registry
 
 KINDS = {"timeseries": "metric", "table": "metric", "breakdown": "metric", "map": "layer"}
 
@@ -23,7 +24,12 @@ def entity_endpoints() -> list[tuple[str, dict[str, str]]]:
     cat = get_catalogue()
     for module in SERVICE_MODULES:
         for c in cat.for_module(module):
-            live = {x.column for x in c.columns if x.status == "live"}
+            ds = get_registry().datasets[c.table]  # columns that cover the current period (no valid_until cut-off)
+            live = {
+                x.column
+                for x in c.columns
+                if x.status == "live" and not (ds.columns.get(x.column) and ds.columns[x.column].valid_until)
+            }
             g = next((g for g in c.groups_for(module) if live & set(g.columns)), None)
             if g is not None:
                 out.append((f"/api/v1/{module}/category/{c.id}/{g.id}", {}))

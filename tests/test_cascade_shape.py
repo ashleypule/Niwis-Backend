@@ -100,11 +100,12 @@ async def test_drought_cascade_has_the_specs_seven_stages(
     assert by["precipitation"]["id"] == "meteorological" and by["vegetation"]["id"] == "agricultural"
     assert by["reservoir"]["id"] == "hydrological"  # original ids kept
     reasons = {u["field"]: u["reason"] for u in body["unavailable"]}
-    # SGI failed the constancy check (frozen since Sep 2024): the groundwater stage is null with the reason too
+    # SGI is served only to Aug 2024 (values after repeat Aug 2024): too old for a current stage → null with reason
     for sid in ("streamflow", "reservoir", "groundwater", "socio-economic"):
         assert by[sid]["valueNum"] is None and f"rows.{by[sid]['id']}" in reasons, sid
     assert "placeholder" in reasons["rows.streamflow"]
-    assert "frozen since Sep 2024" in reasons["rows.groundwater"] and by["groundwater"]["scale"] == "status"
+    assert reasons["rows.groundwater"] == "Latest valid SGI is Aug 2024 (more than 90 days old)"
+    assert by["groundwater"]["scale"] == "status"
 
     sm = by["soil-moisture"]
     summary = (await client.get("/api/v1/drought/summary", params={"municipality": "DC6"})).json()

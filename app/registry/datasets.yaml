@@ -218,7 +218,8 @@ datasets:
       dam_inflow_m3_s:            {var: dam_inflow, role: withheld, reason: "failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)"}
       dam_outflow_m3_s:           {var: dam_outflow, role: withheld, reason: "failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)"}
       borehole_water_level_m_bgl: {var: gw_level, role: withheld, reason: "range −0.18…+0.20: not a depth below ground level"}
-      sgi_dimensionless:          {var: sgi, role: withheld, reason: "failed plausibility: frozen since Sep 2024 (all 52 districts repeat their Aug 2024 value for 16 months) and from Jan 2001 to Apr 2002; Johannesburg, Ekurhuleni, Sedibeng and West Rand share one identical series, as do Sisonke and uMgungundlovu"}
+      sgi_dimensionless:          {var: sgi, role: canonical, valid_from: 2002-05-01, valid_until: 2024-08-01,
+                                   valid_reason: "values after Aug 2024 repeat Aug 2024 and are withheld; Jan 2001 – Apr 2002 is a constant spin-up. Johannesburg, Ekurhuleni, Sedibeng and West Rand share one identical series, as do Sisonke and uMgungundlovu"}
       surface_runoff_m3_s:        {var: surface_runoff_flow, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
       baseflow_separation_m3_s:   {var: baseflow_flow, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
 

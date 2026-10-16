@@ -41,7 +41,8 @@ def column_sql(ds: Dataset, column: str, resolution: str) -> str:
         d if resolution == "daily" else f"date_trunc('{'month' if resolution == 'monthly' else 'year'}', {d})::date"
     )
     return f"""
-WITH d AS (SELECT lower({loc}) AS n, {period} AS p, max({v}) AS v FROM {ds.fq} GROUP BY 1, 2),
+WITH d AS (SELECT lower({loc}) AS n, {period} AS p, max({v}) AS v FROM {ds.fq} WHERE {ds.valid_sql(column)}
+           GROUP BY 1, 2),
 l AS (SELECT n, p, v, lag(v) OVER (PARTITION BY n ORDER BY p) AS pv FROM d WHERE v IS NOT NULL),
 per AS (SELECT p, count(*) AS k, count(DISTINCT v) AS nd, bool_and(v = pv) AS frozen, bool_or(pv IS NULL) AS first
         FROM l GROUP BY p),
