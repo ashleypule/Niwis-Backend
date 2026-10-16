@@ -27,7 +27,7 @@ from app.meta.service import MetaService
 from app.middleware import RateLimitMiddleware, RequestLogMiddleware
 from app.modules import IMPLEMENTED_MODULES
 from app.modules.categories import build_category_router
-from app.modules.categories import prewarm as prewarm_categories
+from app.modules.categories import keep_warm as keep_categories_warm
 from app.modules.climate.router import router as climate_router
 from app.modules.climate.service import prewarm as prewarm_climate
 from app.modules.drought.router import router as drought_router
@@ -70,7 +70,6 @@ async def _warm(state: AppState) -> None:
         ("vegetation", lambda: prewarm_vegetation(state.data)),
         ("runoff", lambda: prewarm_runoff(state.data)),
         ("table statistics", state.meta.table_stats),
-        ("categories", lambda: prewarm_categories(state)),
     ]
     for name, step in steps:
         try:
@@ -104,10 +103,15 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             data=DataAccess(database, registry, cache, settings),
         )
         log.info("startup complete", extra={"tables": len(registry.datasets), "env": settings.environment})
-        warm = asyncio.create_task(_warm(app.state.niwis)) if database.configured else None
+        tasks = []
+        if database.configured:
+            tasks.append(asyncio.create_task(_warm(app.state.niwis)))
+            if settings.prewarm_categories:  # every category chart group, refreshed before the cache expires
+                tasks.append(asyncio.create_task(keep_categories_warm(app.state.niwis)))
         yield
-        if warm is not None and not warm.done():
-            warm.cancel()
+        for task in tasks:
+            if not task.done():
+                task.cancel()
         await database.close()
 
     app = FastAPI(

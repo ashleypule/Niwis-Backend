@@ -399,3 +399,11 @@ VCI / VHI / TCI classes are **Excellent / Good / Fair / Poor / Very Poor** (spec
 Healthy / Healthy / Moderate / Stressed / Very Stressed. `reference/thresholds.ts` is refreshed from the frontend.
 The frontend's `normalizeVegClasses()` mapping is no longer needed.
 
+### 13.6 Category charts answer from cache (BACKEND_ISSUES #13)
+
+No contract change. Every chart group of every page is pre-loaded at startup for the default request (national,
+`period=12M`) and refreshed before the cache expires (`PREWARM_CATEGORIES`, default on; at most `DB_POOL_MAX − 1`
+queries at a time, so requests always get a connection): 43 groups in ≈ 20 s on Supabase, then a few ms per request.
+All columns of a group are now read in one table scan, so uncached scopes are faster too (`temperature-c` for DC32:
+4.2 s → 2.1 s cold).
+

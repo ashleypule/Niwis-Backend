@@ -14,6 +14,7 @@ all-null series with an `unavailable` entry and the reason. One axis per group: 
 
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import logging
 from typing import Any
@@ -307,19 +308,29 @@ class CategoryService:
         w = self.ctx.weights()
         return w, float(sum(w.values()))
 
-    async def scope_series(
-        self, ds: Dataset, x: CatColumn, start: dt.date, end: dt.date, downsample: bool
-    ) -> pd.Series:
-        """Scope value per period of one numeric column (index: period start), computed in SQL."""
+    @staticmethod
+    def served(g: CatGroup, cols: list[CatColumn]) -> list[CatColumn]:
+        """The group's numeric columns that hold data (live, or a duplicate shown on some page): read in one scan."""
+        by = {x.column: x for x in cols}
+        return [by[k] for k in g.columns if by[k].status != "withheld" and by[k].kind == "numeric"]
+
+    async def scope_group(
+        self, ds: Dataset, g: CatGroup, cols: list[CatColumn], start: dt.date, end: dt.date, downsample: bool
+    ) -> dict[str, pd.Series]:
+        """Scope value per period (index: period start) of every served numeric column of a group, from ONE scan of
+        the table (a daily table is ~500 000 rows and unindexed; one scan per column made daily groups slow,
+        BACKEND_ISSUES #13). Cached per group, scope and window; requests pick their `vars` from it."""
         loc, d = ident(ds.location.column), ds.date_sql()
-        if x.resolution == "daily" and downsample:
+        if g.resolution == "daily" and downsample:
             period, inner = f"date_trunc('month', {d})::date", "avg"
-        elif x.resolution == "daily":
+        elif g.resolution == "daily":
             period, inner = d, "max"
         else:
-            trunc = "month" if x.resolution == "monthly" else "year"
+            trunc = "month" if g.resolution == "monthly" else "year"
             period, inner = f"date_trunc('{trunc}', {d})::date", "max"  # one value per period (repeats)
-        extensive = (x.unit or "") in EXTENSIVE_UNITS
+        if not cols:
+            return {}
+        extensive = (cols[0].unit or "") in EXTENSIVE_UNITS  # one unit per group (axis rule)
         factors, total = self.factors(extensive)
         names: list[str] = []
         facs: list[float] = []
@@ -329,29 +340,44 @@ class CategoryService:
                 for n in {dist.db_name, dist.db_name.lower(), *dist.aliases}:
                     names.append(n)
                     facs.append(float(f))
+        inner_cols = ", ".join(
+            f"{inner}({_value_sql(ds, x.column)}) FILTER (WHERE {ds.valid_sql(x.column)}) AS v{i}"
+            for i, x in enumerate(cols)
+        )
+        outer_cols = ", ".join(
+            f"sum(d.v{i} * w.f) AS num{i}, sum(w.f) FILTER (WHERE d.v{i} IS NOT NULL) AS den{i}, count(d.v{i}) AS n{i}"
+            for i in range(len(cols))
+        )
         sql = (
-            f"WITH d AS (SELECT {loc} AS name, {period} AS p, {inner}({_value_sql(ds, x.column)}) AS v "
-            f"FROM {ds.fq} WHERE {ds.range_sql()} AND {ds.valid_sql(x.column)} AND {loc} = ANY($3::text[]) "
-            "GROUP BY 1, 2) "
-            "SELECT d.p, sum(d.v * w.f) AS num, sum(w.f) FILTER (WHERE d.v IS NOT NULL) AS den, count(d.v) AS n "
+            f"WITH d AS (SELECT {loc} AS name, {period} AS p, {inner_cols} "
+            f"FROM {ds.fq} WHERE {ds.range_sql()} AND {loc} = ANY($3::text[]) GROUP BY 1, 2) "
+            f"SELECT d.p, {outer_cols} "
             "FROM d JOIN unnest($3::text[], $4::float8[]) AS w(name, f) ON w.name = d.name GROUP BY 1 ORDER BY 1"
         )
-        key = f"cat:series:{ds.table}:{x.column}:{start}:{end}:{downsample}:{hash(tuple(sorted(factors.items())))}"
+        colkey = ",".join(x.column for x in cols)
+        key = f"cat:group:{ds.table}:{colkey}:{start}:{end}:{downsample}:{hash(tuple(sorted(factors.items())))}"
 
-        async def load() -> pd.Series:
+        async def load() -> dict[str, pd.Series]:
             rows = await self.state.db.fetch(sql, *ds.range_args(start, end), names, facs)
-            out: dict[pd.Timestamp, float] = {}
-            for r in rows:
-                if r["num"] is None or not r["den"]:
-                    continue
-                if extensive:
-                    if r["n"] == len(factors):  # a sum needs every district of the scope
-                        out[pd.Timestamp(r["p"])] = float(r["num"])
-                elif float(r["den"]) >= MIN_COVERAGE * total:
-                    out[pd.Timestamp(r["p"])] = float(r["num"]) / float(r["den"])
-            return pd.Series(list(out.values()), index=pd.DatetimeIndex(list(out.keys())), dtype=float).sort_index()
+            out: dict[str, pd.Series] = {}
+            for i, x in enumerate(cols):
+                vals: dict[pd.Timestamp, float] = {}
+                for r in rows:
+                    num, den, n = r[f"num{i}"], r[f"den{i}"], r[f"n{i}"]
+                    if num is None or not den:
+                        continue
+                    if extensive:
+                        if n == len(factors):  # a sum needs every district of the scope
+                            vals[pd.Timestamp(r["p"])] = float(num)
+                    elif float(den) >= MIN_COVERAGE * total:
+                        vals[pd.Timestamp(r["p"])] = float(num) / float(den)
+                idx = pd.DatetimeIndex(list(vals.keys()))
+                out[x.column] = pd.Series(list(vals.values()), index=idx, dtype=float).sort_index()
+            return out
 
-        res: pd.Series = await self.state.cache.get_or_set(key, self.state.settings.cache_ttl_long_series_s, load)
+        res: dict[str, pd.Series] = await self.state.cache.get_or_set(
+            key, self.state.settings.cache_ttl_long_series_s, load
+        )
         return res
 
     async def district_categories(self, ds: Dataset, x: CatColumn, start: dt.date, end: dt.date) -> pd.Series:
@@ -390,6 +416,7 @@ class CategoryService:
         single = self.ctx.filters.scope.level == "municipality"
         values: dict[str, pd.Series] = {}
         unavailable: list[c.UnavailableField] = []
+        group_data = await self.scope_group(ds, g, self.served(g, self.view(cat)), start, end, downsample)
         for x in cols:
             if x.status != "live":
                 why = x.reason if x.status == "withheld" else f"duplicate of {x.duplicate_of}"
@@ -406,7 +433,7 @@ class CategoryService:
                     continue
                 s = await self.district_categories(ds, x, start, end)
             else:
-                s = await self.scope_series(ds, x, start, end, downsample)
+                s = group_data[x.column]
             if g.resolution != "daily" and cap is not None:
                 s = s[s.index <= pd.Timestamp(cap)]  # incomplete months / years are never served
             values[x.column] = s
@@ -527,11 +554,54 @@ def build_category_router(module: str) -> APIRouter:
     return router
 
 
-async def prewarm(state: AppState) -> None:
-    """Newest date per column of every table (one scan per table), so /categories is fast after a restart."""
+async def prewarm(state: AppState) -> int:
+    """Load what every category chart needs for the default request (national, period 12M — what the pages ask
+    for first): the newest date per column of every table, then every chart group of every page, so they answer
+    from cache (BACKEND_ISSUES #13). At most `db_pool_max − 1` queries run at once, so requests always find a
+    connection. Returns the number of groups warmed; a failing group is logged and skipped."""
     from app.core.filters import Filters, ScopeSel, Window
 
     scope = ScopeSel("national", "ZA", "South Africa", tuple(d.code for d in districts.districts()))
     ctx = Ctx(state, Filters(scope, Window("12M", None, None), False, None), await state.meta.newest_date())
-    for cat in get_catalogue().categories:
-        await CategoryService(ctx, cat.modules[0]).column_dates(cat)  # never raises (falls back)
+    sem = asyncio.Semaphore(max(1, state.settings.db_pool_max - 1))
+    cats = get_catalogue().categories
+
+    async def dates(cat: Category) -> None:
+        async with sem:
+            await CategoryService(ctx, cat.modules[0]).column_dates(cat)  # never raises (falls back)
+
+    await asyncio.gather(*(dates(cat) for cat in cats))
+    jobs: dict[tuple[str, str], tuple[CategoryService, Category, CatGroup]] = {}
+    for cat in cats:
+        for module in cat.modules:
+            svc = CategoryService(ctx, module)
+            for g in cat.groups_for(module):
+                cols = svc.served(g, svc.view(cat))
+                if cols:  # the same table + columns on two pages share one cache entry
+                    jobs.setdefault((cat.table, ",".join(x.column for x in cols)), (svc, cat, g))
+
+    async def one(svc: CategoryService, cat: Category, g: CatGroup) -> bool:
+        async with sem:
+            try:
+                dts = await svc.column_dates(cat)
+                start, end = svc.window(g, dts.get("") or ctx.newest_db or dt.date.today())
+                down = g.resolution == "daily" and (end - start).days + 1 > state.settings.max_series_points
+                await svc.scope_group(svc.dataset(cat), g, svc.served(g, svc.view(cat)), start, end, down)
+                return True
+            except Exception:
+                log.exception("category pre-warm failed", extra={"table": cat.table, "group": g.id})
+                return False
+
+    done = await asyncio.gather(*(one(*job) for job in jobs.values()))
+    log.info("category groups warmed", extra={"groups": sum(done), "of": len(done)})
+    return sum(done)
+
+
+async def keep_warm(state: AppState) -> None:
+    """Warm every category group now, then again shortly before the cached series expire."""
+    while True:
+        try:
+            await prewarm(state)
+        except Exception:
+            log.exception("category pre-warm round failed")
+        await asyncio.sleep(max(300, state.settings.cache_ttl_long_series_s - 600))

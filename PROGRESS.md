@@ -28,7 +28,11 @@
       `Ctx.col_source`); tested: the reported series, and every named column exists in the catalogue as served.
 - [x] **#12** vegetation classes Excellent / Good / Fair / Poor / Very Poor (thresholds.json, severity order,
       vegetation service; reference/thresholds.ts refreshed from the frontend); tested on every endpoint that sends one.
-- [ ] Item 5 category pre-warm · Docker / frontend / docs · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+- [x] **Item 5 / #13 Category pre-warm**: every group of every page loaded at startup (national, 12M) and before its
+      cache expires, ≤ pool − 1 queries at once (43 groups, ≈ 20 s on Supabase, then ms); one table scan per group
+      instead of per column (DC32 temperature 4.2 s → 2.1 s cold). Test: after the pre-warm every group answers with
+      the database switched off.
+- [ ] Docker / frontend / docs · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
       frontend / docs
 
 ### Database category view + spec-audit fixes (2026-10-15 / 16)

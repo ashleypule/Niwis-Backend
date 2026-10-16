@@ -259,3 +259,32 @@ async def test_series_carry_the_recommended_chart(client: httpx.AsyncClient) -> 
     cats = (await client.get("/api/v1/climate/categories")).json()
     grp = next(g for tb in cats["tables"] for g in tb["groups"] if g["id"] == "temperature-c")
     assert grp["chart"] == "band" and grp["band"] == ["Tmin_C", "Tmax_C"]
+
+
+async def test_prewarm_puts_every_group_in_the_cache(
+    client_factory: Callable[..., Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """BACKEND_ISSUES #13: after the pre-warm, every chart group of every page answers its default request (national,
+    12M, vars=all) without touching the database."""
+    from app.db import Database
+    from app.modules.categories import prewarm
+
+    async for c2 in client_factory():
+        state = c2._transport.app.state.niwis  # type: ignore[attr-defined]
+        await state.meta.sources()  # the response checks read the table coverage
+        warmed = await prewarm(state)
+        expected = {  # one entry per table + served columns (withheld-only groups need no data)
+            (cat.table, tuple(k for k in g.columns if cat.column(k).status != "withheld"))  # type: ignore[union-attr]
+            for module, cat, g in GROUPS
+            if any(cat.column(k).status != "withheld" for k in g.columns)  # type: ignore[union-attr]
+        }
+        assert warmed == len(expected) > 30, (warmed, len(expected))
+
+        async def no_db(self: Database, query: str, *args: Any) -> Any:
+            raise AssertionError(f"not served from cache: {query[:80]}")
+
+        monkeypatch.setattr(Database, "fetch", no_db)
+        monkeypatch.setattr(Database, "fetchrow", no_db)
+        for module, cat, g in GROUPS:
+            r = await c2.get(path(module, cat.id, g.id), params={"vars": "all", "period": "12M"})
+            assert r.status_code == 200, (module, cat.id, g.id, r.text[:200])

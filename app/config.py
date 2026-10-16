@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     # headline drought class = the worst class that, with all worse classes, covers at least this % of the area
     drought_class_area_pct: float = Field(20.0, gt=0, le=100)
     max_series_points: int = 2_000
+    # pre-load every category chart group (national, 12M) at startup and before its cache expires (BACKEND_ISSUES #13)
+    prewarm_categories: bool = True
     cache_ttl_summary_s: int = 15 * 60
     cache_ttl_map_s: int = 15 * 60
     cache_ttl_long_series_s: int = 60 * 60
