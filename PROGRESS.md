@@ -37,6 +37,10 @@
       `periodEnd` 2024-08-31 and the note; category view live with the cut-off in its note and reasons; SGI KPI and
       cascade groundwater stage null — "Latest valid SGI is Aug 2024 (more than 90 days old)". Tests in
       `tests/test_drought.py` (`test_sgi_served_to_aug_2024_only`, `test_sgi_in_the_category_view`).
+      Verified: 754 tests; constancy check with the range applied: SGI passes except its shared district series
+      (in the note); Docker rebuilt, healthy, 44 / 44 groups warmed; `fixtures:record` 1 052 (clean re-record
+      after two 429s from another client sharing the IP limit), `contract:check` 0 schema failures, 0 errors,
+      8 structural differences (+1: `gw-sgi` is 200 again with its all-null borehole-level series).
 - [x] **Verification** (2026-10-16): ruff + mypy clean; 753 tests (was 694); integration on Supabase 5 / 5;
       `docs/VERIFICATION.md` 42 / 42; Docker rebuilt, healthy, 43 / 43 category groups warmed at startup; frontend
       `fixtures:record` 1 052 fixtures (1 054 URLs, 2 share a key; no failures), `contract:check` 0 schema failures,
