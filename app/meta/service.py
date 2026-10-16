@@ -108,10 +108,14 @@ class MetaService:
 
         async def load() -> dt.date | None:
             daily = [ds for ds in self.registry.datasets.values() if ds.time.resolution == "daily"]
+            sem = asyncio.Semaphore(max(1, self.settings.db_pool_max - 1))
 
             async def one(ds: Dataset) -> dt.date | None:
                 try:
-                    v = await self.db.fetchval(f"SELECT max({ds.date_sql()}) FROM {ds.fq}")
+                    async with sem:
+                        v = await self.db.fetchval(await self._newest_sql(ds))
+                    if isinstance(v, str):
+                        v = dt.date.fromisoformat(v)
                     return v if isinstance(v, dt.date) else None
                 except Exception:
                     log.exception("newest date failed", extra={"table": ds.table})
@@ -122,6 +126,34 @@ class MetaService:
 
         newest: dt.date | None = await self.cache.get_or_set("meta:newest", self.settings.cache_ttl_meta_s, load)
         return newest
+
+    async def _newest_sql(self, ds: Dataset) -> str:
+        """`SELECT` of the newest raw date value in a daily table (ISO text for text dates: text order = date order).
+
+        A plain max() on the date column scans the whole table when the only index is (location, date), as on
+        runoff_variables_master's primary key — 500 000 rows, past the statement timeout. With such an index, skip
+        through the distinct locations and take each one's newest date from the index: ~2 probes per district.
+        """
+        col, loc = ds.time.column, ds.location.column
+        assert col
+        c, lc, t = ident(col), ident(loc), ds.fq
+        leading = await self.db.fetchval(
+            "SELECT EXISTS (SELECT 1 FROM pg_index i "
+            "JOIN pg_attribute a0 ON a0.attrelid = i.indrelid AND a0.attnum = i.indkey[0] "
+            "JOIN pg_attribute a1 ON a1.attrelid = i.indrelid AND a1.attnum = i.indkey[1] "
+            "WHERE i.indrelid = to_regclass($1) AND a0.attname = $2 AND a1.attname = $3)",
+            t,
+            loc,
+            col,
+        )
+        if not leading:
+            return f"SELECT max({c}) FROM {t}"
+        return (
+            f"WITH RECURSIVE k(v) AS ("
+            f"(SELECT {lc} FROM {t} WHERE {lc} IS NOT NULL ORDER BY {lc} LIMIT 1) UNION ALL "
+            f"SELECT (SELECT {lc} FROM {t} WHERE {lc} > k.v ORDER BY {lc} LIMIT 1) FROM k WHERE k.v IS NOT NULL) "
+            f"SELECT max((SELECT max({c}) FROM {t} WHERE {lc} = k.v)) FROM k WHERE k.v IS NOT NULL"
+        )
 
     # ---------------------------------------------------------------- payloads
 
