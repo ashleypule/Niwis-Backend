@@ -85,7 +85,17 @@ async def driver_series(ctx: Ctx, rain: RainfallService, key: str, sid: str = "d
         title=d.axis_label,
         x_type="time",
         axes=[c.Axis(unit=d.unit, label=d.axis_label)],
-        series=[c.Series(key=key, name=d.name, kind=d.kind, color=d.color, data=data)],
+        series=[
+            c.Series(
+                key=key,
+                name=d.name,
+                kind=d.kind,
+                color=d.color,
+                data=data,
+                # one stored column, averaged (monthly mean / stored monthly value); totals are derived sums
+                **(ctx.col_source(d.var) if d.how in ("mean", "monthly") else {}),
+            )
+        ],
         as_of=iso(last),
         note=f"Complete months of the source table, area-weighted; {ctx.scope.name}.",
         **prov,

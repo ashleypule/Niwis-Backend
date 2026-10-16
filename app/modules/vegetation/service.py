@@ -268,7 +268,15 @@ class VegetationService:
                 label, data = ONLY_IN_5_1[idx], [[iso(x.date()), None] for x in ms]
                 unavailable.append(c.UnavailableField(field=f"series.{idx}", reason=reason))
             series.append(
-                c.Series(key=idx, name=label, kind="line", axis=axis, color=SERIES[i % len(SERIES)], data=data)
+                c.Series(
+                    key=idx,
+                    name=label,
+                    kind="line",
+                    axis=axis,
+                    color=SERIES[i % len(SERIES)],
+                    data=data,
+                    **(self.ctx.col_source(LIVE_INDICES[idx][0]) if idx in LIVE_INDICES else {}),
+                )
             )
         extra: dict[str, Any] = {"unavailable": unavailable} if unavailable else {}
         return c.SeriesSet(
@@ -315,6 +323,7 @@ class VegetationService:
                 c.Series(
                     key="current",
                     name=f"{label} (current)",
+                    **self.ctx.col_source(var),
                     kind="line",
                     color=OBSERVED,
                     symbol=True,
@@ -323,6 +332,7 @@ class VegetationService:
                 c.Series(
                     key="previous",
                     name=f"{label} (previous year)",
+                    **self.ctx.col_source(var),
                     kind="line",
                     color=SERIES[0],
                     dash=True,

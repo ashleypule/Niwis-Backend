@@ -24,7 +24,9 @@
 - [x] **Item 3 Chart types (#8)**: `chart` per column (bar / diverging-bar / line from name, unit, resolution),
       per group (band for Tmin / Tmax, mixed), on series (`kind: bar` for bar types) and series sets.
 - [x] **#10** null `asOf` / `periodEnd` omitted in the response layer (every endpoint); tested over every response.
-- [ ] Item 4 #11 / #12 · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+- [x] **#11** `source: ["table.column"]` on every summary series that plots one stored column (helper
+      `Ctx.col_source`); tested: the reported series, and every named column exists in the catalogue as served.
+- [ ] Item 4 #12 · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
       frontend / docs
 
 ### Database category view + spec-audit fixes (2026-10-15 / 16)

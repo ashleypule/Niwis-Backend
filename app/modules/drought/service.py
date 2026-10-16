@@ -428,6 +428,7 @@ class DroughtService:
                 c.Series(
                     key=f"spi{k}",
                     name=f"SPI-{k}",
+                    **self.ctx.col_source(var),
                     kind="bar" if k == "1" else "line",
                     color=OBSERVED,
                     data=await self._monthly_series(var, last),
@@ -461,6 +462,7 @@ class DroughtService:
                 c.Series(
                     key="spei3",
                     name="SPEI-3",
+                    **self.ctx.col_source("spei_3"),
                     kind="line",
                     axis=1,
                     color=SERIES[3],
@@ -576,6 +578,7 @@ class DroughtService:
                 c.Series(
                     key="surface",
                     name="Surface soil moisture",
+                    **self.ctx.col_source("soil_moisture_surface"),
                     kind="line",
                     color=SERIES[0],
                     data=[[iso(m.date()), rnd(surf.get(m), 3)] for m in ms],
@@ -583,6 +586,7 @@ class DroughtService:
                 c.Series(
                     key="rootzone",
                     name="Root-zone soil moisture",
+                    **self.ctx.col_source("soil_moisture_rootzone"),
                     kind="line",
                     color=SERIES[1],
                     data=[[iso(m.date()), rnd(root.get(m), 3)] for m in ms],
@@ -617,6 +621,7 @@ class DroughtService:
                 c.Series(
                     key="ndvi",
                     name="NDVI",
+                    **self.ctx.col_source("ndvi"),
                     kind="line",
                     axis=0,
                     color=SERIES[1],
@@ -625,6 +630,7 @@ class DroughtService:
                 c.Series(
                     key="vci",
                     name="VCI",
+                    **self.ctx.col_source("vci"),
                     kind="line",
                     axis=1,
                     color=SERIES[0],
@@ -633,6 +639,7 @@ class DroughtService:
                 c.Series(
                     key="vhi",
                     name="VHI",
+                    **self.ctx.col_source("vhi"),
                     kind="line",
                     axis=1,
                     color=SERIES[2],

@@ -66,6 +66,12 @@ class Ctx:
     def weights(self) -> dict[str, float]:
         return weights(self.filters.scope, self.state.spatial)
 
+    def col_source(self, var: str) -> dict[str, list[str]]:
+        """`source=["table.column"]` for a series that plots one stored column (as stored or averaged), or nothing when
+        the variable is not served (BACKEND_ISSUES #11). Derived series (sums, anomalies, shares) do not use it."""
+        src = self.state.registry.canonical_source(var)
+        return {"source": [f"{src[0].table}.{src[1]}"]} if src else {}
+
     def for_entity(self) -> Ctx:
         """This context with the scope narrowed to the `entityId` district (entity datasets), or itself without one.
 

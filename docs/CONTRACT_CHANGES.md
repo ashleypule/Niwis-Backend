@@ -382,3 +382,12 @@ when the group holds a min / max pair, else `mixed`) and, for bands, `band: [min
 Optional `asOf` / `periodEnd` are omitted when there is no date (e.g. category groups whose columns are all withheld),
 never sent as `null`; table cells are unchanged (a cascade row's `asOf` cell is still null when the stage has no data).
 
+### 13.4 Summary series name their column (BACKEND_ISSUES #11)
+
+Series on the module endpoints that plot **one stored column** (as stored, area-weighted, or a monthly / annual mean)
+carry `source: ["table.column"]`, the same key category series have: e.g. `drought/timeseries?metric=soil-moisture`
+`surface` → `satellite_remote_sensing.surface_soil_moisture`, `rainfall/timeseries?metric=spi-spei`, vegetation
+`indices`, climate `temperature-long` / `extremes` / `national-trend` (temperature, rainfall), drivers (mean-type),
+the drought SPI / SPEI / NDVI / VCI / VHI series. Derived series (sums, counts from daily values, anomalies, area
+shares, fits, bands) have no `source`: use their `name`.
+

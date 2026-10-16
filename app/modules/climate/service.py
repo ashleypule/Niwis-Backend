@@ -334,6 +334,7 @@ class ClimateService:
                 c.Series(
                     key="anomaly",
                     name="Tavg anomaly (vs 2000–2026)",
+                    **self.ctx.col_source("temp_anomaly"),
                     kind="bar",
                     axis=1,
                     color=NEGATIVE,
@@ -342,6 +343,7 @@ class ClimateService:
                 c.Series(
                     key="tmax",
                     name="Tmax",
+                    **self.ctx.col_source("tmax"),
                     kind="line",
                     axis=0,
                     color=SERIES[3],
@@ -350,6 +352,7 @@ class ClimateService:
                 c.Series(
                     key="tavg",
                     name="Tavg",
+                    **self.ctx.col_source("tavg"),
                     kind="line",
                     axis=0,
                     color=OBSERVED,
@@ -358,6 +361,7 @@ class ClimateService:
                 c.Series(
                     key="tmin",
                     name="Tmin",
+                    **self.ctx.col_source("tmin"),
                     kind="line",
                     axis=0,
                     color=SERIES[0],
@@ -420,6 +424,7 @@ class ClimateService:
                 c.Series(
                     key="annual",
                     name="Annual",
+                    **self.ctx.col_source(source_var if var in ("temperature", "rainfall") else ""),
                     kind="line",
                     color=OBSERVED,
                     symbol=True,
@@ -454,11 +459,28 @@ class ClimateService:
             x_type="time",
             axes=[c.Axis(unit="days", label="Spell length"), c.Axis(unit="mm", label="Max rainfall")],
             series=[
-                c.Series(key="cdd", name="CDD", kind="bar", axis=0, color=NEGATIVE, data=self.series(yrs, s["cdd"], 1)),
-                c.Series(key="cwd", name="CWD", kind="bar", axis=0, color=POSITIVE, data=self.series(yrs, s["cwd"], 1)),
+                c.Series(
+                    key="cdd",
+                    name="CDD",
+                    kind="bar",
+                    axis=0,
+                    color=NEGATIVE,
+                    data=self.series(yrs, s["cdd"], 1),
+                    **self.ctx.col_source("cdd"),
+                ),
+                c.Series(
+                    key="cwd",
+                    name="CWD",
+                    kind="bar",
+                    axis=0,
+                    color=POSITIVE,
+                    data=self.series(yrs, s["cwd"], 1),
+                    **self.ctx.col_source("cwd"),
+                ),
                 c.Series(
                     key="rx1day",
                     name="Rx1day",
+                    **self.ctx.col_source("rx1day"),
                     kind="line",
                     axis=1,
                     color=SERIES[3],
@@ -467,6 +489,7 @@ class ClimateService:
                 c.Series(
                     key="rx5day",
                     name="Rx5day",
+                    **self.ctx.col_source("rx5day"),
                     kind="line",
                     axis=1,
                     color=SERIES[4],
@@ -504,7 +527,14 @@ class ClimateService:
             x_type="time",
             axes=[c.Axis(unit=unit, label=axis_label)],
             series=[
-                c.Series(key="annual", name=label, kind="bar", color=SERIES[0], data=self.series(yrs, s, 1)),
+                c.Series(
+                    key="annual",
+                    name=label,
+                    kind="bar",
+                    color=SERIES[0],
+                    data=self.series(yrs, s, 1),
+                    **({} if from_daily else self.ctx.col_source(var)),
+                ),
                 c.Series(
                     key="trend",
                     name="Trend",

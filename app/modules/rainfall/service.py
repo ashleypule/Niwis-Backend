@@ -397,6 +397,7 @@ class RainfallService:
             c.Series(
                 key=var.replace("_", ""),
                 name=name,
+                **self.ctx.col_source(var),
                 kind="line",
                 color=SERIES[i % len(SERIES)],
                 dash=var.startswith("spei"),
@@ -482,6 +483,7 @@ class RainfallService:
                 c.Series(
                     key="cdd",
                     name="CDD (dry days)",
+                    **self.ctx.col_source("cdd"),
                     kind="bar",
                     color=NEGATIVE,
                     data=[[f"{y}-01-01", rnd(cdd.get(y), 1)] for y in years],
@@ -489,6 +491,7 @@ class RainfallService:
                 c.Series(
                     key="cwd",
                     name="CWD (wet days)",
+                    **self.ctx.col_source("cwd"),
                     kind="bar",
                     color=POSITIVE,
                     data=[[f"{y}-01-01", rnd(cwd.get(y), 1)] for y in years],
@@ -533,6 +536,7 @@ class RainfallService:
                 c.Series(
                     key="spi3",
                     name="SPI-3",
+                    **self.ctx.col_source("spi_3"),
                     kind="line",
                     axis=1,
                     color=SERIES[2],
@@ -541,6 +545,7 @@ class RainfallService:
                 c.Series(
                     key="spi12",
                     name="SPI-12",
+                    **self.ctx.col_source("spi_12"),
                     kind="line",
                     axis=1,
                     color=SERIES[3],
