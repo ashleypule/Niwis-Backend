@@ -32,7 +32,11 @@
       cache expires, ≤ pool − 1 queries at once (43 groups, ≈ 20 s on Supabase, then ms); one table scan per group
       instead of per column (DC32 temperature 4.2 s → 2.1 s cold). Test: after the pre-warm every group answers with
       the database switched off.
-- [ ] Docker / frontend / docs · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+- [x] **Verification** (2026-10-16): ruff + mypy clean; 753 tests (was 694); integration on Supabase 5 / 5;
+      `docs/VERIFICATION.md` 42 / 42; Docker rebuilt, healthy, 43 / 43 category groups warmed at startup; frontend
+      `fixtures:record` 1 052 fixtures (1 054 URLs, 2 share a key; no failures), `contract:check` 0 schema failures,
+      0 errors, 7 structural differences (was 8) — fixtures left uncommitted. Docs: CONTRACT_CHANGES §13,
+      FRONTEND_INTEGRATION §8 (duplicates per page, chart types, speed, #10–#12), DATA_GAPS §18, README. · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
       frontend / docs
 
 ### Database category view + spec-audit fixes (2026-10-15 / 16)
