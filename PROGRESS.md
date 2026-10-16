@@ -63,7 +63,8 @@ audit fixes B1–B14. One commit per step.
       streamflow, reservoir (withheld) and socio-economic null with reasons; original row ids kept, `stageId` / `order`.
 - [x] **B8 SSI**: one rule — computed from modelled runoff depth on the drought and runoff pages, labelled
       "SSI (modelled runoff)"; the DB column stays withheld. Tested: same value on both pages.
-- [ ] B9–B14 audit fixes
+- [x] **B9 Return periods** 2, 5, 10, 20, 50, 100 years (spec §7.2).
+- [ ] B10–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

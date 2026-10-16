@@ -41,7 +41,7 @@ from app.schemas import contract as c
 
 MODULE = "runoff"
 Q = "runoff_depth_daily"
-RETURN_PERIODS = [1.25, 2, 5, 10, 25, 50, 100]
+RETURN_PERIODS = [2, 5, 10, 20, 50, 100]  # spec §7.2 flood frequency analysis
 NO_STATIONS = "No gauging-station data in the database (runoff is modelled per district municipality)"
 DRIVER_VAR = Selector("var", ("rain", "aet", "sm"), "rain")
 TOP_ORDER = Selector("order", ("highest", "lowest"), "highest")

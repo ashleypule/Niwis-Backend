@@ -157,3 +157,10 @@ async def test_by_wma_flagged(client: httpx.AsyncClient) -> None:
 async def test_entities(client: httpx.AsyncClient) -> None:
     assert (await client.get(f"{B}/entities")).json()["total"] == 52
     assert (await client.get(f"{B}/entities/NOPE")).status_code == 404
+
+
+def test_flood_frequency_uses_the_spec_return_periods() -> None:
+    """B9: spec §7.2 — 2, 5, 10, 20, 50 and 100-year return period flows (no 1.25 or 25)."""
+    from app.modules.runoff.service import RETURN_PERIODS
+
+    assert RETURN_PERIODS == [2, 5, 10, 20, 50, 100]

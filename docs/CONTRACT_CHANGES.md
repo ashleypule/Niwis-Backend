@@ -325,3 +325,8 @@ per calendar month, 2000–last full year) on **both** pages, labelled "SSI (mod
 `ssi_dimensionless` stays withheld everywhere (computed from the placeholder discharge). A null SSI says why
 (e.g. fewer than 10 calibration years). Labels change; keys do not.
 
+### 12.9 Flood-frequency return periods (B9)
+
+`runoff/timeseries?metric=flood-frequency`: the fit and confidence band are given at the spec §7.2 return periods
+**2, 5, 10, 20, 50, 100 years** (1.25 and 25 dropped).
+
