@@ -158,12 +158,17 @@ same chart. Do not merge groups into one chart.
 | --- | --- | --- |
 | `live` | Served from the column | Plot it. |
 | `withheld` | Not served: placeholder, failed plausibility check, or a table under review — `reason` says which | List the column with its reason; its series is all-null with an `unavailable` entry (`series.<column>`). |
-| `duplicate` | The same values as another column (`duplicateOf`) | List it ("same as …"); it is not in any group and cannot be requested. |
+| `duplicate` | The same values as another column (`duplicateOf`) **that this page also shows** | List it ("same as …"); it is not in any group on this page and cannot be requested here. On a page that does not show its twin the column is `live`, in a group, with `note` "Same values as …" and `duplicateOf` kept. |
 
-Today: 151 columns, 63 live, 59 withheld, 29 duplicate, in 71 groups (`docs/CATEGORY_CATALOGUE.md`). Monthly and
-annual values the database repeats on daily rows are read once per period; incomplete months / years are never served;
-daily groups longer than 2 000 points come back as monthly means (`note` says so). Volumes, flows and areas are summed
-over the scope's districts (all needed); everything else is an area-weighted mean (≥ 95 % of the area).
+Today: 151 columns, 62 live, 60 withheld, 29 duplicate; 105 chart groups over the five pages (`docs/CATEGORY_CATALOGUE.md`). Groups are **per page** (a page may show duplicates another page hides): always use the `groups` and `path`s of the page's own `/categories`. Monthly and annual values the database repeats on daily rows are read once per period; incomplete months / years are never served; daily groups longer than 2 000 points come back as monthly means (`note` says so). Volumes, flows and areas are summed over the scope's districts (all needed); everything else is an area-weighted mean (≥ 95 % of the area). A column whose early rows are a fill is served from its first real period (satellite soil moisture from Mar 2015; the variable's `note` says so).
+
+### Recommended chart type
+
+Each variable has `chart`: `bar` (totals and counts: rainfall amounts, seasonal and monthly totals, R10mm / CDD days, volumes, degree-day sums), `diverging-bar` (anomalies: bars around 0) or `line` (states and indices: temperatures, humidity, soil moisture, SPI / SPEI / RAI, NDVI …). Each group has `chart` — the members' common type, `band` when it holds a min / max pair (then `band: [min column, max column]`, e.g. Tmin / Tmax: draw the band between them, other columns as lines), or `mixed` (draw each series by its own `chart`). Category series carry `chart` and `kind: "bar"` for bar types; the SeriesSet carries the group's `chart` / `band`.
+
+### Speed
+
+Every group of every page is pre-loaded at startup for the default request (national, `period=12M`, `vars=all`) and kept warm, so the first view of a page answers from cache (a few ms per chart). Other scopes are computed on demand in one table scan per group (≈ 2 s cold for a daily group, then cached for an hour).
 
 ### Contract changes for the frontend step
 
@@ -196,6 +201,12 @@ All additions unless marked; details in `docs/CONTRACT_CHANGES.md` §11–§12.
 14. **Sources table**: TAMSAT cadence `monthly`.
 15. **Withheld after the plausibility checks** (values → null + reason): dam storage, % FSC, inflow, outflow
     (Dam Storage KPI null, dam-flows → 501), solar radiation, GRACE, the `4_3` record statistics. Show the reason.
+16. **Duplicates per page** (changed, 2026-10-16): see Status values; groups differ per page.
+17. **`chart`** on variables, groups, series and series sets; `kind: "bar"` for bar types (BACKEND_ISSUES #8).
+18. **No null `asOf` / `periodEnd`** anywhere (they are omitted; #10).
+19. **`source: ["table.column"]`** on summary series that plot one stored column (#11).
+20. **Vegetation classes** Excellent / Good / Fair / Poor / Very Poor (#12): `normalizeVegClasses()` can go.
+21. **SGI withheld** (frozen since Sep 2024): SGI KPI null, `gw-sgi` → 501, cascade groundwater stage null; satellite soil moisture served from Mar 2015 (labelled 2015–2025).
 
 ## 9. Checklist
 
