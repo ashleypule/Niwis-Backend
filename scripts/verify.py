@@ -107,6 +107,65 @@ def at_as_of(b: Any) -> Any:
     return next(p[1] for s in b["series"] for p in s["data"] if p[0] == b["asOf"] and p[1] is not None)
 
 
+def _spec_class(v: float) -> str:
+    """Spec §3.4 class of an SPI value (rounded to 2 dp, <= as published) — written here, not imported."""
+    r = round(v + 0.0, 2)
+    for lim, cls in ((-2.0, "D4"), (-1.6, "D3"), (-1.3, "D2"), (-0.8, "D1"), (-0.5, "D0")):
+        if r <= lim:
+            return cls
+    return "None"
+
+
+def _severe_share_year(rows: list[tuple[Any, ...]]) -> float:
+    """(district, month, SPI-3) rows of one year → mean over the 12 months of the % of national area in D2–D4."""
+    from app.core import districts
+
+    areas = get_spatial().district_areas() or {}
+    by_month: dict[Any, list[tuple[float, str]]] = {}
+    for name, month, v in rows:
+        d = districts.resolve(name)
+        if d and v is not None:
+            by_month.setdefault(month, []).append((areas[d.code], _spec_class(float(v))))
+    shares = [
+        sum(a for a, c in xs if c in ("D2", "D3", "D4")) / sum(a for a, _ in xs) * 100 for xs in by_month.values()
+    ]
+    assert len(shares) == 12
+    return round(sum(shares) / 12, 1)
+
+
+def _headline_rank(province: str | None) -> Callable[[list[tuple[Any, ...]]], Any]:
+    """(district, SPI-6) rows → rank of the worst class that, with all worse classes, covers ≥ 20 % of the area."""
+
+    def f(rows: list[tuple[Any, ...]]) -> Any:
+        from app.core import districts
+
+        areas = get_spatial().district_areas() or {}
+        got: dict[str, float] = {}
+        for name, v in rows:
+            d = districts.resolve(name)
+            if d and v is not None and (province is None or d.province == province):
+                got[_spec_class(float(v))] = got.get(_spec_class(float(v)), 0.0) + areas[d.code]
+        total, cum = sum(got.values()), 0.0
+        for rank, cls in ((5, "D4"), (4, "D3"), (3, "D2"), (2, "D1"), (1, "D0")):
+            cum += got.get(cls, 0.0)
+            if cum / total * 100 >= 20:
+                return rank
+        return 0
+
+    return f
+
+
+def _flow_m3s(code: str) -> Callable[[list[tuple[Any, ...]]], Any]:
+    """Mean daily model volume (m³/day, 6 500 km² basis) → depth (mm/day) × real area → m³/s."""
+
+    def f(rows: list[tuple[Any, ...]]) -> Any:
+        areas = get_spatial().district_areas() or {}
+        depth_mm = float(rows[0][0]) / 6.5e9 * 1000
+        return round(depth_mm * areas[code] * 1000 / 86400, 2)
+
+    return f
+
+
 LATEST_COMPLETE_MONTH = (
     """(date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master"))"""
     """ - interval '1 month')::date"""
@@ -439,6 +498,91 @@ SELECT CASE WHEN v <= -2.0 THEN 100 WHEN v <= -1.6 THEN 80 WHEN v <= -1.3 THEN 6
         """SELECT count(DISTINCT round(v::numeric, 3)) FROM (SELECT date, sum(dam_storage_million_m3) AS v
 FROM hydrological_drought_master WHERE date >= '2021-12-01' GROUP BY 1) s""",
         expect_null=lambda v: v == 1,
+    ),
+    Check(
+        "categories",
+        "Rainfall category: core-rainfall-variables / Seasonal_Total_JFM_mm, Alfred Nzo (DC44), 2025 — the stored column",
+        "/api/v1/rainfall/category/core-rainfall-variables/seasonal-total-mm?vars=Seasonal_Total_JFM_mm&municipality=DC44",
+        series_at("Seasonal_Total_JFM_mm", "2025-01-01"),
+        """SELECT round(max("Seasonal_Total_JFM_mm")::numeric, 2) FROM "6.1_core_rainfall_variables_master"
+WHERE "District_Name" = 'Alfred Nzo' AND "Year" = 2025""",
+        tol=0.005,
+    ),
+    Check(
+        "categories",
+        "Drought category: rainfall-derived-drought-indices / RAI_Rainfall_Anomaly_Index, Cape Town, latest complete month",
+        "/api/v1/drought/category/rainfall-derived-drought-indices/spi-rai-index?vars=RAI_Rainfall_Anomaly_Index"
+        "&municipality=CPT",
+        series_last("RAI_Rainfall_Anomaly_Index"),
+        f"""SELECT round("RAI_Rainfall_Anomaly_Index"::numeric, 2) FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE "District_Name" = 'City of Cape Town' AND make_date("Year"::int, "Month"::int, 1) = {LATEST_COMPLETE_MONTH}""",
+        tol=0.005,
+    ),
+    Check(
+        "categories",
+        "Climate category: wet-dry-spells / R10mm_Days, KwaZulu-Natal (area-weighted from 11 districts), 2025",
+        "/api/v1/climate/category/wet-dry-spells/cwd-cdd-r10mm-r20mm-days?vars=R10mm_Days&province=KZN",
+        series_at("R10mm_Days", "2025-01-01"),
+        """SELECT "District_Name", "R10mm_Days" FROM "4_2_wet_dry_spells_master" WHERE "Year" = 2025""",
+        tol=0.005,
+        sql_post=lambda rows: round(_province_weighted(rows, "KZN"), 2),
+    ),
+    Check(
+        "categories",
+        "Vegetation category: satellite-remote-sensing / vhi, Cape Town, Dec 2025",
+        "/api/v1/vegetation/category/satellite-remote-sensing/vci-tci-vhi-pct?vars=vhi&municipality=CPT",
+        series_at("vhi", "2025-12-01"),
+        """SELECT round(vhi::numeric, 1) FROM satellite_remote_sensing WHERE district_name = 'cape town'
+AND date = '2025-12-01'""",
+    ),
+    Check(
+        "categories",
+        "Runoff category: runoff-variables / Soil_Moisture_Prior_m3m3, Alfred Nzo (DC44), 15 Jul 2026 (daily)",
+        "/api/v1/runoff/category/runoff-variables/soil-moisture-prior-m3-m3?municipality=DC44",
+        series_at("Soil_Moisture_Prior_m3m3", "2026-07-15"),
+        """SELECT round("Soil_Moisture_Prior_m3m3"::numeric, 3) FROM runoff_variables_master
+WHERE "District_Name" = 'Alfred Nzo' AND "Date" = '2026-07-15'""",
+        tol=0.0005,
+    ),
+    Check(
+        "audit",
+        "B3 Area in severe drought or worse (D2–D4, SPI-3 ≤ −1.3), national, 2019 — mean of the monthly area shares",
+        "/api/v1/climate/timeseries?metric=drought-frequency",
+        lambda b: round(sum(series_at(k, "2019-01-01")(b) for k in ("d2", "d3", "d4")), 1),
+        """SELECT "District_Name", "Month", "SPI_3_Short_Term_Agricultural_Drought"
+FROM "6.2_rainfall_derived_drought_indices_master" WHERE "Year" = 2019""",
+        tol=0.25,  # three values rounded to 0.1 each
+        sql_post=_severe_share_year,
+    ),
+    Check(
+        "audit",
+        "B1 Discharge for entityId=DC44 (Alfred Nzo): monthly mean derived flow, Aug 2026 — the district, not the nation",
+        "/api/v1/runoff/timeseries?metric=discharge&entityId=DC44",
+        series_at("monthly", "2026-08-01"),
+        """SELECT avg("Daily_Surface_Runoff_Volume_m3_day") FROM runoff_variables_master
+WHERE "District_Name" = 'Alfred Nzo' AND "Date" BETWEEN '2026-08-01' AND '2026-08-31'""",
+        tol=0.011,
+        sql_post=_flow_m3s("DC44"),
+    ),
+    Check(
+        "audit",
+        "B4 Drought headline class, KwaZulu-Natal (rank: None 0 … D4 5) — worst class covering ≥ 20 % of the area",
+        "/api/v1/drought/summary?province=KZN",
+        kpi("class"),
+        f"""SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE make_date("Year"::int, "Month"::int, 1) = {LATEST_COMPLETE_MONTH}""",
+        tol=0,
+        sql_post=_headline_rank("KZN"),
+    ),
+    Check(
+        "audit",
+        "B4 Drought headline class, national (rank) — worst class covering ≥ 20 % of the area",
+        "/api/v1/drought/summary?period=12M",
+        kpi("class"),
+        f"""SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE make_date("Year"::int, "Month"::int, 1) = {LATEST_COMPLETE_MONTH}""",
+        tol=0,
+        sql_post=_headline_rank(None),
     ),
 ]
 

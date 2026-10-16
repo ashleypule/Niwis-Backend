@@ -4,7 +4,100 @@
 > value from the API and recomputes it with independent SQL. Area weights for province values come from
 > `reference/geo/districts.json` (the only non-SQL input).
 
-## climate — 2026-10-15
+## audit — 2026-10-16
+
+### ✅ B3 Area in severe drought or worse (D2–D4, SPI-3 ≤ −1.3), national, 2019 — mean of the monthly area shares
+
+- API: `GET /api/v1/climate/timeseries?metric=drought-frequency` → **13.1**
+- SQL result: **13.1** (tolerance ± 0.25)
+
+```sql
+SELECT "District_Name", "Month", "SPI_3_Short_Term_Agricultural_Drought"
+FROM "6.2_rainfall_derived_drought_indices_master" WHERE "Year" = 2019
+```
+
+### ✅ B1 Discharge for entityId=DC44 (Alfred Nzo): monthly mean derived flow, Aug 2026 — the district, not the nation
+
+- API: `GET /api/v1/runoff/timeseries?metric=discharge&entityId=DC44` → **41.9**
+- SQL result: **41.9** (tolerance ± 0.011)
+
+```sql
+SELECT avg("Daily_Surface_Runoff_Volume_m3_day") FROM runoff_variables_master
+WHERE "District_Name" = 'Alfred Nzo' AND "Date" BETWEEN '2026-08-01' AND '2026-08-31'
+```
+
+### ✅ B4 Drought headline class, KwaZulu-Natal (rank: None 0 … D4 5) — worst class covering ≥ 20 % of the area
+
+- API: `GET /api/v1/drought/summary?province=KZN` → **2.0**
+- SQL result: **2** (tolerance ± 0)
+
+```sql
+SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE make_date("Year"::int, "Month"::int, 1) = (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date
+```
+
+### ✅ B4 Drought headline class, national (rank) — worst class covering ≥ 20 % of the area
+
+- API: `GET /api/v1/drought/summary?period=12M` → **0.0**
+- SQL result: **0** (tolerance ± 0)
+
+```sql
+SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE make_date("Year"::int, "Month"::int, 1) = (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date
+```
+
+## categories — 2026-10-16
+
+### ✅ Rainfall category: core-rainfall-variables / Seasonal_Total_JFM_mm, Alfred Nzo (DC44), 2025 — the stored column
+
+- API: `GET /api/v1/rainfall/category/core-rainfall-variables/seasonal-total-mm?vars=Seasonal_Total_JFM_mm&municipality=DC44` → **497.63**
+- SQL result: **497.63** (tolerance ± 0.005)
+
+```sql
+SELECT round(max("Seasonal_Total_JFM_mm")::numeric, 2) FROM "6.1_core_rainfall_variables_master"
+WHERE "District_Name" = 'Alfred Nzo' AND "Year" = 2025
+```
+
+### ✅ Drought category: rainfall-derived-drought-indices / RAI_Rainfall_Anomaly_Index, Cape Town, latest complete month
+
+- API: `GET /api/v1/drought/category/rainfall-derived-drought-indices/spi-rai-index?vars=RAI_Rainfall_Anomaly_Index&municipality=CPT` → **-1.99**
+- SQL result: **-1.99** (tolerance ± 0.005)
+
+```sql
+SELECT round("RAI_Rainfall_Anomaly_Index"::numeric, 2) FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE "District_Name" = 'City of Cape Town' AND make_date("Year"::int, "Month"::int, 1) = (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date
+```
+
+### ✅ Climate category: wet-dry-spells / R10mm_Days, KwaZulu-Natal (area-weighted from 11 districts), 2025
+
+- API: `GET /api/v1/climate/category/wet-dry-spells/cwd-cdd-r10mm-r20mm-days?vars=R10mm_Days&province=KZN` → **35.59**
+- SQL result: **35.59** (tolerance ± 0.005)
+
+```sql
+SELECT "District_Name", "R10mm_Days" FROM "4_2_wet_dry_spells_master" WHERE "Year" = 2025
+```
+
+### ✅ Vegetation category: satellite-remote-sensing / vhi, Cape Town, Dec 2025
+
+- API: `GET /api/v1/vegetation/category/satellite-remote-sensing/vci-tci-vhi-pct?vars=vhi&municipality=CPT` → **71.2**
+- SQL result: **71.2** (tolerance ± 0.05)
+
+```sql
+SELECT round(vhi::numeric, 1) FROM satellite_remote_sensing WHERE district_name = 'cape town'
+AND date = '2025-12-01'
+```
+
+### ✅ Runoff category: runoff-variables / Soil_Moisture_Prior_m3m3, Alfred Nzo (DC44), 15 Jul 2026 (daily)
+
+- API: `GET /api/v1/runoff/category/runoff-variables/soil-moisture-prior-m3-m3?municipality=DC44` → **0.24**
+- SQL result: **0.240** (tolerance ± 0.0005)
+
+```sql
+SELECT round("Soil_Moisture_Prior_m3m3"::numeric, 3) FROM runoff_variables_master
+WHERE "District_Name" = 'Alfred Nzo' AND "Date" = '2026-07-15'
+```
+
+## climate — 2026-10-16
 
 ### ✅ Hot days (Tmax > 35 °C), Vhembe (DC34), last full year — map layer hot-days vs count of daily Tmax > 35 °C
 
@@ -52,7 +145,7 @@ SELECT round(avg(a)::numeric, 2) FROM (SELECT a FROM m
   WHERE ym < (SELECT left(max("Date"), 7) FROM "6.1_core_rainfall_variables_master") ORDER BY ym DESC LIMIT 12) s
 ```
 
-## drought — 2026-10-15
+## drought — 2026-10-16
 
 ### ✅ SPI-3, KwaZulu-Natal, latest complete month — area-weighted from the 11 KZN districts
 
@@ -64,17 +157,14 @@ SELECT "District_Name", "SPI_3_Short_Term_Agricultural_Drought" FROM "6.2_rainfa
 WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month'
 ```
 
-### ✅ Dam storage, national, latest month (% FSC) — Σ volume / Σ capacity, capacity = volume / %FSC × 100 per district
+### ✅ Dam storage, national (% FSC) — withheld: null while national storage stays frozen since Dec 2021 (SQL = number of distinct national totals since then; 1 = frozen)
 
-- API: `GET /api/v1/drought/summary` → **63.6**
-- SQL result: **63.6** (tolerance ± 0.05)
+- API: `GET /api/v1/drought/summary` → **None**
+- SQL result: **1** (tolerance ± 0.05)
 
 ```sql
-WITH cap AS (SELECT district_name, percentile_cont(0.5) WITHIN GROUP (ORDER BY dam_storage_million_m3 / dam_level_pct_fsc * 100) AS fsc
-             FROM hydrological_drought_master WHERE dam_level_pct_fsc > 0.5 GROUP BY 1),
-     cur AS (SELECT district_name, dam_storage_million_m3 AS v FROM hydrological_drought_master
-             WHERE date = (SELECT max(date) FROM hydrological_drought_master))
-SELECT round((sum(cur.v) / sum(cap.fsc) * 100)::numeric, 1) FROM cur JOIN cap USING (district_name)
+SELECT count(DISTINCT round(v::numeric, 3)) FROM (SELECT date, sum(dam_storage_million_m3) AS v
+FROM hydrological_drought_master WHERE date >= '2021-12-01' GROUP BY 1) s
 ```
 
 ### ✅ VCI, Namakwa (DC6), latest month — map layer vci (satellite_remote_sensing)
@@ -101,7 +191,7 @@ WITH cur AS (SELECT date, surface_soil_moisture AS v FROM satellite_remote_sensi
 SELECT round(((v - n) / n * 100)::numeric, 1) FROM cur, clim
 ```
 
-## fixes — 2026-10-15
+## fixes — 2026-10-16
 
 ### ✅ #6 Seasonal change, Namakwa (DC6), 2001–2020 DJF mean temperature (°C) — mean of monthly mean Tavg
 
@@ -226,20 +316,17 @@ SELECT CASE WHEN v <= -2.0 THEN 100 WHEN v <= -1.6 THEN 80 WHEN v <= -1.3 THEN 6
             WHEN v <= -0.8 THEN 40 WHEN v <= -0.5 THEN 20 ELSE 0 END FROM s
 ```
 
-### ✅ #2 Drought cascade, national: hydrological valueNum = Σ volume / Σ capacity (% FSC), latest month
+### ✅ #2 Drought cascade, national: hydrological stage null — reservoir columns withheld (storage frozen since Dec 2021; SQL = distinct national totals since then)
 
-- API: `GET /api/v1/drought/table?metric=cascade` → **63.6**
-- SQL result: **63.6** (tolerance ± 0.05)
+- API: `GET /api/v1/drought/table?metric=cascade` → **None**
+- SQL result: **1** (tolerance ± 0.05)
 
 ```sql
-WITH cap AS (SELECT district_name, percentile_cont(0.5) WITHIN GROUP (ORDER BY dam_storage_million_m3 / dam_level_pct_fsc * 100) AS fsc
-             FROM hydrological_drought_master WHERE dam_level_pct_fsc > 0.5 GROUP BY 1),
-     cur AS (SELECT district_name, dam_storage_million_m3 AS v FROM hydrological_drought_master
-             WHERE date = (SELECT max(date) FROM hydrological_drought_master))
-SELECT round((sum(cur.v) / sum(cap.fsc) * 100)::numeric, 1) FROM cur JOIN cap USING (district_name)
+SELECT count(DISTINCT round(v::numeric, 3)) FROM (SELECT date, sum(dam_storage_million_m3) AS v
+FROM hydrological_drought_master WHERE date >= '2021-12-01' GROUP BY 1) s
 ```
 
-## rainfall — 2026-10-15
+## rainfall — 2026-10-16
 
 ### ✅ Total rainfall, last 12 months, City of Cape Town (mm)
 
@@ -301,7 +388,7 @@ SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainf
 WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month'
 ```
 
-## runoff — 2026-10-15
+## runoff — 2026-10-16
 
 ### ✅ Runoff depth, last 12 months, City of Cape Town (mm) — model volume / 6 500 km²
 
@@ -345,7 +432,7 @@ SELECT round((sum("Baseflow_Component_m3s") * 86400 / sum("Daily_Surface_Runoff_
 FROM runoff_variables_master WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)
 ```
 
-## vegetation — 2026-10-15
+## vegetation — 2026-10-16
 
 ### ✅ NDVI, Western Cape, latest month — area-weighted from the 6 WC districts (satellite_remote_sensing)
 
