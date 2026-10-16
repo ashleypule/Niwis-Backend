@@ -358,3 +358,14 @@ database repeats on every daily row count once per period. TAMSAT is now **month
 per dekad, one value per month)"); it was listed as daily. The spec (§6.1) expects a dekadal product; the database holds
 one value per month (DATA_GAPS §15).
 
+## 13. Category-chart review fixes (2026-10-16)
+
+### 13.1 Duplicates per page
+
+A `duplicate` column is hidden on a page only when the column it duplicates is shown on the **same** page (its table is
+in that page's `category_modules`). On every other page it is served as a normal **live** column in its own table's
+chart groups, with `note` "Same values as <table.column>" and `duplicateOf` kept. Groups (ids, labels, members,
+`defaultVisible`) are therefore per page: always take them from the page's `/categories` (`groups[].path`), never
+from another page. Example: the Drought page now charts `meteorological_drought_master`'s rainfall and temperature
+columns (6.1 and 4_1 are not on that page), but not its SPI (6.2 is). `counts` are per page.
+

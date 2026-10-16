@@ -24,7 +24,7 @@ def entity_endpoints() -> list[tuple[str, dict[str, str]]]:
     for module in SERVICE_MODULES:
         for c in cat.for_module(module):
             live = {x.column for x in c.columns if x.status == "live"}
-            g = next((g for g in c.groups if live & set(g.columns)), None)
+            g = next((g for g in c.groups_for(module) if live & set(g.columns)), None)
             if g is not None:
                 out.append((f"/api/v1/{module}/category/{c.id}/{g.id}", {}))
                 break

@@ -17,7 +17,11 @@
       Sep 2024 (and twin district series) → withheld (KPI, groundwater chart → 501, cascade stage null with reason);
       satellite soil moisture a constant fill before Mar 2015 → served from Mar 2015 (registry `valid_from`, used by
       every loader and the category view; climatology labelled 2015–2025). All other live columns pass.
-- [ ] Item 1 duplicates per page · Item 3 chart types · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+- [x] **Item 1 Duplicates per page**: hidden only where the canonical column's table is on the same page;
+      elsewhere live with "Same values as …". The catalogue has a view per page (`pages`: groups + shown duplicates;
+      105 groups over all pages). Drought page: meteorological rainfall + temperature charts back. Test: every
+      registry variable present in a page's tables has a live chart on that page.
+- [ ] Item 3 chart types · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
       frontend / docs
 
 ### Database category view + spec-audit fixes (2026-10-15 / 16)

@@ -159,7 +159,7 @@ def test_status_follows_the_registry() -> None:
             elif col.role == "withheld":
                 assert x.status == "withheld" and x.reason == col.reason
             elif col.role == "duplicate":
-                assert x.status == "duplicate" and x.group is None and x.duplicate_of
+                assert x.status == "duplicate" and x.duplicate_of
                 t, _, col_name = x.duplicate_of.rpartition(".")
                 twin = next(k for k in CAT.categories if k.table == t).column(col_name)
                 assert twin is not None and twin.status == "live", x.duplicate_of
@@ -207,7 +207,7 @@ def test_new_columns_and_tables_are_picked_up_without_code_changes() -> None:
     new = next(c for c in cat.categories if c.table == table).column("Daily_Rainfall_Max_mm_h")
     assert new is not None
     assert (new.label, new.status, new.reason) == ("Daily Rainfall Max (mm/h)", "withheld", NEW_COLUMN)
-    assert new.group is not None
+    assert next(c for c in cat.categories if c.table == table).group_of("rainfall", new.column) is not None
     assert "13_new_quality_master" in [u.table for u in cat.unregistered]
 
 
@@ -224,7 +224,7 @@ def test_registry_column_missing_from_database_fails() -> None:
 def test_axis_rule_one_unit_per_group() -> None:
     for c in CAT.categories:
         cols = {x.column: x for x in c.columns}
-        for g in c.groups:
+        for g in (g for p in c.pages for g in p.groups):
             members = [cols[k] for k in g.columns]
             assert len({m.unit for m in members}) == 1, (c.table, g.id)  # same unit → one axis
             assert len({m.resolution for m in members}) == 1, (c.table, g.id)
@@ -236,35 +236,70 @@ def test_axis_rule_one_unit_per_group() -> None:
 
 def test_ndvi_and_vci_never_share_an_axis() -> None:
     sat = next(c for c in CAT.categories if c.table == "satellite_remote_sensing")
-    by_col = {x.column: x.group for x in sat.columns}
-    assert by_col["ndvi"] != by_col["vci"] and by_col["vci"] == by_col["vhi"]
-    ndvi, vci = sat.group(str(by_col["ndvi"])), sat.group(str(by_col["vci"]))
-    assert ndvi is not None and vci is not None and (ndvi.unit, vci.unit) == ("index", "%")
+    for module in sat.modules:
+        ndvi, vci, vhi = (sat.group_of(module, k) for k in ("ndvi", "vci", "vhi"))
+        assert ndvi is not None and vci is not None and ndvi != vci and vci == vhi
+        assert (ndvi.unit, vci.unit) == ("index", "%")
 
 
-def test_every_charted_column_is_in_one_group() -> None:
+def test_every_charted_column_is_in_one_group_per_page() -> None:
     for c in CAT.categories:
-        in_groups = Counter(k for g in c.groups for k in g.columns)
-        assert all(n == 1 for n in in_groups.values()), c.table
-        charted = {x.column for x in c.columns if x.status != "duplicate"}
-        assert set(in_groups) == charted, c.table
-        assert all((x.group is not None) == (x.status != "duplicate") for x in c.columns)
-        assert {x.column for x in c.columns if x.default_visible} == {k for g in c.groups for k in g.default_visible}
+        assert [p.module for p in c.pages] == c.modules
+        for p in c.pages:
+            in_groups = Counter(k for g in p.groups for k in g.columns)
+            assert all(n == 1 for n in in_groups.values()), (c.table, p.module)
+            charted = {x.column for x in c.columns if x.status != "duplicate" or x.column in p.shown_duplicates}
+            assert set(in_groups) == charted, (c.table, p.module)
+
+
+def test_duplicates_hidden_only_where_their_canonical_table_is_on_the_page() -> None:
+    on_page = {m: {k.table for k in CAT.for_module(m)} for c in CAT.categories for m in c.modules}
+    for c in CAT.categories:
+        for p in c.pages:
+            for x in c.columns:
+                if x.status != "duplicate":
+                    continue
+                canonical_here = str(x.duplicate_of).rpartition(".")[0] in on_page[p.module]
+                assert (x.column in p.shown_duplicates) == (not canonical_here), (c.table, p.module, x.column)
+                assert c.status_on(p.module, x.column) == ("duplicate" if canonical_here else "live")
+
+
+def test_every_page_shows_every_variable_of_its_tables() -> None:
+    """No page loses a chart because a column's canonical table lives on another page: every registry variable with a
+    served column (live or duplicate) in a page's tables has a live column in a chart on that page."""
+    for m in sorted({m for c in CAT.categories for m in c.modules}):
+        present, shown = set(), set()
+        for c in CAT.for_module(m):
+            ds = REG.datasets[c.table]
+            for x in c.columns:
+                col = ds.columns.get(x.column)
+                if col is None or x.status == "withheld":
+                    continue
+                present.add(col.var)
+                if c.status_on(m, x.column) == "live" and c.group_of(m, x.column) is not None:
+                    shown.add(col.var)
+        assert present <= shown, (m, sorted(present - shown))
+    met = next(c for c in CAT.categories if c.table == "meteorological_drought_master")
+    labels = {g.label for g in met.groups_for("drought")}
+    assert {"Temperature (°C)", "Monthly Rainfall (mm/month)"} <= labels  # 4_1 and 6.1 are not on the drought page
 
 
 def test_default_visible_prefers_live_columns() -> None:
     for c in CAT.categories:
-        status = {x.column: x.status for x in c.columns}
-        for g in c.groups:
-            if any(status[k] == "live" for k in g.columns):
-                assert all(status[k] == "live" for k in g.default_visible), (c.table, g.id)
+        for p in c.pages:
+            status = {x.column: c.status_on(p.module, x.column) for x in c.columns}
+            for g in p.groups:
+                if any(status[k] == "live" for k in g.columns):
+                    assert all(status[k] == "live" for k in g.default_visible), (c.table, p.module, g.id)
 
 
 def test_meteorological_groups() -> None:
     met = next(c for c in CAT.categories if c.table == "meteorological_drought_master")
-    labels = {g.label for g in met.groups}
-    assert {"Evapotranspiration (mm/day)", "Relative Humidity (%)", "SPEI (index)"} <= labels
+    labels = {g.label for g in met.groups_for("drought")}
+    assert {"Daily Rainfall / PET / ET₀ (mm/day)", "Relative Humidity (%)", "SPEI (index)"} <= labels
     assert "Solar Radiation (W/m²)" in labels and "Wind Speed 2m (m/s)" in labels  # withheld, but listed with a reason
+    spi = [x.column for x in met.columns if x.column.startswith("spi_")]
+    assert spi and all(met.status_on("drought", k) == "duplicate" for k in spi)  # 6.2 is on the drought page
 
 
 @requires_db

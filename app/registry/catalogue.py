@@ -10,7 +10,9 @@ app/registry/catalogue.yaml; the API loads that file (`get_catalogue`). Rules (d
   day, id) are not variables;
 - status: `live` (canonical or plausibility-checked unused columns), `withheld` (registry reason; also raw columns the
   API only serves transformed, and new columns nobody has reviewed yet) or `duplicate` (of the canonical column).
-  Duplicates are listed but kept out of the charts;
+  A duplicate is hidden on a page only when its canonical column's table is on the same page
+  (`category_modules`); elsewhere it is served as a live column of its own table ("same values as …"), so no page loses
+  a variable because its canonical table lives on another page;
 - chart groups (axis rule): one unit per group. Unitless standardised indices (SPI, SPEI, SSI, SGI, RAI, SVI) share an
   `index` group, spectral indices (NDVI, NDWI, NDII, EVI, SAVI, MSAVI2) another, other unitless columns are grouped by
   their name prefix. Within a unit, columns of the same resolution share a group; a name prefix shared by several of
@@ -79,8 +81,6 @@ class CatColumn(_Strict):
     status: Status
     reason: str | None = None  # withheld: why
     duplicate_of: str | None = None  # duplicate: canonical table.column
-    group: str | None = None  # chart group id (None for duplicates)
-    default_visible: bool = False
     note: str | None = None  # registry note (method, caveat)
     unit_override: str | None = None  # why the unit differs from the column-name suffix
 
@@ -94,6 +94,14 @@ class CatGroup(_Strict):
     default_visible: list[str]
 
 
+class CatPage(_Strict):
+    """The table as one module page shows it: its chart groups there, and the duplicates served on that page."""
+
+    module: ModuleId
+    shown_duplicates: list[str]  # duplicates whose canonical table is not on this page: served as live columns
+    groups: list[CatGroup]
+
+
 class Category(_Strict):
     id: str
     table: str
@@ -102,14 +110,32 @@ class Category(_Strict):
     modules: list[ModuleId]
     resolution: TableResolution
     keys: list[str]
-    groups: list[CatGroup]
     columns: list[CatColumn]
+    pages: list[CatPage]
 
     def column(self, name: str) -> CatColumn | None:
         return next((c for c in self.columns if c.column == name), None)
 
-    def group(self, gid: str) -> CatGroup | None:
-        return next((g for g in self.groups if g.id == gid), None)
+    def page(self, module: str) -> CatPage:
+        p = next((p for p in self.pages if p.module == module), None)
+        if p is None:
+            raise KeyError(f"{self.table} is not on the {module} page")
+        return p
+
+    def groups_for(self, module: str) -> list[CatGroup]:
+        return self.page(module).groups
+
+    def group(self, gid: str, module: str) -> CatGroup | None:
+        return next((g for g in self.groups_for(module) if g.id == gid), None)
+
+    def status_on(self, module: str, column: str) -> Status:
+        """Status on a page: a duplicate whose canonical table is not on that page is live there."""
+        x = self.column(column)
+        assert x is not None
+        return "live" if column in self.page(module).shown_duplicates else x.status
+
+    def group_of(self, module: str, column: str) -> CatGroup | None:
+        return next((g for g in self.groups_for(module) if column in g.columns), None)
 
 
 class SchemaColumn(_Strict):
@@ -318,11 +344,9 @@ def _buckets(cols: list[CatColumn]) -> list[tuple[str | None, list[CatColumn]]]:
     return out
 
 
-def build_category(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> Category:
-    keys, cols = _columns(reg, ds, schema)
-    charted = [c for c in cols if c.status != "duplicate"]
+def _groups(charted: list[CatColumn]) -> list[CatGroup]:
+    """Chart groups for the columns a page charts (statuses as on that page)."""
     groups: list[CatGroup] = []
-    assign: dict[str, tuple[str, bool]] = {}
     for fam, members in _buckets(charted):
         label = group_name(members, fam)
         gid, n = slug(label), 2
@@ -340,14 +364,26 @@ def build_category(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> Ca
                 default_visible=default,
             )
         )
-        for c in members:
-            assign[c.column] = (gid, c.column in default)
-    final = [
-        c.model_copy(update={"group": assign[c.column][0], "default_visible": assign[c.column][1]})
-        if c.column in assign
-        else c
-        for c in cols
-    ]
+    return groups
+
+
+def build_category(
+    reg: Registry, ds: Dataset, schema: list[SchemaColumn], page_tables: dict[str, set[str]]
+) -> Category:
+    keys, cols = _columns(reg, ds, schema)
+    pages = []
+    for module in ds.category_modules:
+        shown = [
+            c.column
+            for c in cols
+            if c.status == "duplicate" and str(c.duplicate_of).rpartition(".")[0] not in page_tables[module]
+        ]
+        charted = [
+            c.model_copy(update={"status": "live"}) if c.column in shown else c
+            for c in cols
+            if c.status != "duplicate" or c.column in shown
+        ]
+        pages.append(CatPage(module=module, shown_duplicates=shown, groups=_groups(charted)))
     label = category_label(ds.table)
     return Category(
         id=slug(label),
@@ -357,8 +393,8 @@ def build_category(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> Ca
         modules=list(ds.category_modules),
         resolution=ds.time.resolution,
         keys=keys,
-        groups=groups,
-        columns=final,
+        columns=cols,
+        pages=pages,
     )
 
 
@@ -378,7 +414,11 @@ def build_catalogue(
     ]
     if missing or gone:
         raise ValueError(f"registry entries not in the database: {missing + gone}")
-    cats = [build_category(reg, ds, schema[ds.table]) for ds in reg.datasets.values()]
+    page_tables: dict[str, set[str]] = {}
+    for ds in reg.datasets.values():
+        for m in ds.category_modules:
+            page_tables.setdefault(m, set()).add(ds.table)
+    cats = [build_category(reg, ds, schema[ds.table], page_tables) for ds in reg.datasets.values()]
     ids = [c.id for c in cats]
     if len(set(ids)) != len(ids):
         raise ValueError(f"duplicate category ids: {ids}")

@@ -111,10 +111,22 @@ class CategoryService:
             )
         return cat
 
+    def view(self, cat: Category) -> list[CatColumn]:
+        """The table's columns as this page shows them: a duplicate whose canonical table is not on this page is a
+        live column here, noted "Same values as table.column"."""
+        shown = set(cat.page(self.module).shown_duplicates)
+        out = []
+        for x in cat.columns:
+            if x.column in shown:
+                note = f"Same values as {x.duplicate_of}" + (f"; {x.note}" if x.note else "")
+                x = x.model_copy(update={"status": "live", "note": note})
+            out.append(x)
+        return out
+
     def group(self, cat: Category, group_id: str) -> CatGroup:
-        g = cat.group(group_id)
+        g = cat.group(group_id, self.module)
         if g is None:
-            allowed = [x.id for x in cat.groups]
+            allowed = [x.id for x in cat.groups_for(self.module)]
             raise NotFound(f"Unknown group {group_id!r} in {cat.id}", issues=[{"param": "groupId", "allowed": allowed}])
         return g
 
@@ -135,15 +147,16 @@ class CategoryService:
                     f"Unknown column(s) {bad or [raw]} for group {g.id} of {cat.id}",
                     issues=[{"param": "vars", "invalid": bad, "allowed": [*g.columns, "all"]}],
                 )
-        cols = {x.column: x for x in cat.columns}
+        cols = {x.column: x for x in self.view(cat)}
         return [cols[n] for n in names]
 
     # ---------------------------------------------------------------- dates
 
     async def column_dates(self, cat: Category) -> dict[str, dt.date | None]:
-        """Newest raw period with a value, per live column, plus `""` = the table's newest record (one scan, cached)."""
+        """Newest raw period with a value per served column (live, or a duplicate a page may show), plus `""` = the
+        table's newest record (one scan, cached)."""
         ds = self.dataset(cat)
-        live = [x for x in cat.columns if x.status == "live"]
+        live = [x for x in cat.columns if x.status != "withheld"]
         p = _raw_period_sql(ds)
         exprs = [_value_sql(ds, x.column) if x.kind == "numeric" else ident(x.column) for x in live]
         filtered = (f"max({p}) FILTER (WHERE {e} IS NOT NULL) AS c{i}" for i, e in enumerate(exprs))
@@ -191,7 +204,9 @@ class CategoryService:
         for cat in self.catalogue.for_module(self.module):
             dates = await self.column_dates(cat)
             variables = []
-            for x in cat.columns:
+            cols = self.view(cat)
+            for x in cols:
+                g = cat.group_of(self.module, x.column)
                 a = self.as_of(x, dates) if x.status == "live" else None
                 extra: dict[str, Any] = {}
                 if a is not None:
@@ -207,18 +222,18 @@ class CategoryService:
                         status=x.status,
                         **({"reason": x.reason} if x.reason else {}),
                         **({"duplicate_of": x.duplicate_of} if x.duplicate_of else {}),
-                        **({"group": x.group} if x.group else {}),
-                        default_visible=x.default_visible,
+                        **({"group": g.id} if g else {}),
+                        default_visible=bool(g and x.column in g.default_visible),
                         source=f"{cat.table}.{x.column}",
                         **({"note": x.note} if x.note else {}),
                         **({"unit_override": x.unit_override} if x.unit_override else {}),
                         **extra,
                     )
                 )
-            live_dates = [(d, x.resolution) for x in cat.columns if x.status == "live" and (d := self.as_of(x, dates))]
+            live_dates = [(d, x.resolution) for x in cols if x.status == "live" and (d := self.as_of(x, dates))]
             t_as_of, t_res = max(live_dates) if live_dates else (None, "daily")
             res_t: Resolution = "monthly" if t_res == "monthly" else "annual" if t_res == "annual" else "daily"
-            counts = {s: sum(1 for x in cat.columns if x.status == s) for s in ("live", "withheld", "duplicate")}
+            counts = {s: sum(1 for x in cols if x.status == s) for s in ("live", "withheld", "duplicate")}
             tables.append(
                 c.CatalogueTable(
                     id=cat.id,
@@ -239,7 +254,7 @@ class CategoryService:
                             default_visible=list(g.default_visible),
                             path=f"/api/v1/{self.module}/category/{cat.id}/{g.id}",
                         )
-                        for g in cat.groups
+                        for g in cat.groups_for(self.module)
                     ],
                     variables=variables,
                 )

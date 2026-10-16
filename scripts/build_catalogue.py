@@ -77,9 +77,10 @@ def render_markdown(cat: Catalogue) -> str:
         "  `_pct` → %, …; table below), the label is the rest with underscores as spaces, words capitalised and acronyms",
         "  as written (`ET0` → ET₀). Names without a unit suffix have no unit, except the few overrides listed below.",
         "- **Status**: `live` = served; `withheld` = not served, with the reason (placeholders, failed plausibility",
-        "  checks, docs/DATA_GAPS.md); `duplicate` = identical to another column (named), listed but not charted so the",
-        "  same number never appears twice under two names. Key columns (district, date, year, month, day, id) are not",
-        "  variables.",
+        "  checks, docs/DATA_GAPS.md); `duplicate` = identical to another column (named). A duplicate is hidden on a",
+        "  page only when that page also shows the column it duplicates; on any other page it is served as a live",
+        '  column ("same values as …"), so no page loses a variable. Key columns (district, date, year, month, day, id)',
+        "  are not variables.",
         "- **Chart group**: columns that are drawn together. A group never mixes units (one axis); unitless standardised",
         "  indices (SPI, SPEI, SSI, SGI, RAI, SVI) share an index axis, spectral indices (NDVI, NDWI, …) another. Columns",
         "  marked ★ are shown by default; every other column of the group can be switched on.",
@@ -95,12 +96,12 @@ def render_markdown(cat: Catalogue) -> str:
         n = Counter(x.status for x in c.columns)
         lines.append(
             f"| [{c.label}](#{c.id}) (`{c.table}`) | §{c.spec or '—'} | {', '.join(c.modules)} | {n['live']} | "
-            f"{n['withheld']} | {n['duplicate']} | {len(c.groups)} |"
+            f"{n['withheld']} | {n['duplicate']} | {sum(len(p.groups) for p in c.pages)} |"
         )
     tot = Counter(x.status for c in cat.categories for x in c.columns)
     lines += [
         f"| **Total** | | | **{tot['live']}** | **{tot['withheld']}** | **{tot['duplicate']}** | "
-        f"**{sum(len(c.groups) for c in cat.categories)}** |",
+        f"**{sum(len(p.groups) for c in cat.categories for p in c.pages)}** |",
         "",
     ]
     for c in cat.categories:
@@ -112,13 +113,19 @@ def render_markdown(cat: Catalogue) -> str:
             f"Table `{c.table}` · id `{c.id}` · {c.resolution} · pages: {', '.join(c.modules)} · "
             f"{n['live']} live, {n['withheld']} withheld, {n['duplicate']} duplicate · keys: "
             + ", ".join(f"`{k}`" for k in c.keys),
-            "",
-            "| Chart group | id | Axis unit | Resolution | Columns (★ default) |",
-            "| --- | --- | --- | --- | --- |",
         ]
-        for g in c.groups:
-            cols = ", ".join(f"`{x}`" + (" ★" if x in g.default_visible else "") for x in g.columns)
-            lines.append(f"| {g.label} | `{g.id}` | {g.unit} | {g.resolution} | {cols} |")
+        for p in c.pages:
+            shown = ", ".join(f"`{x}`" for x in p.shown_duplicates)
+            lines += [
+                "",
+                f"**{p.module.capitalize()} page**" + (f" — duplicates shown here (live): {shown}" if shown else ""),
+                "",
+                "| Chart group | id | Axis unit | Resolution | Columns (★ default) |",
+                "| --- | --- | --- | --- | --- |",
+            ]
+            for g in p.groups:
+                cols = ", ".join(f"`{x}`" + (" ★" if x in g.default_visible else "") for x in g.columns)
+                lines.append(f"| {g.label} | `{g.id}` | {g.unit} | {g.resolution} | {cols} |")
         lines += [
             "",
             "| Column | Label | Unit | Resolution | Group | Status |",
@@ -128,14 +135,16 @@ def render_markdown(cat: Catalogue) -> str:
             if x.status == "withheld":
                 status = f"withheld — {_cell(x.reason)}"
             elif x.status == "duplicate":
-                status = f"duplicate of `{x.duplicate_of}`"
+                on = [p.module for p in c.pages if x.column in p.shown_duplicates]
+                status = f"duplicate of `{x.duplicate_of}`" + (f"; live on {', '.join(on)}" if on else "; hidden")
             else:
                 status = "live" + (f" — {_cell(x.note)}" if x.note else "")
             unit = (x.unit or "—") + (" ¹" if x.unit_override else "")
             kind = " (class)" if x.kind == "categorical" else ""
+            groups = [f"{p.module}: `{g.id}`" for p in c.pages if (g := c.group_of(p.module, x.column))]
             lines.append(
                 f"| `{x.column}` | {_cell(x.label)}{kind} | {unit} | {x.resolution} | "
-                f"{('`' + x.group + '`') if x.group else '—'} | {status} |"
+                f"{'; '.join(groups) or '—'} | {status} |"
             )
         lines.append("")
     lines += [
@@ -195,7 +204,8 @@ def main() -> int:
     n = Counter(x.status for c in cat.categories for x in c.columns)
     print(
         f"wrote {CATALOGUE_PATH.relative_to(ROOT)} and {DOC.relative_to(ROOT)}: {len(cat.categories)} categories, "
-        f"{sum(len(c.groups) for c in cat.categories)} chart groups, {dict(n)}, {len(cat.unregistered)} unregistered"
+        f"{sum(len(p.groups) for c in cat.categories for p in c.pages)} chart groups (all pages), {dict(n)}, "
+        f"{len(cat.unregistered)} unregistered"
     )
     return 0
 

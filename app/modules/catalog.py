@@ -74,11 +74,12 @@ async def requests(client: httpx.AsyncClient, scopes: list[dict[str, str]]) -> l
                 for variant, scope in product(list(selector_variants(sels.get((kind, key), ()))), scopes):
                     out.append((f"{base}/{kind}", {param: key, **variant, **scope}))
         out += [(f"{base}/categories", dict(scope)) for scope in scopes]
-    # database view: every chart group of every table with all its columns, under the table's first module page
+    # database view: every chart group of every table with all its columns, on every page that shows the table
     for cat in get_catalogue().categories:
-        for g in cat.groups:
-            path = f"/api/v1/{cat.modules[0]}/category/{cat.id}/{g.id}"
-            out += [(path, {"vars": "all", **scope}) for scope in scopes]
+        for module in cat.modules:
+            for g in cat.groups_for(module):
+                path = f"/api/v1/{module}/category/{cat.id}/{g.id}"
+                out += [(path, {"vars": "all", **scope}) for scope in scopes]
     return out
 
 

@@ -11,9 +11,10 @@
   `_pct` → %, …; table below), the label is the rest with underscores as spaces, words capitalised and acronyms
   as written (`ET0` → ET₀). Names without a unit suffix have no unit, except the few overrides listed below.
 - **Status**: `live` = served; `withheld` = not served, with the reason (placeholders, failed plausibility
-  checks, docs/DATA_GAPS.md); `duplicate` = identical to another column (named), listed but not charted so the
-  same number never appears twice under two names. Key columns (district, date, year, month, day, id) are not
-  variables.
+  checks, docs/DATA_GAPS.md); `duplicate` = identical to another column (named). A duplicate is hidden on a
+  page only when that page also shows the column it duplicates; on any other page it is served as a live
+  column ("same values as …"), so no page loses a variable. Key columns (district, date, year, month, day, id)
+  are not variables.
 - **Chart group**: columns that are drawn together. A group never mixes units (one axis); unitless standardised
   indices (SPI, SPEI, SSI, SGI, RAI, SVI) share an index axis, spectral indices (NDVI, NDWI, …) another. Columns
   marked ★ are shown by default; every other column of the group can be switched on.
@@ -24,31 +25,39 @@
 
 | Category (table) | Spec | Pages | Live | Withheld | Duplicate | Chart groups |
 | --- | --- | --- | ---: | ---: | ---: | --- |
-| [Meteorological Drought](#meteorological-drought) (`meteorological_drought_master`) | §3.1 | drought | 8 | 3 | 14 | 6 |
-| [Satellite Remote Sensing](#satellite-remote-sensing) (`satellite_remote_sensing`) | §3.2 | drought, vegetation | 9 | 1 | 0 | 6 |
-| [Hydrological Drought](#hydrological-drought) (`hydrological_drought_master`) | §3.3 | drought, runoff | 0 | 11 | 0 | 6 |
+| [Meteorological Drought](#meteorological-drought) (`meteorological_drought_master`) | §3.1 | drought | 8 | 3 | 14 | 12 |
+| [Satellite Remote Sensing](#satellite-remote-sensing) (`satellite_remote_sensing`) | §3.2 | drought, vegetation | 9 | 1 | 0 | 12 |
+| [Hydrological Drought](#hydrological-drought) (`hydrological_drought_master`) | §3.3 | drought, runoff | 0 | 11 | 0 | 12 |
 | [Temperature Change](#temperature-change) (`4_1_temperature_change_master`) | §4.1 | climate | 9 | 0 | 0 | 5 |
-| [Wet Dry Spells](#wet-dry-spells) (`4_2_wet_dry_spells_master`) | §4.2 | climate, rainfall | 8 | 0 | 0 | 3 |
-| [Mean Annual Precipitation](#mean-annual-precipitation) (`4_3_mean_annual_precipitation_master`) | §4.3 | climate, rainfall | 6 | 5 | 0 | 8 |
+| [Wet Dry Spells](#wet-dry-spells) (`4_2_wet_dry_spells_master`) | §4.2 | climate, rainfall | 8 | 0 | 0 | 6 |
+| [Mean Annual Precipitation](#mean-annual-precipitation) (`4_3_mean_annual_precipitation_master`) | §4.3 | climate, rainfall | 6 | 5 | 0 | 16 |
 | [Potential Evaporation Daily](#potential-evaporation-daily) (`4_4_potential_evaporation_daily_master`) | §4.4 | climate | 0 | 6 | 0 | 3 |
 | [Irrigation Demand Daily](#irrigation-demand-daily) (`4_5_irrigation_demand_daily_master`) | §4.5 | climate | 0 | 6 | 0 | 5 |
 | [Streamflow and Climate Linkage Annual](#streamflow-and-climate-linkage-annual) (`4_6_streamflow_and_climate_linkage_annual _master`) | §4.6 | climate | 0 | 6 | 0 | 4 |
 | [Primary Satellite Vegetation Variables SANSA](#primary-satellite-vegetation-variables-sansa) (`5.1_primary_satellite_vegetation_variables_sansa_master`) | §5.1 | vegetation | 0 | 14 | 0 | 5 |
-| [Meteorological Drivers SAWS](#meteorological-drivers-saws) (`5.2_meteorological_drivers_saws_master`) | §5.2 | vegetation | 1 | 0 | 10 | 1 |
+| [Meteorological Drivers SAWS](#meteorological-drivers-saws) (`5.2_meteorological_drivers_saws_master`) | §5.2 | vegetation | 1 | 0 | 10 | 5 |
 | [Core Rainfall Variables](#core-rainfall-variables) (`6.1_core_rainfall_variables_master`) | §6.1 | rainfall | 12 | 0 | 2 | 8 |
-| [Rainfall Derived Drought Indices](#rainfall-derived-drought-indices) (`6.2_rainfall_derived_drought_indices_master`) | §6.2 | rainfall, drought | 6 | 0 | 2 | 1 |
+| [Rainfall Derived Drought Indices](#rainfall-derived-drought-indices) (`6.2_rainfall_derived_drought_indices_master`) | §6.2 | rainfall, drought | 6 | 0 | 2 | 2 |
 | [Runoff Variables](#runoff-variables) (`runoff_variables_master`) | §7.1 | runoff | 3 | 8 | 1 | 10 |
-| **Total** | | | **62** | **60** | **29** | **71** |
+| **Total** | | | **62** | **60** | **29** | **105** |
 
 <a id="meteorological-drought"></a>
 ## Meteorological Drought · §3.1
 
 Table `meteorological_drought_master` · id `meteorological-drought` · daily · pages: drought · 8 live, 3 withheld, 14 duplicate · keys: `id`, `district_name`, `date`, `year`, `month`
 
+**Drought page** — duplicates shown here (live): `daily_rainfall_mm_day`, `monthly_rainfall_mm_month`, `rainfall_anomaly_mm`, `rainfall_anomaly_pct`, `rainfall_intensity_mm_h`, `tmin_c`, `tmax_c`, `tavg_c`, `temp_anomaly_c`
+
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
+| Daily Rainfall / PET / ET₀ (mm/day) | `daily-rainfall-pet-et0-mm-day` | mm/day | daily | `daily_rainfall_mm_day` ★, `pet_mm_day` ★, `et0_mm_day` ★ |
+| Monthly Rainfall (mm/month) | `monthly-rainfall-mm-month` | mm/month | monthly | `monthly_rainfall_mm_month` ★ |
 | Seasonal Rainfall (mm/season) | `seasonal-rainfall-mm-season` | mm/season | annual | `seasonal_rainfall_mm_season` ★ |
-| Evapotranspiration (mm/day) | `evapotranspiration-mm-day` | mm/day | daily | `pet_mm_day` ★, `et0_mm_day` ★ |
+| Rainfall Anomaly (mm) | `rainfall-anomaly-mm` | mm | monthly | `rainfall_anomaly_mm` ★ |
+| Rainfall Anomaly (%) | `rainfall-anomaly-pct` | % | monthly | `rainfall_anomaly_pct` ★ |
+| Rainfall Intensity (mm/h) | `rainfall-intensity-mm-h` | mm/h | daily | `rainfall_intensity_mm_h` ★ |
+| Temperature (°C) | `temperature-c` | °C | daily | `tmin_c` ★, `tmax_c` ★, `tavg_c` ★ |
+| Temp Anomaly (°C) | `temp-anomaly-c` | °C | monthly | `temp_anomaly_c` ★ |
 | Relative Humidity (%) | `relative-humidity-pct` | % | daily | `relative_humidity_pct` ★ |
 | Solar Radiation (W/m²) | `solar-radiation-w-m2` | W/m² | daily | `solar_radiation_wm2` ★ |
 | Wind Speed 2m (m/s) | `wind-speed-2m-m-s` | m/s | daily | `wind_speed_2m_ms` ★ |
@@ -56,36 +65,49 @@ Table `meteorological_drought_master` · id `meteorological-drought` · daily ·
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `daily_rainfall_mm_day` | Daily Rainfall (mm/day) | mm/day | daily | — | duplicate of `6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm` |
-| `monthly_rainfall_mm_month` | Monthly Rainfall (mm/month) | mm/month | monthly | — | duplicate of `6.1_core_rainfall_variables_master.Monthly_Total_Precipitation_mm` |
-| `seasonal_rainfall_mm_season` | Seasonal Rainfall (mm/season) | mm/season | annual | `seasonal-rainfall-mm-season` | withheld — holds the calendar-year total, not a season: one value per district-year (Alfred Nzo 2014 = 825.67 mm = sum of its 12 monthly totals, 31 Dec missing) |
-| `rainfall_anomaly_mm` | Rainfall Anomaly (mm) | mm | monthly | — | duplicate of `6.1_core_rainfall_variables_master.Monthly_Anomaly_mm` |
-| `rainfall_anomaly_pct` | Rainfall Anomaly (%) | % | monthly | — | duplicate of `6.1_core_rainfall_variables_master.Monthly_Anomaly_percent` |
-| `rainfall_intensity_mm_h` | Rainfall Intensity (mm/h) | mm/h | daily | — | duplicate of `6.1_core_rainfall_variables_master.Hourly_Rainfall_Intensity_mm_h` |
-| `tmin_c` | Tmin (°C) | °C | daily | — | duplicate of `4_1_temperature_change_master.Tmin_C` |
-| `tmax_c` | Tmax (°C) | °C | daily | — | duplicate of `4_1_temperature_change_master.Tmax_C` |
-| `tavg_c` | Tavg (°C) | °C | daily | — | duplicate of `4_1_temperature_change_master.Tavg_C` |
-| `temp_anomaly_c` | Temp Anomaly (°C) | °C | monthly | — | duplicate of `4_1_temperature_change_master.Temperature_Anomaly_C` |
-| `pet_mm_day` | PET (mm/day) | mm/day | daily | `evapotranspiration-mm-day` | live |
-| `et0_mm_day` | ET₀ (mm/day) | mm/day | daily | `evapotranspiration-mm-day` | live — plausible 1–7.4 mm/day (the 4_4 table's ET₀ is withheld) |
-| `relative_humidity_pct` | Relative Humidity (%) | % | daily | `relative-humidity-pct` | live |
-| `solar_radiation_wm2` | Solar Radiation (W/m²) | W/m² | daily | `solar-radiation-w-m2` | withheld — synthetic: one value per calendar day (365 distinct values), identical in all 52 districts and every year; peaks in April (247 W/m²) with the minimum in Sep–Oct (113 W/m²), where the Southern-Hemisphere maximum is in December |
-| `wind_speed_2m_ms` | Wind Speed 2m (m/s) | m/s | daily | `wind-speed-2m-m-s` | withheld — constant 2.5 m/s in every row |
-| `spi_1` | SPI 1 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_1_Meteorological_Drought_Onset` |
-| `spi_3` | SPI 3 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_3_Short_Term_Agricultural_Drought` |
-| `spi_6` | SPI 6 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_6_Medium_Term_Hydrological_Impacts` |
-| `spi_12` | SPI 12 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_12_Long_Term_Groundwater_Impacts` |
-| `spi_24` | SPI 24 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_24_Very_Long_Term_Drought` |
-| `spei_1` | SPEI 1 | — | monthly | `spei-index` | live |
-| `spei_3` | SPEI 3 | — | monthly | `spei-index` | live |
-| `spei_6` | SPEI 6 | — | monthly | `spei-index` | live |
-| `spei_12` | SPEI 12 | — | monthly | `spei-index` | live |
-| `spei_24` | SPEI 24 | — | monthly | `spei-index` | live |
+| `daily_rainfall_mm_day` | Daily Rainfall (mm/day) | mm/day | daily | drought: `daily-rainfall-pet-et0-mm-day` | duplicate of `6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm`; live on drought |
+| `monthly_rainfall_mm_month` | Monthly Rainfall (mm/month) | mm/month | monthly | drought: `monthly-rainfall-mm-month` | duplicate of `6.1_core_rainfall_variables_master.Monthly_Total_Precipitation_mm`; live on drought |
+| `seasonal_rainfall_mm_season` | Seasonal Rainfall (mm/season) | mm/season | annual | drought: `seasonal-rainfall-mm-season` | withheld — holds the calendar-year total, not a season: one value per district-year (Alfred Nzo 2014 = 825.67 mm = sum of its 12 monthly totals, 31 Dec missing) |
+| `rainfall_anomaly_mm` | Rainfall Anomaly (mm) | mm | monthly | drought: `rainfall-anomaly-mm` | duplicate of `6.1_core_rainfall_variables_master.Monthly_Anomaly_mm`; live on drought |
+| `rainfall_anomaly_pct` | Rainfall Anomaly (%) | % | monthly | drought: `rainfall-anomaly-pct` | duplicate of `6.1_core_rainfall_variables_master.Monthly_Anomaly_percent`; live on drought |
+| `rainfall_intensity_mm_h` | Rainfall Intensity (mm/h) | mm/h | daily | drought: `rainfall-intensity-mm-h` | duplicate of `6.1_core_rainfall_variables_master.Hourly_Rainfall_Intensity_mm_h`; live on drought |
+| `tmin_c` | Tmin (°C) | °C | daily | drought: `temperature-c` | duplicate of `4_1_temperature_change_master.Tmin_C`; live on drought |
+| `tmax_c` | Tmax (°C) | °C | daily | drought: `temperature-c` | duplicate of `4_1_temperature_change_master.Tmax_C`; live on drought |
+| `tavg_c` | Tavg (°C) | °C | daily | drought: `temperature-c` | duplicate of `4_1_temperature_change_master.Tavg_C`; live on drought |
+| `temp_anomaly_c` | Temp Anomaly (°C) | °C | monthly | drought: `temp-anomaly-c` | duplicate of `4_1_temperature_change_master.Temperature_Anomaly_C`; live on drought |
+| `pet_mm_day` | PET (mm/day) | mm/day | daily | drought: `daily-rainfall-pet-et0-mm-day` | live |
+| `et0_mm_day` | ET₀ (mm/day) | mm/day | daily | drought: `daily-rainfall-pet-et0-mm-day` | live — plausible 1–7.4 mm/day (the 4_4 table's ET₀ is withheld) |
+| `relative_humidity_pct` | Relative Humidity (%) | % | daily | drought: `relative-humidity-pct` | live |
+| `solar_radiation_wm2` | Solar Radiation (W/m²) | W/m² | daily | drought: `solar-radiation-w-m2` | withheld — synthetic: one value per calendar day (365 distinct values), identical in all 52 districts and every year; peaks in April (247 W/m²) with the minimum in Sep–Oct (113 W/m²), where the Southern-Hemisphere maximum is in December |
+| `wind_speed_2m_ms` | Wind Speed 2m (m/s) | m/s | daily | drought: `wind-speed-2m-m-s` | withheld — constant 2.5 m/s in every row |
+| `spi_1` | SPI 1 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_1_Meteorological_Drought_Onset`; hidden |
+| `spi_3` | SPI 3 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_3_Short_Term_Agricultural_Drought`; hidden |
+| `spi_6` | SPI 6 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_6_Medium_Term_Hydrological_Impacts`; hidden |
+| `spi_12` | SPI 12 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_12_Long_Term_Groundwater_Impacts`; hidden |
+| `spi_24` | SPI 24 | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_24_Very_Long_Term_Drought`; hidden |
+| `spei_1` | SPEI 1 | — | monthly | drought: `spei-index` | live |
+| `spei_3` | SPEI 3 | — | monthly | drought: `spei-index` | live |
+| `spei_6` | SPEI 6 | — | monthly | drought: `spei-index` | live |
+| `spei_12` | SPEI 12 | — | monthly | drought: `spei-index` | live |
+| `spei_24` | SPEI 24 | — | monthly | drought: `spei-index` | live |
 
 <a id="satellite-remote-sensing"></a>
 ## Satellite Remote Sensing · §3.2
 
 Table `satellite_remote_sensing` · id `satellite-remote-sensing` · monthly · pages: drought, vegetation · 9 live, 1 withheld, 0 duplicate · keys: `id`, `date`, `district_name`, `year`
+
+**Drought page**
+
+| Chart group | id | Axis unit | Resolution | Columns (★ default) |
+| --- | --- | --- | --- | --- |
+| NDVI / NDWI (index) | `ndvi-ndwi-index` | index | monthly | `ndvi` ★, `ndwi` ★ |
+| LST (°C) | `lst-c` | °C | monthly | `lst` ★ |
+| VCI / TCI / VHI (%) | `vci-tci-vhi-pct` | % | monthly | `vci` ★, `tci` ★, `vhi` ★ |
+| Soil Moisture (m³/m³) | `soil-moisture-m3-m3` | m³/m³ | monthly | `rootzone_soil_moisture` ★, `surface_soil_moisture` ★ |
+| Surface Water Extent (km²) | `surface-water-extent-km2` | km² | monthly | `surface_water_extent_km2` ★ |
+| GRACE TWS | `grace-tws` | — | monthly | `grace_tws` ★ |
+
+**Vegetation page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -98,21 +120,34 @@ Table `satellite_remote_sensing` · id `satellite-remote-sensing` · monthly · 
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `ndvi` | NDVI | — | monthly | `ndvi-ndwi-index` | live — passes the NDVI plausibility check (arid west low, wet east high, seasonal cycle follows the rains) |
-| `lst` | LST (°C) | °C ¹ | monthly | `lst-c` | live |
-| `ndwi` | NDWI | — | monthly | `ndvi-ndwi-index` | live |
-| `vci` | VCI (%) | % ¹ | monthly | `vci-tci-vhi-pct` | live |
-| `tci` | TCI (%) | % ¹ | monthly | `vci-tci-vhi-pct` | live |
-| `vhi` | VHI (%) | % ¹ | monthly | `vci-tci-vhi-pct` | live |
-| `rootzone_soil_moisture` | Rootzone Soil Moisture (m³/m³) | m³/m³ ¹ | monthly | `soil-moisture-m3-m3` | live — Served from Mar 2015: one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015 |
-| `surface_soil_moisture` | Surface Soil Moisture (m³/m³) | m³/m³ ¹ | monthly | `soil-moisture-m3-m3` | live — Served from Mar 2015: one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015 |
-| `surface_water_extent_km2` | Surface Water Extent (km²) | km² | monthly | `surface-water-extent-km2` | live — plausibility checked 2026-10-15: ≥ 0 everywhere, different in every district |
-| `grace_tws` | GRACE TWS | — | monthly | `grace-tws` | withheld — values of 70–412 in 2001 and up to 270 in 2002, before GRACE data exist (launch March 2002); about ±10 from 2003; unit undocumented |
+| `ndvi` | NDVI | — | monthly | drought: `ndvi-ndwi-index`; vegetation: `ndvi-ndwi-index` | live — passes the NDVI plausibility check (arid west low, wet east high, seasonal cycle follows the rains) |
+| `lst` | LST (°C) | °C ¹ | monthly | drought: `lst-c`; vegetation: `lst-c` | live |
+| `ndwi` | NDWI | — | monthly | drought: `ndvi-ndwi-index`; vegetation: `ndvi-ndwi-index` | live |
+| `vci` | VCI (%) | % ¹ | monthly | drought: `vci-tci-vhi-pct`; vegetation: `vci-tci-vhi-pct` | live |
+| `tci` | TCI (%) | % ¹ | monthly | drought: `vci-tci-vhi-pct`; vegetation: `vci-tci-vhi-pct` | live |
+| `vhi` | VHI (%) | % ¹ | monthly | drought: `vci-tci-vhi-pct`; vegetation: `vci-tci-vhi-pct` | live |
+| `rootzone_soil_moisture` | Rootzone Soil Moisture (m³/m³) | m³/m³ ¹ | monthly | drought: `soil-moisture-m3-m3`; vegetation: `soil-moisture-m3-m3` | live — Served from Mar 2015: one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015 |
+| `surface_soil_moisture` | Surface Soil Moisture (m³/m³) | m³/m³ ¹ | monthly | drought: `soil-moisture-m3-m3`; vegetation: `soil-moisture-m3-m3` | live — Served from Mar 2015: one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015 |
+| `surface_water_extent_km2` | Surface Water Extent (km²) | km² | monthly | drought: `surface-water-extent-km2`; vegetation: `surface-water-extent-km2` | live — plausibility checked 2026-10-15: ≥ 0 everywhere, different in every district |
+| `grace_tws` | GRACE TWS | — | monthly | drought: `grace-tws`; vegetation: `grace-tws` | withheld — values of 70–412 in 2001 and up to 270 in 2002, before GRACE data exist (launch March 2002); about ±10 from 2003; unit undocumented |
 
 <a id="hydrological-drought"></a>
 ## Hydrological Drought · §3.3
 
 Table `hydrological_drought_master` · id `hydrological-drought` · monthly · pages: drought, runoff · 0 live, 11 withheld, 0 duplicate · keys: `id`, `date`, `district_name`
+
+**Drought page**
+
+| Chart group | id | Axis unit | Resolution | Columns (★ default) |
+| --- | --- | --- | --- | --- |
+| River Discharge / FDC Percentiles / Surface Runoff / Baseflow Separation (m³/s) | `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | m³/s | monthly | `river_discharge_m3_s` ★, `fdc_percentiles_m3_s` ★, `surface_runoff_m3_s` ★, `baseflow_separation_m3_s` |
+| SSI / SGI (index) | `ssi-sgi-index` | index | monthly | `ssi_dimensionless` ★, `sgi_dimensionless` ★ |
+| Dam Storage (Mm³) | `dam-storage-mm3` | Mm³ | monthly | `dam_storage_million_m3` ★ |
+| Dam Level (% FSC) | `dam-level-pct-fsc` | % FSC | monthly | `dam_level_pct_fsc` ★ |
+| Dam Inflow / Dam Outflow (m³/s) | `dam-inflow-dam-outflow-m3-s` | m³/s | monthly | `dam_inflow_m3_s` ★, `dam_outflow_m3_s` ★ |
+| Borehole Water Level (m bgl) | `borehole-water-level-m-bgl` | m bgl | monthly | `borehole_water_level_m_bgl` ★ |
+
+**Runoff page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -125,22 +160,24 @@ Table `hydrological_drought_master` · id `hydrological-drought` · monthly · p
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `river_discharge_m3_s` | River Discharge (m³/s) | m³/s | monthly | `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
-| `fdc_percentiles_m3_s` | FDC Percentiles (m³/s) | m³/s | monthly | `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — constant 0.01 |
-| `ssi_dimensionless` | SSI | — | monthly | `ssi-sgi-index` | withheld — computed from the placeholder discharge |
-| `dam_storage_million_m3` | Dam Storage (Mm³) | Mm³ | monthly | `dam-storage-mm3` | withheld — failed plausibility: frozen since Dec 2021 in all 52 districts (national 17 715 Mm³ every month) and implausible swings before (national 421 Mm³ in Jun 2021, 16 617 Mm³ in Aug 2021) |
-| `dam_level_pct_fsc` | Dam Level (% FSC) | % FSC | monthly | `dam-level-pct-fsc` | withheld — failed plausibility: frozen since Dec 2021; 1 212 district-months at 0 % FSC (national mean 69 % in Jul 2002, 0.5 % in Jul 2003) |
-| `dam_inflow_m3_s` | Dam Inflow (m³/s) | m³/s | monthly | `dam-inflow-dam-outflow-m3-s` | withheld — failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen) |
-| `dam_outflow_m3_s` | Dam Outflow (m³/s) | m³/s | monthly | `dam-inflow-dam-outflow-m3-s` | withheld — failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen) |
-| `borehole_water_level_m_bgl` | Borehole Water Level (m bgl) | m bgl | monthly | `borehole-water-level-m-bgl` | withheld — range −0.18…+0.20: not a depth below ground level |
-| `sgi_dimensionless` | SGI | — | monthly | `ssi-sgi-index` | withheld — failed plausibility: frozen since Sep 2024 (all 52 districts repeat their Aug 2024 value for 16 months) and from Jan 2001 to Apr 2002; Johannesburg, Ekurhuleni, Sedibeng and West Rand share one identical series, as do Sisonke and uMgungundlovu |
-| `surface_runoff_m3_s` | Surface Runoff (m³/s) | m³/s | monthly | `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
-| `baseflow_separation_m3_s` | Baseflow Separation (m³/s) | m³/s | monthly | `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
+| `river_discharge_m3_s` | River Discharge (m³/s) | m³/s | monthly | drought: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s`; runoff: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
+| `fdc_percentiles_m3_s` | FDC Percentiles (m³/s) | m³/s | monthly | drought: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s`; runoff: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — constant 0.01 |
+| `ssi_dimensionless` | SSI | — | monthly | drought: `ssi-sgi-index`; runoff: `ssi-sgi-index` | withheld — computed from the placeholder discharge |
+| `dam_storage_million_m3` | Dam Storage (Mm³) | Mm³ | monthly | drought: `dam-storage-mm3`; runoff: `dam-storage-mm3` | withheld — failed plausibility: frozen since Dec 2021 in all 52 districts (national 17 715 Mm³ every month) and implausible swings before (national 421 Mm³ in Jun 2021, 16 617 Mm³ in Aug 2021) |
+| `dam_level_pct_fsc` | Dam Level (% FSC) | % FSC | monthly | drought: `dam-level-pct-fsc`; runoff: `dam-level-pct-fsc` | withheld — failed plausibility: frozen since Dec 2021; 1 212 district-months at 0 % FSC (national mean 69 % in Jul 2002, 0.5 % in Jul 2003) |
+| `dam_inflow_m3_s` | Dam Inflow (m³/s) | m³/s | monthly | drought: `dam-inflow-dam-outflow-m3-s`; runoff: `dam-inflow-dam-outflow-m3-s` | withheld — failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen) |
+| `dam_outflow_m3_s` | Dam Outflow (m³/s) | m³/s | monthly | drought: `dam-inflow-dam-outflow-m3-s`; runoff: `dam-inflow-dam-outflow-m3-s` | withheld — failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen) |
+| `borehole_water_level_m_bgl` | Borehole Water Level (m bgl) | m bgl | monthly | drought: `borehole-water-level-m-bgl`; runoff: `borehole-water-level-m-bgl` | withheld — range −0.18…+0.20: not a depth below ground level |
+| `sgi_dimensionless` | SGI | — | monthly | drought: `ssi-sgi-index`; runoff: `ssi-sgi-index` | withheld — failed plausibility: frozen since Sep 2024 (all 52 districts repeat their Aug 2024 value for 16 months) and from Jan 2001 to Apr 2002; Johannesburg, Ekurhuleni, Sedibeng and West Rand share one identical series, as do Sisonke and uMgungundlovu |
+| `surface_runoff_m3_s` | Surface Runoff (m³/s) | m³/s | monthly | drought: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s`; runoff: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
+| `baseflow_separation_m3_s` | Baseflow Separation (m³/s) | m³/s | monthly | drought: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s`; runoff: `river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s` | withheld — identical value in all 52 districts every month (placeholder) |
 
 <a id="temperature-change"></a>
 ## Temperature Change · §4.1
 
 Table `4_1_temperature_change_master` · id `temperature-change` · daily · pages: climate · 9 live, 0 withheld, 0 duplicate · keys: `District_Name`, `Date`
+
+**Climate page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -152,20 +189,30 @@ Table `4_1_temperature_change_master` · id `temperature-change` · daily · pag
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `Tmin_C` | Tmin (°C) | °C | daily | `temperature-c` | live |
-| `Tmax_C` | Tmax (°C) | °C | daily | `temperature-c` | live |
-| `Tavg_C` | Tavg (°C) | °C | daily | `temperature-c` | live |
-| `Temperature_Anomaly_C` | Temperature Anomaly (°C) | °C | monthly | `temperature-anomaly-c` | live |
-| `Heatwave_Frequency_Days` | Heatwave Frequency (days) | days | annual | `heatwave-days` | live — = count of days Tmax > 35 °C in the year (verified) |
-| `Heatwave_Duration_Max_Consecutive_Days` | Heatwave Duration Max Consecutive (days) | days | annual | `heatwave-days` | live — = longest run of days with Tmax > 35 °C in the year (1 404 / 1 404 district-years verified) |
-| `Frost_Day_Flag` | Frost Day Flag | — | daily | `frost-day-flag` | live |
-| `LST_Day_C` | LST Day (°C) | °C | daily | `lst-day-lst-night-c` | live |
-| `LST_Night_C` | LST Night (°C) | °C | daily | `lst-day-lst-night-c` | live |
+| `Tmin_C` | Tmin (°C) | °C | daily | climate: `temperature-c` | live |
+| `Tmax_C` | Tmax (°C) | °C | daily | climate: `temperature-c` | live |
+| `Tavg_C` | Tavg (°C) | °C | daily | climate: `temperature-c` | live |
+| `Temperature_Anomaly_C` | Temperature Anomaly (°C) | °C | monthly | climate: `temperature-anomaly-c` | live |
+| `Heatwave_Frequency_Days` | Heatwave Frequency (days) | days | annual | climate: `heatwave-days` | live — = count of days Tmax > 35 °C in the year (verified) |
+| `Heatwave_Duration_Max_Consecutive_Days` | Heatwave Duration Max Consecutive (days) | days | annual | climate: `heatwave-days` | live — = longest run of days with Tmax > 35 °C in the year (1 404 / 1 404 district-years verified) |
+| `Frost_Day_Flag` | Frost Day Flag | — | daily | climate: `frost-day-flag` | live |
+| `LST_Day_C` | LST Day (°C) | °C | daily | climate: `lst-day-lst-night-c` | live |
+| `LST_Night_C` | LST Night (°C) | °C | daily | climate: `lst-day-lst-night-c` | live |
 
 <a id="wet-dry-spells"></a>
 ## Wet Dry Spells · §4.2
 
 Table `4_2_wet_dry_spells_master` · id `wet-dry-spells` · annual · pages: climate, rainfall · 8 live, 0 withheld, 0 duplicate · keys: `District_Name`, `Year`
+
+**Climate page**
+
+| Chart group | id | Axis unit | Resolution | Columns (★ default) |
+| --- | --- | --- | --- | --- |
+| CWD / CDD / R10mm / R20mm (days) | `cwd-cdd-r10mm-r20mm-days` | days | annual | `CWD_Days` ★, `CDD_Days` ★, `R10mm_Days` ★, `R20mm_Days` |
+| Rx1day / Rx5day / PRCPTOT (mm) | `rx1day-rx5day-prcptot-mm` | mm | annual | `Rx1day_mm` ★, `Rx5day_mm` ★, `PRCPTOT_mm` ★ |
+| SDII (mm/wet day) | `sdii-mm-wet-day` | mm/wet day | annual | `SDII_mm_per_wet_day` ★ |
+
+**Rainfall page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -175,19 +222,34 @@ Table `4_2_wet_dry_spells_master` · id `wet-dry-spells` · annual · pages: cli
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `CWD_Days` | CWD (days) | days | annual | `cwd-cdd-r10mm-r20mm-days` | live |
-| `CDD_Days` | CDD (days) | days | annual | `cwd-cdd-r10mm-r20mm-days` | live |
-| `Rx1day_mm` | Rx1day (mm) | mm | annual | `rx1day-rx5day-prcptot-mm` | live |
-| `Rx5day_mm` | Rx5day (mm) | mm | annual | `rx1day-rx5day-prcptot-mm` | live |
-| `PRCPTOT_mm` | PRCPTOT (mm) | mm | annual | `rx1day-rx5day-prcptot-mm` | live |
-| `R10mm_Days` | R10mm (days) | days | annual | `cwd-cdd-r10mm-r20mm-days` | live |
-| `R20mm_Days` | R20mm (days) | days | annual | `cwd-cdd-r10mm-r20mm-days` | live |
-| `SDII_mm_per_wet_day` | SDII (mm/wet day) | mm/wet day | annual | `sdii-mm-wet-day` | live |
+| `CWD_Days` | CWD (days) | days | annual | climate: `cwd-cdd-r10mm-r20mm-days`; rainfall: `cwd-cdd-r10mm-r20mm-days` | live |
+| `CDD_Days` | CDD (days) | days | annual | climate: `cwd-cdd-r10mm-r20mm-days`; rainfall: `cwd-cdd-r10mm-r20mm-days` | live |
+| `Rx1day_mm` | Rx1day (mm) | mm | annual | climate: `rx1day-rx5day-prcptot-mm`; rainfall: `rx1day-rx5day-prcptot-mm` | live |
+| `Rx5day_mm` | Rx5day (mm) | mm | annual | climate: `rx1day-rx5day-prcptot-mm`; rainfall: `rx1day-rx5day-prcptot-mm` | live |
+| `PRCPTOT_mm` | PRCPTOT (mm) | mm | annual | climate: `rx1day-rx5day-prcptot-mm`; rainfall: `rx1day-rx5day-prcptot-mm` | live |
+| `R10mm_Days` | R10mm (days) | days | annual | climate: `cwd-cdd-r10mm-r20mm-days`; rainfall: `cwd-cdd-r10mm-r20mm-days` | live |
+| `R20mm_Days` | R20mm (days) | days | annual | climate: `cwd-cdd-r10mm-r20mm-days`; rainfall: `cwd-cdd-r10mm-r20mm-days` | live |
+| `SDII_mm_per_wet_day` | SDII (mm/wet day) | mm/wet day | annual | climate: `sdii-mm-wet-day`; rainfall: `sdii-mm-wet-day` | live |
 
 <a id="mean-annual-precipitation"></a>
 ## Mean Annual Precipitation · §4.3
 
 Table `4_3_mean_annual_precipitation_master` · id `mean-annual-precipitation` · annual · pages: climate, rainfall · 6 live, 5 withheld, 0 duplicate · keys: `District_Name`, `Year`
+
+**Climate page**
+
+| Chart group | id | Axis unit | Resolution | Columns (★ default) |
+| --- | --- | --- | --- | --- |
+| MAP (mm) | `map-mm` | mm | annual | `MAP_mm` ★ |
+| Precipitation (mm) | `precipitation-mm` | mm | annual | `Precip_DJF_mm` ★, `Precip_JJA_mm` ★, `Precip_MAM_mm` ★, `Precip_SON_mm` |
+| Nino34 Annual Mean | `nino34-annual-mean` | — | annual | `Nino34_Annual_Mean` ★ |
+| Precip CV (%) | `precip-cv-pct` | % | annual | `Precip_CV_Percent` ★ |
+| MK Sens Slope (mm/year) | `mk-sens-slope-mm-year` | mm/year | annual | `MK_Sens_Slope_mm_yr` ★ |
+| MK P Value | `mk-p-value` | — | annual | `MK_p_value` ★ |
+| MK Trend (class) | `mk-trend-class` | class | annual | `MK_Trend` ★ |
+| ENSO Nino34 Correlation | `enso-nino34-correlation` | — | annual | `ENSO_Nino34_Correlation` ★ |
+
+**Rainfall page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -202,22 +264,24 @@ Table `4_3_mean_annual_precipitation_master` · id `mean-annual-precipitation` �
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `MAP_mm` | MAP (mm) | mm | annual | `map-mm` | live — identical to 6.1 Annual_Total_Precipitation_mm |
-| `Precip_DJF_mm` | Precip DJF (mm) | mm | annual | `precipitation-mm` | live |
-| `Precip_JJA_mm` | Precip JJA (mm) | mm | annual | `precipitation-mm` | live |
-| `Precip_MAM_mm` | Precip MAM (mm) | mm | annual | `precipitation-mm` | live |
-| `Precip_SON_mm` | Precip SON (mm) | mm | annual | `precipitation-mm` | live |
-| `Nino34_Annual_Mean` | Nino34 Annual Mean | — | annual | `nino34-annual-mean` | live — −0.85 … +1.55 for 2000–2025; the 2026 value (−41.28) belongs to the partial year, which is never served |
-| `Precip_CV_Percent` | Precip CV (%) | % | annual | `precip-cv-pct` | withheld — computed over 2000–2026 including the partial year 2026 (Alfred Nzo 17.05 %; 14.70 % over 2000–2025) |
-| `MK_Sens_Slope_mm_yr` | MK Sens Slope (mm/year) | mm/year | annual | `mk-sens-slope-mm-year` | withheld — computed over 2000–2026 including the partial year 2026: Alfred Nzo −1.03 mm/yr stored, +0.22 mm/yr over the full years 2000–2025 (app.core.stats) |
-| `MK_p_value` | MK P Value | — | annual | `mk-p-value` | withheld — computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr) |
-| `MK_Trend` | MK Trend (class) | — | annual | `mk-trend-class` | withheld — computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr) |
-| `ENSO_Nino34_Correlation` | ENSO Nino34 Correlation | — | annual | `enso-nino34-correlation` | withheld — includes 2026, whose Niño 3.4 value is −41.28: Alfred Nzo +0.48 stored, −0.43 over 2000–2025 |
+| `MAP_mm` | MAP (mm) | mm | annual | climate: `map-mm`; rainfall: `map-mm` | live — identical to 6.1 Annual_Total_Precipitation_mm |
+| `Precip_DJF_mm` | Precip DJF (mm) | mm | annual | climate: `precipitation-mm`; rainfall: `precipitation-mm` | live |
+| `Precip_JJA_mm` | Precip JJA (mm) | mm | annual | climate: `precipitation-mm`; rainfall: `precipitation-mm` | live |
+| `Precip_MAM_mm` | Precip MAM (mm) | mm | annual | climate: `precipitation-mm`; rainfall: `precipitation-mm` | live |
+| `Precip_SON_mm` | Precip SON (mm) | mm | annual | climate: `precipitation-mm`; rainfall: `precipitation-mm` | live |
+| `Nino34_Annual_Mean` | Nino34 Annual Mean | — | annual | climate: `nino34-annual-mean`; rainfall: `nino34-annual-mean` | live — −0.85 … +1.55 for 2000–2025; the 2026 value (−41.28) belongs to the partial year, which is never served |
+| `Precip_CV_Percent` | Precip CV (%) | % | annual | climate: `precip-cv-pct`; rainfall: `precip-cv-pct` | withheld — computed over 2000–2026 including the partial year 2026 (Alfred Nzo 17.05 %; 14.70 % over 2000–2025) |
+| `MK_Sens_Slope_mm_yr` | MK Sens Slope (mm/year) | mm/year | annual | climate: `mk-sens-slope-mm-year`; rainfall: `mk-sens-slope-mm-year` | withheld — computed over 2000–2026 including the partial year 2026: Alfred Nzo −1.03 mm/yr stored, +0.22 mm/yr over the full years 2000–2025 (app.core.stats) |
+| `MK_p_value` | MK P Value | — | annual | climate: `mk-p-value`; rainfall: `mk-p-value` | withheld — computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr) |
+| `MK_Trend` | MK Trend (class) | — | annual | climate: `mk-trend-class`; rainfall: `mk-trend-class` | withheld — computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr) |
+| `ENSO_Nino34_Correlation` | ENSO Nino34 Correlation | — | annual | climate: `enso-nino34-correlation`; rainfall: `enso-nino34-correlation` | withheld — includes 2026, whose Niño 3.4 value is −41.28: Alfred Nzo +0.48 stored, −0.43 over 2000–2025 |
 
 <a id="potential-evaporation-daily"></a>
 ## Potential Evaporation Daily · §4.4
 
 Table `4_4_potential_evaporation_daily_master` · id `potential-evaporation-daily` · daily · pages: climate · 0 live, 6 withheld, 0 duplicate · keys: `District_Name`, `Date`
+
+**Climate page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -227,17 +291,19 @@ Table `4_4_potential_evaporation_daily_master` · id `potential-evaporation-dail
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `Daily_ET0_mm` | Daily ET₀ (mm) | mm | daily | `evapotranspiration-mm` | withheld — 23–97× smaller than meteorological et0_mm_day (implausible magnitude) |
-| `Daily_PET_mm` | Daily PET (mm) | mm | daily | `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
-| `Daily_AET_mm` | Daily AET (mm) | mm | daily | `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
-| `Daily_Pan_Evap_mm` | Daily Pan Evap (mm) | mm | daily | `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
-| `Daily_VPD_kPa` | Daily VPD (kPa) | kPa | daily | `daily-vpd-kpa` | withheld — the 4_4 table is withheld: its evaporation values are 23–97× smaller than plausible, so the table is under review |
-| `SPEI_Daily` | SPEI Daily | — | daily | `spei-index` | withheld — stored as text, and the 4_4 table is withheld (evaporation values 23–97× too small) |
+| `Daily_ET0_mm` | Daily ET₀ (mm) | mm | daily | climate: `evapotranspiration-mm` | withheld — 23–97× smaller than meteorological et0_mm_day (implausible magnitude) |
+| `Daily_PET_mm` | Daily PET (mm) | mm | daily | climate: `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
+| `Daily_AET_mm` | Daily AET (mm) | mm | daily | climate: `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
+| `Daily_Pan_Evap_mm` | Daily Pan Evap (mm) | mm | daily | climate: `evapotranspiration-mm` | withheld — same magnitude problem as Daily_ET0_mm |
+| `Daily_VPD_kPa` | Daily VPD (kPa) | kPa | daily | climate: `daily-vpd-kpa` | withheld — the 4_4 table is withheld: its evaporation values are 23–97× smaller than plausible, so the table is under review |
+| `SPEI_Daily` | SPEI Daily | — | daily | climate: `spei-index` | withheld — stored as text, and the 4_4 table is withheld (evaporation values 23–97× too small) |
 
 <a id="irrigation-demand-daily"></a>
 ## Irrigation Demand Daily · §4.5
 
 Table `4_5_irrigation_demand_daily_master` · id `irrigation-demand-daily` · daily · pages: climate · 0 live, 6 withheld, 0 duplicate · keys: `District_Name`, `Date`
+
+**Climate page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -249,17 +315,19 @@ Table `4_5_irrigation_demand_daily_master` · id `irrigation-demand-daily` · da
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `CWR_mm_day` | CWR (mm/day) | mm/day | daily | `cwr-mm-day` | withheld — built on the implausible 4_4 ET₀ (CWR = 0.85 × ET₀) |
-| `Irrigation_Water_Demand_mm` | Irrigation Water Demand (mm) | mm | daily | `irrigation-mm` | withheld — built on the implausible 4_4 ET₀ |
-| `Rainfall_Deficit_mm` | Rainfall Deficit (mm) | mm | daily | `rainfall-deficit-mm` | withheld — built on the implausible 4_4 ET₀ |
-| `Soil_Moisture_Deficit_m3m3` | Soil Moisture Deficit (m³/m³) | m³/m³ | daily | `soil-moisture-deficit-m3-m3` | withheld — the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values |
-| `Growing_Season_Temp_C` | Growing Season Temp (°C) | °C | daily | `growing-season-temp-c` | withheld — the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values |
-| `Irrigation_Return_Flow_mm` | Irrigation Return Flow (mm) | mm | daily | `irrigation-mm` | withheld — built on the implausible 4_4 ET₀ |
+| `CWR_mm_day` | CWR (mm/day) | mm/day | daily | climate: `cwr-mm-day` | withheld — built on the implausible 4_4 ET₀ (CWR = 0.85 × ET₀) |
+| `Irrigation_Water_Demand_mm` | Irrigation Water Demand (mm) | mm | daily | climate: `irrigation-mm` | withheld — built on the implausible 4_4 ET₀ |
+| `Rainfall_Deficit_mm` | Rainfall Deficit (mm) | mm | daily | climate: `rainfall-deficit-mm` | withheld — built on the implausible 4_4 ET₀ |
+| `Soil_Moisture_Deficit_m3m3` | Soil Moisture Deficit (m³/m³) | m³/m³ | daily | climate: `soil-moisture-deficit-m3-m3` | withheld — the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values |
+| `Growing_Season_Temp_C` | Growing Season Temp (°C) | °C | daily | climate: `growing-season-temp-c` | withheld — the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values |
+| `Irrigation_Return_Flow_mm` | Irrigation Return Flow (mm) | mm | daily | climate: `irrigation-mm` | withheld — built on the implausible 4_4 ET₀ |
 
 <a id="streamflow-and-climate-linkage-annual"></a>
 ## Streamflow and Climate Linkage Annual · §4.6
 
 Table `4_6_streamflow_and_climate_linkage_annual _master` · id `streamflow-and-climate-linkage-annual` · annual · pages: climate · 0 live, 6 withheld, 0 duplicate · keys: `District_Name`, `Year`
+
+**Climate page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -270,17 +338,19 @@ Table `4_6_streamflow_and_climate_linkage_annual _master` · id `streamflow-and-
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `MAR_m3_year` | MAR (m³/year) | m³/year | annual | `mar-q90-lowflow-q10-floodflow-m3-year` | withheld — national sum ≈ 7× South Africa's MAR |
-| `Streamflow_Anomaly_percent` | Streamflow Anomaly (%) | % | annual | `streamflow-anomaly-pct` | withheld — the rainfall anomaly, not a streamflow signal (r = 0.999 with the MAP anomaly); its mean includes the partial year 2026 |
-| `Q90_LowFlow_m3_year` | Q90 LowFlow (m³/year) | m³/year | annual | `mar-q90-lowflow-q10-floodflow-m3-year` | withheld — a volume on the implausible MAR basis; one value per district repeated every year |
-| `Q10_FloodFlow_m3_year` | Q10 FloodFlow (m³/year) | m³/year | annual | `mar-q90-lowflow-q10-floodflow-m3-year` | withheld — a volume on the implausible MAR basis; one value per district repeated every year |
-| `Rainfall_Runoff_Ratio` | Rainfall Runoff Ratio | — | annual | `rainfall-runoff-ratio` | withheld — 0.49–0.98, implausible for SA (runoff coefficients 0.02–0.2; runoff_variables_master 0.10–0.26) |
-| `Climate_Streamflow_Elasticity` | Climate Streamflow Elasticity | — | annual | `climate-streamflow-elasticity` | withheld — about 1.05 in most districts (0.31–2.23), i.e. runoff proportional to rainfall; published SA elasticities are about 2–3.5 |
+| `MAR_m3_year` | MAR (m³/year) | m³/year | annual | climate: `mar-q90-lowflow-q10-floodflow-m3-year` | withheld — national sum ≈ 7× South Africa's MAR |
+| `Streamflow_Anomaly_percent` | Streamflow Anomaly (%) | % | annual | climate: `streamflow-anomaly-pct` | withheld — the rainfall anomaly, not a streamflow signal (r = 0.999 with the MAP anomaly); its mean includes the partial year 2026 |
+| `Q90_LowFlow_m3_year` | Q90 LowFlow (m³/year) | m³/year | annual | climate: `mar-q90-lowflow-q10-floodflow-m3-year` | withheld — a volume on the implausible MAR basis; one value per district repeated every year |
+| `Q10_FloodFlow_m3_year` | Q10 FloodFlow (m³/year) | m³/year | annual | climate: `mar-q90-lowflow-q10-floodflow-m3-year` | withheld — a volume on the implausible MAR basis; one value per district repeated every year |
+| `Rainfall_Runoff_Ratio` | Rainfall Runoff Ratio | — | annual | climate: `rainfall-runoff-ratio` | withheld — 0.49–0.98, implausible for SA (runoff coefficients 0.02–0.2; runoff_variables_master 0.10–0.26) |
+| `Climate_Streamflow_Elasticity` | Climate Streamflow Elasticity | — | annual | climate: `climate-streamflow-elasticity` | withheld — about 1.05 in most districts (0.31–2.23), i.e. runoff proportional to rainfall; published SA elasticities are about 2–3.5 |
 
 <a id="primary-satellite-vegetation-variables-sansa"></a>
 ## Primary Satellite Vegetation Variables SANSA · §5.1
 
 Table `5.1_primary_satellite_vegetation_variables_sansa_master` · id `primary-satellite-vegetation-variables-sansa` · daily · pages: vegetation · 0 live, 14 withheld, 0 duplicate · keys: `District_Name`, `Date`, `Year`, `Month`
+
+**Vegetation page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -292,48 +362,56 @@ Table `5.1_primary_satellite_vegetation_variables_sansa_master` · id `primary-s
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `NDVI_10day_composite` | NDVI 10day Composite | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — failed plausibility: same mean 0.35 and winter peak in every district |
-| `EVI` | EVI | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — perfectly correlated with the failed NDVI (r = 1.000) |
-| `SAVI` | SAVI | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — perfectly correlated with the failed NDVI (r = 1.000) |
-| `MSAVI2` | MSAVI2 | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — same source as the failed NDVI |
-| `VCI_percent` | VCI (%) | % | daily | `vci-vhi-tci-vpi-asi-pct` | withheld — same source as the failed NDVI |
-| `VHI_percent` | VHI (%) | % | daily | `vci-vhi-tci-vpi-asi-pct` | withheld — same source as the failed NDVI |
-| `TCI_percent` | TCI (%) | % | daily | `vci-vhi-tci-vpi-asi-pct` | withheld — same source as the failed NDVI |
-| `VPI_percent` | VPI (%) | % | daily | `vci-vhi-tci-vpi-asi-pct` | withheld — exact copy of VCI_percent |
-| `ASI_percent` | ASI (%) | % | daily | `vci-vhi-tci-vpi-asi-pct` | withheld — = 100 − VHI_percent of the failed source |
-| `SVI_standardised` | SVI | — | daily | `svi-index` | withheld — same source as the failed NDVI |
-| `NDWI` | NDWI | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — same source as the failed NDVI |
-| `NDII` | NDII | — | daily | `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — perfectly correlated with the failed NDVI (r = 1.000) |
-| `LST_Land_Surface_Temperature_C` | LST Land Surface Temperature (°C) | °C | daily | `lst-land-surface-temperature-c` | withheld — the 5.1 vegetation source is withheld: its NDVI fails the plausibility check (the same cycle in every district) |
-| `Surface_Soil_Moisture_m3m3` | Surface Soil Moisture (m³/m³) | m³/m³ | daily | `surface-soil-moisture-m3-m3` | withheld — constant 0.22 |
+| `NDVI_10day_composite` | NDVI 10day Composite | — | daily | vegetation: `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — failed plausibility: same mean 0.35 and winter peak in every district |
+| `EVI` | EVI | — | daily | vegetation: `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — perfectly correlated with the failed NDVI (r = 1.000) |
+| `SAVI` | SAVI | — | daily | vegetation: `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — perfectly correlated with the failed NDVI (r = 1.000) |
+| `MSAVI2` | MSAVI2 | — | daily | vegetation: `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — same source as the failed NDVI |
+| `VCI_percent` | VCI (%) | % | daily | vegetation: `vci-vhi-tci-vpi-asi-pct` | withheld — same source as the failed NDVI |
+| `VHI_percent` | VHI (%) | % | daily | vegetation: `vci-vhi-tci-vpi-asi-pct` | withheld — same source as the failed NDVI |
+| `TCI_percent` | TCI (%) | % | daily | vegetation: `vci-vhi-tci-vpi-asi-pct` | withheld — same source as the failed NDVI |
+| `VPI_percent` | VPI (%) | % | daily | vegetation: `vci-vhi-tci-vpi-asi-pct` | withheld — exact copy of VCI_percent |
+| `ASI_percent` | ASI (%) | % | daily | vegetation: `vci-vhi-tci-vpi-asi-pct` | withheld — = 100 − VHI_percent of the failed source |
+| `SVI_standardised` | SVI | — | daily | vegetation: `svi-index` | withheld — same source as the failed NDVI |
+| `NDWI` | NDWI | — | daily | vegetation: `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — same source as the failed NDVI |
+| `NDII` | NDII | — | daily | vegetation: `ndvi-evi-savi-msavi2-ndwi-ndii-index` | withheld — perfectly correlated with the failed NDVI (r = 1.000) |
+| `LST_Land_Surface_Temperature_C` | LST Land Surface Temperature (°C) | °C | daily | vegetation: `lst-land-surface-temperature-c` | withheld — the 5.1 vegetation source is withheld: its NDVI fails the plausibility check (the same cycle in every district) |
+| `Surface_Soil_Moisture_m3m3` | Surface Soil Moisture (m³/m³) | m³/m³ | daily | vegetation: `surface-soil-moisture-m3-m3` | withheld — constant 0.22 |
 
 <a id="meteorological-drivers-saws"></a>
 ## Meteorological Drivers SAWS · §5.2
 
 Table `5.2_meteorological_drivers_saws_master` · id `meteorological-drivers-saws` · monthly · pages: vegetation · 1 live, 0 withheld, 10 duplicate · keys: `District_Name`, `Year`, `Month`
 
+**Vegetation page** — duplicates shown here (live): `Monthly_Rainfall_mm`, `Rainfall_Anomaly_percent`, `SPI_1_month`, `SPI_3_month`, `SPI_6_month`, `SPEI_1_month`, `SPEI_3_month`, `SPEI_6_month`, `Mean_Temperature_C`, `Potential_Evapotranspiration_ET0_mm`
+
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
+| Monthly Rainfall / Potential Evapotranspiration ET₀ (mm) | `monthly-rainfall-potential-evapotranspiration-et0-mm` | mm | monthly | `Monthly_Rainfall_mm` ★, `Potential_Evapotranspiration_ET0_mm` ★ |
+| Rainfall Anomaly (%) | `rainfall-anomaly-pct` | % | monthly | `Rainfall_Anomaly_percent` ★ |
+| SPI / SPEI (index) | `spi-spei-index` | index | monthly | `SPI_1_month` ★, `SPI_3_month` ★, `SPI_6_month` ★, `SPEI_1_month`, `SPEI_3_month`, `SPEI_6_month` |
+| Mean Temperature (°C) | `mean-temperature-c` | °C | monthly | `Mean_Temperature_C` ★ |
 | Growing Degree Days GDD (°C·days) | `growing-degree-days-gdd-c-days` | °C·days | monthly | `Growing_Degree_Days_GDD_C` ★ |
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `Monthly_Rainfall_mm` | Monthly Rainfall (mm) | mm | monthly | — | duplicate of `6.1_core_rainfall_variables_master.Monthly_Total_Precipitation_mm` |
-| `Rainfall_Anomaly_percent` | Rainfall Anomaly (%) | % | monthly | — | duplicate of `6.1_core_rainfall_variables_master.Monthly_Anomaly_percent` |
-| `SPI_1_month` | SPI 1 Month | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_1_Meteorological_Drought_Onset` |
-| `SPI_3_month` | SPI 3 Month | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_3_Short_Term_Agricultural_Drought` |
-| `SPI_6_month` | SPI 6 Month | — | monthly | — | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_6_Medium_Term_Hydrological_Impacts` |
-| `SPEI_1_month` | SPEI 1 Month | — | monthly | — | duplicate of `meteorological_drought_master.spei_1` |
-| `SPEI_3_month` | SPEI 3 Month | — | monthly | — | duplicate of `meteorological_drought_master.spei_3` |
-| `SPEI_6_month` | SPEI 6 Month | — | monthly | — | duplicate of `meteorological_drought_master.spei_6` |
-| `Mean_Temperature_C` | Mean Temperature (°C) | °C | monthly | — | duplicate of `4_1_temperature_change_master.Tavg_C` |
-| `Potential_Evapotranspiration_ET0_mm` | Potential Evapotranspiration ET₀ (mm) | mm | monthly | — | duplicate of `meteorological_drought_master.et0_mm_day` |
-| `Growing_Degree_Days_GDD_C` | Growing Degree Days GDD (°C·days) | °C·days ¹ | monthly | `growing-degree-days-gdd-c-days` | live — = Σ daily max(Tavg − 10 °C, 0) from 4_1 (624 / 624 district-months of 2015 match): degree-days |
+| `Monthly_Rainfall_mm` | Monthly Rainfall (mm) | mm | monthly | vegetation: `monthly-rainfall-potential-evapotranspiration-et0-mm` | duplicate of `6.1_core_rainfall_variables_master.Monthly_Total_Precipitation_mm`; live on vegetation |
+| `Rainfall_Anomaly_percent` | Rainfall Anomaly (%) | % | monthly | vegetation: `rainfall-anomaly-pct` | duplicate of `6.1_core_rainfall_variables_master.Monthly_Anomaly_percent`; live on vegetation |
+| `SPI_1_month` | SPI 1 Month | — | monthly | vegetation: `spi-spei-index` | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_1_Meteorological_Drought_Onset`; live on vegetation |
+| `SPI_3_month` | SPI 3 Month | — | monthly | vegetation: `spi-spei-index` | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_3_Short_Term_Agricultural_Drought`; live on vegetation |
+| `SPI_6_month` | SPI 6 Month | — | monthly | vegetation: `spi-spei-index` | duplicate of `6.2_rainfall_derived_drought_indices_master.SPI_6_Medium_Term_Hydrological_Impacts`; live on vegetation |
+| `SPEI_1_month` | SPEI 1 Month | — | monthly | vegetation: `spi-spei-index` | duplicate of `meteorological_drought_master.spei_1`; live on vegetation |
+| `SPEI_3_month` | SPEI 3 Month | — | monthly | vegetation: `spi-spei-index` | duplicate of `meteorological_drought_master.spei_3`; live on vegetation |
+| `SPEI_6_month` | SPEI 6 Month | — | monthly | vegetation: `spi-spei-index` | duplicate of `meteorological_drought_master.spei_6`; live on vegetation |
+| `Mean_Temperature_C` | Mean Temperature (°C) | °C | monthly | vegetation: `mean-temperature-c` | duplicate of `4_1_temperature_change_master.Tavg_C`; live on vegetation |
+| `Potential_Evapotranspiration_ET0_mm` | Potential Evapotranspiration ET₀ (mm) | mm | monthly | vegetation: `monthly-rainfall-potential-evapotranspiration-et0-mm` | duplicate of `meteorological_drought_master.et0_mm_day`; live on vegetation |
+| `Growing_Degree_Days_GDD_C` | Growing Degree Days GDD (°C·days) | °C·days ¹ | monthly | vegetation: `growing-degree-days-gdd-c-days` | live — = Σ daily max(Tavg − 10 °C, 0) from 4_1 (624 / 624 district-months of 2015 match): degree-days |
 
 <a id="core-rainfall-variables"></a>
 ## Core Rainfall Variables · §6.1
 
 Table `6.1_core_rainfall_variables_master` · id `core-rainfall-variables` · daily · pages: rainfall · 12 live, 0 withheld, 2 duplicate · keys: `District_Name`, `Date`, `Year`, `Month`, `Day`
+
+**Rainfall page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -348,25 +426,33 @@ Table `6.1_core_rainfall_variables_master` · id `core-rainfall-variables` · da
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `Daily_Rainfall_Total_mm` | Daily Rainfall Total (mm) | mm | daily | `daily-rainfall-total-mm` | live — complete calendar incl. 31 Dec |
-| `Number_of_Rainy_Days_days_month` | Number of Rainy Days (days/month) | days/month | monthly | `number-of-rainy-days-days-month` | live — = days ≥ 1 mm (verified) |
-| `Monthly_Total_Precipitation_mm` | Monthly Total Precipitation (mm) | mm | monthly | `monthly-mm` | live |
-| `Monthly_Anomaly_mm` | Monthly Anomaly (mm) | mm | monthly | `monthly-mm` | live |
-| `Monthly_Anomaly_percent` | Monthly Anomaly (%) | % | monthly | `monthly-anomaly-pct` | live |
-| `Seasonal_Total_OND_mm` | Seasonal Total OND (mm) | mm | annual | `seasonal-total-mm` | live |
-| `Seasonal_Total_JFM_mm` | Seasonal Total JFM (mm) | mm | annual | `seasonal-total-mm` | live |
-| `Seasonal_Total_AMJ_mm` | Seasonal Total AMJ (mm) | mm | annual | `seasonal-total-mm` | live |
-| `Seasonal_Total_JAS_mm` | Seasonal Total JAS (mm) | mm | annual | `seasonal-total-mm` | live |
-| `Annual_Total_Precipitation_mm` | Annual Total Precipitation (mm) | mm | annual | — | duplicate of `4_3_mean_annual_precipitation_master.MAP_mm` |
-| `Gridded_Rainfall_Product_1km_mm` | Gridded Rainfall Product 1km (mm) | mm | daily | — | duplicate of `6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm` |
-| `CHIRPS_Daily_Rainfall_Estimate_mm_day` | CHIRPS Daily Rainfall Estimate (mm/day) | mm/day | daily | `chirps-daily-rainfall-estimate-mm-day` | live — = Daily_Rainfall_Total_mm × 0.95–1.05 (r = 1.000): derived from the gauge series, not an independent estimate |
-| `TAMSAT_Satellite_Rainfall_Estimate_mm_dekad` | TAMSAT Satellite Rainfall Estimate (mm/dekad) | mm/dekad | monthly | `tamsat-satellite-rainfall-estimate-mm-dekad` | live — one value per district-month (mm per dekad, ≈ monthly total ÷ 3, r = 0.998), repeated on every daily row |
-| `Hourly_Rainfall_Intensity_mm_h` | Hourly Rainfall Intensity (mm/h) | mm/h | daily | `hourly-rainfall-intensity-mm-h` | live — = daily total × 0.15–0.20 (r = 1.000): a proxy, not gauge-measured hourly intensity |
+| `Daily_Rainfall_Total_mm` | Daily Rainfall Total (mm) | mm | daily | rainfall: `daily-rainfall-total-mm` | live — complete calendar incl. 31 Dec |
+| `Number_of_Rainy_Days_days_month` | Number of Rainy Days (days/month) | days/month | monthly | rainfall: `number-of-rainy-days-days-month` | live — = days ≥ 1 mm (verified) |
+| `Monthly_Total_Precipitation_mm` | Monthly Total Precipitation (mm) | mm | monthly | rainfall: `monthly-mm` | live |
+| `Monthly_Anomaly_mm` | Monthly Anomaly (mm) | mm | monthly | rainfall: `monthly-mm` | live |
+| `Monthly_Anomaly_percent` | Monthly Anomaly (%) | % | monthly | rainfall: `monthly-anomaly-pct` | live |
+| `Seasonal_Total_OND_mm` | Seasonal Total OND (mm) | mm | annual | rainfall: `seasonal-total-mm` | live |
+| `Seasonal_Total_JFM_mm` | Seasonal Total JFM (mm) | mm | annual | rainfall: `seasonal-total-mm` | live |
+| `Seasonal_Total_AMJ_mm` | Seasonal Total AMJ (mm) | mm | annual | rainfall: `seasonal-total-mm` | live |
+| `Seasonal_Total_JAS_mm` | Seasonal Total JAS (mm) | mm | annual | rainfall: `seasonal-total-mm` | live |
+| `Annual_Total_Precipitation_mm` | Annual Total Precipitation (mm) | mm | annual | — | duplicate of `4_3_mean_annual_precipitation_master.MAP_mm`; hidden |
+| `Gridded_Rainfall_Product_1km_mm` | Gridded Rainfall Product 1km (mm) | mm | daily | — | duplicate of `6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm`; hidden |
+| `CHIRPS_Daily_Rainfall_Estimate_mm_day` | CHIRPS Daily Rainfall Estimate (mm/day) | mm/day | daily | rainfall: `chirps-daily-rainfall-estimate-mm-day` | live — = Daily_Rainfall_Total_mm × 0.95–1.05 (r = 1.000): derived from the gauge series, not an independent estimate |
+| `TAMSAT_Satellite_Rainfall_Estimate_mm_dekad` | TAMSAT Satellite Rainfall Estimate (mm/dekad) | mm/dekad | monthly | rainfall: `tamsat-satellite-rainfall-estimate-mm-dekad` | live — one value per district-month (mm per dekad, ≈ monthly total ÷ 3, r = 0.998), repeated on every daily row |
+| `Hourly_Rainfall_Intensity_mm_h` | Hourly Rainfall Intensity (mm/h) | mm/h | daily | rainfall: `hourly-rainfall-intensity-mm-h` | live — = daily total × 0.15–0.20 (r = 1.000): a proxy, not gauge-measured hourly intensity |
 
 <a id="rainfall-derived-drought-indices"></a>
 ## Rainfall Derived Drought Indices · §6.2
 
 Table `6.2_rainfall_derived_drought_indices_master` · id `rainfall-derived-drought-indices` · monthly · pages: rainfall, drought · 6 live, 0 withheld, 2 duplicate · keys: `District_Name`, `Year`, `Month`
+
+**Rainfall page** — duplicates shown here (live): `SPEI_3_Agricultural_Drought_ET`, `SPEI_12_Annual_Water_Balance_Drought`
+
+| Chart group | id | Axis unit | Resolution | Columns (★ default) |
+| --- | --- | --- | --- | --- |
+| SPI / SPEI / RAI (index) | `spi-spei-rai-index` | index | monthly | `SPI_1_Meteorological_Drought_Onset` ★, `SPI_3_Short_Term_Agricultural_Drought` ★, `SPI_6_Medium_Term_Hydrological_Impacts` ★, `SPI_12_Long_Term_Groundwater_Impacts`, `SPI_24_Very_Long_Term_Drought`, `SPEI_3_Agricultural_Drought_ET`, `SPEI_12_Annual_Water_Balance_Drought`, `RAI_Rainfall_Anomaly_Index` |
+
+**Drought page**
 
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
@@ -374,24 +460,26 @@ Table `6.2_rainfall_derived_drought_indices_master` · id `rainfall-derived-drou
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `SPI_1_Meteorological_Drought_Onset` | SPI 1 – Meteorological Drought Onset | — | monthly | `spi-rai-index` | live |
-| `SPI_3_Short_Term_Agricultural_Drought` | SPI 3 – Short Term Agricultural Drought | — | monthly | `spi-rai-index` | live |
-| `SPI_6_Medium_Term_Hydrological_Impacts` | SPI 6 – Medium Term Hydrological Impacts | — | monthly | `spi-rai-index` | live |
-| `SPI_12_Long_Term_Groundwater_Impacts` | SPI 12 – Long Term Groundwater Impacts | — | monthly | `spi-rai-index` | live |
-| `SPI_24_Very_Long_Term_Drought` | SPI 24 – Very Long Term Drought | — | monthly | `spi-rai-index` | live |
-| `SPEI_3_Agricultural_Drought_ET` | SPEI 3 – Agricultural Drought ET | — | monthly | — | duplicate of `meteorological_drought_master.spei_3` |
-| `SPEI_12_Annual_Water_Balance_Drought` | SPEI 12 – Annual Water Balance Drought | — | monthly | — | duplicate of `meteorological_drought_master.spei_12` |
-| `RAI_Rainfall_Anomaly_Index` | RAI – Rainfall Anomaly Index | — | monthly | `spi-rai-index` | live |
+| `SPI_1_Meteorological_Drought_Onset` | SPI 1 – Meteorological Drought Onset | — | monthly | rainfall: `spi-spei-rai-index`; drought: `spi-rai-index` | live |
+| `SPI_3_Short_Term_Agricultural_Drought` | SPI 3 – Short Term Agricultural Drought | — | monthly | rainfall: `spi-spei-rai-index`; drought: `spi-rai-index` | live |
+| `SPI_6_Medium_Term_Hydrological_Impacts` | SPI 6 – Medium Term Hydrological Impacts | — | monthly | rainfall: `spi-spei-rai-index`; drought: `spi-rai-index` | live |
+| `SPI_12_Long_Term_Groundwater_Impacts` | SPI 12 – Long Term Groundwater Impacts | — | monthly | rainfall: `spi-spei-rai-index`; drought: `spi-rai-index` | live |
+| `SPI_24_Very_Long_Term_Drought` | SPI 24 – Very Long Term Drought | — | monthly | rainfall: `spi-spei-rai-index`; drought: `spi-rai-index` | live |
+| `SPEI_3_Agricultural_Drought_ET` | SPEI 3 – Agricultural Drought ET | — | monthly | rainfall: `spi-spei-rai-index` | duplicate of `meteorological_drought_master.spei_3`; live on rainfall |
+| `SPEI_12_Annual_Water_Balance_Drought` | SPEI 12 – Annual Water Balance Drought | — | monthly | rainfall: `spi-spei-rai-index` | duplicate of `meteorological_drought_master.spei_12`; live on rainfall |
+| `RAI_Rainfall_Anomaly_Index` | RAI – Rainfall Anomaly Index | — | monthly | rainfall: `spi-spei-rai-index`; drought: `spi-rai-index` | live |
 
 <a id="runoff-variables"></a>
 ## Runoff Variables · §7.1
 
 Table `runoff_variables_master` · id `runoff-variables` · daily · pages: runoff · 3 live, 8 withheld, 1 duplicate · keys: `District_Name`, `Date`, `Year`, `Month`
 
+**Runoff page** — duplicates shown here (live): `Mean_Catchment_Rainfall_mm`
+
 | Chart group | id | Axis unit | Resolution | Columns (★ default) |
 | --- | --- | --- | --- | --- |
 | Catchment Area (km²) | `catchment-area-km2` | km² | daily | `Catchment_Area_km2` ★ |
-| Actual ET from Catchment (mm) | `actual-et-from-catchment-mm` | mm | daily | `Actual_ET_from_Catchment_mm` ★ |
+| Mean Catchment Rainfall / Actual ET from Catchment (mm) | `mean-catchment-rainfall-actual-et-from-catchment-mm` | mm | daily | `Mean_Catchment_Rainfall_mm` ★, `Actual_ET_from_Catchment_mm` ★ |
 | Daily Surface Runoff Volume (m³/day) | `daily-surface-runoff-volume-m3-day` | m³/day | daily | `Daily_Surface_Runoff_Volume_m3_day` ★ |
 | Monthly Runoff Totals (Mm³/month) | `monthly-runoff-totals-mm3-month` | Mm³/month | monthly | `Monthly_Runoff_Totals_Million_m3_month` ★ |
 | Runoff Coefficient | `runoff-coefficient` | — | daily | `Runoff_Coefficient_dimensionless` ★ |
@@ -403,18 +491,18 @@ Table `runoff_variables_master` · id `runoff-variables` · daily · pages: runo
 
 | Column | Label | Unit | Resolution | Group | Status |
 | --- | --- | --- | --- | --- | --- |
-| `Catchment_Area_km2` | Catchment Area (km²) | km² | daily | `catchment-area-km2` | withheld — constant 6 500 km² for every district |
-| `Mean_Catchment_Rainfall_mm` | Mean Catchment Rainfall (mm) | mm | daily | — | duplicate of `6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm` |
-| `Actual_ET_from_Catchment_mm` | Actual ET from Catchment (mm) | mm | daily | `actual-et-from-catchment-mm` | live |
-| `Daily_Surface_Runoff_Volume_m3_day` | Daily Surface Runoff Volume (m³/day) | m³/day | daily | `daily-surface-runoff-volume-m3-day` | withheld — volume computed with the constant 6 500 km² area for every district; the runoff page serves depth × real district area instead |
-| `Monthly_Runoff_Totals_Million_m3_month` | Monthly Runoff Totals (Mm³/month) | Mm³/month | monthly | `monthly-runoff-totals-mm3-month` | withheld — volume computed with the constant 6 500 km² area |
-| `Runoff_Coefficient_dimensionless` | Runoff Coefficient | — | daily | `runoff-coefficient` | live |
-| `Soil_Moisture_Prior_m3m3` | Soil Moisture Prior (m³/m³) | m³/m³ | daily | `soil-moisture-prior-m3-m3` | live — plausibility checked 2026-10-15: 0.025–0.475 m³/m³, varying |
-| `Curve_Number_CN` | Curve Number CN | — | daily | `curve-number-cn` | withheld — constant 72.9 |
-| `Peak_Flow_Rates_m3s` | Peak Flow Rates (m³/s) | m³/s | daily | `peak-flow-rates-baseflow-component-m3-s` | withheld — flow scaled to the constant 6 500 km² area |
-| `Baseflow_Component_m3s` | Baseflow Component (m³/s) | m³/s | daily | `peak-flow-rates-baseflow-component-m3-s` | withheld — flow scaled to the constant 6 500 km² area for every district; only the baseflow index (a ratio) is served |
-| `Dominant_LandCover_Class` | Dominant LandCover Class (class) | — | daily | `dominant-landcover-class` | withheld — one constant class for every district |
-| `Impervious_Surface_Fraction_percent` | Impervious Surface Fraction (%) | % | daily | `impervious-surface-fraction-pct` | withheld — constant 4.5 % |
+| `Catchment_Area_km2` | Catchment Area (km²) | km² | daily | runoff: `catchment-area-km2` | withheld — constant 6 500 km² for every district |
+| `Mean_Catchment_Rainfall_mm` | Mean Catchment Rainfall (mm) | mm | daily | runoff: `mean-catchment-rainfall-actual-et-from-catchment-mm` | duplicate of `6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm`; live on runoff |
+| `Actual_ET_from_Catchment_mm` | Actual ET from Catchment (mm) | mm | daily | runoff: `mean-catchment-rainfall-actual-et-from-catchment-mm` | live |
+| `Daily_Surface_Runoff_Volume_m3_day` | Daily Surface Runoff Volume (m³/day) | m³/day | daily | runoff: `daily-surface-runoff-volume-m3-day` | withheld — volume computed with the constant 6 500 km² area for every district; the runoff page serves depth × real district area instead |
+| `Monthly_Runoff_Totals_Million_m3_month` | Monthly Runoff Totals (Mm³/month) | Mm³/month | monthly | runoff: `monthly-runoff-totals-mm3-month` | withheld — volume computed with the constant 6 500 km² area |
+| `Runoff_Coefficient_dimensionless` | Runoff Coefficient | — | daily | runoff: `runoff-coefficient` | live |
+| `Soil_Moisture_Prior_m3m3` | Soil Moisture Prior (m³/m³) | m³/m³ | daily | runoff: `soil-moisture-prior-m3-m3` | live — plausibility checked 2026-10-15: 0.025–0.475 m³/m³, varying |
+| `Curve_Number_CN` | Curve Number CN | — | daily | runoff: `curve-number-cn` | withheld — constant 72.9 |
+| `Peak_Flow_Rates_m3s` | Peak Flow Rates (m³/s) | m³/s | daily | runoff: `peak-flow-rates-baseflow-component-m3-s` | withheld — flow scaled to the constant 6 500 km² area |
+| `Baseflow_Component_m3s` | Baseflow Component (m³/s) | m³/s | daily | runoff: `peak-flow-rates-baseflow-component-m3-s` | withheld — flow scaled to the constant 6 500 km² area for every district; only the baseflow index (a ratio) is served |
+| `Dominant_LandCover_Class` | Dominant LandCover Class (class) | — | daily | runoff: `dominant-landcover-class` | withheld — one constant class for every district |
+| `Impervious_Surface_Fraction_percent` | Impervious Surface Fraction (%) | % | daily | runoff: `impervious-surface-fraction-pct` | withheld — constant 4.5 % |
 
 ## Unit suffixes (app/core/units.py)
 

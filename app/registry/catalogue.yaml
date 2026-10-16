@@ -16,63 +16,6 @@ categories:
   - date
   - year
   - month
-  groups:
-  - id: seasonal-rainfall-mm-season
-    label: Seasonal Rainfall (mm/season)
-    unit: mm/season
-    resolution: annual
-    columns:
-    - seasonal_rainfall_mm_season
-    default_visible:
-    - seasonal_rainfall_mm_season
-  - id: evapotranspiration-mm-day
-    label: Evapotranspiration (mm/day)
-    unit: mm/day
-    resolution: daily
-    columns:
-    - pet_mm_day
-    - et0_mm_day
-    default_visible:
-    - pet_mm_day
-    - et0_mm_day
-  - id: relative-humidity-pct
-    label: Relative Humidity (%)
-    unit: '%'
-    resolution: daily
-    columns:
-    - relative_humidity_pct
-    default_visible:
-    - relative_humidity_pct
-  - id: solar-radiation-w-m2
-    label: Solar Radiation (W/m²)
-    unit: W/m²
-    resolution: daily
-    columns:
-    - solar_radiation_wm2
-    default_visible:
-    - solar_radiation_wm2
-  - id: wind-speed-2m-m-s
-    label: Wind Speed 2m (m/s)
-    unit: m/s
-    resolution: daily
-    columns:
-    - wind_speed_2m_ms
-    default_visible:
-    - wind_speed_2m_ms
-  - id: spei-index
-    label: SPEI (index)
-    unit: index
-    resolution: monthly
-    columns:
-    - spei_1
-    - spei_3
-    - spei_6
-    - spei_12
-    - spei_24
-    default_visible:
-    - spei_1
-    - spei_3
-    - spei_6
   columns:
   - column: daily_rainfall_mm_day
     name: Daily Rainfall
@@ -84,8 +27,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: monthly_rainfall_mm_month
@@ -98,8 +39,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Monthly_Total_Precipitation_mm
-    group: null
-    default_visible: false
     note: December totals miss 31 Dec
     unit_override: null
   - column: seasonal_rainfall_mm_season
@@ -112,8 +51,6 @@ categories:
     status: withheld
     reason: 'holds the calendar-year total, not a season: one value per district-year (Alfred Nzo 2014 = 825.67 mm = sum of its 12 monthly totals, 31 Dec missing)'
     duplicate_of: null
-    group: seasonal-rainfall-mm-season
-    default_visible: true
     note: null
     unit_override: null
   - column: rainfall_anomaly_mm
@@ -126,8 +63,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Monthly_Anomaly_mm
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: rainfall_anomaly_pct
@@ -140,8 +75,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Monthly_Anomaly_percent
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: rainfall_intensity_mm_h
@@ -154,8 +87,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Hourly_Rainfall_Intensity_mm_h
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: tmin_c
@@ -168,8 +99,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 4_1_temperature_change_master.Tmin_C
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: tmax_c
@@ -182,8 +111,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 4_1_temperature_change_master.Tmax_C
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: tavg_c
@@ -196,8 +123,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 4_1_temperature_change_master.Tavg_C
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: temp_anomaly_c
@@ -210,8 +135,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 4_1_temperature_change_master.Temperature_Anomaly_C
-    group: null
-    default_visible: false
     note: equals 4_1 to 0.001 °C
     unit_override: null
   - column: pet_mm_day
@@ -224,8 +147,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: evapotranspiration-mm-day
-    default_visible: true
     note: null
     unit_override: null
   - column: et0_mm_day
@@ -238,8 +159,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: evapotranspiration-mm-day
-    default_visible: true
     note: plausible 1–7.4 mm/day (the 4_4 table's ET₀ is withheld)
     unit_override: null
   - column: relative_humidity_pct
@@ -252,8 +171,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: relative-humidity-pct
-    default_visible: true
     note: null
     unit_override: null
   - column: solar_radiation_wm2
@@ -267,8 +184,6 @@ categories:
     reason: 'synthetic: one value per calendar day (365 distinct values), identical in all 52 districts and every year; peaks in April (247 W/m²) with the minimum in Sep–Oct (113 W/m²), where the Southern-Hemisphere
       maximum is in December'
     duplicate_of: null
-    group: solar-radiation-w-m2
-    default_visible: true
     note: null
     unit_override: null
   - column: wind_speed_2m_ms
@@ -281,8 +196,6 @@ categories:
     status: withheld
     reason: constant 2.5 m/s in every row
     duplicate_of: null
-    group: wind-speed-2m-m-s
-    default_visible: true
     note: null
     unit_override: null
   - column: spi_1
@@ -295,8 +208,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_1_Meteorological_Drought_Onset
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: spi_3
@@ -309,8 +220,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_3_Short_Term_Agricultural_Drought
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: spi_6
@@ -323,8 +232,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_6_Medium_Term_Hydrological_Impacts
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: spi_12
@@ -337,8 +244,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_12_Long_Term_Groundwater_Impacts
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: spi_24
@@ -351,8 +256,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_24_Very_Long_Term_Drought
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: spei_1
@@ -365,8 +268,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spei-index
-    default_visible: true
     note: null
     unit_override: null
   - column: spei_3
@@ -379,8 +280,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spei-index
-    default_visible: true
     note: null
     unit_override: null
   - column: spei_6
@@ -393,8 +292,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spei-index
-    default_visible: true
     note: null
     unit_override: null
   - column: spei_12
@@ -407,8 +304,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spei-index
-    default_visible: false
     note: null
     unit_override: null
   - column: spei_24
@@ -421,10 +316,131 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spei-index
-    default_visible: false
     note: null
     unit_override: null
+  pages:
+  - module: drought
+    shown_duplicates:
+    - daily_rainfall_mm_day
+    - monthly_rainfall_mm_month
+    - rainfall_anomaly_mm
+    - rainfall_anomaly_pct
+    - rainfall_intensity_mm_h
+    - tmin_c
+    - tmax_c
+    - tavg_c
+    - temp_anomaly_c
+    groups:
+    - id: daily-rainfall-pet-et0-mm-day
+      label: Daily Rainfall / PET / ET₀ (mm/day)
+      unit: mm/day
+      resolution: daily
+      columns:
+      - daily_rainfall_mm_day
+      - pet_mm_day
+      - et0_mm_day
+      default_visible:
+      - daily_rainfall_mm_day
+      - pet_mm_day
+      - et0_mm_day
+    - id: monthly-rainfall-mm-month
+      label: Monthly Rainfall (mm/month)
+      unit: mm/month
+      resolution: monthly
+      columns:
+      - monthly_rainfall_mm_month
+      default_visible:
+      - monthly_rainfall_mm_month
+    - id: seasonal-rainfall-mm-season
+      label: Seasonal Rainfall (mm/season)
+      unit: mm/season
+      resolution: annual
+      columns:
+      - seasonal_rainfall_mm_season
+      default_visible:
+      - seasonal_rainfall_mm_season
+    - id: rainfall-anomaly-mm
+      label: Rainfall Anomaly (mm)
+      unit: mm
+      resolution: monthly
+      columns:
+      - rainfall_anomaly_mm
+      default_visible:
+      - rainfall_anomaly_mm
+    - id: rainfall-anomaly-pct
+      label: Rainfall Anomaly (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - rainfall_anomaly_pct
+      default_visible:
+      - rainfall_anomaly_pct
+    - id: rainfall-intensity-mm-h
+      label: Rainfall Intensity (mm/h)
+      unit: mm/h
+      resolution: daily
+      columns:
+      - rainfall_intensity_mm_h
+      default_visible:
+      - rainfall_intensity_mm_h
+    - id: temperature-c
+      label: Temperature (°C)
+      unit: °C
+      resolution: daily
+      columns:
+      - tmin_c
+      - tmax_c
+      - tavg_c
+      default_visible:
+      - tmin_c
+      - tmax_c
+      - tavg_c
+    - id: temp-anomaly-c
+      label: Temp Anomaly (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - temp_anomaly_c
+      default_visible:
+      - temp_anomaly_c
+    - id: relative-humidity-pct
+      label: Relative Humidity (%)
+      unit: '%'
+      resolution: daily
+      columns:
+      - relative_humidity_pct
+      default_visible:
+      - relative_humidity_pct
+    - id: solar-radiation-w-m2
+      label: Solar Radiation (W/m²)
+      unit: W/m²
+      resolution: daily
+      columns:
+      - solar_radiation_wm2
+      default_visible:
+      - solar_radiation_wm2
+    - id: wind-speed-2m-m-s
+      label: Wind Speed 2m (m/s)
+      unit: m/s
+      resolution: daily
+      columns:
+      - wind_speed_2m_ms
+      default_visible:
+      - wind_speed_2m_ms
+    - id: spei-index
+      label: SPEI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - spei_1
+      - spei_3
+      - spei_6
+      - spei_12
+      - spei_24
+      default_visible:
+      - spei_1
+      - spei_3
+      - spei_6
 - id: satellite-remote-sensing
   table: satellite_remote_sensing
   label: Satellite Remote Sensing
@@ -438,63 +454,6 @@ categories:
   - date
   - district_name
   - year
-  groups:
-  - id: ndvi-ndwi-index
-    label: NDVI / NDWI (index)
-    unit: index
-    resolution: monthly
-    columns:
-    - ndvi
-    - ndwi
-    default_visible:
-    - ndvi
-    - ndwi
-  - id: lst-c
-    label: LST (°C)
-    unit: °C
-    resolution: monthly
-    columns:
-    - lst
-    default_visible:
-    - lst
-  - id: vci-tci-vhi-pct
-    label: VCI / TCI / VHI (%)
-    unit: '%'
-    resolution: monthly
-    columns:
-    - vci
-    - tci
-    - vhi
-    default_visible:
-    - vci
-    - tci
-    - vhi
-  - id: soil-moisture-m3-m3
-    label: Soil Moisture (m³/m³)
-    unit: m³/m³
-    resolution: monthly
-    columns:
-    - rootzone_soil_moisture
-    - surface_soil_moisture
-    default_visible:
-    - rootzone_soil_moisture
-    - surface_soil_moisture
-  - id: surface-water-extent-km2
-    label: Surface Water Extent (km²)
-    unit: km²
-    resolution: monthly
-    columns:
-    - surface_water_extent_km2
-    default_visible:
-    - surface_water_extent_km2
-  - id: grace-tws
-    label: GRACE TWS
-    unit: —
-    resolution: monthly
-    columns:
-    - grace_tws
-    default_visible:
-    - grace_tws
   columns:
   - column: ndvi
     name: NDVI
@@ -506,8 +465,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: ndvi-ndwi-index
-    default_visible: true
     note: passes the NDVI plausibility check (arid west low, wet east high, seasonal cycle follows the rains)
     unit_override: null
   - column: lst
@@ -520,8 +477,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: lst-c
-    default_visible: true
     note: null
     unit_override: name has no unit suffix; spec §3.2 gives LST in °C
   - column: ndwi
@@ -534,8 +489,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: ndvi-ndwi-index
-    default_visible: true
     note: null
     unit_override: null
   - column: vci
@@ -548,8 +501,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: vci-tci-vhi-pct
-    default_visible: true
     note: null
     unit_override: 'name has no unit suffix; spec §3.2: VCI 0–100 %'
   - column: tci
@@ -562,8 +513,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: vci-tci-vhi-pct
-    default_visible: true
     note: null
     unit_override: 'name has no unit suffix; spec §3.2: TCI 0–100 %'
   - column: vhi
@@ -576,8 +525,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: vci-tci-vhi-pct
-    default_visible: true
     note: null
     unit_override: 'name has no unit suffix; spec §3.2: VHI 0–100 %'
   - column: rootzone_soil_moisture
@@ -590,8 +537,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: soil-moisture-m3-m3
-    default_visible: true
     note: 'Served from Mar 2015: one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015'
     unit_override: 'name has no unit suffix; spec §3.2: root-zone soil moisture in m³/m³'
   - column: surface_soil_moisture
@@ -604,8 +549,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: soil-moisture-m3-m3
-    default_visible: true
     note: 'Served from Mar 2015: one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015'
     unit_override: 'name has no unit suffix; spec §3.2: surface soil moisture in m³/m³'
   - column: surface_water_extent_km2
@@ -618,8 +561,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: surface-water-extent-km2
-    default_visible: true
     note: 'plausibility checked 2026-10-15: ≥ 0 everywhere, different in every district'
     unit_override: null
   - column: grace_tws
@@ -632,10 +573,127 @@ categories:
     status: withheld
     reason: values of 70–412 in 2001 and up to 270 in 2002, before GRACE data exist (launch March 2002); about ±10 from 2003; unit undocumented
     duplicate_of: null
-    group: grace-tws
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: drought
+    shown_duplicates: []
+    groups:
+    - id: ndvi-ndwi-index
+      label: NDVI / NDWI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - ndvi
+      - ndwi
+      default_visible:
+      - ndvi
+      - ndwi
+    - id: lst-c
+      label: LST (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - lst
+      default_visible:
+      - lst
+    - id: vci-tci-vhi-pct
+      label: VCI / TCI / VHI (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - vci
+      - tci
+      - vhi
+      default_visible:
+      - vci
+      - tci
+      - vhi
+    - id: soil-moisture-m3-m3
+      label: Soil Moisture (m³/m³)
+      unit: m³/m³
+      resolution: monthly
+      columns:
+      - rootzone_soil_moisture
+      - surface_soil_moisture
+      default_visible:
+      - rootzone_soil_moisture
+      - surface_soil_moisture
+    - id: surface-water-extent-km2
+      label: Surface Water Extent (km²)
+      unit: km²
+      resolution: monthly
+      columns:
+      - surface_water_extent_km2
+      default_visible:
+      - surface_water_extent_km2
+    - id: grace-tws
+      label: GRACE TWS
+      unit: —
+      resolution: monthly
+      columns:
+      - grace_tws
+      default_visible:
+      - grace_tws
+  - module: vegetation
+    shown_duplicates: []
+    groups:
+    - id: ndvi-ndwi-index
+      label: NDVI / NDWI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - ndvi
+      - ndwi
+      default_visible:
+      - ndvi
+      - ndwi
+    - id: lst-c
+      label: LST (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - lst
+      default_visible:
+      - lst
+    - id: vci-tci-vhi-pct
+      label: VCI / TCI / VHI (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - vci
+      - tci
+      - vhi
+      default_visible:
+      - vci
+      - tci
+      - vhi
+    - id: soil-moisture-m3-m3
+      label: Soil Moisture (m³/m³)
+      unit: m³/m³
+      resolution: monthly
+      columns:
+      - rootzone_soil_moisture
+      - surface_soil_moisture
+      default_visible:
+      - rootzone_soil_moisture
+      - surface_soil_moisture
+    - id: surface-water-extent-km2
+      label: Surface Water Extent (km²)
+      unit: km²
+      resolution: monthly
+      columns:
+      - surface_water_extent_km2
+      default_visible:
+      - surface_water_extent_km2
+    - id: grace-tws
+      label: GRACE TWS
+      unit: —
+      resolution: monthly
+      columns:
+      - grace_tws
+      default_visible:
+      - grace_tws
 - id: hydrological-drought
   table: hydrological_drought_master
   label: Hydrological Drought
@@ -648,64 +706,6 @@ categories:
   - id
   - date
   - district_name
-  groups:
-  - id: river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s
-    label: River Discharge / FDC Percentiles / Surface Runoff / Baseflow Separation (m³/s)
-    unit: m³/s
-    resolution: monthly
-    columns:
-    - river_discharge_m3_s
-    - fdc_percentiles_m3_s
-    - surface_runoff_m3_s
-    - baseflow_separation_m3_s
-    default_visible:
-    - river_discharge_m3_s
-    - fdc_percentiles_m3_s
-    - surface_runoff_m3_s
-  - id: ssi-sgi-index
-    label: SSI / SGI (index)
-    unit: index
-    resolution: monthly
-    columns:
-    - ssi_dimensionless
-    - sgi_dimensionless
-    default_visible:
-    - ssi_dimensionless
-    - sgi_dimensionless
-  - id: dam-storage-mm3
-    label: Dam Storage (Mm³)
-    unit: Mm³
-    resolution: monthly
-    columns:
-    - dam_storage_million_m3
-    default_visible:
-    - dam_storage_million_m3
-  - id: dam-level-pct-fsc
-    label: Dam Level (% FSC)
-    unit: '% FSC'
-    resolution: monthly
-    columns:
-    - dam_level_pct_fsc
-    default_visible:
-    - dam_level_pct_fsc
-  - id: dam-inflow-dam-outflow-m3-s
-    label: Dam Inflow / Dam Outflow (m³/s)
-    unit: m³/s
-    resolution: monthly
-    columns:
-    - dam_inflow_m3_s
-    - dam_outflow_m3_s
-    default_visible:
-    - dam_inflow_m3_s
-    - dam_outflow_m3_s
-  - id: borehole-water-level-m-bgl
-    label: Borehole Water Level (m bgl)
-    unit: m bgl
-    resolution: monthly
-    columns:
-    - borehole_water_level_m_bgl
-    default_visible:
-    - borehole_water_level_m_bgl
   columns:
   - column: river_discharge_m3_s
     name: River Discharge
@@ -717,8 +717,6 @@ categories:
     status: withheld
     reason: identical value in all 52 districts every month (placeholder)
     duplicate_of: null
-    group: river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s
-    default_visible: true
     note: null
     unit_override: null
   - column: fdc_percentiles_m3_s
@@ -731,8 +729,6 @@ categories:
     status: withheld
     reason: constant 0.01
     duplicate_of: null
-    group: river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s
-    default_visible: true
     note: null
     unit_override: null
   - column: ssi_dimensionless
@@ -745,8 +741,6 @@ categories:
     status: withheld
     reason: computed from the placeholder discharge
     duplicate_of: null
-    group: ssi-sgi-index
-    default_visible: true
     note: null
     unit_override: null
   - column: dam_storage_million_m3
@@ -759,8 +753,6 @@ categories:
     status: withheld
     reason: 'failed plausibility: frozen since Dec 2021 in all 52 districts (national 17 715 Mm³ every month) and implausible swings before (national 421 Mm³ in Jun 2021, 16 617 Mm³ in Aug 2021)'
     duplicate_of: null
-    group: dam-storage-mm3
-    default_visible: true
     note: null
     unit_override: null
   - column: dam_level_pct_fsc
@@ -773,8 +765,6 @@ categories:
     status: withheld
     reason: 'failed plausibility: frozen since Dec 2021; 1 212 district-months at 0 % FSC (national mean 69 % in Jul 2002, 0.5 % in Jul 2003)'
     duplicate_of: null
-    group: dam-level-pct-fsc
-    default_visible: true
     note: null
     unit_override: null
   - column: dam_inflow_m3_s
@@ -787,8 +777,6 @@ categories:
     status: withheld
     reason: 'failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)'
     duplicate_of: null
-    group: dam-inflow-dam-outflow-m3-s
-    default_visible: true
     note: null
     unit_override: null
   - column: dam_outflow_m3_s
@@ -801,8 +789,6 @@ categories:
     status: withheld
     reason: 'failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)'
     duplicate_of: null
-    group: dam-inflow-dam-outflow-m3-s
-    default_visible: true
     note: null
     unit_override: null
   - column: borehole_water_level_m_bgl
@@ -815,8 +801,6 @@ categories:
     status: withheld
     reason: 'range −0.18…+0.20: not a depth below ground level'
     duplicate_of: null
-    group: borehole-water-level-m-bgl
-    default_visible: true
     note: null
     unit_override: null
   - column: sgi_dimensionless
@@ -830,8 +814,6 @@ categories:
     reason: 'failed plausibility: frozen since Sep 2024 (all 52 districts repeat their Aug 2024 value for 16 months) and from Jan 2001 to Apr 2002; Johannesburg, Ekurhuleni, Sedibeng and West Rand share
       one identical series, as do Sisonke and uMgungundlovu'
     duplicate_of: null
-    group: ssi-sgi-index
-    default_visible: true
     note: null
     unit_override: null
   - column: surface_runoff_m3_s
@@ -844,8 +826,6 @@ categories:
     status: withheld
     reason: identical value in all 52 districts every month (placeholder)
     duplicate_of: null
-    group: river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s
-    default_visible: true
     note: null
     unit_override: null
   - column: baseflow_separation_m3_s
@@ -858,10 +838,129 @@ categories:
     status: withheld
     reason: identical value in all 52 districts every month (placeholder)
     duplicate_of: null
-    group: river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s
-    default_visible: false
     note: null
     unit_override: null
+  pages:
+  - module: drought
+    shown_duplicates: []
+    groups:
+    - id: river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s
+      label: River Discharge / FDC Percentiles / Surface Runoff / Baseflow Separation (m³/s)
+      unit: m³/s
+      resolution: monthly
+      columns:
+      - river_discharge_m3_s
+      - fdc_percentiles_m3_s
+      - surface_runoff_m3_s
+      - baseflow_separation_m3_s
+      default_visible:
+      - river_discharge_m3_s
+      - fdc_percentiles_m3_s
+      - surface_runoff_m3_s
+    - id: ssi-sgi-index
+      label: SSI / SGI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - ssi_dimensionless
+      - sgi_dimensionless
+      default_visible:
+      - ssi_dimensionless
+      - sgi_dimensionless
+    - id: dam-storage-mm3
+      label: Dam Storage (Mm³)
+      unit: Mm³
+      resolution: monthly
+      columns:
+      - dam_storage_million_m3
+      default_visible:
+      - dam_storage_million_m3
+    - id: dam-level-pct-fsc
+      label: Dam Level (% FSC)
+      unit: '% FSC'
+      resolution: monthly
+      columns:
+      - dam_level_pct_fsc
+      default_visible:
+      - dam_level_pct_fsc
+    - id: dam-inflow-dam-outflow-m3-s
+      label: Dam Inflow / Dam Outflow (m³/s)
+      unit: m³/s
+      resolution: monthly
+      columns:
+      - dam_inflow_m3_s
+      - dam_outflow_m3_s
+      default_visible:
+      - dam_inflow_m3_s
+      - dam_outflow_m3_s
+    - id: borehole-water-level-m-bgl
+      label: Borehole Water Level (m bgl)
+      unit: m bgl
+      resolution: monthly
+      columns:
+      - borehole_water_level_m_bgl
+      default_visible:
+      - borehole_water_level_m_bgl
+  - module: runoff
+    shown_duplicates: []
+    groups:
+    - id: river-discharge-fdc-percentiles-surface-runoff-baseflow-separation-m3-s
+      label: River Discharge / FDC Percentiles / Surface Runoff / Baseflow Separation (m³/s)
+      unit: m³/s
+      resolution: monthly
+      columns:
+      - river_discharge_m3_s
+      - fdc_percentiles_m3_s
+      - surface_runoff_m3_s
+      - baseflow_separation_m3_s
+      default_visible:
+      - river_discharge_m3_s
+      - fdc_percentiles_m3_s
+      - surface_runoff_m3_s
+    - id: ssi-sgi-index
+      label: SSI / SGI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - ssi_dimensionless
+      - sgi_dimensionless
+      default_visible:
+      - ssi_dimensionless
+      - sgi_dimensionless
+    - id: dam-storage-mm3
+      label: Dam Storage (Mm³)
+      unit: Mm³
+      resolution: monthly
+      columns:
+      - dam_storage_million_m3
+      default_visible:
+      - dam_storage_million_m3
+    - id: dam-level-pct-fsc
+      label: Dam Level (% FSC)
+      unit: '% FSC'
+      resolution: monthly
+      columns:
+      - dam_level_pct_fsc
+      default_visible:
+      - dam_level_pct_fsc
+    - id: dam-inflow-dam-outflow-m3-s
+      label: Dam Inflow / Dam Outflow (m³/s)
+      unit: m³/s
+      resolution: monthly
+      columns:
+      - dam_inflow_m3_s
+      - dam_outflow_m3_s
+      default_visible:
+      - dam_inflow_m3_s
+      - dam_outflow_m3_s
+    - id: borehole-water-level-m-bgl
+      label: Borehole Water Level (m bgl)
+      unit: m bgl
+      resolution: monthly
+      columns:
+      - borehole_water_level_m_bgl
+      default_visible:
+      - borehole_water_level_m_bgl
 - id: temperature-change
   table: 4_1_temperature_change_master
   label: Temperature Change
@@ -872,55 +971,6 @@ categories:
   keys:
   - District_Name
   - Date
-  groups:
-  - id: temperature-c
-    label: Temperature (°C)
-    unit: °C
-    resolution: daily
-    columns:
-    - Tmin_C
-    - Tmax_C
-    - Tavg_C
-    default_visible:
-    - Tmin_C
-    - Tmax_C
-    - Tavg_C
-  - id: temperature-anomaly-c
-    label: Temperature Anomaly (°C)
-    unit: °C
-    resolution: monthly
-    columns:
-    - Temperature_Anomaly_C
-    default_visible:
-    - Temperature_Anomaly_C
-  - id: heatwave-days
-    label: Heatwave (days)
-    unit: days
-    resolution: annual
-    columns:
-    - Heatwave_Frequency_Days
-    - Heatwave_Duration_Max_Consecutive_Days
-    default_visible:
-    - Heatwave_Frequency_Days
-    - Heatwave_Duration_Max_Consecutive_Days
-  - id: frost-day-flag
-    label: Frost Day Flag
-    unit: —
-    resolution: daily
-    columns:
-    - Frost_Day_Flag
-    default_visible:
-    - Frost_Day_Flag
-  - id: lst-day-lst-night-c
-    label: LST Day / LST Night (°C)
-    unit: °C
-    resolution: daily
-    columns:
-    - LST_Day_C
-    - LST_Night_C
-    default_visible:
-    - LST_Day_C
-    - LST_Night_C
   columns:
   - column: Tmin_C
     name: Tmin
@@ -932,8 +982,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: temperature-c
-    default_visible: true
     note: null
     unit_override: null
   - column: Tmax_C
@@ -946,8 +994,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: temperature-c
-    default_visible: true
     note: null
     unit_override: null
   - column: Tavg_C
@@ -960,8 +1006,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: temperature-c
-    default_visible: true
     note: null
     unit_override: null
   - column: Temperature_Anomaly_C
@@ -974,8 +1018,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: temperature-anomaly-c
-    default_visible: true
     note: null
     unit_override: null
   - column: Heatwave_Frequency_Days
@@ -988,8 +1030,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: heatwave-days
-    default_visible: true
     note: = count of days Tmax > 35 °C in the year (verified)
     unit_override: null
   - column: Heatwave_Duration_Max_Consecutive_Days
@@ -1002,8 +1042,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: heatwave-days
-    default_visible: true
     note: = longest run of days with Tmax > 35 °C in the year (1 404 / 1 404 district-years verified)
     unit_override: null
   - column: Frost_Day_Flag
@@ -1016,8 +1054,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: frost-day-flag
-    default_visible: true
     note: null
     unit_override: null
   - column: LST_Day_C
@@ -1030,8 +1066,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: lst-day-lst-night-c
-    default_visible: true
     note: null
     unit_override: null
   - column: LST_Night_C
@@ -1044,10 +1078,60 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: lst-day-lst-night-c
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: climate
+    shown_duplicates: []
+    groups:
+    - id: temperature-c
+      label: Temperature (°C)
+      unit: °C
+      resolution: daily
+      columns:
+      - Tmin_C
+      - Tmax_C
+      - Tavg_C
+      default_visible:
+      - Tmin_C
+      - Tmax_C
+      - Tavg_C
+    - id: temperature-anomaly-c
+      label: Temperature Anomaly (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - Temperature_Anomaly_C
+      default_visible:
+      - Temperature_Anomaly_C
+    - id: heatwave-days
+      label: Heatwave (days)
+      unit: days
+      resolution: annual
+      columns:
+      - Heatwave_Frequency_Days
+      - Heatwave_Duration_Max_Consecutive_Days
+      default_visible:
+      - Heatwave_Frequency_Days
+      - Heatwave_Duration_Max_Consecutive_Days
+    - id: frost-day-flag
+      label: Frost Day Flag
+      unit: —
+      resolution: daily
+      columns:
+      - Frost_Day_Flag
+      default_visible:
+      - Frost_Day_Flag
+    - id: lst-day-lst-night-c
+      label: LST Day / LST Night (°C)
+      unit: °C
+      resolution: daily
+      columns:
+      - LST_Day_C
+      - LST_Night_C
+      default_visible:
+      - LST_Day_C
+      - LST_Night_C
 - id: wet-dry-spells
   table: 4_2_wet_dry_spells_master
   label: Wet Dry Spells
@@ -1059,40 +1143,6 @@ categories:
   keys:
   - District_Name
   - Year
-  groups:
-  - id: cwd-cdd-r10mm-r20mm-days
-    label: CWD / CDD / R10mm / R20mm (days)
-    unit: days
-    resolution: annual
-    columns:
-    - CWD_Days
-    - CDD_Days
-    - R10mm_Days
-    - R20mm_Days
-    default_visible:
-    - CWD_Days
-    - CDD_Days
-    - R10mm_Days
-  - id: rx1day-rx5day-prcptot-mm
-    label: Rx1day / Rx5day / PRCPTOT (mm)
-    unit: mm
-    resolution: annual
-    columns:
-    - Rx1day_mm
-    - Rx5day_mm
-    - PRCPTOT_mm
-    default_visible:
-    - Rx1day_mm
-    - Rx5day_mm
-    - PRCPTOT_mm
-  - id: sdii-mm-wet-day
-    label: SDII (mm/wet day)
-    unit: mm/wet day
-    resolution: annual
-    columns:
-    - SDII_mm_per_wet_day
-    default_visible:
-    - SDII_mm_per_wet_day
   columns:
   - column: CWD_Days
     name: CWD
@@ -1104,8 +1154,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: cwd-cdd-r10mm-r20mm-days
-    default_visible: true
     note: null
     unit_override: null
   - column: CDD_Days
@@ -1118,8 +1166,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: cwd-cdd-r10mm-r20mm-days
-    default_visible: true
     note: null
     unit_override: null
   - column: Rx1day_mm
@@ -1132,8 +1178,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: rx1day-rx5day-prcptot-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Rx5day_mm
@@ -1146,8 +1190,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: rx1day-rx5day-prcptot-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: PRCPTOT_mm
@@ -1160,8 +1202,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: rx1day-rx5day-prcptot-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: R10mm_Days
@@ -1174,8 +1214,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: cwd-cdd-r10mm-r20mm-days
-    default_visible: true
     note: null
     unit_override: null
   - column: R20mm_Days
@@ -1188,8 +1226,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: cwd-cdd-r10mm-r20mm-days
-    default_visible: false
     note: null
     unit_override: null
   - column: SDII_mm_per_wet_day
@@ -1202,10 +1238,81 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: sdii-mm-wet-day
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: climate
+    shown_duplicates: []
+    groups:
+    - id: cwd-cdd-r10mm-r20mm-days
+      label: CWD / CDD / R10mm / R20mm (days)
+      unit: days
+      resolution: annual
+      columns:
+      - CWD_Days
+      - CDD_Days
+      - R10mm_Days
+      - R20mm_Days
+      default_visible:
+      - CWD_Days
+      - CDD_Days
+      - R10mm_Days
+    - id: rx1day-rx5day-prcptot-mm
+      label: Rx1day / Rx5day / PRCPTOT (mm)
+      unit: mm
+      resolution: annual
+      columns:
+      - Rx1day_mm
+      - Rx5day_mm
+      - PRCPTOT_mm
+      default_visible:
+      - Rx1day_mm
+      - Rx5day_mm
+      - PRCPTOT_mm
+    - id: sdii-mm-wet-day
+      label: SDII (mm/wet day)
+      unit: mm/wet day
+      resolution: annual
+      columns:
+      - SDII_mm_per_wet_day
+      default_visible:
+      - SDII_mm_per_wet_day
+  - module: rainfall
+    shown_duplicates: []
+    groups:
+    - id: cwd-cdd-r10mm-r20mm-days
+      label: CWD / CDD / R10mm / R20mm (days)
+      unit: days
+      resolution: annual
+      columns:
+      - CWD_Days
+      - CDD_Days
+      - R10mm_Days
+      - R20mm_Days
+      default_visible:
+      - CWD_Days
+      - CDD_Days
+      - R10mm_Days
+    - id: rx1day-rx5day-prcptot-mm
+      label: Rx1day / Rx5day / PRCPTOT (mm)
+      unit: mm
+      resolution: annual
+      columns:
+      - Rx1day_mm
+      - Rx5day_mm
+      - PRCPTOT_mm
+      default_visible:
+      - Rx1day_mm
+      - Rx5day_mm
+      - PRCPTOT_mm
+    - id: sdii-mm-wet-day
+      label: SDII (mm/wet day)
+      unit: mm/wet day
+      resolution: annual
+      columns:
+      - SDII_mm_per_wet_day
+      default_visible:
+      - SDII_mm_per_wet_day
 - id: mean-annual-precipitation
   table: 4_3_mean_annual_precipitation_master
   label: Mean Annual Precipitation
@@ -1217,76 +1324,6 @@ categories:
   keys:
   - District_Name
   - Year
-  groups:
-  - id: map-mm
-    label: MAP (mm)
-    unit: mm
-    resolution: annual
-    columns:
-    - MAP_mm
-    default_visible:
-    - MAP_mm
-  - id: precipitation-mm
-    label: Precipitation (mm)
-    unit: mm
-    resolution: annual
-    columns:
-    - Precip_DJF_mm
-    - Precip_JJA_mm
-    - Precip_MAM_mm
-    - Precip_SON_mm
-    default_visible:
-    - Precip_DJF_mm
-    - Precip_JJA_mm
-    - Precip_MAM_mm
-  - id: nino34-annual-mean
-    label: Nino34 Annual Mean
-    unit: —
-    resolution: annual
-    columns:
-    - Nino34_Annual_Mean
-    default_visible:
-    - Nino34_Annual_Mean
-  - id: precip-cv-pct
-    label: Precip CV (%)
-    unit: '%'
-    resolution: annual
-    columns:
-    - Precip_CV_Percent
-    default_visible:
-    - Precip_CV_Percent
-  - id: mk-sens-slope-mm-year
-    label: MK Sens Slope (mm/year)
-    unit: mm/year
-    resolution: annual
-    columns:
-    - MK_Sens_Slope_mm_yr
-    default_visible:
-    - MK_Sens_Slope_mm_yr
-  - id: mk-p-value
-    label: MK P Value
-    unit: —
-    resolution: annual
-    columns:
-    - MK_p_value
-    default_visible:
-    - MK_p_value
-  - id: mk-trend-class
-    label: MK Trend (class)
-    unit: class
-    resolution: annual
-    columns:
-    - MK_Trend
-    default_visible:
-    - MK_Trend
-  - id: enso-nino34-correlation
-    label: ENSO Nino34 Correlation
-    unit: —
-    resolution: annual
-    columns:
-    - ENSO_Nino34_Correlation
-    default_visible:
-    - ENSO_Nino34_Correlation
   columns:
   - column: MAP_mm
     name: MAP
@@ -1298,8 +1335,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: map-mm
-    default_visible: true
     note: identical to 6.1 Annual_Total_Precipitation_mm
     unit_override: null
   - column: Precip_DJF_mm
@@ -1312,8 +1347,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: precipitation-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Precip_JJA_mm
@@ -1326,8 +1359,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: precipitation-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Precip_MAM_mm
@@ -1340,8 +1371,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: precipitation-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Precip_SON_mm
@@ -1354,8 +1383,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: precipitation-mm
-    default_visible: false
     note: null
     unit_override: null
   - column: Nino34_Annual_Mean
@@ -1368,8 +1395,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: nino34-annual-mean
-    default_visible: true
     note: −0.85 … +1.55 for 2000–2025; the 2026 value (−41.28) belongs to the partial year, which is never served
     unit_override: null
   - column: Precip_CV_Percent
@@ -1382,8 +1407,6 @@ categories:
     status: withheld
     reason: computed over 2000–2026 including the partial year 2026 (Alfred Nzo 17.05 %; 14.70 % over 2000–2025)
     duplicate_of: null
-    group: precip-cv-pct
-    default_visible: true
     note: null
     unit_override: null
   - column: MK_Sens_Slope_mm_yr
@@ -1396,8 +1419,6 @@ categories:
     status: withheld
     reason: 'computed over 2000–2026 including the partial year 2026: Alfred Nzo −1.03 mm/yr stored, +0.22 mm/yr over the full years 2000–2025 (app.core.stats)'
     duplicate_of: null
-    group: mk-sens-slope-mm-year
-    default_visible: true
     note: null
     unit_override: null
   - column: MK_p_value
@@ -1410,8 +1431,6 @@ categories:
     status: withheld
     reason: computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr)
     duplicate_of: null
-    group: mk-p-value
-    default_visible: true
     note: null
     unit_override: null
   - column: MK_Trend
@@ -1424,8 +1443,6 @@ categories:
     status: withheld
     reason: computed over 2000–2026 including the partial year 2026 (same test as MK_Sens_Slope_mm_yr)
     duplicate_of: null
-    group: mk-trend-class
-    default_visible: true
     note: null
     unit_override: null
   - column: ENSO_Nino34_Correlation
@@ -1438,10 +1455,153 @@ categories:
     status: withheld
     reason: 'includes 2026, whose Niño 3.4 value is −41.28: Alfred Nzo +0.48 stored, −0.43 over 2000–2025'
     duplicate_of: null
-    group: enso-nino34-correlation
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: climate
+    shown_duplicates: []
+    groups:
+    - id: map-mm
+      label: MAP (mm)
+      unit: mm
+      resolution: annual
+      columns:
+      - MAP_mm
+      default_visible:
+      - MAP_mm
+    - id: precipitation-mm
+      label: Precipitation (mm)
+      unit: mm
+      resolution: annual
+      columns:
+      - Precip_DJF_mm
+      - Precip_JJA_mm
+      - Precip_MAM_mm
+      - Precip_SON_mm
+      default_visible:
+      - Precip_DJF_mm
+      - Precip_JJA_mm
+      - Precip_MAM_mm
+    - id: nino34-annual-mean
+      label: Nino34 Annual Mean
+      unit: —
+      resolution: annual
+      columns:
+      - Nino34_Annual_Mean
+      default_visible:
+      - Nino34_Annual_Mean
+    - id: precip-cv-pct
+      label: Precip CV (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - Precip_CV_Percent
+      default_visible:
+      - Precip_CV_Percent
+    - id: mk-sens-slope-mm-year
+      label: MK Sens Slope (mm/year)
+      unit: mm/year
+      resolution: annual
+      columns:
+      - MK_Sens_Slope_mm_yr
+      default_visible:
+      - MK_Sens_Slope_mm_yr
+    - id: mk-p-value
+      label: MK P Value
+      unit: —
+      resolution: annual
+      columns:
+      - MK_p_value
+      default_visible:
+      - MK_p_value
+    - id: mk-trend-class
+      label: MK Trend (class)
+      unit: class
+      resolution: annual
+      columns:
+      - MK_Trend
+      default_visible:
+      - MK_Trend
+    - id: enso-nino34-correlation
+      label: ENSO Nino34 Correlation
+      unit: —
+      resolution: annual
+      columns:
+      - ENSO_Nino34_Correlation
+      default_visible:
+      - ENSO_Nino34_Correlation
+  - module: rainfall
+    shown_duplicates: []
+    groups:
+    - id: map-mm
+      label: MAP (mm)
+      unit: mm
+      resolution: annual
+      columns:
+      - MAP_mm
+      default_visible:
+      - MAP_mm
+    - id: precipitation-mm
+      label: Precipitation (mm)
+      unit: mm
+      resolution: annual
+      columns:
+      - Precip_DJF_mm
+      - Precip_JJA_mm
+      - Precip_MAM_mm
+      - Precip_SON_mm
+      default_visible:
+      - Precip_DJF_mm
+      - Precip_JJA_mm
+      - Precip_MAM_mm
+    - id: nino34-annual-mean
+      label: Nino34 Annual Mean
+      unit: —
+      resolution: annual
+      columns:
+      - Nino34_Annual_Mean
+      default_visible:
+      - Nino34_Annual_Mean
+    - id: precip-cv-pct
+      label: Precip CV (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - Precip_CV_Percent
+      default_visible:
+      - Precip_CV_Percent
+    - id: mk-sens-slope-mm-year
+      label: MK Sens Slope (mm/year)
+      unit: mm/year
+      resolution: annual
+      columns:
+      - MK_Sens_Slope_mm_yr
+      default_visible:
+      - MK_Sens_Slope_mm_yr
+    - id: mk-p-value
+      label: MK P Value
+      unit: —
+      resolution: annual
+      columns:
+      - MK_p_value
+      default_visible:
+      - MK_p_value
+    - id: mk-trend-class
+      label: MK Trend (class)
+      unit: class
+      resolution: annual
+      columns:
+      - MK_Trend
+      default_visible:
+      - MK_Trend
+    - id: enso-nino34-correlation
+      label: ENSO Nino34 Correlation
+      unit: —
+      resolution: annual
+      columns:
+      - ENSO_Nino34_Correlation
+      default_visible:
+      - ENSO_Nino34_Correlation
 - id: potential-evaporation-daily
   table: 4_4_potential_evaporation_daily_master
   label: Potential Evaporation Daily
@@ -1452,36 +1612,6 @@ categories:
   keys:
   - District_Name
   - Date
-  groups:
-  - id: evapotranspiration-mm
-    label: Evapotranspiration (mm)
-    unit: mm
-    resolution: daily
-    columns:
-    - Daily_ET0_mm
-    - Daily_PET_mm
-    - Daily_AET_mm
-    - Daily_Pan_Evap_mm
-    default_visible:
-    - Daily_ET0_mm
-    - Daily_PET_mm
-    - Daily_AET_mm
-  - id: daily-vpd-kpa
-    label: Daily VPD (kPa)
-    unit: kPa
-    resolution: daily
-    columns:
-    - Daily_VPD_kPa
-    default_visible:
-    - Daily_VPD_kPa
-  - id: spei-index
-    label: SPEI (index)
-    unit: index
-    resolution: daily
-    columns:
-    - SPEI_Daily
-    default_visible:
-    - SPEI_Daily
   columns:
   - column: Daily_ET0_mm
     name: Daily ET₀
@@ -1493,8 +1623,6 @@ categories:
     status: withheld
     reason: 23–97× smaller than meteorological et0_mm_day (implausible magnitude)
     duplicate_of: null
-    group: evapotranspiration-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Daily_PET_mm
@@ -1507,8 +1635,6 @@ categories:
     status: withheld
     reason: same magnitude problem as Daily_ET0_mm
     duplicate_of: null
-    group: evapotranspiration-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Daily_AET_mm
@@ -1521,8 +1647,6 @@ categories:
     status: withheld
     reason: same magnitude problem as Daily_ET0_mm
     duplicate_of: null
-    group: evapotranspiration-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Daily_Pan_Evap_mm
@@ -1535,8 +1659,6 @@ categories:
     status: withheld
     reason: same magnitude problem as Daily_ET0_mm
     duplicate_of: null
-    group: evapotranspiration-mm
-    default_visible: false
     note: null
     unit_override: null
   - column: Daily_VPD_kPa
@@ -1549,8 +1671,6 @@ categories:
     status: withheld
     reason: 'the 4_4 table is withheld: its evaporation values are 23–97× smaller than plausible, so the table is under review'
     duplicate_of: null
-    group: daily-vpd-kpa
-    default_visible: true
     note: null
     unit_override: null
   - column: SPEI_Daily
@@ -1563,10 +1683,41 @@ categories:
     status: withheld
     reason: stored as text, and the 4_4 table is withheld (evaporation values 23–97× too small)
     duplicate_of: null
-    group: spei-index
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: climate
+    shown_duplicates: []
+    groups:
+    - id: evapotranspiration-mm
+      label: Evapotranspiration (mm)
+      unit: mm
+      resolution: daily
+      columns:
+      - Daily_ET0_mm
+      - Daily_PET_mm
+      - Daily_AET_mm
+      - Daily_Pan_Evap_mm
+      default_visible:
+      - Daily_ET0_mm
+      - Daily_PET_mm
+      - Daily_AET_mm
+    - id: daily-vpd-kpa
+      label: Daily VPD (kPa)
+      unit: kPa
+      resolution: daily
+      columns:
+      - Daily_VPD_kPa
+      default_visible:
+      - Daily_VPD_kPa
+    - id: spei-index
+      label: SPEI (index)
+      unit: index
+      resolution: daily
+      columns:
+      - SPEI_Daily
+      default_visible:
+      - SPEI_Daily
 - id: irrigation-demand-daily
   table: 4_5_irrigation_demand_daily_master
   label: Irrigation Demand Daily
@@ -1577,49 +1728,6 @@ categories:
   keys:
   - District_Name
   - Date
-  groups:
-  - id: cwr-mm-day
-    label: CWR (mm/day)
-    unit: mm/day
-    resolution: daily
-    columns:
-    - CWR_mm_day
-    default_visible:
-    - CWR_mm_day
-  - id: irrigation-mm
-    label: Irrigation (mm)
-    unit: mm
-    resolution: daily
-    columns:
-    - Irrigation_Water_Demand_mm
-    - Irrigation_Return_Flow_mm
-    default_visible:
-    - Irrigation_Water_Demand_mm
-    - Irrigation_Return_Flow_mm
-  - id: rainfall-deficit-mm
-    label: Rainfall Deficit (mm)
-    unit: mm
-    resolution: daily
-    columns:
-    - Rainfall_Deficit_mm
-    default_visible:
-    - Rainfall_Deficit_mm
-  - id: soil-moisture-deficit-m3-m3
-    label: Soil Moisture Deficit (m³/m³)
-    unit: m³/m³
-    resolution: daily
-    columns:
-    - Soil_Moisture_Deficit_m3m3
-    default_visible:
-    - Soil_Moisture_Deficit_m3m3
-  - id: growing-season-temp-c
-    label: Growing Season Temp (°C)
-    unit: °C
-    resolution: daily
-    columns:
-    - Growing_Season_Temp_C
-    default_visible:
-    - Growing_Season_Temp_C
   columns:
   - column: CWR_mm_day
     name: CWR
@@ -1631,8 +1739,6 @@ categories:
     status: withheld
     reason: built on the implausible 4_4 ET₀ (CWR = 0.85 × ET₀)
     duplicate_of: null
-    group: cwr-mm-day
-    default_visible: true
     note: null
     unit_override: null
   - column: Irrigation_Water_Demand_mm
@@ -1645,8 +1751,6 @@ categories:
     status: withheld
     reason: built on the implausible 4_4 ET₀
     duplicate_of: null
-    group: irrigation-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Rainfall_Deficit_mm
@@ -1659,8 +1763,6 @@ categories:
     status: withheld
     reason: built on the implausible 4_4 ET₀
     duplicate_of: null
-    group: rainfall-deficit-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Soil_Moisture_Deficit_m3m3
@@ -1673,8 +1775,6 @@ categories:
     status: withheld
     reason: 'the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values'
     duplicate_of: null
-    group: soil-moisture-deficit-m3-m3
-    default_visible: true
     note: null
     unit_override: null
   - column: Growing_Season_Temp_C
@@ -1687,8 +1787,6 @@ categories:
     status: withheld
     reason: 'the 4_5 table is withheld: it is built on the implausible 4_4 evaporation values'
     duplicate_of: null
-    group: growing-season-temp-c
-    default_visible: true
     note: null
     unit_override: null
   - column: Irrigation_Return_Flow_mm
@@ -1701,10 +1799,54 @@ categories:
     status: withheld
     reason: built on the implausible 4_4 ET₀
     duplicate_of: null
-    group: irrigation-mm
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: climate
+    shown_duplicates: []
+    groups:
+    - id: cwr-mm-day
+      label: CWR (mm/day)
+      unit: mm/day
+      resolution: daily
+      columns:
+      - CWR_mm_day
+      default_visible:
+      - CWR_mm_day
+    - id: irrigation-mm
+      label: Irrigation (mm)
+      unit: mm
+      resolution: daily
+      columns:
+      - Irrigation_Water_Demand_mm
+      - Irrigation_Return_Flow_mm
+      default_visible:
+      - Irrigation_Water_Demand_mm
+      - Irrigation_Return_Flow_mm
+    - id: rainfall-deficit-mm
+      label: Rainfall Deficit (mm)
+      unit: mm
+      resolution: daily
+      columns:
+      - Rainfall_Deficit_mm
+      default_visible:
+      - Rainfall_Deficit_mm
+    - id: soil-moisture-deficit-m3-m3
+      label: Soil Moisture Deficit (m³/m³)
+      unit: m³/m³
+      resolution: daily
+      columns:
+      - Soil_Moisture_Deficit_m3m3
+      default_visible:
+      - Soil_Moisture_Deficit_m3m3
+    - id: growing-season-temp-c
+      label: Growing Season Temp (°C)
+      unit: °C
+      resolution: daily
+      columns:
+      - Growing_Season_Temp_C
+      default_visible:
+      - Growing_Season_Temp_C
 - id: streamflow-and-climate-linkage-annual
   table: 4_6_streamflow_and_climate_linkage_annual _master
   label: Streamflow and Climate Linkage Annual
@@ -1715,43 +1857,6 @@ categories:
   keys:
   - District_Name
   - Year
-  groups:
-  - id: mar-q90-lowflow-q10-floodflow-m3-year
-    label: MAR / Q90 LowFlow / Q10 FloodFlow (m³/year)
-    unit: m³/year
-    resolution: annual
-    columns:
-    - MAR_m3_year
-    - Q90_LowFlow_m3_year
-    - Q10_FloodFlow_m3_year
-    default_visible:
-    - MAR_m3_year
-    - Q90_LowFlow_m3_year
-    - Q10_FloodFlow_m3_year
-  - id: streamflow-anomaly-pct
-    label: Streamflow Anomaly (%)
-    unit: '%'
-    resolution: annual
-    columns:
-    - Streamflow_Anomaly_percent
-    default_visible:
-    - Streamflow_Anomaly_percent
-  - id: rainfall-runoff-ratio
-    label: Rainfall Runoff Ratio
-    unit: —
-    resolution: annual
-    columns:
-    - Rainfall_Runoff_Ratio
-    default_visible:
-    - Rainfall_Runoff_Ratio
-  - id: climate-streamflow-elasticity
-    label: Climate Streamflow Elasticity
-    unit: —
-    resolution: annual
-    columns:
-    - Climate_Streamflow_Elasticity
-    default_visible:
-    - Climate_Streamflow_Elasticity
   columns:
   - column: MAR_m3_year
     name: MAR
@@ -1763,8 +1868,6 @@ categories:
     status: withheld
     reason: national sum ≈ 7× South Africa's MAR
     duplicate_of: null
-    group: mar-q90-lowflow-q10-floodflow-m3-year
-    default_visible: true
     note: null
     unit_override: null
   - column: Streamflow_Anomaly_percent
@@ -1777,8 +1880,6 @@ categories:
     status: withheld
     reason: the rainfall anomaly, not a streamflow signal (r = 0.999 with the MAP anomaly); its mean includes the partial year 2026
     duplicate_of: null
-    group: streamflow-anomaly-pct
-    default_visible: true
     note: null
     unit_override: null
   - column: Q90_LowFlow_m3_year
@@ -1791,8 +1892,6 @@ categories:
     status: withheld
     reason: a volume on the implausible MAR basis; one value per district repeated every year
     duplicate_of: null
-    group: mar-q90-lowflow-q10-floodflow-m3-year
-    default_visible: true
     note: null
     unit_override: null
   - column: Q10_FloodFlow_m3_year
@@ -1805,8 +1904,6 @@ categories:
     status: withheld
     reason: a volume on the implausible MAR basis; one value per district repeated every year
     duplicate_of: null
-    group: mar-q90-lowflow-q10-floodflow-m3-year
-    default_visible: true
     note: null
     unit_override: null
   - column: Rainfall_Runoff_Ratio
@@ -1819,8 +1916,6 @@ categories:
     status: withheld
     reason: 0.49–0.98, implausible for SA (runoff coefficients 0.02–0.2; runoff_variables_master 0.10–0.26)
     duplicate_of: null
-    group: rainfall-runoff-ratio
-    default_visible: true
     note: null
     unit_override: null
   - column: Climate_Streamflow_Elasticity
@@ -1833,10 +1928,48 @@ categories:
     status: withheld
     reason: about 1.05 in most districts (0.31–2.23), i.e. runoff proportional to rainfall; published SA elasticities are about 2–3.5
     duplicate_of: null
-    group: climate-streamflow-elasticity
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: climate
+    shown_duplicates: []
+    groups:
+    - id: mar-q90-lowflow-q10-floodflow-m3-year
+      label: MAR / Q90 LowFlow / Q10 FloodFlow (m³/year)
+      unit: m³/year
+      resolution: annual
+      columns:
+      - MAR_m3_year
+      - Q90_LowFlow_m3_year
+      - Q10_FloodFlow_m3_year
+      default_visible:
+      - MAR_m3_year
+      - Q90_LowFlow_m3_year
+      - Q10_FloodFlow_m3_year
+    - id: streamflow-anomaly-pct
+      label: Streamflow Anomaly (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - Streamflow_Anomaly_percent
+      default_visible:
+      - Streamflow_Anomaly_percent
+    - id: rainfall-runoff-ratio
+      label: Rainfall Runoff Ratio
+      unit: —
+      resolution: annual
+      columns:
+      - Rainfall_Runoff_Ratio
+      default_visible:
+      - Rainfall_Runoff_Ratio
+    - id: climate-streamflow-elasticity
+      label: Climate Streamflow Elasticity
+      unit: —
+      resolution: annual
+      columns:
+      - Climate_Streamflow_Elasticity
+      default_visible:
+      - Climate_Streamflow_Elasticity
 - id: primary-satellite-vegetation-variables-sansa
   table: 5.1_primary_satellite_vegetation_variables_sansa_master
   label: Primary Satellite Vegetation Variables SANSA
@@ -1849,60 +1982,6 @@ categories:
   - Date
   - Year
   - Month
-  groups:
-  - id: ndvi-evi-savi-msavi2-ndwi-ndii-index
-    label: NDVI / EVI / SAVI / MSAVI2 / NDWI / NDII (index)
-    unit: index
-    resolution: daily
-    columns:
-    - NDVI_10day_composite
-    - EVI
-    - SAVI
-    - MSAVI2
-    - NDWI
-    - NDII
-    default_visible:
-    - NDVI_10day_composite
-    - EVI
-    - SAVI
-  - id: vci-vhi-tci-vpi-asi-pct
-    label: VCI / VHI / TCI / VPI / ASI (%)
-    unit: '%'
-    resolution: daily
-    columns:
-    - VCI_percent
-    - VHI_percent
-    - TCI_percent
-    - VPI_percent
-    - ASI_percent
-    default_visible:
-    - VCI_percent
-    - VHI_percent
-    - TCI_percent
-  - id: svi-index
-    label: SVI (index)
-    unit: index
-    resolution: daily
-    columns:
-    - SVI_standardised
-    default_visible:
-    - SVI_standardised
-  - id: lst-land-surface-temperature-c
-    label: LST Land Surface Temperature (°C)
-    unit: °C
-    resolution: daily
-    columns:
-    - LST_Land_Surface_Temperature_C
-    default_visible:
-    - LST_Land_Surface_Temperature_C
-  - id: surface-soil-moisture-m3-m3
-    label: Surface Soil Moisture (m³/m³)
-    unit: m³/m³
-    resolution: daily
-    columns:
-    - Surface_Soil_Moisture_m3m3
-    default_visible:
-    - Surface_Soil_Moisture_m3m3
   columns:
   - column: NDVI_10day_composite
     name: NDVI 10day Composite
@@ -1914,8 +1993,6 @@ categories:
     status: withheld
     reason: 'failed plausibility: same mean 0.35 and winter peak in every district'
     duplicate_of: null
-    group: ndvi-evi-savi-msavi2-ndwi-ndii-index
-    default_visible: true
     note: null
     unit_override: null
   - column: EVI
@@ -1928,8 +2005,6 @@ categories:
     status: withheld
     reason: perfectly correlated with the failed NDVI (r = 1.000)
     duplicate_of: null
-    group: ndvi-evi-savi-msavi2-ndwi-ndii-index
-    default_visible: true
     note: null
     unit_override: null
   - column: SAVI
@@ -1942,8 +2017,6 @@ categories:
     status: withheld
     reason: perfectly correlated with the failed NDVI (r = 1.000)
     duplicate_of: null
-    group: ndvi-evi-savi-msavi2-ndwi-ndii-index
-    default_visible: true
     note: null
     unit_override: null
   - column: MSAVI2
@@ -1956,8 +2029,6 @@ categories:
     status: withheld
     reason: same source as the failed NDVI
     duplicate_of: null
-    group: ndvi-evi-savi-msavi2-ndwi-ndii-index
-    default_visible: false
     note: null
     unit_override: null
   - column: VCI_percent
@@ -1970,8 +2041,6 @@ categories:
     status: withheld
     reason: same source as the failed NDVI
     duplicate_of: null
-    group: vci-vhi-tci-vpi-asi-pct
-    default_visible: true
     note: null
     unit_override: null
   - column: VHI_percent
@@ -1984,8 +2053,6 @@ categories:
     status: withheld
     reason: same source as the failed NDVI
     duplicate_of: null
-    group: vci-vhi-tci-vpi-asi-pct
-    default_visible: true
     note: null
     unit_override: null
   - column: TCI_percent
@@ -1998,8 +2065,6 @@ categories:
     status: withheld
     reason: same source as the failed NDVI
     duplicate_of: null
-    group: vci-vhi-tci-vpi-asi-pct
-    default_visible: true
     note: null
     unit_override: null
   - column: VPI_percent
@@ -2012,8 +2077,6 @@ categories:
     status: withheld
     reason: exact copy of VCI_percent
     duplicate_of: null
-    group: vci-vhi-tci-vpi-asi-pct
-    default_visible: false
     note: null
     unit_override: null
   - column: ASI_percent
@@ -2026,8 +2089,6 @@ categories:
     status: withheld
     reason: = 100 − VHI_percent of the failed source
     duplicate_of: null
-    group: vci-vhi-tci-vpi-asi-pct
-    default_visible: false
     note: null
     unit_override: null
   - column: SVI_standardised
@@ -2040,8 +2101,6 @@ categories:
     status: withheld
     reason: same source as the failed NDVI
     duplicate_of: null
-    group: svi-index
-    default_visible: true
     note: null
     unit_override: null
   - column: NDWI
@@ -2054,8 +2113,6 @@ categories:
     status: withheld
     reason: same source as the failed NDVI
     duplicate_of: null
-    group: ndvi-evi-savi-msavi2-ndwi-ndii-index
-    default_visible: false
     note: null
     unit_override: null
   - column: NDII
@@ -2068,8 +2125,6 @@ categories:
     status: withheld
     reason: perfectly correlated with the failed NDVI (r = 1.000)
     duplicate_of: null
-    group: ndvi-evi-savi-msavi2-ndwi-ndii-index
-    default_visible: false
     note: null
     unit_override: null
   - column: LST_Land_Surface_Temperature_C
@@ -2082,8 +2137,6 @@ categories:
     status: withheld
     reason: 'the 5.1 vegetation source is withheld: its NDVI fails the plausibility check (the same cycle in every district)'
     duplicate_of: null
-    group: lst-land-surface-temperature-c
-    default_visible: true
     note: null
     unit_override: null
   - column: Surface_Soil_Moisture_m3m3
@@ -2096,10 +2149,65 @@ categories:
     status: withheld
     reason: constant 0.22
     duplicate_of: null
-    group: surface-soil-moisture-m3-m3
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: vegetation
+    shown_duplicates: []
+    groups:
+    - id: ndvi-evi-savi-msavi2-ndwi-ndii-index
+      label: NDVI / EVI / SAVI / MSAVI2 / NDWI / NDII (index)
+      unit: index
+      resolution: daily
+      columns:
+      - NDVI_10day_composite
+      - EVI
+      - SAVI
+      - MSAVI2
+      - NDWI
+      - NDII
+      default_visible:
+      - NDVI_10day_composite
+      - EVI
+      - SAVI
+    - id: vci-vhi-tci-vpi-asi-pct
+      label: VCI / VHI / TCI / VPI / ASI (%)
+      unit: '%'
+      resolution: daily
+      columns:
+      - VCI_percent
+      - VHI_percent
+      - TCI_percent
+      - VPI_percent
+      - ASI_percent
+      default_visible:
+      - VCI_percent
+      - VHI_percent
+      - TCI_percent
+    - id: svi-index
+      label: SVI (index)
+      unit: index
+      resolution: daily
+      columns:
+      - SVI_standardised
+      default_visible:
+      - SVI_standardised
+    - id: lst-land-surface-temperature-c
+      label: LST Land Surface Temperature (°C)
+      unit: °C
+      resolution: daily
+      columns:
+      - LST_Land_Surface_Temperature_C
+      default_visible:
+      - LST_Land_Surface_Temperature_C
+    - id: surface-soil-moisture-m3-m3
+      label: Surface Soil Moisture (m³/m³)
+      unit: m³/m³
+      resolution: daily
+      columns:
+      - Surface_Soil_Moisture_m3m3
+      default_visible:
+      - Surface_Soil_Moisture_m3m3
 - id: meteorological-drivers-saws
   table: 5.2_meteorological_drivers_saws_master
   label: Meteorological Drivers SAWS
@@ -2111,15 +2219,6 @@ categories:
   - District_Name
   - Year
   - Month
-  groups:
-  - id: growing-degree-days-gdd-c-days
-    label: Growing Degree Days GDD (°C·days)
-    unit: °C·days
-    resolution: monthly
-    columns:
-    - Growing_Degree_Days_GDD_C
-    default_visible:
-    - Growing_Degree_Days_GDD_C
   columns:
   - column: Monthly_Rainfall_mm
     name: Monthly Rainfall
@@ -2131,8 +2230,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Monthly_Total_Precipitation_mm
-    group: null
-    default_visible: false
     note: differs from 6.1 only in December
     unit_override: null
   - column: Rainfall_Anomaly_percent
@@ -2145,8 +2242,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Monthly_Anomaly_percent
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: SPI_1_month
@@ -2159,8 +2254,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_1_Meteorological_Drought_Onset
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: SPI_3_month
@@ -2173,8 +2266,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_3_Short_Term_Agricultural_Drought
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: SPI_6_month
@@ -2187,8 +2278,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.2_rainfall_derived_drought_indices_master.SPI_6_Medium_Term_Hydrological_Impacts
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: SPEI_1_month
@@ -2201,8 +2290,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: meteorological_drought_master.spei_1
-    group: null
-    default_visible: false
     note: rounding differences ≤ 0.05
     unit_override: null
   - column: SPEI_3_month
@@ -2215,8 +2302,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: meteorological_drought_master.spei_3
-    group: null
-    default_visible: false
     note: rounding differences ≤ 0.05
     unit_override: null
   - column: SPEI_6_month
@@ -2229,8 +2314,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: meteorological_drought_master.spei_6
-    group: null
-    default_visible: false
     note: rounding differences ≤ 0.05
     unit_override: null
   - column: Mean_Temperature_C
@@ -2243,8 +2326,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 4_1_temperature_change_master.Tavg_C
-    group: null
-    default_visible: false
     note: = monthly mean of daily Tavg
     unit_override: null
   - column: Potential_Evapotranspiration_ET0_mm
@@ -2257,8 +2338,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: meteorological_drought_master.et0_mm_day
-    group: null
-    default_visible: false
     note: = monthly sum of meteorological et0_mm_day
     unit_override: null
   - column: Growing_Degree_Days_GDD_C
@@ -2271,10 +2350,71 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: growing-degree-days-gdd-c-days
-    default_visible: true
     note: '= Σ daily max(Tavg − 10 °C, 0) from 4_1 (624 / 624 district-months of 2015 match): degree-days'
     unit_override: 'suffix `_C` reads as °C, but the values are degree-day sums: Σ max(Tavg − 10 °C, 0), checked against the daily temperatures'
+  pages:
+  - module: vegetation
+    shown_duplicates:
+    - Monthly_Rainfall_mm
+    - Rainfall_Anomaly_percent
+    - SPI_1_month
+    - SPI_3_month
+    - SPI_6_month
+    - SPEI_1_month
+    - SPEI_3_month
+    - SPEI_6_month
+    - Mean_Temperature_C
+    - Potential_Evapotranspiration_ET0_mm
+    groups:
+    - id: monthly-rainfall-potential-evapotranspiration-et0-mm
+      label: Monthly Rainfall / Potential Evapotranspiration ET₀ (mm)
+      unit: mm
+      resolution: monthly
+      columns:
+      - Monthly_Rainfall_mm
+      - Potential_Evapotranspiration_ET0_mm
+      default_visible:
+      - Monthly_Rainfall_mm
+      - Potential_Evapotranspiration_ET0_mm
+    - id: rainfall-anomaly-pct
+      label: Rainfall Anomaly (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - Rainfall_Anomaly_percent
+      default_visible:
+      - Rainfall_Anomaly_percent
+    - id: spi-spei-index
+      label: SPI / SPEI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - SPI_1_month
+      - SPI_3_month
+      - SPI_6_month
+      - SPEI_1_month
+      - SPEI_3_month
+      - SPEI_6_month
+      default_visible:
+      - SPI_1_month
+      - SPI_3_month
+      - SPI_6_month
+    - id: mean-temperature-c
+      label: Mean Temperature (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - Mean_Temperature_C
+      default_visible:
+      - Mean_Temperature_C
+    - id: growing-degree-days-gdd-c-days
+      label: Growing Degree Days GDD (°C·days)
+      unit: °C·days
+      resolution: monthly
+      columns:
+      - Growing_Degree_Days_GDD_C
+      default_visible:
+      - Growing_Degree_Days_GDD_C
 - id: core-rainfall-variables
   table: 6.1_core_rainfall_variables_master
   label: Core Rainfall Variables
@@ -2288,78 +2428,6 @@ categories:
   - Year
   - Month
   - Day
-  groups:
-  - id: daily-rainfall-total-mm
-    label: Daily Rainfall Total (mm)
-    unit: mm
-    resolution: daily
-    columns:
-    - Daily_Rainfall_Total_mm
-    default_visible:
-    - Daily_Rainfall_Total_mm
-  - id: number-of-rainy-days-days-month
-    label: Number of Rainy Days (days/month)
-    unit: days/month
-    resolution: monthly
-    columns:
-    - Number_of_Rainy_Days_days_month
-    default_visible:
-    - Number_of_Rainy_Days_days_month
-  - id: monthly-mm
-    label: Monthly (mm)
-    unit: mm
-    resolution: monthly
-    columns:
-    - Monthly_Total_Precipitation_mm
-    - Monthly_Anomaly_mm
-    default_visible:
-    - Monthly_Total_Precipitation_mm
-    - Monthly_Anomaly_mm
-  - id: monthly-anomaly-pct
-    label: Monthly Anomaly (%)
-    unit: '%'
-    resolution: monthly
-    columns:
-    - Monthly_Anomaly_percent
-    default_visible:
-    - Monthly_Anomaly_percent
-  - id: seasonal-total-mm
-    label: Seasonal Total (mm)
-    unit: mm
-    resolution: annual
-    columns:
-    - Seasonal_Total_OND_mm
-    - Seasonal_Total_JFM_mm
-    - Seasonal_Total_AMJ_mm
-    - Seasonal_Total_JAS_mm
-    default_visible:
-    - Seasonal_Total_OND_mm
-    - Seasonal_Total_JFM_mm
-    - Seasonal_Total_AMJ_mm
-  - id: chirps-daily-rainfall-estimate-mm-day
-    label: CHIRPS Daily Rainfall Estimate (mm/day)
-    unit: mm/day
-    resolution: daily
-    columns:
-    - CHIRPS_Daily_Rainfall_Estimate_mm_day
-    default_visible:
-    - CHIRPS_Daily_Rainfall_Estimate_mm_day
-  - id: tamsat-satellite-rainfall-estimate-mm-dekad
-    label: TAMSAT Satellite Rainfall Estimate (mm/dekad)
-    unit: mm/dekad
-    resolution: monthly
-    columns:
-    - TAMSAT_Satellite_Rainfall_Estimate_mm_dekad
-    default_visible:
-    - TAMSAT_Satellite_Rainfall_Estimate_mm_dekad
-  - id: hourly-rainfall-intensity-mm-h
-    label: Hourly Rainfall Intensity (mm/h)
-    unit: mm/h
-    resolution: daily
-    columns:
-    - Hourly_Rainfall_Intensity_mm_h
-    default_visible:
-    - Hourly_Rainfall_Intensity_mm_h
   columns:
   - column: Daily_Rainfall_Total_mm
     name: Daily Rainfall Total
@@ -2371,8 +2439,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: daily-rainfall-total-mm
-    default_visible: true
     note: complete calendar incl. 31 Dec
     unit_override: null
   - column: Number_of_Rainy_Days_days_month
@@ -2385,8 +2451,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: number-of-rainy-days-days-month
-    default_visible: true
     note: = days ≥ 1 mm (verified)
     unit_override: null
   - column: Monthly_Total_Precipitation_mm
@@ -2399,8 +2463,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: monthly-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Monthly_Anomaly_mm
@@ -2413,8 +2475,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: monthly-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Monthly_Anomaly_percent
@@ -2427,8 +2487,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: monthly-anomaly-pct
-    default_visible: true
     note: null
     unit_override: null
   - column: Seasonal_Total_OND_mm
@@ -2441,8 +2499,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: seasonal-total-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Seasonal_Total_JFM_mm
@@ -2455,8 +2511,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: seasonal-total-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Seasonal_Total_AMJ_mm
@@ -2469,8 +2523,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: seasonal-total-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Seasonal_Total_JAS_mm
@@ -2483,8 +2535,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: seasonal-total-mm
-    default_visible: false
     note: null
     unit_override: null
   - column: Annual_Total_Precipitation_mm
@@ -2497,8 +2547,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 4_3_mean_annual_precipitation_master.MAP_mm
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: Gridded_Rainfall_Product_1km_mm
@@ -2511,8 +2559,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: CHIRPS_Daily_Rainfall_Estimate_mm_day
@@ -2525,8 +2571,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: chirps-daily-rainfall-estimate-mm-day
-    default_visible: true
     note: '= Daily_Rainfall_Total_mm × 0.95–1.05 (r = 1.000): derived from the gauge series, not an independent estimate'
     unit_override: null
   - column: TAMSAT_Satellite_Rainfall_Estimate_mm_dekad
@@ -2539,8 +2583,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: tamsat-satellite-rainfall-estimate-mm-dekad
-    default_visible: true
     note: one value per district-month (mm per dekad, ≈ monthly total ÷ 3, r = 0.998), repeated on every daily row
     unit_override: null
   - column: Hourly_Rainfall_Intensity_mm_h
@@ -2553,10 +2595,83 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: hourly-rainfall-intensity-mm-h
-    default_visible: true
     note: '= daily total × 0.15–0.20 (r = 1.000): a proxy, not gauge-measured hourly intensity'
     unit_override: null
+  pages:
+  - module: rainfall
+    shown_duplicates: []
+    groups:
+    - id: daily-rainfall-total-mm
+      label: Daily Rainfall Total (mm)
+      unit: mm
+      resolution: daily
+      columns:
+      - Daily_Rainfall_Total_mm
+      default_visible:
+      - Daily_Rainfall_Total_mm
+    - id: number-of-rainy-days-days-month
+      label: Number of Rainy Days (days/month)
+      unit: days/month
+      resolution: monthly
+      columns:
+      - Number_of_Rainy_Days_days_month
+      default_visible:
+      - Number_of_Rainy_Days_days_month
+    - id: monthly-mm
+      label: Monthly (mm)
+      unit: mm
+      resolution: monthly
+      columns:
+      - Monthly_Total_Precipitation_mm
+      - Monthly_Anomaly_mm
+      default_visible:
+      - Monthly_Total_Precipitation_mm
+      - Monthly_Anomaly_mm
+    - id: monthly-anomaly-pct
+      label: Monthly Anomaly (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - Monthly_Anomaly_percent
+      default_visible:
+      - Monthly_Anomaly_percent
+    - id: seasonal-total-mm
+      label: Seasonal Total (mm)
+      unit: mm
+      resolution: annual
+      columns:
+      - Seasonal_Total_OND_mm
+      - Seasonal_Total_JFM_mm
+      - Seasonal_Total_AMJ_mm
+      - Seasonal_Total_JAS_mm
+      default_visible:
+      - Seasonal_Total_OND_mm
+      - Seasonal_Total_JFM_mm
+      - Seasonal_Total_AMJ_mm
+    - id: chirps-daily-rainfall-estimate-mm-day
+      label: CHIRPS Daily Rainfall Estimate (mm/day)
+      unit: mm/day
+      resolution: daily
+      columns:
+      - CHIRPS_Daily_Rainfall_Estimate_mm_day
+      default_visible:
+      - CHIRPS_Daily_Rainfall_Estimate_mm_day
+    - id: tamsat-satellite-rainfall-estimate-mm-dekad
+      label: TAMSAT Satellite Rainfall Estimate (mm/dekad)
+      unit: mm/dekad
+      resolution: monthly
+      columns:
+      - TAMSAT_Satellite_Rainfall_Estimate_mm_dekad
+      default_visible:
+      - TAMSAT_Satellite_Rainfall_Estimate_mm_dekad
+    - id: hourly-rainfall-intensity-mm-h
+      label: Hourly Rainfall Intensity (mm/h)
+      unit: mm/h
+      resolution: daily
+      columns:
+      - Hourly_Rainfall_Intensity_mm_h
+      default_visible:
+      - Hourly_Rainfall_Intensity_mm_h
 - id: rainfall-derived-drought-indices
   table: 6.2_rainfall_derived_drought_indices_master
   label: Rainfall Derived Drought Indices
@@ -2569,22 +2684,6 @@ categories:
   - District_Name
   - Year
   - Month
-  groups:
-  - id: spi-rai-index
-    label: SPI / RAI (index)
-    unit: index
-    resolution: monthly
-    columns:
-    - SPI_1_Meteorological_Drought_Onset
-    - SPI_3_Short_Term_Agricultural_Drought
-    - SPI_6_Medium_Term_Hydrological_Impacts
-    - SPI_12_Long_Term_Groundwater_Impacts
-    - SPI_24_Very_Long_Term_Drought
-    - RAI_Rainfall_Anomaly_Index
-    default_visible:
-    - SPI_1_Meteorological_Drought_Onset
-    - SPI_3_Short_Term_Agricultural_Drought
-    - SPI_6_Medium_Term_Hydrological_Impacts
   columns:
   - column: SPI_1_Meteorological_Drought_Onset
     name: SPI 1 – Meteorological Drought Onset
@@ -2596,8 +2695,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spi-rai-index
-    default_visible: true
     note: null
     unit_override: null
   - column: SPI_3_Short_Term_Agricultural_Drought
@@ -2610,8 +2707,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spi-rai-index
-    default_visible: true
     note: null
     unit_override: null
   - column: SPI_6_Medium_Term_Hydrological_Impacts
@@ -2624,8 +2719,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spi-rai-index
-    default_visible: true
     note: null
     unit_override: null
   - column: SPI_12_Long_Term_Groundwater_Impacts
@@ -2638,8 +2731,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spi-rai-index
-    default_visible: false
     note: null
     unit_override: null
   - column: SPI_24_Very_Long_Term_Drought
@@ -2652,8 +2743,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spi-rai-index
-    default_visible: false
     note: null
     unit_override: null
   - column: SPEI_3_Agricultural_Drought_ET
@@ -2666,8 +2755,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: meteorological_drought_master.spei_3
-    group: null
-    default_visible: false
     note: rounding differences ≤ 0.06 vs meteorological
     unit_override: null
   - column: SPEI_12_Annual_Water_Balance_Drought
@@ -2680,8 +2767,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: meteorological_drought_master.spei_12
-    group: null
-    default_visible: false
     note: rounding differences vs meteorological
     unit_override: null
   - column: RAI_Rainfall_Anomaly_Index
@@ -2694,10 +2779,49 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: spi-rai-index
-    default_visible: false
     note: null
     unit_override: null
+  pages:
+  - module: rainfall
+    shown_duplicates:
+    - SPEI_3_Agricultural_Drought_ET
+    - SPEI_12_Annual_Water_Balance_Drought
+    groups:
+    - id: spi-spei-rai-index
+      label: SPI / SPEI / RAI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - SPI_1_Meteorological_Drought_Onset
+      - SPI_3_Short_Term_Agricultural_Drought
+      - SPI_6_Medium_Term_Hydrological_Impacts
+      - SPI_12_Long_Term_Groundwater_Impacts
+      - SPI_24_Very_Long_Term_Drought
+      - SPEI_3_Agricultural_Drought_ET
+      - SPEI_12_Annual_Water_Balance_Drought
+      - RAI_Rainfall_Anomaly_Index
+      default_visible:
+      - SPI_1_Meteorological_Drought_Onset
+      - SPI_3_Short_Term_Agricultural_Drought
+      - SPI_6_Medium_Term_Hydrological_Impacts
+  - module: drought
+    shown_duplicates: []
+    groups:
+    - id: spi-rai-index
+      label: SPI / RAI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - SPI_1_Meteorological_Drought_Onset
+      - SPI_3_Short_Term_Agricultural_Drought
+      - SPI_6_Medium_Term_Hydrological_Impacts
+      - SPI_12_Long_Term_Groundwater_Impacts
+      - SPI_24_Very_Long_Term_Drought
+      - RAI_Rainfall_Anomaly_Index
+      default_visible:
+      - SPI_1_Meteorological_Drought_Onset
+      - SPI_3_Short_Term_Agricultural_Drought
+      - SPI_6_Medium_Term_Hydrological_Impacts
 - id: runoff-variables
   table: runoff_variables_master
   label: Runoff Variables
@@ -2710,89 +2834,6 @@ categories:
   - Date
   - Year
   - Month
-  groups:
-  - id: catchment-area-km2
-    label: Catchment Area (km²)
-    unit: km²
-    resolution: daily
-    columns:
-    - Catchment_Area_km2
-    default_visible:
-    - Catchment_Area_km2
-  - id: actual-et-from-catchment-mm
-    label: Actual ET from Catchment (mm)
-    unit: mm
-    resolution: daily
-    columns:
-    - Actual_ET_from_Catchment_mm
-    default_visible:
-    - Actual_ET_from_Catchment_mm
-  - id: daily-surface-runoff-volume-m3-day
-    label: Daily Surface Runoff Volume (m³/day)
-    unit: m³/day
-    resolution: daily
-    columns:
-    - Daily_Surface_Runoff_Volume_m3_day
-    default_visible:
-    - Daily_Surface_Runoff_Volume_m3_day
-  - id: monthly-runoff-totals-mm3-month
-    label: Monthly Runoff Totals (Mm³/month)
-    unit: Mm³/month
-    resolution: monthly
-    columns:
-    - Monthly_Runoff_Totals_Million_m3_month
-    default_visible:
-    - Monthly_Runoff_Totals_Million_m3_month
-  - id: runoff-coefficient
-    label: Runoff Coefficient
-    unit: —
-    resolution: daily
-    columns:
-    - Runoff_Coefficient_dimensionless
-    default_visible:
-    - Runoff_Coefficient_dimensionless
-  - id: soil-moisture-prior-m3-m3
-    label: Soil Moisture Prior (m³/m³)
-    unit: m³/m³
-    resolution: daily
-    columns:
-    - Soil_Moisture_Prior_m3m3
-    default_visible:
-    - Soil_Moisture_Prior_m3m3
-  - id: curve-number-cn
-    label: Curve Number CN
-    unit: —
-    resolution: daily
-    columns:
-    - Curve_Number_CN
-    default_visible:
-    - Curve_Number_CN
-  - id: peak-flow-rates-baseflow-component-m3-s
-    label: Peak Flow Rates / Baseflow Component (m³/s)
-    unit: m³/s
-    resolution: daily
-    columns:
-    - Peak_Flow_Rates_m3s
-    - Baseflow_Component_m3s
-    default_visible:
-    - Peak_Flow_Rates_m3s
-    - Baseflow_Component_m3s
-  - id: dominant-landcover-class
-    label: Dominant LandCover Class
-    unit: class
-    resolution: daily
-    columns:
-    - Dominant_LandCover_Class
-    default_visible:
-    - Dominant_LandCover_Class
-  - id: impervious-surface-fraction-pct
-    label: Impervious Surface Fraction (%)
-    unit: '%'
-    resolution: daily
-    columns:
-    - Impervious_Surface_Fraction_percent
-    default_visible:
-    - Impervious_Surface_Fraction_percent
   columns:
   - column: Catchment_Area_km2
     name: Catchment Area
@@ -2804,8 +2845,6 @@ categories:
     status: withheld
     reason: constant 6 500 km² for every district
     duplicate_of: null
-    group: catchment-area-km2
-    default_visible: true
     note: null
     unit_override: null
   - column: Mean_Catchment_Rainfall_mm
@@ -2818,8 +2857,6 @@ categories:
     status: duplicate
     reason: null
     duplicate_of: 6.1_core_rainfall_variables_master.Daily_Rainfall_Total_mm
-    group: null
-    default_visible: false
     note: null
     unit_override: null
   - column: Actual_ET_from_Catchment_mm
@@ -2832,8 +2869,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: actual-et-from-catchment-mm
-    default_visible: true
     note: null
     unit_override: null
   - column: Daily_Surface_Runoff_Volume_m3_day
@@ -2846,8 +2881,6 @@ categories:
     status: withheld
     reason: volume computed with the constant 6 500 km² area for every district; the runoff page serves depth × real district area instead
     duplicate_of: null
-    group: daily-surface-runoff-volume-m3-day
-    default_visible: true
     note: depth (mm) = volume / model_area_km2; volumes are re-derived as depth × real district area
     unit_override: null
   - column: Monthly_Runoff_Totals_Million_m3_month
@@ -2860,8 +2893,6 @@ categories:
     status: withheld
     reason: volume computed with the constant 6 500 km² area
     duplicate_of: null
-    group: monthly-runoff-totals-mm3-month
-    default_visible: true
     note: null
     unit_override: null
   - column: Runoff_Coefficient_dimensionless
@@ -2874,8 +2905,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: runoff-coefficient
-    default_visible: true
     note: null
     unit_override: null
   - column: Soil_Moisture_Prior_m3m3
@@ -2888,8 +2917,6 @@ categories:
     status: live
     reason: null
     duplicate_of: null
-    group: soil-moisture-prior-m3-m3
-    default_visible: true
     note: 'plausibility checked 2026-10-15: 0.025–0.475 m³/m³, varying'
     unit_override: null
   - column: Curve_Number_CN
@@ -2902,8 +2929,6 @@ categories:
     status: withheld
     reason: constant 72.9
     duplicate_of: null
-    group: curve-number-cn
-    default_visible: true
     note: null
     unit_override: null
   - column: Peak_Flow_Rates_m3s
@@ -2916,8 +2941,6 @@ categories:
     status: withheld
     reason: flow scaled to the constant 6 500 km² area
     duplicate_of: null
-    group: peak-flow-rates-baseflow-component-m3-s
-    default_visible: true
     note: null
     unit_override: null
   - column: Baseflow_Component_m3s
@@ -2930,8 +2953,6 @@ categories:
     status: withheld
     reason: flow scaled to the constant 6 500 km² area for every district; only the baseflow index (a ratio) is served
     duplicate_of: null
-    group: peak-flow-rates-baseflow-component-m3-s
-    default_visible: true
     note: only the baseflow index (ratio to total flow, same area scaling) is served
     unit_override: null
   - column: Dominant_LandCover_Class
@@ -2944,8 +2965,6 @@ categories:
     status: withheld
     reason: one constant class for every district
     duplicate_of: null
-    group: dominant-landcover-class
-    default_visible: true
     note: null
     unit_override: null
   - column: Impervious_Surface_Fraction_percent
@@ -2958,10 +2977,97 @@ categories:
     status: withheld
     reason: constant 4.5 %
     duplicate_of: null
-    group: impervious-surface-fraction-pct
-    default_visible: true
     note: null
     unit_override: null
+  pages:
+  - module: runoff
+    shown_duplicates:
+    - Mean_Catchment_Rainfall_mm
+    groups:
+    - id: catchment-area-km2
+      label: Catchment Area (km²)
+      unit: km²
+      resolution: daily
+      columns:
+      - Catchment_Area_km2
+      default_visible:
+      - Catchment_Area_km2
+    - id: mean-catchment-rainfall-actual-et-from-catchment-mm
+      label: Mean Catchment Rainfall / Actual ET from Catchment (mm)
+      unit: mm
+      resolution: daily
+      columns:
+      - Mean_Catchment_Rainfall_mm
+      - Actual_ET_from_Catchment_mm
+      default_visible:
+      - Mean_Catchment_Rainfall_mm
+      - Actual_ET_from_Catchment_mm
+    - id: daily-surface-runoff-volume-m3-day
+      label: Daily Surface Runoff Volume (m³/day)
+      unit: m³/day
+      resolution: daily
+      columns:
+      - Daily_Surface_Runoff_Volume_m3_day
+      default_visible:
+      - Daily_Surface_Runoff_Volume_m3_day
+    - id: monthly-runoff-totals-mm3-month
+      label: Monthly Runoff Totals (Mm³/month)
+      unit: Mm³/month
+      resolution: monthly
+      columns:
+      - Monthly_Runoff_Totals_Million_m3_month
+      default_visible:
+      - Monthly_Runoff_Totals_Million_m3_month
+    - id: runoff-coefficient
+      label: Runoff Coefficient
+      unit: —
+      resolution: daily
+      columns:
+      - Runoff_Coefficient_dimensionless
+      default_visible:
+      - Runoff_Coefficient_dimensionless
+    - id: soil-moisture-prior-m3-m3
+      label: Soil Moisture Prior (m³/m³)
+      unit: m³/m³
+      resolution: daily
+      columns:
+      - Soil_Moisture_Prior_m3m3
+      default_visible:
+      - Soil_Moisture_Prior_m3m3
+    - id: curve-number-cn
+      label: Curve Number CN
+      unit: —
+      resolution: daily
+      columns:
+      - Curve_Number_CN
+      default_visible:
+      - Curve_Number_CN
+    - id: peak-flow-rates-baseflow-component-m3-s
+      label: Peak Flow Rates / Baseflow Component (m³/s)
+      unit: m³/s
+      resolution: daily
+      columns:
+      - Peak_Flow_Rates_m3s
+      - Baseflow_Component_m3s
+      default_visible:
+      - Peak_Flow_Rates_m3s
+      - Baseflow_Component_m3s
+    - id: dominant-landcover-class
+      label: Dominant LandCover Class
+      unit: class
+      resolution: daily
+      columns:
+      - Dominant_LandCover_Class
+      default_visible:
+      - Dominant_LandCover_Class
+    - id: impervious-surface-fraction-pct
+      label: Impervious Surface Fraction (%)
+      unit: '%'
+      resolution: daily
+      columns:
+      - Impervious_Surface_Fraction_percent
+      default_visible:
+      - Impervious_Surface_Fraction_percent
 unregistered:
 - table: 10_1_borehole_and_aquifer_master
   columns:

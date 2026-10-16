@@ -15,7 +15,10 @@ from tests.conftest import requires_db
 
 pytestmark = [pytest.mark.db, requires_db]
 CAT = get_catalogue()
-GROUPS = [(cat.modules[0], cat, g) for cat in CAT.categories for g in cat.groups]
+RAI_GROUP = next(  # the 6.2 chart on the rainfall page (it also shows the SPEI duplicates there)
+    c.group_of("rainfall", "RAI_Rainfall_Anomaly_Index") for c in CAT.categories if c.table.startswith("6.2")
+).id  # type: ignore[union-attr]
+GROUPS = [(m, cat, g) for cat in CAT.categories for m in cat.modules for g in cat.groups_for(m)]
 
 
 def path(module: str, table_id: str, group_id: str) -> str:
@@ -34,17 +37,19 @@ async def test_categories_list_every_table_of_the_module(client: httpx.AsyncClie
     mine = CAT.for_module(module)
     assert [t["table"] for t in body["tables"]] == [x.table for x in mine]
     for t, cat in zip(body["tables"], mine, strict=True):
-        assert t["counts"] == {
-            s: sum(1 for x in cat.columns if x.status == s) for s in ("live", "withheld", "duplicate")
-        }
+        on_page = [cat.status_on(module, x.column) for x in cat.columns]
+        assert t["counts"] == {s: on_page.count(s) for s in ("live", "withheld", "duplicate")}
         assert t["specTag"] == f"§{cat.spec}"
-        assert [g["path"] for g in t["groups"]] == [path(module, cat.id, g.id) for g in cat.groups]
+        assert [g["path"] for g in t["groups"]] == [path(module, cat.id, g.id) for g in cat.groups_for(module)]
         for v in t["variables"]:
             assert v["label"] and v["source"] == f"{cat.table}.{v['column']}" and "defaultVisible" in v
             if v["status"] == "withheld":
                 assert v["reason"] and "asOf" not in v
-            if v["status"] == "duplicate":
+            if v["status"] == "duplicate":  # hidden: the column it duplicates is on this page
                 assert v["duplicateOf"] and "group" not in v
+            if v["column"] in cat.page(module).shown_duplicates:  # served here: its twin is on another page
+                assert v["status"] == "live" and v["group"]
+                assert v["note"].startswith(f"Same values as {v['duplicateOf']}")
             if v["status"] == "live":
                 assert v["asOf"] and isinstance(v["isStale"], bool)
 
@@ -54,7 +59,7 @@ async def test_meteorological_table_is_on_the_drought_page(client: httpx.AsyncCl
     met = next(t for t in body["tables"] if t["table"] == "meteorological_drought_master")
     assert met["label"] == "Meteorological Drought" and met["specTag"] == "§3.1"
     labels = {g["label"] for g in met["groups"]}
-    assert "Evapotranspiration (mm/day)" in labels and "SPEI (index)" in labels
+    assert "Daily Rainfall / PET / ET₀ (mm/day)" in labels and "SPEI (index)" in labels
     rh = next(v for v in met["variables"] if v["column"] == "relative_humidity_pct")
     assert (rh["label"], rh["unit"], rh["status"]) == ("Relative Humidity (%)", "%", "live")
 
@@ -73,15 +78,15 @@ async def test_every_group_serves_all_its_columns(client: httpx.AsyncClient, mod
     for s in body["series"]:
         x = cols[s["key"]]
         assert s["name"] == x.label and s["source"] == [f"{cat.table}.{x.column}"] and s["axis"] == 0
-        assert s.get("unit") == x.unit and s["status"] == x.status
-        if x.status == "withheld":
+        assert s.get("unit") == x.unit and s["status"] == cat.status_on(module, x.column)
+        if cat.status_on(module, x.column) == "withheld":
             assert all(p[1] is None for p in s["data"]) and f"series.{x.column}" in unavailable
     assert body["source"] == [cat.table]
 
 
 async def test_default_columns_are_the_groups_default_visible(client: httpx.AsyncClient) -> None:
     cat = next(x for x in CAT.categories if x.table == "6.1_core_rainfall_variables_master")
-    g = cat.group("seasonal-total-mm")
+    g = cat.group("seasonal-total-mm", "rainfall")
     assert g is not None
     body = (await client.get(path("rainfall", cat.id, g.id), params={"municipality": "DC44"})).json()
     assert [s["key"] for s in body["series"]] == g.default_visible
@@ -129,7 +134,7 @@ async def test_monthly_values_equal_the_column(
 ) -> None:
     body = (
         await client.get(
-            path("rainfall", "rainfall-derived-drought-indices", "spi-rai-index"),
+            path("rainfall", "rainfall-derived-drought-indices", RAI_GROUP),
             params={"vars": "RAI_Rainfall_Anomaly_Index,SPI_3_Short_Term_Agricultural_Drought", "municipality": "DC6"},
         )
     ).json()
@@ -179,7 +184,7 @@ async def test_repeated_monthly_values_are_read_once_per_month(
 
 
 async def test_entity_selects_one_district_whatever_the_scope(client: httpx.AsyncClient) -> None:
-    p = path("rainfall", "rainfall-derived-drought-indices", "spi-rai-index")
+    p = path("rainfall", "rainfall-derived-drought-indices", RAI_GROUP)
     a = (await client.get(p, params={"entityId": "DC44"})).json()
     a_wc = (await client.get(p, params={"entityId": "DC44", "province": "WC"})).json()
     b = (await client.get(p, params={"entityId": "DC6"})).json()
@@ -216,3 +221,26 @@ async def test_categories_survive_a_failed_date_scan(
         assert r.status_code == 200, r.text
         t = next(x for x in r.json()["tables"] if x["table"] == "6.1_core_rainfall_variables_master")
         assert t["asOf"] == "2026-09-06"
+
+
+async def test_drought_page_serves_meteorological_rainfall_and_temperature(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """Item 1: 6.1 and 4_1 are not on the drought page, so their duplicates in meteorological_drought_master are served
+    there as live columns; the SPI duplicates stay hidden because 6.2 is on the drought page."""
+    body = (await client.get("/api/v1/drought/categories")).json()
+    met = next(t for t in body["tables"] if t["table"] == "meteorological_drought_master")
+    v = {x["column"]: x for x in met["variables"]}
+    assert v["tmax_c"]["status"] == "live" and v["tmax_c"]["note"].startswith("Same values as 4_1_temperature_change")
+    assert v["spi_3"]["status"] == "duplicate"
+    g = v["tmax_c"]["group"]
+    r = await client.get(
+        f"/api/v1/drought/category/meteorological-drought/{g}", params={"vars": "tmax_c", "municipality": "DC44"}
+    )
+    s = r.json()["series"][0]
+    assert s["status"] == "live" and s["source"] == ["meteorological_drought_master.tmax_c"]
+    ((tx,),) = fixture_db(
+        "SELECT round(tmax_c::numeric, 2) FROM meteorological_drought_master WHERE district_name = 'Alfred Nzo' "
+        "AND date = '2026-07-15'"
+    )
+    assert dict(map(tuple, s["data"]))["2026-07-15"] == float(tx)
