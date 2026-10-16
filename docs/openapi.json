@@ -1890,6 +1890,50 @@
         "title": "KpiSet",
         "type": "object"
       },
+      "LegendClass": {
+        "additionalProperties": false,
+        "description": "One class of a data-derived map legend (addition): values in [from, to); open ends are null.",
+        "properties": {
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "from": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "to": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "color",
+          "label"
+        ],
+        "title": "LegendClass",
+        "type": "object"
+      },
       "MapLayer": {
         "additionalProperties": false,
         "properties": {
@@ -2039,6 +2083,20 @@
             ],
             "title": "Kind",
             "type": "string"
+          },
+          "legend": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/LegendClass"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legend"
           },
           "level": {
             "enum": [

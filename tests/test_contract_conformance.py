@@ -28,7 +28,7 @@ ADDITIONS: dict[str, set[str]] = {
     "CategorySetSchema": PROVENANCE | {"asOf", "units"},
     "TableSetSchema": PROVENANCE | {"asOf"},
     "MatrixSetSchema": PROVENANCE | {"asOf"},
-    "MapLayerSchema": PROVENANCE | {"asOf", "geometry"},
+    "MapLayerSchema": PROVENANCE | {"asOf", "geometry", "legend"},
     "EntityListSchema": PROVENANCE,
     "EntityDetailSchema": {"asOf", "source"},
 }

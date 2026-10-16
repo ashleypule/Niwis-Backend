@@ -342,3 +342,12 @@ totals (each the sum of three calendar months of the same year); it served DJF /
 `jja`, `son` keys are gone from this panel). The climate page keeps `4_3`'s DJF / MAM / JJA / SON (spec §4.3; DJF =
 January + February + December of the same calendar year, as stored).
 
+### 12.12 NDVI trend classes from the data (B12)
+
+`vegetation/map?layer=ndvi-trend` adds `legend` (addition to `MapLayer`): five classes `{from, to, color, label}`
+(open ends null), symmetric around 0, with breaks ±a / ±b at the 40 % / 80 % quantiles of |trend| over all 52 districts
+(2 significant figures; the same for every scope), using the `ndviTrend` colours. The palette's fixed ±0.05 / ±0.1 per
+decade put all 52 districts in the middle class; on Supabase the breaks are ±0.013 / ±0.019 per decade and the
+districts fall 21 / 19 / 12 into the stable / greening / strong greening classes (none browning). When `legend` is
+present it replaces the palette's classes.
+

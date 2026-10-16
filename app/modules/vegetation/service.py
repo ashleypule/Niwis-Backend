@@ -22,7 +22,7 @@ from app.core import districts
 from app.core.aggregate import class_areas, coverage_reason, short_of_coverage, weighted, weighted_scalar
 from app.core.data import DataAccess
 from app.core.errors import BadRequest, DataUnavailable
-from app.core.palettes import NEGATIVE, OBSERVED, POSITIVE, SERIES
+from app.core.palettes import NDVI_TREND, NEGATIVE, OBSERVED, POSITIVE, SERIES, symmetric_legend
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import thresholds, veg_class
@@ -681,6 +681,7 @@ class VegetationService:
             "sm": ("soil_moisture_surface", "Soil moisture (m³/m³)", "soilMoisture", "m³/m³", 3),
         }
         baseline = None
+        legend: list[dict[str, object]] = []
         if layer in simple:
             var, label, scale, unit, nd = simple[layer]
             vals = (await self.at(var, m)).map(lambda v: rnd(v, nd))
@@ -706,6 +707,11 @@ class VegetationService:
             vals = pd.Series(out)
             title = f"NDVI trend (Sen's slope per decade, {CLIM[0]}–{CLIM[1]})"
             scale, unit, variables = "ndviTrend", "/decade", ["ndvi"]
+            # breaks from the distribution of all 52 district trends (stable across scopes); the palette's fixed
+            # ±0.05 / ±0.1 per decade put nearly every district in the middle class (B12)
+            legend = symmetric_legend(
+                [float(v) for v in out.values() if v is not None], NDVI_TREND, "/decade", "browning", "greening"
+            )
         else:
             raise unknown(
                 "layer",
@@ -726,6 +732,7 @@ class VegetationService:
             date=iso(m) or "",
             values={str(k): v for k, v in vals.items() if k in w},
             geometry="districts",
+            **({"legend": [c.LegendClass.model_validate(x) for x in legend]} if legend else {}),
             **prov,
         ).dump()
 

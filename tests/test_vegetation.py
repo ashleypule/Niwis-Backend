@@ -146,3 +146,24 @@ async def test_indicator_trends_temperature_in_degrees(client: httpx.AsyncClient
     temp = next(s for s in body["series"] if s["key"] == "temp")
     assert temp["axis"] == 1 and body["axes"][1]["unit"] == "°C"
     assert all(s.get("axis", 0) == 0 for s in body["series"] if s["key"] != "temp")
+
+
+def test_symmetric_legend_breaks_follow_the_data() -> None:
+    """B12: breaks at the 40 % / 80 % quantiles of |trend|, symmetric, rounded to 2 significant figures."""
+    from app.core.palettes import NDVI_TREND, symmetric_legend
+
+    values = [0.001 * i for i in range(1, 51)]  # |trend| 0.001 … 0.050
+    leg = symmetric_legend(values, NDVI_TREND, "/decade", "browning", "greening")
+    edges = [(x["from"], x["to"]) for x in leg]
+    assert edges == [(None, -0.04), (-0.04, -0.021), (-0.021, 0.021), (0.021, 0.04), (0.04, None)]  # q40 = 0.0206
+    assert [x["color"] for x in leg] == NDVI_TREND
+    middle = sum(1 for v in values if -0.021 <= v < 0.021)
+    assert middle < len(values) / 2  # the fixed ±0.05 class would hold all 50
+
+
+async def test_ndvi_trend_map_returns_its_legend(client: httpx.AsyncClient) -> None:
+    body = (await client.get(f"{B}/map", params={"layer": "ndvi-trend"})).json()
+    c.MapLayer.model_validate(body)
+    leg = body["legend"]
+    assert len(leg) == 5 and leg[0]["from"] is None and leg[-1]["to"] is None
+    assert leg[1]["from"] == -leg[3]["to"] and leg[2]["from"] == -leg[2]["to"]  # symmetric around 0

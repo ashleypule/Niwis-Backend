@@ -250,6 +250,15 @@ class MapPoint(ContractModel):
     sub: str | None = None
 
 
+class LegendClass(ContractModel):
+    """One class of a data-derived map legend (addition): values in [from, to); open ends are null."""
+
+    from_: float | None = Field(alias="from")
+    to: float | None
+    color: str
+    label: str
+
+
 class MapLayer(Provenance):
     id: str
     title: str
@@ -264,6 +273,7 @@ class MapLayer(Provenance):
     points: list[MapPoint] | None = None
     as_of: str | None = Field(None, alias="asOf")  # addition
     geometry: str | None = None  # addition: boundary set the `values` keys refer to, e.g. "districts"
+    legend: list[LegendClass] | None = None  # addition: class breaks derived from the data (overrides `scale`'s)
 
 
 # ------------------------------------------------------------------ entities

@@ -67,7 +67,9 @@ audit fixes B1–B14. One commit per step.
 - [x] **B10 FDC long-term** = 2000–2025 (was 2011–2020), labelled; no other hard-coded periods remain.
 - [x] **B11 Seasons**: rainfall page OND / JFM / AMJ / JAS from `6.1`'s columns; climate page DJF / MAM / JJA / SON
       from `4_3` (unchanged). Both read stored columns, values tested against SQL.
-- [ ] B12–B14 audit fixes
+- [x] **B12 NDVI trend legend** from the data (symmetric quantile breaks, returned as `legend`): Supabase breaks
+      ±0.013 / ±0.019 per decade, 21 / 19 / 12 districts per class (was 52 / 52 in the middle class).
+- [ ] B13–B14 audit fixes
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue
