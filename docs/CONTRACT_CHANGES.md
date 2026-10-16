@@ -248,7 +248,7 @@ Rules the frontend can rely on:
 
 ## 12. Spec-audit fixes (2026-10-15)
 
-Behaviour and additions from the audit of the live dashboard against the spec (`docs/ISSUE_FIXES.md`). Nothing is
+Behaviour and additions from the audit of the live dashboard against the spec (evidence in `PROGRESS.md`). Nothing is
 renamed or removed unless stated.
 
 ### 12.1 `entityId` selects the district (B1)

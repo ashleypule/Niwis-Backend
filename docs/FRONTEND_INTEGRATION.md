@@ -101,7 +101,103 @@ Every response may carry `asOf`, `source` (tables), `isStale`, `components` (per
 - **"No drought" for missing data:** removed; a missing SPI now has no class / pill (only visible on scopes with a
   missing district).
 
-## 8. Checklist
+## 8. Database category charts (2026-10-15)
+
+DWS asked for every dataset to be shown **as it exists in the database**: category = table, variable = column, label
+and unit = from the column name. Nothing from the mockup's names or groupings is used here; the full list of tables,
+columns, labels, units, chart groups and statuses is `docs/CATEGORY_CATALOGUE.md` (generated from the database
+schema by `python scripts/build_catalogue.py`).
+
+### Endpoints (every module: `rainfall`, `drought`, `climate`, `vegetation`, `runoff`)
+
+| Request | Returns |
+| --- | --- |
+| `GET /api/v1/{module}/categories` | `{module, asOf, source, aggregation, tables: [...]}`. One entry per table shown on that page: `id`, `table` (exact DB name), `label` (from the table name), `spec` / `specTag` (`"§3.1"`), `resolution`, `asOf` / `isStale`, `counts` (`live`, `withheld`, `duplicate`), `groups` and `variables`. |
+| `GET /api/v1/{module}/category/{tableId}/{groupId}?vars=…` | A `SeriesSet` (same shape as `/timeseries`), one series per column. `vars` = comma-separated **exact column names**, `all`, or absent (= the group's `defaultVisible`). The usual filters apply (`province`, `wma`, `municipality`, `period`, `from`, `to`); `entityId` selects one district. |
+
+Each **group** is one chart: `{id, label, unit, resolution, columns, defaultVisible, path}`; `path` is the series URL.
+Each **variable** (column): `column`, `label` (with unit, e.g. "Daily Rainfall (mm/day)"), `name` (without),
+`unit`, `kind` (`numeric` / `categorical`), `resolution`, `status`, `reason` (withheld), `duplicateOf` (duplicate),
+`group`, `defaultVisible`, `asOf` / `isStale` / `periodEnd` (live), `source` (`table.column`), `note` (method /
+caveat, show as a tooltip), `unitOverride` (why the unit is not the name's suffix).
+
+Series (`key` = column name, `name` = label) add `unit`, `asOf`, `isStale`, `periodEnd`, `source` (`["table.column"]`),
+`resolution` and `status`.
+
+### Table → module pages (`category_modules` in `app/registry/datasets.yaml`)
+
+| Page | Tables |
+| --- | --- |
+| Drought | Meteorological Drought §3.1, Satellite Remote Sensing §3.2, Hydrological Drought §3.3, Rainfall Derived Drought Indices §6.2 |
+| Rainfall | Wet Dry Spells §4.2, Mean Annual Precipitation §4.3, Core Rainfall Variables §6.1, Rainfall Derived Drought Indices §6.2 |
+| Climate | Temperature Change §4.1, Wet Dry Spells §4.2, Mean Annual Precipitation §4.3, Potential Evaporation Daily §4.4, Irrigation Demand Daily §4.5, Streamflow and Climate Linkage Annual §4.6 |
+| Vegetation | Satellite Remote Sensing §3.2, Primary Satellite Vegetation Variables SANSA §5.1, Meteorological Drivers SAWS §5.2 |
+| Runoff | Hydrological Drought §3.3, Runoff Variables §7.1 |
+
+Render one card per table (`label` + `specTag`), one chart per group, and a toggle per column of the group (all
+columns of the group can be switched on; start with `defaultVisible`). Order tables and groups as returned.
+
+### Labels and units
+
+From the column name only: the unit is the name's suffix (`_mm_day` → mm/day, `_C` → °C, `_pct` / `_percent` → %,
+`_m3_s` → m³/s, `_million_m3` → Mm³, `_km2` → km², `_wm2` → W/m², `_days` → days, …; `_dimensionless` /
+`_standardised` → no unit); the label is the rest with underscores as spaces, words capitalised and acronyms kept
+(SPI, SPEI, NDVI, ET₀, PRCPTOT, …). Use `label` as is; do not rename. Seven unit overrides exist where the name has no
+unit or the wrong one (`unitOverride` says why), e.g. satellite `vci` → %, GDD → °C·days.
+
+### The axis rule
+
+A group never mixes units, so a category chart always has **exactly one axis**: `axes[0].unit` = the group's `unit`.
+Unitless standardised indices (SPI, SPEI, SSI, SGI, RAI, SVI) share an `index` axis; spectral indices (NDVI, NDWI,
+NDII, EVI, SAVI, MSAVI2) are a separate group with their own `index` axis; NDVI and VCI / VHI (%) are never in the
+same chart. Do not merge groups into one chart.
+
+### Status values
+
+| Status | Meaning | What the UI does |
+| --- | --- | --- |
+| `live` | Served from the column | Plot it. |
+| `withheld` | Not served: placeholder, failed plausibility check, or a table under review — `reason` says which | List the column with its reason; its series is all-null with an `unavailable` entry (`series.<column>`). |
+| `duplicate` | The same values as another column (`duplicateOf`) | List it ("same as …"); it is not in any group and cannot be requested. |
+
+Today: 151 columns, 63 live, 59 withheld, 29 duplicate, in 71 groups (`docs/CATEGORY_CATALOGUE.md`). Monthly and
+annual values the database repeats on daily rows are read once per period; incomplete months / years are never served;
+daily groups longer than 2 000 points come back as monthly means (`note` says so). Volumes, flows and areas are summed
+over the scope's districts (all needed); everything else is an area-weighted mean (≥ 95 % of the area).
+
+### Contract changes for the frontend step
+
+All additions unless marked; details in `docs/CONTRACT_CHANGES.md` §11–§12.
+
+1. **New endpoints** `/{module}/categories` and `/{module}/category/{tableId}/{groupId}` (above); new response type
+   `CategoryList`; `Series` gains optional `unit`, `asOf`, `isStale`, `periodEnd`, `source`, `resolution`, `status`.
+2. **`entityId`** now selects the district on runoff `discharge`, `fdc`, `flood-frequency`, `seasonal`, runoff
+   `statistics` and every category chart (as rainfall `station` did); unknown code → 404.
+3. **`decimals`** on every numeric table column; mixed-unit statistics tables (runoff, rainfall) also give each row
+   `unit` / `decimals` (runoff `trendDecimals`). Prefer the row's value when present.
+4. **`climate/timeseries?metric=drought-frequency`** (changed): series `d2`, `d3`, `d4` (new, stacked % of area, axis
+   0), `trend` (axis 0), `months` (**redefined**: district-months in D2+, axis 1); axes `%` and `district-months`.
+5. **Drought Class KPI** (changed meaning): worst class covering ≥ 20 % of the area; `sublabel` gives the % in D1–D4.
+   SPI-3 / SPI-6 / SPEI-12 KPIs are labelled "(area-weighted mean)" on aggregated scopes. Province-class map and the
+   affected table's `class` use the same area rule.
+6. **`vegetation/breakdown?metric=drivers`** (changed): `unit` = `"mixed"`, new `units` per category, unit in each
+   category name; temperature / LST in °C, GDD in °C·days, rainfall / ET₀ in %. `climate indicator-trends`: `temp`
+   in °C on a second axis (`axis: 1`).
+7. **Notes / reasons**: developer wording removed (text only).
+8. **Drought cascade** (changed): 7 rows in spec order with `stageId` / `order`; new rows `soil-moisture`,
+   `streamflow`, `groundwater` (scale `status`); reservoir (`hydrological`) null with the plausibility reason.
+9. **SSI**: drought `ssi3` now has values (from modelled runoff), labelled "SSI-3 (modelled runoff)"; runoff SSI
+   labels likewise.
+10. **Flood frequency** at 2, 5, 10, 20, 50, 100 years (1.25 and 25 gone).
+11. **FDC** `lt` = 2000–2025 (was 2011–2020).
+12. **`rainfall/breakdown?metric=seasonal`** (changed keys): `jfm`, `amj`, `jas`, `ond` (was `djf` … `son`).
+13. **`vegetation/map?layer=ndvi-trend`**: new `legend` (5 data-derived classes `{from, to, color, label}`); use it
+    instead of the `ndviTrend` palette when present.
+14. **Sources table**: TAMSAT cadence `monthly`.
+15. **Withheld after the plausibility checks** (values → null + reason): dam storage, % FSC, inflow, outflow
+    (Dam Storage KPI null, dam-flows → 501), solar radiation, GRACE, the `4_3` record statistics. Show the reason.
+
+## 9. Checklist
 
 - [ ] `VITE_DATA_SOURCE=api`, `VITE_API_BASE_URL` set; backend `CORS_ORIGINS` includes the frontend origin
 - [ ] API client maps `501 DATA_UNAVAILABLE` → "Sample" state
@@ -109,3 +205,5 @@ Every response may carry `asOf`, `source` (tables), `isStale`, `components` (per
 - [ ] `public/geo/districts.json` added; choropleths with `geometry: "districts"` use it
 - [ ] Municipality filter lists districts from `/reference/municipalities`
 - [ ] Optional: zod schemas extended with the provenance fields; "as of" / stale badges
+- [ ] Database category charts: one card per table, one chart per group, column toggles, withheld / duplicate
+      columns listed with their reason (section 8)
