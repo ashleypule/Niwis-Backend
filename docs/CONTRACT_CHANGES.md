@@ -351,3 +351,10 @@ decade put all 52 districts in the middle class; on Supabase the breaks are ±0.
 districts fall 21 / 19 / 12 into the stable / greening / strong greening classes (none browning). When `legend` is
 present it replaces the palette's classes.
 
+### 12.13 Sources: each column's real resolution (B14)
+
+`rainfall/table?metric=sources` gives each source column its own resolution (`resolution`, `cadence`): values the
+database repeats on every daily row count once per period. TAMSAT is now **monthly** ("TAMSAT rainfall estimate (mm
+per dekad, one value per month)"); it was listed as daily. The spec (§6.1) expects a dekadal product; the database holds
+one value per month (DATA_GAPS §15).
+

@@ -72,7 +72,8 @@ audit fixes B1–B14. One commit per step.
 - [x] **B13 Current dry spell**: calculation verified and kept (days since the last day ≥ 1 mm per district →
       area-weighted mean; test vs SQL). Cause of the 1-day value: rain ≥ 1 mm on the newest day (2026-09-06) in
       42 / 52 districts, the rest 1–3 days earlier — unusual for the season, asked of the data team (DATA_GAPS §17).
-- [ ] B14 audit fix
+- [x] **B14 TAMSAT** listed with its real resolution (monthly: one value per month in mm/dekad) — the sources table
+      now uses each column's own resolution from the catalogue.
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

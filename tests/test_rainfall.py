@@ -221,3 +221,13 @@ async def test_current_dry_spell_is_days_since_the_last_wet_day(
         k for k in (await client.get(f"{B}/summary", params={"municipality": "DC6"})).json()["kpis"] if k["id"] == "cdd"
     )
     assert kpi["value"] == body["values"]["DC6"]
+
+
+async def test_sources_give_each_columns_real_resolution(client: httpx.AsyncClient) -> None:
+    """B14: TAMSAT is stored on daily rows but holds one value per month — the sources table says monthly."""
+    body = (await client.get(f"{B}/table", params={"metric": "sources"})).json()
+    rows = {r["id"].rsplit(".", 1)[1]: r for r in body["rows"]}
+    tamsat = rows["TAMSAT_Satellite_Rainfall_Estimate_mm_dekad"]
+    assert tamsat["cadence"] == "monthly" and "dekad" in tamsat["source"]
+    assert rows["Daily_Rainfall_Total_mm"]["cadence"] == "daily"
+    assert rows["CHIRPS_Daily_Rainfall_Estimate_mm_day"]["cadence"] == "daily"

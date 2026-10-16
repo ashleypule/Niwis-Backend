@@ -38,6 +38,7 @@ from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import drought_class_or_none
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status, forecast_unavailable, unknown
+from app.registry.catalogue import get_catalogue
 from app.schemas import contract as c
 
 MODULE = "rainfall"
@@ -808,7 +809,7 @@ class RainfallService:
         for var, label in (
             ("rain_daily", "District daily rainfall"),
             ("rain_daily_chirps", "CHIRPS daily rainfall estimate"),
-            ("rain_dekad_tamsat", "TAMSAT dekadal rainfall estimate"),
+            ("rain_dekad_tamsat", "TAMSAT rainfall estimate (mm per dekad, one value per month)"),
             ("spi_6", "SPI (1–24 months)"),
             ("spei_6", "SPEI (1–24 months)"),
             ("r20mm", "ETCCDI rainfall indices (annual)"),
@@ -818,14 +819,18 @@ class RainfallService:
                 continue
             ds, col = src
             st = stats.get(ds.table)
+            # the column's own resolution (values repeated on daily rows count once per period), not the table's:
+            # TAMSAT is stored on daily rows but holds one value per month (B14; spec §6.1 expects dekadal)
+            cat = next(x for x in get_catalogue().categories if x.table == ds.table).column(col)
+            res = cat.resolution if cat is not None else ds.time.resolution
             rows.append(
                 {
                     "id": f"{ds.table}.{col}",
                     "source": label,
                     "table": ds.table,
                     "stations": None,
-                    "resolution": f"52 districts, {ds.time.resolution}",
-                    "cadence": ds.time.resolution,
+                    "resolution": f"52 districts, {res}",
+                    "cadence": res,
                     "asOf": iso(st.last_date) if st else None,
                 }
             )
