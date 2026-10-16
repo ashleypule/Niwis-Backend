@@ -66,15 +66,15 @@ def test_spi_category(spi: float, label: str) -> None:
 
 
 def test_other_classes() -> None:
-    assert [veg_class(v) for v in (95, 80, 79.9, 60, 40, 39.9, 20, 0)] == [
-        "Very Healthy",
-        "Very Healthy",
-        "Healthy",
-        "Healthy",
-        "Moderate",
-        "Stressed",
-        "Stressed",
-        "Very Stressed",
+    assert [veg_class(v) for v in (95, 80, 79.9, 60, 40, 39.9, 20, 0)] == [  # spec §5.3 names
+        "Excellent",
+        "Excellent",
+        "Good",
+        "Good",
+        "Fair",
+        "Poor",
+        "Poor",
+        "Very Poor",
     ]
     assert [storage_alert_level(v) for v in (60, 49.9, 29.9, 14.9)] == ["None", "L1", "L2", "L3"]
     assert [borehole_status(v) for v in (0, -0.5, -1.0, -1.6)] == ["Normal", "Watch", "Low", "Critical"]

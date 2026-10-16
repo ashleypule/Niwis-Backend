@@ -33,13 +33,13 @@ from app.schemas import contract as c
 
 MODULE = "vegetation"
 CLIM = (2001, 2025)
-VEG_CLASSES = ["Very Healthy", "Healthy", "Moderate", "Stressed", "Very Stressed"]
+VEG_CLASSES = ["Excellent", "Good", "Fair", "Poor", "Very Poor"]  # spec §5.3 (BACKEND_ISSUES #12)
 VEG_COLOURS = {
-    "Very Healthy": "#1A9850",
-    "Healthy": "#A6D96A",
-    "Moderate": "#FEE08B",
-    "Stressed": "#F46D43",
-    "Very Stressed": "#A50026",
+    "Excellent": "#1A9850",
+    "Good": "#A6D96A",
+    "Fair": "#FEE08B",
+    "Poor": "#F46D43",
+    "Very Poor": "#A50026",
 }  # `vci` palette, reference/DATA_DICTIONARY.md
 ONLY_IN_5_1 = {
     "evi": "EVI",

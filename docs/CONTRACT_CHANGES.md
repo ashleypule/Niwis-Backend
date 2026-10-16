@@ -391,3 +391,11 @@ carry `source: ["table.column"]`, the same key category series have: e.g. `droug
 the drought SPI / SPEI / NDVI / VCI / VHI series. Derived series (sums, counts from daily values, anomalies, area
 shares, fits, bands) have no `source`: use their `name`.
 
+### 13.5 Vegetation classes: spec names (BACKEND_ISSUES #12)
+
+VCI / VHI / TCI classes are **Excellent / Good / Fair / Poor / Very Poor** (spec §5.3; breaks unchanged at 80 / 60 /
+40 / 20 %) everywhere a class is sent: vegetation `summary` status, `breakdown?metric=classification` categories,
+`table?metric=provinces|hotspots`, and the drought cascade's vegetation stage (`cls`, `class`). They were Very
+Healthy / Healthy / Moderate / Stressed / Very Stressed. `reference/thresholds.ts` is refreshed from the frontend.
+The frontend's `normalizeVegClasses()` mapping is no longer needed.
+

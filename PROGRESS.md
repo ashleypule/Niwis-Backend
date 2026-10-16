@@ -26,7 +26,9 @@
 - [x] **#10** null `asOf` / `periodEnd` omitted in the response layer (every endpoint); tested over every response.
 - [x] **#11** `source: ["table.column"]` on every summary series that plots one stored column (helper
       `Ctx.col_source`); tested: the reported series, and every named column exists in the catalogue as served.
-- [ ] Item 4 #12 · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+- [x] **#12** vegetation classes Excellent / Good / Fair / Poor / Very Poor (thresholds.json, severity order,
+      vegetation service; reference/thresholds.ts refreshed from the frontend); tested on every endpoint that sends one.
+- [ ] Item 5 category pre-warm · Docker / frontend / docs · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
       frontend / docs
 
 ### Database category view + spec-audit fixes (2026-10-15 / 16)

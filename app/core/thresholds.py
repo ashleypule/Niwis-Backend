@@ -101,7 +101,7 @@ def storage_band(pct_fsc: float) -> str:
 # Classes of each palette scale, least to most severe (cascade `bar`)
 SEVERITY_ORDER: dict[str, list[str]] = {
     "drought": ["None", "D0", "D1", "D2", "D3", "D4"],
-    "vci": ["Very Healthy", "Healthy", "Moderate", "Stressed", "Very Stressed"],
+    "vci": ["Excellent", "Good", "Fair", "Poor", "Very Poor"],  # spec §5.3 vegetation health classes
     "storage": ["very-high", "high", "moderate", "low", "very-low"],
     "status": ["Normal", "Watch", "Low", "Critical"],  # borehole SGI status (thresholds.ts boreholeStatus)
 }

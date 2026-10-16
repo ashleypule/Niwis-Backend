@@ -30,8 +30,8 @@
   "vegetation": {
     "_spec": "VCI / VHI 0–100 % (Kogan 1995; < 40 % = drought stress). >= comparisons",
     "classes": [
-      {"min": 80, "id": "Very Healthy"}, {"min": 60, "id": "Healthy"}, {"min": 40, "id": "Moderate"},
-      {"min": 20, "id": "Stressed"}, {"min": null, "id": "Very Stressed"}
+      {"min": 80, "id": "Excellent"}, {"min": 60, "id": "Good"}, {"min": 40, "id": "Fair"},
+      {"min": 20, "id": "Poor"}, {"min": null, "id": "Very Poor"}
     ],
     "stress_below": 40
   },

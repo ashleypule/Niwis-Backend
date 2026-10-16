@@ -167,3 +167,24 @@ async def test_ndvi_trend_map_returns_its_legend(client: httpx.AsyncClient) -> N
     leg = body["legend"]
     assert len(leg) == 5 and leg[0]["from"] is None and leg[-1]["to"] is None
     assert leg[1]["from"] == -leg[3]["to"] and leg[2]["from"] == -leg[2]["to"]  # symmetric around 0
+
+
+async def test_vegetation_classes_use_the_spec_names(client: httpx.AsyncClient) -> None:
+    """BACKEND_ISSUES #12: Excellent / Good / Fair / Poor / Very Poor (spec §5.3) wherever a class is sent."""
+    spec = {"Excellent", "Good", "Fair", "Poor", "Very Poor"}
+    old = ("Very Healthy", "Healthy", "Moderate", "Stressed")
+    for path, params in [
+        (f"{B}/summary", {"municipality": "DC44"}),
+        (f"{B}/breakdown", {"metric": "classification", "municipality": "DC44"}),
+        (f"{B}/table", {"metric": "provinces"}),
+        (f"{B}/table", {"metric": "hotspots"}),
+        ("/api/v1/drought/table", {"metric": "cascade", "municipality": "DC44"}),
+        ("/api/v1/drought/summary", {"municipality": "DC44"}),
+    ]:
+        r = await client.get(path, params=params)
+        assert r.status_code == 200 and not any(f'"{w}"' in r.text for w in old), (path, params)
+    cls = (await client.get(f"{B}/breakdown", params={"metric": "classification", "municipality": "DC44"})).json()
+    assert set(cls["categories"]) <= spec
+    cas = (await client.get("/api/v1/drought/table", params={"metric": "cascade", "municipality": "DC44"})).json()
+    veg = next(r for r in cas["rows"] if r["stageId"] == "vegetation")
+    assert veg["cls"] in spec and veg["class"] == veg["cls"]

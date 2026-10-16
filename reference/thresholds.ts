@@ -218,15 +218,29 @@ export function effluentPass(id: string, value: number): boolean {
 }
 
 // ---------------------------------------------------------------- Vegetation
-export type VegClass = 'Very Healthy' | 'Healthy' | 'Moderate' | 'Stressed' | 'Very Stressed';
-/** VCI / VHI (0–100%) → condition class (Kogan 1995; < 40% = drought stress). */
+/** Vegetation health classes, spec §5.3 ("Excellent / Good / Fair / Poor / Very Poor"). */
+export type VegClass = 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Very Poor';
+export const VEG_CLASSES: VegClass[] = ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor'];
+/** VCI / VHI (0–100%) → health class (breaks at 20 / 40 / 60 / 80 %, Kogan 1995; < 40% = drought stress). */
 export function vegClass(vci: number): VegClass {
-  if (vci >= 80) return 'Very Healthy';
-  if (vci >= 60) return 'Healthy';
-  if (vci >= 40) return 'Moderate';
-  if (vci >= 20) return 'Stressed';
-  return 'Very Stressed';
+  if (vci >= 80) return 'Excellent';
+  if (vci >= 60) return 'Good';
+  if (vci >= 40) return 'Fair';
+  if (vci >= 20) return 'Poor';
+  return 'Very Poor';
 }
+
+/**
+ * The backend still names the classes Very Healthy … Very Stressed: the one place they are mapped to the spec's names
+ * (applied to every response by the API client, src/lib/vegClasses.ts).
+ */
+export const LEGACY_VEG_CLASS: Record<string, VegClass> = {
+  'Very Healthy': 'Excellent',
+  Healthy: 'Good',
+  Moderate: 'Fair',
+  Stressed: 'Poor',
+  'Very Stressed': 'Very Poor',
+};
 
 // ---------------------------------------------------------------- Groundwater
 /** Exploitation index = abstraction / recharge (spec §11.3). */
