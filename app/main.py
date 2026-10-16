@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -57,21 +57,27 @@ Backend for the National Integrated Water Information System (DWS). Serves the f
 
 
 async def _warm(state: AppState) -> None:
-    """Pre-load the newest DB date, the rainfall frames and the table statistics (~15 s cold) in the background."""
-    try:
-        await state.meta.newest_date()
-        await prewarm_rainfall(state.data)
-        await prewarm_drought(state.data)
-        await prewarm_climate(state.data)
-        await prewarm_vegetation(state.data)
-        await prewarm_runoff(state.data)
-        log.info("data cache warmed")
-        await state.meta.table_stats()
-        log.info("meta cache warmed")
-        await prewarm_categories(state)
-        log.info("category cache warmed")
-    except Exception:
-        log.exception("meta cache warm-up failed")
+    """Pre-load the newest DB date, the module frames, the table statistics and the category dates in the background.
+
+    Each step is independent: one that fails (e.g. a statement timeout on an unindexed table) is logged and the
+    others still run; the request that needs it later simply loads it then.
+    """
+    steps: list[tuple[str, Callable[[], Awaitable[Any]]]] = [
+        ("newest date", state.meta.newest_date),
+        ("rainfall", lambda: prewarm_rainfall(state.data)),
+        ("drought", lambda: prewarm_drought(state.data)),
+        ("climate", lambda: prewarm_climate(state.data)),
+        ("vegetation", lambda: prewarm_vegetation(state.data)),
+        ("runoff", lambda: prewarm_runoff(state.data)),
+        ("table statistics", state.meta.table_stats),
+        ("categories", lambda: prewarm_categories(state)),
+    ]
+    for name, step in steps:
+        try:
+            await step()
+        except Exception:
+            log.exception("cache warm-up step failed", extra={"step": name})
+    log.info("cache warm-up finished")
 
 
 def create_app(settings: Settings | None = None, db: Database | None = None) -> FastAPI:

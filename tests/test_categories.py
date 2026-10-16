@@ -195,3 +195,24 @@ async def test_withheld_group_says_why(client: httpx.AsyncClient) -> None:
     s = body["series"][0]
     assert all(p[1] is None for p in s["data"]) and len(s["data"]) == 12
     assert "plausibility" in body["unavailable"][0]["reason"] and s["status"] == "withheld"
+
+
+async def test_categories_survive_a_failed_date_scan(
+    client_factory: Callable[..., Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A statement timeout on the per-column date scan falls back to the table's newest date instead of a 500."""
+    from app.db import Database
+
+    real = Database.fetchrow
+
+    async def flaky(self: Database, query: str, *args: Any) -> Any:
+        if "FILTER (WHERE" in query and "c_all" in query:
+            raise TimeoutError("canceling statement due to statement timeout")
+        return await real(self, query, *args)
+
+    monkeypatch.setattr(Database, "fetchrow", flaky)
+    async for c2 in client_factory():
+        r = await c2.get("/api/v1/rainfall/categories")
+        assert r.status_code == 200, r.text
+        t = next(x for x in r.json()["tables"] if x["table"] == "6.1_core_rainfall_variables_master")
+        assert t["asOf"] == "2026-09-06"

@@ -15,6 +15,7 @@ all-null series with an `unavailable` entry and the reason. One axis per group: 
 from __future__ import annotations
 
 import datetime as dt
+import logging
 from typing import Any
 
 import pandas as pd
@@ -34,6 +35,7 @@ from app.registry.registry import Dataset
 from app.schemas import contract as c
 from app.state import AppState
 
+log = logging.getLogger("niwis.categories")
 HISTORY_START = dt.date(2000, 1, 1)
 EXTENSIVE_UNITS = {"Mm³", "Mm³/month", "m³/s", "m³/day", "m³/year", "km²"}  # summed over districts, not averaged
 DECIMALS = {"°C": 2, "%": 1, "% FSC": 1, "index": 2, "—": 3, "m³/m³": 3, "°C·days": 1, "km²": 1}
@@ -155,10 +157,17 @@ class CategoryService:
                 out[x.column] = _to_date(ds, row[f"c{i}"]) if row else None
             return out
 
-        res: dict[str, dt.date | None] = await self.state.cache.get_or_set(
-            f"cat:dates:{cat.table}", self.state.settings.cache_ttl_meta_s, load
-        )
-        return res
+        try:
+            res: dict[str, dt.date | None] = await self.state.cache.get_or_set(
+                f"cat:dates:{cat.table}", self.state.settings.cache_ttl_meta_s, load
+            )
+            return res
+        except Exception:  # e.g. a statement timeout on a large unindexed table: fall back, do not cache
+            log.warning("category dates failed; using the table's newest date", extra={"table": cat.table})
+            items = (await self.state.meta.sources())["items"]
+            newest = next((it.get("asOf") for it in items if it.get("table") == cat.table), None)
+            d = dt.date.fromisoformat(newest) if newest else None
+            return {"": d, **{x.column: d for x in live}}
 
     def complete_cap(self, res: Resolution) -> dt.date | None:
         """Start of the latest complete period relative to the newest record in the database (None: no cap)."""
@@ -503,4 +512,4 @@ async def prewarm(state: AppState) -> None:
     scope = ScopeSel("national", "ZA", "South Africa", tuple(d.code for d in districts.districts()))
     ctx = Ctx(state, Filters(scope, Window("12M", None, None), False, None), await state.meta.newest_date())
     for cat in get_catalogue().categories:
-        await CategoryService(ctx, cat.modules[0]).column_dates(cat)
+        await CategoryService(ctx, cat.modules[0]).column_dates(cat)  # never raises (falls back)
