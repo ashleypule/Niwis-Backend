@@ -69,7 +69,10 @@ audit fixes B1–B14. One commit per step.
       from `4_3` (unchanged). Both read stored columns, values tested against SQL.
 - [x] **B12 NDVI trend legend** from the data (symmetric quantile breaks, returned as `legend`): Supabase breaks
       ±0.013 / ±0.019 per decade, 21 / 19 / 12 districts per class (was 52 / 52 in the middle class).
-- [ ] B13–B14 audit fixes
+- [x] **B13 Current dry spell**: calculation verified and kept (days since the last day ≥ 1 mm per district →
+      area-weighted mean; test vs SQL). Cause of the 1-day value: rain ≥ 1 mm on the newest day (2026-09-06) in
+      42 / 52 districts, the rest 1–3 days earlier — unusual for the season, asked of the data team (DATA_GAPS §17).
+- [ ] B14 audit fix
 - [ ] Verification (ruff, mypy, pytest, integration, VERIFICATION.md, Docker, frontend fixtures / contract check)
 
 Also found: 13 new tables (§8–§12) in the database since 2026-10-14 — not registered, listed in the catalogue

@@ -202,3 +202,22 @@ async def test_climate_seasons_stay_djf_mam_jja_son(client: httpx.AsyncClient) -
     ).json()
     assert [x["name"] for x in body["series"]] == ["Annual", "DJF", "MAM", "JJA", "SON"]
     assert "4_3_mean_annual_precipitation_master" in body["source"]
+
+
+async def test_current_dry_spell_is_days_since_the_last_wet_day(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """B13: per district, the number of days since the last day with ≥ 1 mm up to the newest record (the map layer
+    shows the district values, the KPI their area-weighted mean)."""
+    body = (await client.get(f"{B}/map", params={"layer": "cdd"})).json()
+    rows = fixture_db(
+        """WITH n AS (SELECT max("Date")::date AS d FROM "6.1_core_rainfall_variables_master")
+           SELECT "District_Name", (SELECT d FROM n) - max("Date")::date
+           FROM "6.1_core_rainfall_variables_master" WHERE "Daily_Rainfall_Total_mm" >= 1 GROUP BY 1"""
+    )
+    codes = {"Alfred Nzo": "DC44", "City of Cape Town": "CPT", "Namakwa": "DC6"}
+    assert {codes[n]: float(d) for n, d in rows} == body["values"]
+    kpi = next(
+        k for k in (await client.get(f"{B}/summary", params={"municipality": "DC6"})).json()["kpis"] if k["id"] == "cdd"
+    )
+    assert kpi["value"] == body["values"]["DC6"]

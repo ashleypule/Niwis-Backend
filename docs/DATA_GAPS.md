@@ -30,6 +30,7 @@
 | 13 | The same data stored in several tables; canonical source chosen per variable | 9 tables | P3 |
 | 14 | Partial current month: anomaly and SPI compare a few days with a full-month normal | `6.1`, `6.2`, `meteorological`, `5.2` | P2 |
 | 15 | Plausibility checks for the database view (2026-10-15): **reservoir columns, solar radiation, GRACE, the `4_3` record statistics and `4_6` fail and are withheld** | `hydrological_drought_master`, `meteorological_drought_master`, `satellite_remote_sensing`, `4_3`, `4_6` | P1 |
+| 17 | Rain on the newest day in 42 of 52 districts (2026-09-06): verify the last load | `6.1` | P3 |
 | 16 | 13 new tables (§8–§12: reservoirs, surface water, groundwater, water quality) appeared on 2026-10-15; not registered, not served | `8_1` … `12.4` | P2 |
 
 ---
@@ -286,3 +287,15 @@ in every other table (2026-09-06), and future-dated rows cannot be observations;
 encoding (`m�/day`); `10_1` has two variables called hydraulic head with different units (`hydraulic_head_amsl_m` in
 m amsl, `hydraulic_head_m_amsl` in m bgl). The catalogue generator lists them (`app/registry/catalogue.yaml` →
 `unregistered`, and `docs/CATEGORY_CATALOGUE.md`) so nothing in the database is hidden.
+
+## 17. Widespread rain on the newest day (P3) — 2026-10-15
+
+The rainfall page's "Consecutive Dry Days (current)" KPI is 1 day nationally in early September, in the dry season
+for most of the country. The calculation is correct (days since the last day with ≥ 1 mm, per district, then the
+area-weighted mean; tested against SQL in `tests/test_rainfall.py`). The data explain it: on **2026-09-06**, the
+newest day in the database, **42 of 52 districts** have ≥ 1 mm and the other 10 (Western Cape, Karoo, Namakwa,
+Z F Mgcawu, Capricorn) had rain 1–3 days earlier. In July–August 2000–2025 Johannesburg has ≥ 1 mm on 4.3 % of days
+and Waterberg on 2.0 %, yet between 1 July and 6 September 2026 both have 4–5 wet days (Johannesburg 48 mm).
+**Ask:** confirm that early September 2026 really had a country-wide rain event, or check the last load (e.g. a
+forecast or a partial day loaded as observations).
+
