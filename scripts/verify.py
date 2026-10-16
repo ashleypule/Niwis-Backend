@@ -256,13 +256,15 @@ WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remo
     ),
     Check(
         "drought",
-        "Surface soil-moisture anomaly, Namakwa, latest month vs same month 2001–2025 (%)",
+        "Surface soil-moisture anomaly, Namakwa, latest month vs same month 2015–2025 (%) — the values before Mar 2015 "
+        "are a constant fill and are excluded",
         "/api/v1/drought/summary?municipality=DC6",
         kpi("soilMoisture"),
         """WITH cur AS (SELECT date, surface_soil_moisture AS v FROM satellite_remote_sensing
              WHERE district_name = 'namakwa' AND date = (SELECT max(date) FROM satellite_remote_sensing)),
      clim AS (SELECT avg(surface_soil_moisture) AS n FROM satellite_remote_sensing, cur
               WHERE district_name = 'namakwa' AND extract(month FROM satellite_remote_sensing.date) = extract(month FROM cur.date)
+                AND satellite_remote_sensing.date >= '2015-03-01'
                 AND extract(year FROM satellite_remote_sensing.date) BETWEEN 2001 AND 2025)
 SELECT round(((v - n) / n * 100)::numeric, 1) FROM cur, clim""",
     ),

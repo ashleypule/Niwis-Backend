@@ -8,6 +8,18 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Category-chart review fixes (2026-10-16)
+
+- [x] **Item 6** `app/meta/service.py` (uncommitted from an earlier session) tested and committed: newest date via an
+      index skip-scan where a (location, date) index exists — same date as max() for every daily table on the
+      fixture and Supabase, 0.6 s instead of 2.9 s on the two indexed tables.
+- [x] **Item 2 Constancy check** (`scripts/constancy_check.py`, DATA_GAPS §18) over every column: SGI frozen since
+      Sep 2024 (and twin district series) → withheld (KPI, groundwater chart → 501, cascade stage null with reason);
+      satellite soil moisture a constant fill before Mar 2015 → served from Mar 2015 (registry `valid_from`, used by
+      every loader and the category view; climatology labelled 2015–2025). All other live columns pass.
+- [ ] Item 1 duplicates per page · Item 3 chart types · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+      frontend / docs
+
 ### Database category view + spec-audit fixes (2026-10-15 / 16)
 
 Goal: every registered table = a category, every column = a variable with label and unit from its name

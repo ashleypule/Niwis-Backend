@@ -100,27 +100,19 @@ async def test_drought_cascade_has_the_specs_seven_stages(
     assert by["precipitation"]["id"] == "meteorological" and by["vegetation"]["id"] == "agricultural"
     assert by["reservoir"]["id"] == "hydrological"  # original ids kept
     reasons = {u["field"]: u["reason"] for u in body["unavailable"]}
-    for sid in ("streamflow", "reservoir", "socio-economic"):
+    # SGI failed the constancy check (frozen since Sep 2024): the groundwater stage is null with the reason too
+    for sid in ("streamflow", "reservoir", "groundwater", "socio-economic"):
         assert by[sid]["valueNum"] is None and f"rows.{by[sid]['id']}" in reasons, sid
     assert "placeholder" in reasons["rows.streamflow"]
-
-    gw = by["groundwater"]
-    ((sgi,),) = fixture_db(
-        "SELECT round(sgi_dimensionless::numeric, 2) FROM hydrological_drought_master "
-        "WHERE district_name = 'namakwa' AND date = '2025-12-01'"
-    )
-    assert gw["valueNum"] == float(sgi) and gw["scale"] == "status"
-    expected = "Critical" if sgi <= -1.6 else "Low" if sgi <= -1.0 else "Watch" if sgi <= -0.5 else "Normal"
-    assert gw["cls"] == expected and gw["bar"] == severity_bar("status", expected)
-    assert gw["severity"] == (100 if expected in ("Low", "Critical") else 0)
+    assert "frozen since Sep 2024" in reasons["rows.groundwater"] and by["groundwater"]["scale"] == "status"
 
     sm = by["soil-moisture"]
     summary = (await client.get("/api/v1/drought/summary", params={"municipality": "DC6"})).json()
     sm_kpi = next(k for k in summary["kpis"] if k["id"] == "soilMoisture")
-    assert sm["valueNum"] == sm_kpi["value"] and sm["value"].endswith("vs 2001–2025")
+    assert sm["valueNum"] == sm_kpi["value"] and sm["value"].endswith(sm_kpi["sublabel"].rsplit(" vs ", 1)[1])
     assert sm["cls"] is None and "rows.soil-moisture.cls" in reasons
     comps = {x["key"] for x in body["components"]}
-    assert comps == {"meteorological", "soil-moisture", "agricultural", "groundwater"}
+    assert comps == {"meteorological", "soil-moisture", "agricultural"}
 
 
 async def test_cascade_precipitation_class_matches_the_headline(client: httpx.AsyncClient) -> None:

@@ -69,9 +69,12 @@ class DataAccess:
         ds, col = self.source(var)
         c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
         if ds.time.resolution == "monthly":
-            sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq}"
+            sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
         elif ds.columns[col].repeats == "monthly":
-            sql = f"SELECT {loc}, date_trunc('month', {d})::date AS m, max({c}) FROM {ds.fq} GROUP BY 1, 2"
+            sql = (
+                f"SELECT {loc}, date_trunc('month', {d})::date AS m, max({c}) FROM {ds.fq} "
+                f"WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
+            )
         else:
             raise ValueError(f"{var} is not a monthly variable")
         return await self._cached(f"data:monthly:{var}", sql)
@@ -81,9 +84,12 @@ class DataAccess:
         ds, col = self.source(var)
         c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
         if ds.time.resolution == "annual":
-            sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq}"
+            sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
         elif ds.columns[col].repeats == "annual":
-            sql = f"SELECT {loc}, date_trunc('year', {d})::date, max({c}) FROM {ds.fq} GROUP BY 1, 2"
+            sql = (
+                f"SELECT {loc}, date_trunc('year', {d})::date, max({c}) FROM {ds.fq} "
+                f"WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
+            )
         else:
             raise ValueError(f"{var} is not an annual variable")
         return await self._cached(f"data:annual:{var}", sql)
@@ -103,7 +109,7 @@ class DataAccess:
         )
         sql = (
             f"SELECT {loc}, sum({c}), count({c}), max({c}), (array_agg({d} ORDER BY {c} DESC NULLS LAST))[1]{extra} "
-            f"FROM {ds.fq} WHERE {ds.range_sql()} GROUP BY 1"
+            f"FROM {ds.fq} WHERE {ds.range_sql()} AND {ds.valid_sql(col)} GROUP BY 1"
         )
         names = ["district", "sum", "days", "max", "max_date"]
         for t in thresholds:
@@ -146,7 +152,7 @@ class DataAccess:
         sql = (
             f"SELECT {d} AS day, sum({c} * w.f) AS v, count(DISTINCT {loc}) AS n FROM {ds.fq} "
             f"JOIN unnest($3::text[], $4::float8[]) AS w(name, f) ON w.name = {loc} "
-            f"WHERE {ds.range_sql()} GROUP BY 1"
+            f"WHERE {ds.range_sql()} AND {ds.valid_sql(col)} GROUP BY 1"
         )
         need = len(factors)
         key = f"data:dscope:{var}:{start}:{end}:{hash(tuple(sorted(factors.items())))}"
@@ -179,7 +185,8 @@ class DataAccess:
                     thr.append(float(t))
         sql = (
             f"SELECT {loc}, {d}, {c} FROM {ds.fq} JOIN unnest($3::text[], $4::float8[]) AS t(name, thr) "
-            f"ON t.name = {loc} WHERE {ds.range_sql()} AND {c} > t.thr ORDER BY {c} DESC LIMIT 5000"
+            f"ON t.name = {loc} WHERE {ds.range_sql()} AND {ds.valid_sql(col)} AND {c} > t.thr "
+            f"ORDER BY {c} DESC LIMIT 5000"
         )
         key = f"data:exceed:{var}:{start}:{end}:{hash(tuple(sorted(thresholds.items())))}"
         return await self._cached(key, sql, *ds.range_args(start, end), names, thr)
@@ -190,7 +197,7 @@ class DataAccess:
         c, loc = ds.column_sql(col), ident(ds.location.column)
         sql = (
             f"SELECT {loc}, percentile_cont($3) WITHIN GROUP (ORDER BY {c}) FROM {ds.fq} "
-            f"WHERE {ds.range_sql()} GROUP BY 1"
+            f"WHERE {ds.range_sql()} AND {ds.valid_sql(col)} GROUP BY 1"
         )
 
         async def load() -> pd.Series:
@@ -217,7 +224,7 @@ class DataAccess:
         counts = ", ".join(f"count(*) FILTER (WHERE {c} >= {float(t)!r})" for t in thresholds)
         sql = (
             f"SELECT {loc}, date_trunc('month', {d})::date, sum({c}), max({c}), count({c})"
-            f"{', ' + counts if counts else ''} FROM {ds.fq} GROUP BY 1, 2"
+            f"{', ' + counts if counts else ''} FROM {ds.fq} WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
         )
         names = ["district", "date", "sum", "max", "days", *[f"ge_{t:g}" for t in thresholds]]
 

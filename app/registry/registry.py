@@ -9,6 +9,7 @@ Rules enforced at startup (the app refuses to start on a broken registry):
 
 from __future__ import annotations
 
+import datetime as dt
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -49,6 +50,9 @@ class Column(_Strict):
     use: Literal["ratio_only"] | None = None
     # why the raw column is withheld from the database view although the API serves a value derived from it
     raw_reason: str | None = None
+    # first period with real values: earlier rows (a fill / spin-up) are never read; `valid_reason` says why
+    valid_from: dt.date | None = None
+    valid_reason: str | None = None
 
     @model_validator(mode="after")
     def _withheld_needs_reason(self) -> Column:
@@ -56,6 +60,8 @@ class Column(_Strict):
             raise ValueError("withheld columns need a reason")
         if (self.transform or self.use) and not self.raw_reason:
             raise ValueError("columns served only after a transform need a raw_reason for the database view")
+        if self.valid_from and not self.valid_reason:
+            raise ValueError("valid_from needs a valid_reason")
         return self
 
 
@@ -150,6 +156,13 @@ class Dataset(_Strict):
             # m³ / (km² × 10⁶ m²/km²) × 1000 mm/m
             expr = f"({expr} / {float(self.model_area_km2) * 1e6!r} * 1000.0)"
         return expr
+
+    def valid_sql(self, column: str) -> str:
+        """SQL condition keeping only the column's valid periods (`valid_from`); "TRUE" when it has none."""
+        col = self.columns.get(column)
+        if col is None or col.valid_from is None:
+            return "TRUE"
+        return f"{self.date_sql()} >= DATE '{col.valid_from.isoformat()}'"
 
     def served_columns(self) -> dict[str, Column]:
         return {name: c for name, c in self.columns.items() if c.role == "canonical"}

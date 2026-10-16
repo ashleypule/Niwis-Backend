@@ -30,6 +30,7 @@
 | 13 | The same data stored in several tables; canonical source chosen per variable | 9 tables | P3 |
 | 14 | Partial current month: anomaly and SPI compare a few days with a full-month normal | `6.1`, `6.2`, `meteorological`, `5.2` | P2 |
 | 15 | Plausibility checks for the database view (2026-10-15): **reservoir columns, solar radiation, GRACE, the `4_3` record statistics and `4_6` fail and are withheld** | `hydrological_drought_master`, `meteorological_drought_master`, `satellite_remote_sensing`, `4_3`, `4_6` | P1 |
+| 18 | Constancy check (2026-10-16): **SGI frozen since Sep 2024 and withheld**; satellite soil moisture a constant fill before Mar 2015 (served from Mar 2015) | `hydrological_drought_master`, `satellite_remote_sensing` | P1 |
 | 17 | Rain on the newest day in 42 of 52 districts (2026-09-06): verify the last load | `6.1` | P3 |
 | 16 | 13 new tables (§8–§12: reservoirs, surface water, groundwater, water quality) appeared on 2026-10-15; not registered, not served | `8_1` … `12.4` | P2 |
 
@@ -298,4 +299,25 @@ Z F Mgcawu, Capricorn) had rain 1–3 days earlier. In July–August 2000–2025
 and Waterberg on 2.0 %, yet between 1 July and 6 September 2026 both have 4–5 wet days (Johannesburg 48 mm).
 **Ask:** confirm that early September 2026 really had a country-wide rain event, or check the last load (e.g. a
 forecast or a partial day loaded as observations).
+
+## 18. Constancy check: constant over time or identical across districts (P1) — 2026-10-16
+
+Every column, live and withheld, was tested for the two signatures of a placeholder (`python scripts/constancy_check.py
+--all`, read-only): **identical across districts** (share of periods in which every district has the same value) and
+**constant over time** (share of periods in which no district changed; trailing frozen periods; districts with
+identical whole series). Each column is read at its own resolution (repeated monthly / annual values once per period).
+The check finds every placeholder already withheld (wind 100 % identical and frozen; river discharge, surface runoff,
+baseflow, SSI and FDC identical in all 52 districts; `5.1` soil moisture, catchment area, curve number and impervious
+fraction one constant; reservoir storage frozen for the last 48 months; the `4_3` record statistics and `4_6` Q90 / Q10
+one value per district) and two new problems:
+
+| Table · column | Finding | Action |
+| --- | --- | --- |
+| `hydrological_drought_master` · `sgi_dimensionless` | **Frozen since Sep 2024**: all 52 districts repeat their Aug 2024 value for 16 months (Sep 2024 – Dec 2025), so the "current" SGI is 16 months old; also frozen from Jan 2001 to Apr 2002 (spin-up). Johannesburg = Ekurhuleni = Sedibeng = West Rand and Sisonke = uMgungundlovu have identical series in all 300 months. Values from May 2002 to Aug 2024 vary plausibly (mean 0, s.d. 1). | **Withheld** everywhere: the SGI KPI, the groundwater chart (501) and the cascade's groundwater stage are null with this reason. **Ask:** extend SGI past Aug 2024, and fix the shared district series. |
+| `satellite_remote_sensing` · `surface_soil_moisture`, `rootzone_soil_moisture` | **One constant value per district from Jan 2001 to Feb 2015** (no district changes in any month before Mar 2015, e.g. eThekwini 0.16755 surface every month 2001–2015), then real monthly values. | **Served from Mar 2015 only** (registry `valid_from`): the fill is never read, the anomaly and range climatology are 2015–2025 and labelled so. **Ask:** remove the fill or document it. |
+
+Live columns flagged but explained, kept live: `Nino34_Annual_Mean` (one global index, identical in every district by
+definition); `Frost_Day_Flag` (a 0/1 flag: warm districts are always 0); `Heatwave_Frequency_Days` /
+`Heatwave_Duration_…` (cool districts share the same few hot days, e.g. Johannesburg = Ekurhuleni = Joe Gqabi with
+2 hot days in 27 years). Every other live column passes: 0 % identical periods, no frozen tail, no district twins.
 

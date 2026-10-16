@@ -156,6 +156,15 @@ class DroughtService:
         df["mm3"] = df["district"].map(f) * df["value"] * secs / 1e6
         return df.groupby("date")["mm3"].sum()
 
+    async def sm_years(self) -> str:
+        """Climatology period of soil moisture actually used: CLIM_YEARS clipped to the column's valid record (the
+        values before Mar 2015 are a constant fill and are never read)."""
+        df = await self.data.monthly("soil_moisture_surface")
+        years = df["date"].dt.year
+        y0 = max(CLIM_YEARS[0], int(years.min())) if not df.empty else CLIM_YEARS[0]
+        y1 = min(CLIM_YEARS[1], int(years.max())) if not df.empty else CLIM_YEARS[1]
+        return f"{y0}–{y1}"
+
     async def sm_anomaly(self, month: dt.date) -> tuple[float | None, pd.Series]:
         """Surface soil-moisture anomaly (%) vs the same calendar month 2001–2025: scope value and per district."""
         w = self.ctx.weights()
@@ -254,7 +263,7 @@ class DroughtService:
                 id="soilMoisture",
                 metric="soilMoistureAnomaly",
                 label="Soil Moisture Anomaly",
-                sublabel=f"surface, {ms:%b %Y} vs {CLIM_YEARS[0]}–{CLIM_YEARS[1]}",
+                sublabel=f"surface, {ms:%b %Y} vs {await self.sm_years()}",
                 value=rnd(sma, 1),
                 unit="%",
                 decimals=0,
@@ -319,19 +328,23 @@ class DroughtService:
                     **self.kpi_extra(dmo, "dam_storage", "dam_level_pct", res="monthly"),
                 )
             )
-        msg = await self.latest("sgi")
-        sgi = weighted_scalar(await self.at("sgi", msg), w)
-        kpis.append(
-            c.Kpi(
-                id="sgi",
-                metric="sgi",
-                label="SGI",
-                sublabel=f"{msg:%b %Y}",
-                value=rnd(sgi, 2),
-                decimals=2,
-                **self.kpi_extra(msg, "sgi", res="monthly"),
+        if reason_sgi := self.withheld("sgi"):
+            kpis.append(c.Kpi(id="sgi", metric="sgi", label="SGI", value=None, unavailable_reason=reason_sgi))
+            unavail.append(c.UnavailableField(field="kpis.sgi", reason=reason_sgi))
+        else:
+            msg = await self.latest("sgi")
+            sgi = weighted_scalar(await self.at("sgi", msg), w)
+            kpis.append(
+                c.Kpi(
+                    id="sgi",
+                    metric="sgi",
+                    label=self.mean_label("SGI"),
+                    sublabel=f"{msg:%b %Y}",
+                    value=rnd(sgi, 2),
+                    decimals=2,
+                    **self.kpi_extra(msg, "sgi", res="monthly"),
+                )
             )
-        )
         reason_set = "No settlement register in the database"
         kpis.append(
             c.Kpi(
@@ -584,10 +597,11 @@ class DroughtService:
                 ),
             ],
             as_of=iso(last),
-            note=f"Range and mean per calendar month over {CLIM_YEARS[0]}–{CLIM_YEARS[1]}. Data end 2025-12.",
+            note=f"Range and mean per calendar month over {await self.sm_years()} (the satellite soil-moisture record "
+            "starts in Mar 2015). Data end 2025-12.",
             **{
                 **self._prov(last, "soil_moisture_surface", "soil_moisture_rootzone", res="monthly"),
-                "baseline": f"{CLIM_YEARS[0]}–{CLIM_YEARS[1]} monthly range",
+                "baseline": f"{await self.sm_years()} monthly range",
                 "baselineNote": self.ctx.state.registry.baseline.note,
             },
         )
@@ -838,7 +852,7 @@ class DroughtService:
                 "soilMoistureAnomaly",
                 "anomalyPct",
                 rnd(sma, 1),
-                f"{sma:+.0f} % vs {CLIM_YEARS[0]}–{CLIM_YEARS[1]}" if sma is not None else None,
+                f"{sma:+.0f} % vs {await self.sm_years()}" if sma is not None else None,
                 None,
                 as_of=ms,
             )
@@ -923,29 +937,33 @@ class DroughtService:
                 c.UnavailableField(field="rows.hydrological", reason=reason_st or "No dam storage data for this scope")
             )
         # 6 groundwater: SGI with the spec's borehole status classes; severity = % of area at Low or worse (≤ −1.0)
-        mg = await self.latest("sgi")
-        sgi_d = (await self.at("sgi", mg)).dropna()
-        sgi = weighted_scalar(sgi_d, w)
-        gw_cls = borehole_status(sgi) if sgi is not None else None
-        low = sum(w[k] for k, v in sgi_d.items() if k in w and borehole_status(float(v)) in ("Low", "Critical"))
-        covered = sum(w[k] for k in sgi_d.index if k in w)
-        rows.append(
-            stage(
-                6,
-                "groundwater",
-                "groundwater",
-                "Groundwater (SGI)",
-                "sgi",
-                "status",
-                rnd(sgi, 2),
-                f"SGI {sgi:.2f}" if sgi is not None else None,
-                gw_cls,
-                cls_label=gw_cls,
-                severity=low / covered * 100 if sgi is not None and covered else None,
-                as_of=mg,
+        if reason_sgi := self.withheld("sgi"):
+            rows.append(stage(6, "groundwater", "groundwater", "Groundwater (SGI)", "sgi", "status", None, None, None))
+            unavailable.append(c.UnavailableField(field="rows.groundwater", reason=reason_sgi))
+        else:
+            mg = await self.latest("sgi")
+            sgi_d = (await self.at("sgi", mg)).dropna()
+            sgi = weighted_scalar(sgi_d, w)
+            gw_cls = borehole_status(sgi) if sgi is not None else None
+            low = sum(w[k] for k, v in sgi_d.items() if k in w and borehole_status(float(v)) in ("Low", "Critical"))
+            covered = sum(w[k] for k in sgi_d.index if k in w)
+            rows.append(
+                stage(
+                    6,
+                    "groundwater",
+                    "groundwater",
+                    "Groundwater (SGI)",
+                    "sgi",
+                    "status",
+                    rnd(sgi, 2),
+                    f"SGI {sgi:.2f}" if sgi is not None else None,
+                    gw_cls,
+                    cls_label=gw_cls,
+                    severity=low / covered * 100 if sgi is not None and covered else None,
+                    as_of=mg,
+                )
             )
-        )
-        component("groundwater", mg, "sgi")
+            component("groundwater", mg, "sgi")
         # 7 socio-economic impact
         rows.append(
             stage(
@@ -1310,6 +1328,5 @@ async def prewarm(data: DataAccess) -> None:
         "vhi",
         "ndvi",
         "soil_moisture_surface",
-        "sgi",
     ):
         await data.monthly(var)

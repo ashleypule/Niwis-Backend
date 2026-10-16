@@ -192,8 +192,10 @@ datasets:
       vci:                    {var: vci, role: canonical}
       tci:                    {var: tci, role: canonical}
       vhi:                    {var: vhi, role: canonical}
-      rootzone_soil_moisture: {var: soil_moisture_rootzone, role: canonical}
-      surface_soil_moisture:  {var: soil_moisture_surface, role: canonical}
+      rootzone_soil_moisture: {var: soil_moisture_rootzone, role: canonical, valid_from: 2015-03-01,
+                               valid_reason: "one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015"}
+      surface_soil_moisture:  {var: soil_moisture_surface, role: canonical, valid_from: 2015-03-01,
+                               valid_reason: "one constant value per district from 2001 to Feb 2015 (a fill before the satellite record); real monthly values from Mar 2015"}
       surface_water_extent_km2: {var: surface_water_extent, role: unused, note: "plausibility checked 2026-10-15: ≥ 0 everywhere, different in every district"}
       grace_tws:              {var: grace_tws, role: withheld,
                                reason: "values of 70–412 in 2001 and up to 270 in 2002, before GRACE data exist (launch March 2002); about ±10 from 2003; unit undocumented"}
@@ -216,7 +218,7 @@ datasets:
       dam_inflow_m3_s:            {var: dam_inflow, role: withheld, reason: "failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)"}
       dam_outflow_m3_s:           {var: dam_outflow, role: withheld, reason: "failed plausibility: inflow = outflow in 2 496 of 2 600 district-months since Nov 2021 (storage frozen)"}
       borehole_water_level_m_bgl: {var: gw_level, role: withheld, reason: "range −0.18…+0.20: not a depth below ground level"}
-      sgi_dimensionless:          {var: sgi, role: canonical}
+      sgi_dimensionless:          {var: sgi, role: withheld, reason: "failed plausibility: frozen since Sep 2024 (all 52 districts repeat their Aug 2024 value for 16 months) and from Jan 2001 to Apr 2002; Johannesburg, Ekurhuleni, Sedibeng and West Rand share one identical series, as do Sisonke and uMgungundlovu"}
       surface_runoff_m3_s:        {var: surface_runoff_flow, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
       baseflow_separation_m3_s:   {var: baseflow_flow, role: withheld, reason: "identical value in all 52 districts every month (placeholder)"}
 

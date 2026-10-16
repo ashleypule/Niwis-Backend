@@ -24,16 +24,16 @@ async def test_summary_per_component_dates(client: httpx.AsyncClient) -> None:
     c.KpiSet.model_validate(body)
     k = kpis(body)
     assert k["spi6"]["asOf"] == "2026-08-01" and k["spi6"]["isStale"] is False
-    for kid in ("vci", "soilMoisture", "sgi"):  # satellite / hydrology end 2025-12
+    for kid in ("vci", "soilMoisture"):  # satellite ends 2025-12
         assert k[kid]["asOf"] == "2025-12-01" and k[kid]["isStale"] is True, kid
     assert body["isStale"] is True  # at least one component is stale
     comps = {x["key"]: x for x in body["components"]}
     assert comps["vci"]["source"] == ["satellite_remote_sensing"]
     assert comps["spi6"]["source"] == ["6.2_rainfall_derived_drought_indices_master"]
     assert k["class"]["status"]["scale"] == "drought"
-    for kid in ("ssi3", "settlements", "storage"):
+    for kid in ("ssi3", "settlements", "storage", "sgi"):
         assert k[kid]["value"] is None and k[kid]["unavailableReason"]
-    assert {u["field"] for u in body["unavailable"]} == {"kpis.ssi3", "kpis.settlements", "kpis.storage"}
+    assert {u["field"] for u in body["unavailable"]} == {"kpis.ssi3", "kpis.settlements", "kpis.storage", "kpis.sgi"}
 
 
 async def test_vci_matches_sql(client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]) -> None:
@@ -50,7 +50,7 @@ async def test_dam_storage_withheld_after_plausibility_check(client: httpx.Async
     body = (await client.get(f"{B}/summary", params={"municipality": "DC44"})).json()
     storage = kpis(body)["storage"]
     assert storage["value"] is None and "plausibility" in storage["unavailableReason"]
-    assert "hydrological_drought_master" in body["source"]  # SGI still comes from the table
+    assert "hydrological_drought_master" not in body["source"]  # storage and SGI are both withheld
     r = await client.get(f"{B}/timeseries", params={"metric": "dam-flows", "municipality": "DC44"})
     assert r.status_code == 501 and "plausibility" in r.json()["error"]
 
@@ -61,7 +61,6 @@ async def test_dam_storage_withheld_after_plausibility_check(client: httpx.Async
         ("timeseries", "spi", c.SeriesSet),
         ("timeseries", "rain-spei", c.SeriesSet),
         ("timeseries", "rain-anomaly", c.SeriesSet),
-        ("timeseries", "gw-sgi", c.SeriesSet),
         ("timeseries", "soil-moisture", c.SeriesSet),
         ("timeseries", "vegetation", c.SeriesSet),
         ("timeseries", "drought-area", c.SeriesSet),
@@ -90,14 +89,13 @@ async def test_cascade_components(client: httpx.AsyncClient) -> None:
     assert rows["agricultural"]["asOf"] == "2025-12-01" and rows["hydrological"]["asOf"] is None
     assert rows["socio-economic"]["value"] is None and rows["hydrological"]["value"] is None
     stale = {x["key"]: x["isStale"] for x in body["components"]}
-    assert stale == {"meteorological": False, "soil-moisture": True, "agricultural": True, "groundwater": True}
+    assert stale == {"meteorological": False, "soil-moisture": True, "agricultural": True}
 
 
-async def test_gw_sgi_level_unavailable(client: httpx.AsyncClient) -> None:
-    body = (await client.get(f"{B}/timeseries", params={"metric": "gw-sgi", "municipality": "DC6"})).json()
-    level = next(s for s in body["series"] if s["key"] == "level")
-    assert all(p[1] is None for p in level["data"])
-    assert body["unavailable"][0]["field"] == "series.level"
+async def test_gw_sgi_unavailable(client: httpx.AsyncClient) -> None:
+    """Borehole level (not a depth) and SGI (frozen since Sep 2024) are both withheld: the chart is 501."""
+    r = await client.get(f"{B}/timeseries", params={"metric": "gw-sgi", "municipality": "DC6"})
+    assert r.status_code == 501 and "frozen" in r.json()["error"]
 
 
 async def test_vegetation_same_source_as_vegetation_page(client: httpx.AsyncClient) -> None:
@@ -181,3 +179,16 @@ async def test_ssi_is_the_same_rule_on_both_pages(client: httpx.AsyncClient) -> 
         assert k["value"] == last
         if k["value"] is None:  # the fixture holds < 10 calibration years: same reason on both pages
             assert "calibration" in k["unavailableReason"]
+
+
+async def test_soil_moisture_fill_before_2015_is_never_read(client: httpx.AsyncClient) -> None:
+    """Satellite soil moisture is one constant per district until Feb 2015 (registry `valid_from`): never served."""
+    import pandas as pd
+
+    state = client._transport.app.state.niwis  # type: ignore[attr-defined]
+    for var in ("soil_moisture_surface", "soil_moisture_rootzone"):  # one loader for every page
+        df = await state.data.monthly(var)
+        assert df.empty or df["date"].min() >= pd.Timestamp("2015-03-01"), var
+    ds = state.registry.datasets["satellite_remote_sensing"]
+    assert ds.valid_sql("surface_soil_moisture") == "\"date\"::date >= DATE '2015-03-01'"
+    assert ds.valid_sql("ndvi") == "TRUE"

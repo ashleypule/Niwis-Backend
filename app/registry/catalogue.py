@@ -30,7 +30,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.core import units
 from app.core.provenance import Resolution
-from app.registry.registry import Dataset, ModuleId, Registry
+from app.registry.registry import Column, Dataset, ModuleId, Registry
 from app.registry.registry import Resolution as TableResolution
 
 CATALOGUE_PATH = Path(__file__).with_name("catalogue.yaml")
@@ -240,6 +240,16 @@ def _status(reg: Registry, ds: Dataset, column: str) -> tuple[Status, str | None
     return "live", None, None
 
 
+def _note(col: Column | None) -> str | None:
+    """Registry note, plus the first served period when earlier rows are a fill (`valid_from`)."""
+    if col is None:
+        return None
+    parts = [col.note] if col.note else []
+    if col.valid_from:
+        parts.append(f"Served from {col.valid_from:%b %Y}: {col.valid_reason}")
+    return "; ".join(parts) or None
+
+
 def _columns(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> tuple[list[str], list[CatColumn]]:
     keys_named = {x for x in (ds.location.column, ds.time.column, ds.time.year, ds.time.month) if x}
     keys, out = [], []
@@ -263,7 +273,7 @@ def _columns(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> tuple[li
                 status=status,
                 reason=reason,
                 duplicate_of=dup,
-                note=reg_col.note if reg_col else None,
+                note=_note(reg_col),
                 unit_override=why,
             )
         )

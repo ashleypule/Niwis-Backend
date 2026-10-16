@@ -313,7 +313,8 @@ class CategoryService:
                     facs.append(float(f))
         sql = (
             f"WITH d AS (SELECT {loc} AS name, {period} AS p, {inner}({_value_sql(ds, x.column)}) AS v "
-            f"FROM {ds.fq} WHERE {ds.range_sql()} AND {loc} = ANY($3::text[]) GROUP BY 1, 2) "
+            f"FROM {ds.fq} WHERE {ds.range_sql()} AND {ds.valid_sql(x.column)} AND {loc} = ANY($3::text[]) "
+            "GROUP BY 1, 2) "
             "SELECT d.p, sum(d.v * w.f) AS num, sum(w.f) FILTER (WHERE d.v IS NOT NULL) AS den, count(d.v) AS n "
             "FROM d JOIN unnest($3::text[], $4::float8[]) AS w(name, f) ON w.name = d.name GROUP BY 1 ORDER BY 1"
         )
