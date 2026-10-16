@@ -102,6 +102,32 @@
       "CatalogueGroup": {
         "additionalProperties": false,
         "properties": {
+          "band": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "chart": {
+            "default": "line",
+            "enum": [
+              "bar",
+              "diverging-bar",
+              "line",
+              "band",
+              "mixed"
+            ],
+            "title": "Chart",
+            "type": "string"
+          },
           "columns": {
             "items": {
               "type": "string"
@@ -279,6 +305,16 @@
               }
             ],
             "title": "Asof"
+          },
+          "chart": {
+            "default": "line",
+            "enum": [
+              "bar",
+              "diverging-bar",
+              "line"
+            ],
+            "title": "Chart",
+            "type": "string"
           },
           "column": {
             "title": "Column",
@@ -2648,6 +2684,22 @@
             ],
             "title": "Axis"
           },
+          "chart": {
+            "anyOf": [
+              {
+                "enum": [
+                  "bar",
+                  "diverging-bar",
+                  "line"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chart"
+          },
           "color": {
             "anyOf": [
               {
@@ -2871,6 +2923,20 @@
             "title": "Axes",
             "type": "array"
           },
+          "band": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
           "bands": {
             "anyOf": [
               {
@@ -2906,6 +2972,24 @@
               }
             ],
             "title": "Baselinenote"
+          },
+          "chart": {
+            "anyOf": [
+              {
+                "enum": [
+                  "bar",
+                  "diverging-bar",
+                  "line",
+                  "band",
+                  "mixed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chart"
           },
           "components": {
             "anyOf": [

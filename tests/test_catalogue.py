@@ -316,3 +316,39 @@ def test_fixture_database_has_the_catalogued_columns() -> None:
         have.setdefault(str(t), set()).add(str(col))
     for c in CAT.categories:
         assert have.get(c.table) == {*c.keys, *(x.column for x in c.columns)}, c.table
+
+
+@pytest.mark.parametrize(
+    ("column", "unit", "res", "chart"),
+    [
+        ("Daily_Rainfall_Total_mm", "mm", "daily", "bar"),  # totals
+        ("Seasonal_Total_OND_mm", "mm", "annual", "bar"),
+        ("Potential_Evapotranspiration_ET0_mm", "mm", "monthly", "bar"),  # a monthly sum
+        ("Growing_Degree_Days_GDD_C", "°C·days", "monthly", "bar"),
+        ("R20mm_Days", "days", "annual", "bar"),  # counts
+        ("Number_of_Rainy_Days_days_month", "days/month", "monthly", "bar"),
+        ("Monthly_Anomaly_mm", "mm", "monthly", "diverging-bar"),  # anomalies
+        ("Temperature_Anomaly_C", "°C", "monthly", "diverging-bar"),
+        ("Tmax_C", "°C", "daily", "line"),  # states and indices
+        ("et0_mm_day", "mm/day", "daily", "line"),
+        ("Hourly_Rainfall_Intensity_mm_h", "mm/h", "daily", "line"),
+        ("SPI_3_Short_Term_Agricultural_Drought", None, "monthly", "line"),
+        ("RAI_Rainfall_Anomaly_Index", None, "monthly", "line"),
+        ("ndvi", None, "monthly", "line"),
+    ],
+)
+def test_recommended_chart_type(column: str, unit: str | None, res: str, chart: str) -> None:
+    from app.registry.catalogue import chart_of
+
+    assert chart_of(column, unit, res) == chart  # type: ignore[arg-type]
+
+
+def test_min_max_pairs_are_bands() -> None:
+    t41 = next(c for c in CAT.categories if c.table.startswith("4_1"))
+    g = t41.group_of("climate", "Tmin_C")
+    assert g is not None and g.chart == "band" and g.band == ["Tmin_C", "Tmax_C"]
+    for c in CAT.categories:
+        for p in c.pages:
+            for grp in p.groups:
+                charts = {x.chart for x in c.columns if x.column in grp.columns}
+                assert grp.chart in ("band", "mixed") or {grp.chart} == charts, (c.table, grp.id)

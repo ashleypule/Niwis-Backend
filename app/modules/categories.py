@@ -224,6 +224,7 @@ class CategoryService:
                         **({"duplicate_of": x.duplicate_of} if x.duplicate_of else {}),
                         **({"group": g.id} if g else {}),
                         default_visible=bool(g and x.column in g.default_visible),
+                        chart=x.chart,
                         source=f"{cat.table}.{x.column}",
                         **({"note": x.note} if x.note else {}),
                         **({"unit_override": x.unit_override} if x.unit_override else {}),
@@ -253,6 +254,8 @@ class CategoryService:
                             columns=list(g.columns),
                             default_visible=list(g.default_visible),
                             path=f"/api/v1/{self.module}/category/{cat.id}/{g.id}",
+                            chart=g.chart,
+                            **({"band": list(g.band)} if g.band else {}),
                         )
                         for g in cat.groups_for(self.module)
                     ],
@@ -440,7 +443,8 @@ class CategoryService:
                 c.Series(
                     key=x.column,
                     name=x.label,
-                    kind="line",
+                    kind="bar" if x.chart in ("bar", "diverging-bar") else "line",
+                    chart=x.chart,
                     axis=0,
                     color=SERIES[i % len(SERIES)],
                     data=data,
@@ -476,6 +480,8 @@ class CategoryService:
             x_type="time",
             axes=[c.Axis(unit=g.unit, label=g.label)],
             series=series,
+            chart=g.chart,
+            **({"band": list(g.band)} if g.band else {}),
             as_of=iso(as_of),
             note=note,
             **({"unavailable": unavailable} if unavailable else {}),

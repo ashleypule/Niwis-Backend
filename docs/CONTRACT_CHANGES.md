@@ -369,3 +369,11 @@ chart groups, with `note` "Same values as <table.column>" and `duplicateOf` kept
 from another page. Example: the Drought page now charts `meteorological_drought_master`'s rainfall and temperature
 columns (6.1 and 4_1 are not on that page), but not its SPI (6.2 is). `counts` are per page.
 
+### 13.2 Recommended chart type (BACKEND_ISSUES #8)
+
+Every catalogue variable has `chart` (`bar` for totals and counts, `diverging-bar` for anomalies, `line` for states
+and indices, standardised indices such as RAI included); every group has `chart` (the members' common type, `band`
+when the group holds a min / max pair, else `mixed`) and, for bands, `band: [min column, max column]` (e.g.
+`["Tmin_C", "Tmax_C"]`). Category series carry the column's `chart` and `kind: "bar"` for bar types (was always
+`line`); the SeriesSet carries the group's `chart` / `band`.
+

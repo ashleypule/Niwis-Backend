@@ -23,8 +23,8 @@ PROVENANCE = {"source", "isStale", "periodEnd", "components", "baseline", "basel
 ADDITIONS: dict[str, set[str]] = {
     "KpiSchema": {"asOf", "source", "isStale", "periodEnd", "unavailableReason"},
     "KpiSetSchema": PROVENANCE,
-    "SeriesSchema": {"unit", "asOf", "isStale", "periodEnd", "source", "resolution", "status"},  # category charts
-    "SeriesSetSchema": PROVENANCE,
+    "SeriesSchema": {"unit", "asOf", "isStale", "periodEnd", "source", "resolution", "status", "chart"},
+    "SeriesSetSchema": PROVENANCE | {"chart", "band"},
     "CategorySetSchema": PROVENANCE | {"asOf", "units"},
     "TableSetSchema": PROVENANCE | {"asOf"},
     "MatrixSetSchema": PROVENANCE | {"asOf"},

@@ -244,3 +244,18 @@ async def test_drought_page_serves_meteorological_rainfall_and_temperature(
         "AND date = '2026-07-15'"
     )
     assert dict(map(tuple, s["data"]))["2026-07-15"] == float(tx)
+
+
+async def test_series_carry_the_recommended_chart(client: httpx.AsyncClient) -> None:
+    """BACKEND_ISSUES #8: bars for totals / counts, diverging bars for anomalies, lines for states; band groups."""
+    b = (await client.get(path("rainfall", "core-rainfall-variables", "monthly-mm"), params={"vars": "all"})).json()
+    s = {x["key"]: x for x in b["series"]}
+    assert (s["Monthly_Total_Precipitation_mm"]["kind"], s["Monthly_Total_Precipitation_mm"]["chart"]) == ("bar", "bar")
+    assert (s["Monthly_Anomaly_mm"]["kind"], s["Monthly_Anomaly_mm"]["chart"]) == ("bar", "diverging-bar")
+    assert b["chart"] == "mixed"
+    t = (await client.get(path("climate", "temperature-change", "temperature-c"), params={"vars": "all"})).json()
+    assert t["chart"] == "band" and t["band"] == ["Tmin_C", "Tmax_C"]
+    assert {x["kind"] for x in t["series"]} == {"line"}
+    cats = (await client.get("/api/v1/climate/categories")).json()
+    grp = next(g for tb in cats["tables"] for g in tb["groups"] if g["id"] == "temperature-c")
+    assert grp["chart"] == "band" and grp["band"] == ["Tmin_C", "Tmax_C"]

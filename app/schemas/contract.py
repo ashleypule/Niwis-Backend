@@ -127,6 +127,7 @@ class Series(ContractModel):
     source: list[str] | None = None  # ["table.column"]
     resolution: Literal["daily", "monthly", "annual"] | None = None
     status: Literal["live", "withheld", "duplicate"] | None = None
+    chart: Literal["bar", "diverging-bar", "line"] | None = None  # recommended chart type (BACKEND_ISSUES #8)
 
 
 class Axis(ContractModel):
@@ -164,6 +165,9 @@ class SeriesSet(Provenance):
     ref_lines: list[RefLine] | None = Field(None, alias="refLines")
     as_of: str | None = Field(None, alias="asOf")
     note: str | None = None
+    # additions (category charts): the group's recommended chart and its min / max pair
+    chart: Literal["bar", "diverging-bar", "line", "band", "mixed"] | None = None
+    band: list[str] | None = None
 
 
 # ------------------------------------------------------------------ categories
@@ -336,6 +340,7 @@ class CatalogueVariable(ContractModel):
     duplicate_of: str | None = Field(None, alias="duplicateOf")  # duplicate: "table.column" that is shown instead
     group: str | None = None  # chart group id (None for duplicates)
     default_visible: bool = Field(alias="defaultVisible")
+    chart: Literal["bar", "diverging-bar", "line"] = "line"  # recommended chart type
     as_of: str | None = Field(None, alias="asOf")
     is_stale: bool | None = Field(None, alias="isStale")
     period_end: str | None = Field(None, alias="periodEnd")
@@ -352,6 +357,8 @@ class CatalogueGroup(ContractModel):
     columns: list[str]
     default_visible: list[str] = Field(alias="defaultVisible")
     path: str  # the series endpoint for this group
+    chart: Literal["bar", "diverging-bar", "line", "band", "mixed"] = "line"
+    band: list[str] | None = None  # [min column, max column] when chart is "band"
 
 
 class CatalogueTable(ContractModel):

@@ -21,7 +21,9 @@
       elsewhere live with "Same values as …". The catalogue has a view per page (`pages`: groups + shown duplicates;
       105 groups over all pages). Drought page: meteorological rainfall + temperature charts back. Test: every
       registry variable present in a page's tables has a live chart on that page.
-- [ ] Item 3 chart types · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
+- [x] **Item 3 Chart types (#8)**: `chart` per column (bar / diverging-bar / line from name, unit, resolution),
+      per group (band for Tmin / Tmax, mixed), on series (`kind: bar` for bar types) and series sets.
+- [ ] Item 4 #10 / #11 / #12 · Item 4 #10 / #11 / #12 · Item 5 category pre-warm · Docker /
       frontend / docs
 
 ### Database category view + spec-audit fixes (2026-10-15 / 16)

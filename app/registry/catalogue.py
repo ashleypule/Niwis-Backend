@@ -38,6 +38,16 @@ from app.registry.registry import Resolution as TableResolution
 CATALOGUE_PATH = Path(__file__).with_name("catalogue.yaml")
 Status = Literal["live", "withheld", "duplicate"]
 Kind = Literal["numeric", "categorical"]
+Chart = Literal["bar", "diverging-bar", "line"]
+GroupChart = Literal["bar", "diverging-bar", "line", "band", "mixed"]
+# recommended chart type (BACKEND_ISSUES #8): bars for totals and counts, diverging bars for anomalies, lines for states
+# and indices, a band for min / max pairs
+TOTAL_WORDS = {"rainfall", "rain", "precip", "precipitation", "prcptot", "map", "rx1day", "rx5day", "chirps", "tamsat"}
+TOTAL_WORDS |= {"gridded", "total", "totals", "seasonal", "demand", "deficit", "return"}
+VOLUME_UNITS = {"Mm³", "Mm³/month", "m³/day", "m³/year", "°C·days"}
+AMOUNT_UNITS = {"mm", "mm/day", "mm/month", "mm/season", "mm/dekad"}
+COUNT_UNITS = {"days", "days/month"}
+BAND_PAIRS = (("tmin", "tmax"), ("min", "max"))
 KEY_NAMES = {"id", "day", "date", "year", "month"} | {
     "district",
     "district_name",
@@ -81,6 +91,7 @@ class CatColumn(_Strict):
     status: Status
     reason: str | None = None  # withheld: why
     duplicate_of: str | None = None  # duplicate: canonical table.column
+    chart: Chart = "line"  # recommended chart type for this column
     note: str | None = None  # registry note (method, caveat)
     unit_override: str | None = None  # why the unit differs from the column-name suffix
 
@@ -92,6 +103,8 @@ class CatGroup(_Strict):
     resolution: Resolution
     columns: list[str]
     default_visible: list[str]
+    chart: GroupChart = "line"  # the columns' common chart type, "band" for a min / max pair, else "mixed"
+    band: list[str] | None = None  # [min column, max column] when chart is "band"
 
 
 class CatPage(_Strict):
@@ -238,6 +251,29 @@ def axis_unit(cols: list[CatColumn], family: str | None) -> str:
 # ---------------------------------------------------------------- builder
 
 
+def chart_of(column: str, unit: str | None, resolution: Resolution) -> Chart:
+    """Recommended chart type for a column, from its name, unit and resolution."""
+    tokens = set(_tokens(column))
+    if unit is None and units.index_family(units.name_of(units.split_unit(column)[0])):
+        return "line"  # standardised / spectral indices (SPI, SPEI, RAI, NDVI …) are states
+    if "anomaly" in tokens:
+        return "diverging-bar"
+    if unit in COUNT_UNITS or tokens & {"frequency", "number"}:
+        return "bar"
+    if unit in VOLUME_UNITS or (unit in AMOUNT_UNITS and (tokens & TOTAL_WORDS or resolution != "daily")):
+        return "bar"  # totals: precipitation-type amounts, monthly / annual sums, volumes, degree-day sums
+    return "line"
+
+
+def _band(members: list[CatColumn]) -> list[str] | None:
+    """[min column, max column] when the group holds a min / max pair (Tmin / Tmax)."""
+    by_token = {t: c.column for c in members for t in _tokens(c.column)}
+    for lo, hi in BAND_PAIRS:
+        if lo in by_token and hi in by_token:
+            return [by_token[lo], by_token[hi]]
+    return None
+
+
 def _resolution(ds: Dataset, column: str | None) -> Resolution:
     rep = ds.columns[column].repeats if column and column in ds.columns else None
     if rep == "monthly":
@@ -299,6 +335,7 @@ def _columns(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> tuple[li
                 status=status,
                 reason=reason,
                 duplicate_of=dup,
+                chart=chart_of(sc.column, unit, _resolution(ds, sc.column)) if not categorical else "line",
                 note=_note(reg_col),
                 unit_override=why,
             )
@@ -354,6 +391,9 @@ def _groups(charted: list[CatColumn]) -> list[CatGroup]:
             gid, n = f"{slug(label)}-{n}", n + 1
         live = [c.column for c in members if c.status == "live"]
         default = (live or [c.column for c in members])[:3]
+        band = _band(members)
+        charts = {c.chart for c in members}
+        chart: GroupChart = "band" if band else (members[0].chart if len(charts) == 1 else "mixed")
         groups.append(
             CatGroup(
                 id=gid,
@@ -362,6 +402,8 @@ def _groups(charted: list[CatColumn]) -> list[CatGroup]:
                 resolution=members[0].resolution,
                 columns=[c.column for c in members],
                 default_visible=default,
+                chart=chart,
+                band=band,
             )
         )
     return groups

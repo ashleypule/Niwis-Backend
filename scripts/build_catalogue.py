@@ -84,6 +84,8 @@ def render_markdown(cat: Catalogue) -> str:
         "- **Chart group**: columns that are drawn together. A group never mixes units (one axis); unitless standardised",
         "  indices (SPI, SPEI, SSI, SGI, RAI, SVI) share an index axis, spectral indices (NDVI, NDWI, …) another. Columns",
         "  marked ★ are shown by default; every other column of the group can be switched on.",
+        "- **Chart**: the recommended chart per column — `bar` for totals and counts, `diverging-bar` for anomalies,",
+        "  `line` for states and indices; a group with a min / max pair (Tmin / Tmax) is a `band`.",
         "- **Resolution**: daily, monthly or annual. Monthly / annual values that the database repeats on every daily row",
         "  are read once per period. Incomplete months / years (e.g. 2026) are never served.",
         "",
@@ -120,16 +122,17 @@ def render_markdown(cat: Catalogue) -> str:
                 "",
                 f"**{p.module.capitalize()} page**" + (f" — duplicates shown here (live): {shown}" if shown else ""),
                 "",
-                "| Chart group | id | Axis unit | Resolution | Columns (★ default) |",
-                "| --- | --- | --- | --- | --- |",
+                "| Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |",
+                "| --- | --- | --- | --- | --- | --- |",
             ]
             for g in p.groups:
                 cols = ", ".join(f"`{x}`" + (" ★" if x in g.default_visible else "") for x in g.columns)
-                lines.append(f"| {g.label} | `{g.id}` | {g.unit} | {g.resolution} | {cols} |")
+                chart = g.chart + (f" ({' – '.join(g.band)})" if g.band else "")
+                lines.append(f"| {g.label} | `{g.id}` | {g.unit} | {g.resolution} | {chart} | {cols} |")
         lines += [
             "",
-            "| Column | Label | Unit | Resolution | Group | Status |",
-            "| --- | --- | --- | --- | --- | --- |",
+            "| Column | Label | Unit | Resolution | Chart | Group | Status |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
         ]
         for x in c.columns:
             if x.status == "withheld":
@@ -143,7 +146,7 @@ def render_markdown(cat: Catalogue) -> str:
             kind = " (class)" if x.kind == "categorical" else ""
             groups = [f"{p.module}: `{g.id}`" for p in c.pages if (g := c.group_of(p.module, x.column))]
             lines.append(
-                f"| `{x.column}` | {_cell(x.label)}{kind} | {unit} | {x.resolution} | "
+                f"| `{x.column}` | {_cell(x.label)}{kind} | {unit} | {x.resolution} | {x.chart} | "
                 f"{'; '.join(groups) or '—'} | {status} |"
             )
         lines.append("")
