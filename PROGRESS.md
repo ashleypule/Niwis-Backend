@@ -19,7 +19,11 @@
       measured on an exact local copy of 6.1 (a district's whole daily record 9 797 → 279 / 106 pages);
       002_indexes.sql notes that the indexes now exist.
 - [x] `.gitattributes` already had `* text=auto eol=lf` (since Phase 1); every file is stored with LF.
-- [ ] Verification: tests, Docker, frontend fixtures / contract check
+- [x] Verification: 755 tests (ruff + mypy clean); Docker rebuilt, healthy, 176 / 176 entries warmed (4 scopes);
+      WC / DC32 / WMA5 seasonal totals 0.3 s / 13 ms / 12 ms from the container; frontend `fixtures:record` 1 100
+      (no failures; the three #14 fixtures recorded 200), `contract:check` 0 schema failures, 0 errors, 8 structural
+      differences (unchanged) — fixtures left uncommitted. Schema changes picked up by the catalogue (DATA_GAPS §19);
+      scripts now write LF.
 
 ### Category-chart review fixes (2026-10-16)
 
