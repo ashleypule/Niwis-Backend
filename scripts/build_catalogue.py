@@ -202,8 +202,8 @@ def main() -> int:
             return 1
         print("catalogue up to date")
         return 0
-    CATALOGUE_PATH.write_text(dump_yaml(cat), encoding="utf-8")
-    DOC.write_text(render_markdown(cat), encoding="utf-8")
+    CATALOGUE_PATH.write_text(dump_yaml(cat), encoding="utf-8", newline="\n")  # LF on every OS (.gitattributes)
+    DOC.write_text(render_markdown(cat), encoding="utf-8", newline="\n")
     n = Counter(x.status for c in cat.categories for x in c.columns)
     print(
         f"wrote {CATALOGUE_PATH.relative_to(ROOT)} and {DOC.relative_to(ROOT)}: {len(cat.categories)} categories, "

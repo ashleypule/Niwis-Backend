@@ -80,7 +80,7 @@ def main(src: str, tolerance: float = 0.002) -> None:
         f"coverage-simplified, tolerance {tolerance}°",
         "features": sorted(out_feats, key=lambda f: f["properties"]["id"]),
     }
-    OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size / 1e6:.2f} MB); max area change {100 * worst:.3f} %")
 
 

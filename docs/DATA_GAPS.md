@@ -321,3 +321,16 @@ definition); `Frost_Day_Flag` (a 0/1 flag: warm districts are always 0); `Heatwa
 `Heatwave_Duration_…` (cool districts share the same few hot days, e.g. Johannesburg = Ekurhuleni = Joe Gqabi with
 2 hot days in 27 years). Every other live column passes: 0 % identical periods, no frozen tail, no district twins.
 
+## 19. Schema changes found on 2026-10-19 (P3)
+
+- The data team created (district, date) / (district, year) indexes on every table (see
+  `migrations/proposed/002_indexes.sql`, now done). Thank you: scoped queries use them. A layout change that would make
+  long daily series fast on a cold cache is proposed in `migrations/proposed/003_daily_tables_layout.sql`.
+- `5.2_meteorological_drivers_saws_master` and `6.2_rainfall_derived_drought_indices_master` gained a `date` column
+  (a key, not a variable; picked up by the catalogue as such).
+- New tables, **not registered and not served**: `7.2_derived_runoff_indicators_master` (spec §7.2: runoff anomaly,
+  runoff-ratio trend, SSI, flood flows at 2–100-year return periods, hydrological response time) and `testing_table`
+  (a copy of the `4_1` temperature columns; looks like a test table). **Ask:** confirm whether 7.2 should replace the
+  API's own runoff anomaly / SSI / flood-frequency calculations (it then needs registering and a plausibility check),
+  and whether `testing_table` can be dropped.
+

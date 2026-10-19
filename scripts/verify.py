@@ -635,7 +635,7 @@ def write(results: list[dict[str, Any]]) -> None:
             lines.append(f"- SQL result: **{r['sql_val']}** (tolerance ± {r['tol']})\n")
             lines.append(f"```sql\n{r['sql'].strip()}\n```\n")
         sections[module] = "\n".join(lines)
-    OUT.write_text(head + "\n".join(sections[k] for k in sorted(sections)), encoding="utf-8")
+    OUT.write_text(head + "\n".join(sections[k] for k in sorted(sections)), encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 

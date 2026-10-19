@@ -87,7 +87,7 @@ async def main() -> None:
         "(`migrations/proposed/002_indexes.sql`) and hosting the API in the same region as the database would cut cold",
         "times further.",
     ]
-    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    OUT.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 

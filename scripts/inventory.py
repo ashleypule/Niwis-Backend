@@ -623,7 +623,7 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
         L.append("\n<details><summary>5 sample rows</summary>\n\n```json")
         L.append(json.dumps(t.get("sample_rows", []), indent=1, ensure_ascii=False, default=str))
         L.append("```\n</details>\n")
-    path.write_text("\n".join(L), encoding="utf-8")
+    path.write_text("\n".join(L), encoding="utf-8", newline="\n")
 
 
 # --------------------------------------------------------------------------- main
@@ -655,7 +655,7 @@ def main() -> int:
     inv["modules"] = modules
     DOCS.mkdir(exist_ok=True)
     (DOCS / "db_inventory.json").write_text(
-        json.dumps(jsonable(inv), indent=1, ensure_ascii=False, default=str), encoding="utf-8"
+        json.dumps(jsonable(inv), indent=1, ensure_ascii=False, default=str), encoding="utf-8", newline="\n"
     )
     write_markdown(inv, DOCS / "DB_INVENTORY.md")
     errors = [t for t, v in inv["tables"].items() if "error" in v]

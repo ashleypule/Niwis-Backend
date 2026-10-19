@@ -22,5 +22,5 @@ def render() -> str:
 
 
 if __name__ == "__main__":
-    OUT.write_text(render(), encoding="utf-8")
+    OUT.write_text(render(), encoding="utf-8", newline="\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
