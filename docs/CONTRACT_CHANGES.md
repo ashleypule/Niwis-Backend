@@ -421,3 +421,15 @@ SGI repeats its Aug 2024 value in every district from Sep 2024, so it is served 
 - `drought/summary` → `sgi` KPI and `drought/table?metric=cascade` → groundwater stage stay **null**, reason
   "Latest valid SGI is Aug 2024 (more than 90 days old)" (they come back once a current SGI exists).
 
+### 13.8 Scoped category requests no longer time out (BACKEND_ISSUES #14)
+
+No contract change. Cause (EXPLAIN ANALYZE on Supabase): scoped annual / monthly groups of daily tables read every daily
+row of the scope to get one repeated value per period (seasonal totals, Western Cape: 56 982 rows on 10 484 pages read
+from disk, 6.7 s cold; with other load it passed the 10 s statement timeout). Monthly / annual values repeated on daily
+rows are now read from the first day of each period through the (district, date) index (checked on Supabase: every
+repeated column is constant within its period and its first day exists for every district-period): Western Cape 624
+pages, Ehlanzeni 104, WMA5 2 184; the three requests answer uncached in 1.6 / 0.6 / 1.1 s. `PREWARM_SCOPES` (default
+national, province=WC, municipality=DC32, wma=WMA5 — the frontend's test scopes) are pre-loaded for every group
+(176 entries, ≈ 38 s at startup). A database-side layout change for long daily series is proposed in
+`migrations/proposed/003_daily_tables_layout.sql` with measured gains.
+

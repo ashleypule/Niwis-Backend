@@ -26,6 +26,7 @@ from app.auth import get_current_user
 from app.core import districts
 from app.core.aggregate import MIN_COVERAGE, sum_fractions
 from app.core.errors import BadRequest, NotFound
+from app.core.filters import ScopeSel, parse_scope
 from app.core.palettes import SERIES
 from app.core.provenance import Resolution, iso, latest_complete_period_end, period_end
 from app.core.stats import rnd
@@ -359,9 +360,23 @@ class CategoryService:
             f"sum(d.v{i} * w.f) AS num{i}, sum(w.f) FILTER (WHERE d.v{i} IS NOT NULL) AS den{i}, count(d.v{i}) AS n{i}"
             for i in range(len(cols))
         )
+        # Monthly / annual values repeated on every row of a daily table: read only the first day of each period (the
+        # value is the same on every day — checked for every repeated column, and the first day always exists). With
+        # the (district, date) index that is ~12 / 26 rows per district instead of every daily row: the scoped
+        # seasonal totals read 156 rows instead of 57 000 (10 484 cold pages, 6.7 s; BACKEND_ISSUES #14).
+        first_days: list[Any] = []
+        if ds.time.resolution == "daily" and g.resolution in ("monthly", "annual"):
+            freq = "MS" if g.resolution == "monthly" else "YS"
+            days = [t.date() for t in pd.date_range(_period_start(start, g.resolution), end, freq=freq)]
+            first_days = [x.isoformat() for x in days] if ds.time.kind == "text_date" else days
+        one_day = (
+            f" AND {ident(str(ds.time.column))} = ANY($5::{'text' if ds.time.kind == 'text_date' else 'date'}[])"
+            if first_days
+            else ""
+        )
         sql = (
             f"WITH d AS (SELECT {loc} AS name, {period} AS p, {inner_cols} "
-            f"FROM {ds.fq} WHERE {ds.range_sql()} AND {loc} = ANY($3::text[]) GROUP BY 1, 2) "
+            f"FROM {ds.fq} WHERE {ds.range_sql()}{one_day} AND {loc} = ANY($3::text[]) GROUP BY 1, 2) "
             f"SELECT d.p, {outer_cols} "
             "FROM d JOIN unnest($3::text[], $4::float8[]) AS w(name, f) ON w.name = d.name GROUP BY 1 ORDER BY 1"
         )
@@ -369,7 +384,8 @@ class CategoryService:
         key = f"cat:group:{ds.table}:{colkey}:{start}:{end}:{downsample}:{hash(tuple(sorted(factors.items())))}"
 
         async def load() -> dict[str, pd.Series]:
-            rows = await self.state.db.fetch(sql, *ds.range_args(start, end), names, facs)
+            args = [*ds.range_args(start, end), names, facs, *([first_days] if first_days else [])]
+            rows = await self.state.db.fetch(sql, *args)
             out: dict[str, pd.Series] = {}
             for i, x in enumerate(cols):
                 vals: dict[pd.Timestamp, float] = {}
@@ -578,37 +594,55 @@ def build_category_router(module: str) -> APIRouter:
     return router
 
 
-async def prewarm(state: AppState) -> int:
-    """Load what every category chart needs for the default request (national, period 12M — what the pages ask
-    for first): the newest date per column of every table, then every chart group of every page, so they answer
-    from cache (BACKEND_ISSUES #13). At most `db_pool_max − 1` queries run at once, so requests always find a
-    connection. Returns the number of groups warmed; a failing group is logged and skipped."""
-    from app.core.filters import Filters, ScopeSel, Window
+def prewarm_scopes(state: AppState) -> list[ScopeSel]:
+    """The scopes to pre-warm (`PREWARM_SCOPES`): "national" or "province=WC", "municipality=DC32", "wma=WMA5"."""
+    out = []
+    for item in state.settings.prewarm_scopes:
+        key, _, value = item.partition("=")
+        if key == "national":
+            out.append(parse_scope())
+        elif key in ("province", "municipality", "wma") and value:
+            out.append(parse_scope(**{key: value}, wma_districts=state.spatial.wma_districts()))
+        else:
+            log.warning("ignoring unknown pre-warm scope", extra={"scope": item})
+    return out
 
-    scope = ScopeSel("national", "ZA", "South Africa", tuple(d.code for d in districts.districts()))
-    ctx = Ctx(state, Filters(scope, Window("12M", None, None), False, None), await state.meta.newest_date())
+
+async def prewarm(state: AppState) -> int:
+    """Load what every category chart needs for its first request (period 12M) in each pre-warm scope — national
+    and the scopes the frontend uses (BACKEND_ISSUES #13, #14): the newest date per column of every table, then every
+    chart group of every page, so they answer from cache. At most `db_pool_max − 1` queries run at once, so requests
+    always find a connection. Returns the number of (scope, group) entries warmed; a failure is logged and skipped."""
+    from app.core.filters import Filters, Window
+
+    newest = await state.meta.newest_date()
     sem = asyncio.Semaphore(max(1, state.settings.db_pool_max - 1))
     cats = get_catalogue().categories
+    scopes = prewarm_scopes(state)
+    national = Ctx(state, Filters(parse_scope(), Window("12M", None, None), False, None), newest)
 
     async def dates(cat: Category) -> None:
         async with sem:
-            await CategoryService(ctx, cat.modules[0]).column_dates(cat)  # never raises (falls back)
+            await CategoryService(national, cat.modules[0]).column_dates(cat)  # never raises (falls back)
 
     await asyncio.gather(*(dates(cat) for cat in cats))
-    jobs: dict[tuple[str, str], tuple[CategoryService, Category, CatGroup]] = {}
-    for cat in cats:
-        for module in cat.modules:
-            svc = CategoryService(ctx, module)
-            for g in cat.groups_for(module):
-                cols = svc.served(g, svc.view(cat))
-                if cols:  # the same table + columns on two pages share one cache entry
-                    jobs.setdefault((cat.table, ",".join(x.column for x in cols)), (svc, cat, g))
+    jobs: dict[tuple[str, str, str], tuple[CategoryService, Category, CatGroup]] = {}
+    for scope in scopes:
+        ctx = Ctx(state, Filters(scope, Window("12M", None, None), False, None), newest)
+        for cat in cats:
+            for module in cat.modules:
+                svc = CategoryService(ctx, module)
+                for g in cat.groups_for(module):
+                    cols = svc.served(g, svc.view(cat))
+                    if cols:  # the same table + columns on two pages share one cache entry
+                        key = (f"{scope.level}:{scope.id}", cat.table, ",".join(x.column for x in cols))
+                        jobs.setdefault(key, (svc, cat, g))
 
     async def one(svc: CategoryService, cat: Category, g: CatGroup) -> bool:
         async with sem:
             try:
                 dts = await svc.column_dates(cat)
-                start, end = svc.window(g, dts.get("") or ctx.newest_db or dt.date.today())
+                start, end = svc.window(g, dts.get("") or newest or dt.date.today())
                 down = g.resolution == "daily" and (end - start).days + 1 > state.settings.max_series_points
                 await svc.scope_group(svc.dataset(cat), g, svc.served(g, svc.view(cat)), start, end, down)
                 return True
@@ -617,7 +651,10 @@ async def prewarm(state: AppState) -> int:
                 return False
 
     done = await asyncio.gather(*(one(*job) for job in jobs.values()))
-    log.info("category groups warmed", extra={"groups": sum(done), "of": len(done)})
+    log.info(
+        "category groups warmed",
+        extra={"groups": sum(done), "of": len(done), "scopes": [f"{s.level}:{s.id}" for s in scopes]},
+    )
     return sum(done)
 
 

@@ -44,14 +44,18 @@ class Settings(BaseSettings):
     # headline drought class = the worst class that, with all worse classes, covers at least this % of the area
     drought_class_area_pct: float = Field(20.0, gt=0, le=100)
     max_series_points: int = 2_000
-    # pre-load every category chart group (national, 12M) at startup and before its cache expires (BACKEND_ISSUES #13)
+    # pre-load every category chart group (period 12M) at startup and before its cache expires (BACKEND_ISSUES #13),
+    # for each scope listed: "national", "province=WC", "municipality=DC32", "wma=WMA5" (#14: frontend test scopes)
     prewarm_categories: bool = True
+    prewarm_scopes: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["national", "province=WC", "municipality=DC32", "wma=WMA5"]
+    )
     cache_ttl_summary_s: int = 15 * 60
     cache_ttl_map_s: int = 15 * 60
     cache_ttl_long_series_s: int = 60 * 60
     cache_ttl_meta_s: int = 60 * 60
 
-    @field_validator("cors_origins", "rate_limit_trusted_cidrs", mode="before")
+    @field_validator("cors_origins", "rate_limit_trusted_cidrs", "prewarm_scopes", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
         if isinstance(v, str):

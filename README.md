@@ -50,6 +50,7 @@ Check it works: `GET /api/v1/health` should report `"status": "ok"` and `"readOn
 | `NIWIS_SUPABASE_TABLES_MODULE_<n>` | — | Tables the data team has registered; a test checks they match `app/registry/datasets.yaml`. |
 | `CORS_ORIGINS` | `http://localhost:5173,http://localhost:5174` | Comma-separated frontend origins. |
 | `STALE_AFTER_DAYS` | `90` | A value is `isStale` when its `asOf` lags the newest DB date by more than this. |
+| `PREWARM_SCOPES` | `national,province=WC,municipality=DC32,wma=WMA5` | Scopes pre-loaded for every category chart group (`national`, `province=…`, `municipality=…`, `wma=…`). |
 | `PREWARM_CATEGORIES` | `true` | Pre-load every category chart group (national, 12M) at startup and before its cache expires; at most `DB_POOL_MAX − 1` queries at once. |
 | `DROUGHT_CLASS_AREA_PCT` | `20` | Headline drought class = the worst class that, with all worse classes, covers at least this % of the area (spec §3.4 classes per district). |
 | `RATE_LIMIT_PER_MINUTE` | `600` | Per client IP; `0` disables. `/api/v1/health` is exempt. |

@@ -8,6 +8,19 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Issue #14 — scoped seasonal totals timed out (2026-10-19)
+
+- [x] Cause (EXPLAIN ANALYZE, Supabase): scoped annual / monthly groups of daily tables read every daily row (WC
+      seasonal totals: 56 982 rows, 10 484 pages from disk, 6.7 s cold). Fix: repeated values read from the first day of
+      each period via the (district, date) index the data team created (all repeated columns verified constant within
+      the period, first day present): WC 624 pages, DC32 104, WMA5 2 184; uncached 1.6 / 0.6 / 1.1 s.
+- [x] `PREWARM_SCOPES` (national, WC, DC32, WMA5): every group pre-loaded per scope (176 entries, ≈ 38 s).
+- [x] `migrations/proposed/003_daily_tables_layout.sql`: CLUSTER or a covering index for long daily series, gains
+      measured on an exact local copy of 6.1 (a district's whole daily record 9 797 → 279 / 106 pages);
+      002_indexes.sql notes that the indexes now exist.
+- [x] `.gitattributes` already had `* text=auto eol=lf` (since Phase 1); every file is stored with LF.
+- [ ] Verification: tests, Docker, frontend fixtures / contract check
+
 ### Category-chart review fixes (2026-10-16)
 
 - [x] **Item 6** `app/meta/service.py` (uncommitted from an earlier session) tested and committed: newest date via an

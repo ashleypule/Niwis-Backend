@@ -1,5 +1,10 @@
 -- PROPOSED — for review by the NIWIS data team. The backend team does NOT run this.
 --
+-- STATUS 2026-10-19: the data team has created (district, date) / (district, year) indexes on every table listed
+-- here, under their own names (e.g. idx_rainfall_district_date, idx_temperature_change_district_date); see
+-- pg_indexes. Nothing below is still needed for speed; the unique variants remain a useful data-quality guard.
+-- Next step for cold-cache speed: 003_daily_tables_layout.sql.
+--
 -- Why: ten of the fourteen tables have no primary key and no index (see docs/DB_INVENTORY.md). Every API query
 -- filters by district and a date range, so without an index each request scans the whole table (~500 000 rows,
 -- 50–100 MB for the daily tables). These indexes make district + period lookups index scans.

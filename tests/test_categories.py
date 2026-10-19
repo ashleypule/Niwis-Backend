@@ -278,7 +278,8 @@ async def test_prewarm_puts_every_group_in_the_cache(
             for module, cat, g in GROUPS
             if any(cat.column(k).status != "withheld" for k in g.columns)  # type: ignore[union-attr]
         }
-        assert warmed == len(expected) > 30, (warmed, len(expected))
+        scopes = [{}, {"province": "WC"}, {"municipality": "DC32"}, {"wma": "WMA5"}]  # PREWARM_SCOPES default (#14)
+        assert warmed == len(expected) * len(scopes) and len(expected) > 30, (warmed, len(expected))
 
         async def no_db(self: Database, query: str, *args: Any) -> Any:
             raise AssertionError(f"not served from cache: {query[:80]}")
@@ -286,5 +287,45 @@ async def test_prewarm_puts_every_group_in_the_cache(
         monkeypatch.setattr(Database, "fetch", no_db)
         monkeypatch.setattr(Database, "fetchrow", no_db)
         for module, cat, g in GROUPS:
-            r = await c2.get(path(module, cat.id, g.id), params={"vars": "all", "period": "12M"})
-            assert r.status_code == 200, (module, cat.id, g.id, r.text[:200])
+            for scope in scopes:
+                r = await c2.get(path(module, cat.id, g.id), params={"vars": "all", "period": "12M", **scope})
+                assert r.status_code == 200, (module, cat.id, g.id, scope, r.text[:200])
+
+
+async def test_repeated_values_are_read_from_the_first_day_of_each_period(
+    client_factory: Callable[..., Any], monkeypatch: pytest.MonkeyPatch, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """BACKEND_ISSUES #14: annual / monthly values repeated on daily rows are read from one row per district-period
+    (the first day, via the (district, date) index), not from every daily row — same values, ~1/365 of the rows."""
+    from app.db import Database
+
+    seen: list[tuple[str, tuple[Any, ...]]] = []
+    real = Database.fetch
+
+    async def spy(self: Database, query: str, *args: Any) -> Any:
+        seen.append((query, args))
+        return await real(self, query, *args)
+
+    monkeypatch.setattr(Database, "fetch", spy)
+    async for c2 in client_factory():
+        p = path("rainfall", "core-rainfall-variables", "seasonal-total-mm")
+        body = (await c2.get(p, params={"vars": "all", "province": "WC"})).json()
+        q, args = next((q, a) for q, a in seen if "WITH d AS" in q and "Seasonal_Total_JFM_mm" in q)
+        assert '"Date" = ANY($5::text[])' in q and args[4][0].endswith("-01-01")
+        assert all(x.endswith("-01-01") for x in args[4]) and len(args[4]) >= 20
+        seen.clear()
+        p = path("rainfall", "core-rainfall-variables", "monthly-mm")
+        await c2.get(p, params={"vars": "all", "municipality": "DC44"})
+        q, args = next((q, a) for q, a in seen if "WITH d AS" in q and "Monthly_Total_Precipitation_mm" in q)
+        assert '"Date" = ANY($5::text[])' in q and all(x.endswith("-01") for x in args[4]) and len(args[4]) == 12
+        seen.clear()
+        p = path("rainfall", "core-rainfall-variables", "daily-rainfall-total-mm")  # daily values: every row
+        await c2.get(p, params={"municipality": "DC44"})
+        q, _ = next((q, a) for q, a in seen if "WITH d AS" in q and "Daily_Rainfall_Total_mm" in q)
+        assert "ANY($5" not in q
+    assert body["series"]  # WC is not covered by the 3-district fixture: values are null, the query still runs
+    ((jfm,),) = fixture_db(  # the first day carries the year's value (checked on Supabase for every repeated column)
+        """SELECT count(DISTINCT "Seasonal_Total_JFM_mm") FROM "6.1_core_rainfall_variables_master"
+           WHERE "District_Name" = 'Alfred Nzo' AND "Year" = 2025"""
+    )
+    assert jfm == 1
