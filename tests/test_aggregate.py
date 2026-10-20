@@ -10,6 +10,7 @@ import pytest
 from app.core.aggregate import (
     class_areas,
     monthly_normals,
+    monthly_normals_pct,
     sum_fractions,
     weighted,
     weighted_scalar,
@@ -61,6 +62,14 @@ def test_monthly_normals_and_prorating() -> None:
     assert n.to_dict("records") == [{"district": "A", "month": 9, "normal": 55.0}]
     # 6 of 30 September days → one fifth of the monthly normal
     assert window_normal(n, dt.date(2026, 9, 1), dt.date(2026, 9, 6))["A"] == pytest.approx(11.0)
+
+
+def test_monthly_normals_from_a_percent_anomaly() -> None:
+    dates = pd.to_datetime(["2024-09-01", "2025-09-01", "2026-09-01"])
+    total = pd.DataFrame({"district": ["A"] * 3, "date": dates, "value": [30.0, 60.0, 0.0]})
+    anom = pd.DataFrame({"district": ["A"] * 3, "date": dates, "value": [-25.0, 50.0, -100.0]})
+    # 30 / 0.75 = 60 / 1.5 = 40; the −100 % month (zero runoff) says nothing about the normal and is skipped
+    assert monthly_normals_pct(total, anom).to_dict("records") == [{"district": "A", "month": 9, "normal": 40.0}]
 
 
 def test_period_gap_requires_the_whole_period() -> None:

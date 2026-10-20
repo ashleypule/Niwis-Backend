@@ -441,7 +441,7 @@ BFI = Σ baseflow × 86 400 / Σ model volume (the shared 6 500 km² scaling can
 | KPI | Status | Source → transformation |
 | --- | --- | --- |
 | Annual Runoff (`runoff`, mm) | DERIVED | Σ daily volume / (6 500 km²) over 12 months → mm, area-weighted |
-| Runoff Anomaly (`runoffAnomaly`, %) | DERIVED | 12 m runoff vs same-period 2000–2025 mean |
+| Runoff Anomaly (`runoffAnomaly`, %) | DERIVED | 12 m runoff vs same-period normal stored in `7.2` (2000–2026 same-month means, recovered from `Runoff_Anomaly_percent`; DATA_GAPS §20) |
 | Peak Flow Qmax (`peakFlow`, m³/s) | **UNAVAILABLE** (D5) | `Peak_Flow_Rates_m3s` is scaled to the constant 6 500 km² area |
 | Baseflow Index (`baseflowIndex`) | DERIVED | Σ `Baseflow_Component_m3s` / Σ (model volume / 86 400) — a ratio, so the shared area scaling cancels |
 | Runoff Coefficient (`runoffCoefficient`) | DERIVED | mean `Runoff_Coefficient_dimensionless` (equivalently Σ runoff / Σ rainfall) |
@@ -453,7 +453,7 @@ BFI = Σ baseflow × 86 400 / Σ model volume (the shared 6 500 km² scaling can
 | Key | Status | Source |
 | --- | --- | --- |
 | `discharge` | DERIVED ⚑D2 | daily mean flow = derived volume (depth × real area) / 86 400 (m³/s); monthly mean; long-term mean 2000–2025 |
-| `runoff-anomaly` | DERIVED | monthly anomaly % + 12-month moving average |
+| `runoff-anomaly` | LIVE (one district) / DERIVED | `7.2` `Runoff_Anomaly_percent` for one district; larger scopes: area-weighted depth vs area-weighted stored normals; + 12-month moving average |
 | `ssi` | DERIVED | SSI-1/3/6/12 computed |
 | `rainfall-runoff` | LIVE | monthly Σ `Mean_Catchment_Rainfall_mm` and runoff mm |
 | `water-balance` | LIVE | monthly P, AET (`Actual_ET_from_Catchment_mm`), Q (mm) |

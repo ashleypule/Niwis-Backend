@@ -433,3 +433,17 @@ national, province=WC, municipality=DC32, wma=WMA5 — the frontend's test scope
 (176 entries, ≈ 38 s at startup). A database-side layout change for long daily series is proposed in
 `migrations/proposed/003_daily_tables_layout.sql` with measured gains.
 
+### 13.9 Runoff anomaly from `7.2_derived_runoff_indicators_master`; `testing_table` ignored
+
+Additions only; values change slightly.
+- `runoff/summary` KPI `anomaly`, `runoff/timeseries?metric=runoff-anomaly`, `runoff/map?layer=runoff-anomaly`,
+  `runoff/breakdown?metric=by-wma` (`lt`) and the runoff entity card use the same-month means stored in 7.2 instead of
+  the API's 2000–2025 means (DATA_GAPS §20). For one district the monthly anomaly is 7.2's `Runoff_Anomaly_percent`.
+  `source` adds `7.2_derived_runoff_indicators_master`; `baseline` is "2000–2026 same-month mean (stored in 7.2)"
+  (map / by-WMA: "same-period mean"); the anomaly KPI `sublabel` reads "vs 2000–2026 same-month mean (stored in 7.2)";
+  the anomaly series set has a `note`. Values move by 2.6 pp on average (r = 0.997).
+- SSI and flood frequency unchanged (7.2's columns failed the checks and are withheld).
+- Categories: new category `derived-runoff-indicators` (§7.2, page `runoff`): `runoff_anomaly_monthly` live
+  (diverging bars, %), the other nine columns withheld with reasons. New variables in the registry:
+  `runoff_anomaly_monthly`, `runoff_ratio_trend`, `flood_flow_2yr` … `flood_flow_100yr`, `response_time`.
+- `testing_table` is no longer listed under `unregistered` in the catalogue (registry `ignored_tables`).

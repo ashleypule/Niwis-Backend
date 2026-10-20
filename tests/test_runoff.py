@@ -171,3 +171,31 @@ async def test_fdc_long_term_is_the_common_period(client: httpx.AsyncClient) -> 
     body = (await client.get(f"{B}/timeseries", params={"metric": "fdc", "municipality": "DC44"})).json()
     lt = next(s for s in body["series"] if s["key"] == "lt")
     assert lt["name"] == "Long-term (2000–2025)" and "2000–2025" in body["note"]
+
+
+async def test_anomaly_is_the_stored_7_2_value(
+    client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
+) -> None:
+    """For one district the monthly runoff anomaly is 7.2's Runoff_Anomaly_percent, not an API-computed one."""
+    body = (await client.get(f"{B}/timeseries", params={"metric": "runoff-anomaly", "municipality": "DC6"})).json()
+    c.SeriesSet.model_validate(body)
+    api = {p[0][:7]: p[1] for p in body["series"][0]["data"] if p[1] is not None}
+    stored = {
+        f"{y:04d}-{m:02d}": float(a)
+        for y, m, a in fixture_db(
+            """SELECT "Year", "Month", "Runoff_Anomaly_percent" FROM "7.2_derived_runoff_indicators_master"
+               WHERE "District_Name" = 'Namakwa'"""
+        )
+    }
+    both = [k for k in api if k in stored]
+    assert len(both) >= 12, both
+    assert all(api[k] == pytest.approx(stored[k], abs=0.051) for k in both), [(k, api[k], stored[k]) for k in both]
+    assert "7.2_derived_runoff_indicators_master" in body["source"]
+    assert "stored in 7.2" in body["baseline"]
+
+
+async def test_summary_anomaly_uses_the_stored_normal(client: httpx.AsyncClient) -> None:
+    k = kpis((await client.get(f"{B}/summary", params={"municipality": "DC6"})).json())
+    assert k["anomaly"]["value"] is not None
+    assert "7.2_derived_runoff_indicators_master" in k["anomaly"]["source"]
+    assert "stored in 7.2" in k["anomaly"]["sublabel"]

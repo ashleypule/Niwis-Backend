@@ -150,6 +150,19 @@ def monthly_normals(total: pd.DataFrame, anomaly_mm: pd.DataFrame) -> pd.DataFra
     return m.groupby(["district", "month"], as_index=False)["normal"].median()
 
 
+def monthly_normals_pct(total: pd.DataFrame, anomaly_pct: pd.DataFrame) -> pd.DataFrame:
+    """As monthly_normals, from a stored % anomaly: normal = value / (1 + anomaly / 100).
+
+    Rows with anomaly −100 % (zero value) carry no information about the normal and are skipped.
+    Columns: district, month (1–12), normal.
+    """
+    m = total.merge(anomaly_pct, on=["district", "date"], suffixes=("", "_a"))
+    m = m[m["value_a"] > -100]
+    m["normal"] = m["value"] / (1 + m["value_a"] / 100)
+    m["month"] = m["date"].dt.month
+    return m.groupby(["district", "month"], as_index=False)["normal"].median()
+
+
 def window_normal(normals: pd.DataFrame, start: dt.date, end: dt.date) -> pd.Series:
     """Normal rainfall per district over [start, end], pro-rating months by the days inside the window."""
     days = pd.date_range(start, end, freq="D")

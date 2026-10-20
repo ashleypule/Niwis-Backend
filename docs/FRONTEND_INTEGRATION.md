@@ -209,6 +209,11 @@ All additions unless marked; details in `docs/CONTRACT_CHANGES.md` §11–§12.
 21. **SGI served May 2002 – Aug 2024 only** (values after repeat Aug 2024): `gw-sgi` and the category view serve it
     marked `isStale`, `periodEnd` 2024-08-31, with a note; the SGI KPI and cascade groundwater stage stay null
     ("Latest valid SGI is Aug 2024 (more than 90 days old)"). satellite soil moisture served from Mar 2015 (labelled 2015–2025).
+22. **Runoff anomaly from `7.2`** (2026-10-20): the runoff anomaly (KPI, chart, map, by-WMA long-term, entity card)
+    uses the same-month means stored in `7.2_derived_runoff_indicators_master`; the baseline label reads "2000–2026
+    same-month mean (stored in 7.2)" — show `baseline` from the response rather than a fixed "2000–2025". New category
+    `derived-runoff-indicators` on the runoff page (one live chart; SSI, flood flows, trend and response time
+    withheld with reasons). `testing_table` no longer appears under unregistered tables.
 
 ## 9. Checklist
 

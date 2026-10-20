@@ -11,7 +11,9 @@ gauging stations: station counts, station maps and the by-province station break
 as entities (D1).
 
 Methods (docs/DATA_MAPPING.md §5): depths area-weighted; flows and volumes summed over the scope (WMA: district volume
-apportioned by the share of its area inside the WMA); normals = same calendar month 2000–(last full year); SSI computed
+apportioned by the share of its area inside the WMA); runoff normals = the same-month means stored in
+`7.2_derived_runoff_indicators_master` (recovered from its runoff anomaly: depth / (1 + anomaly/100); DATA_GAPS §20),
+so a district's anomaly is the table's own; long-term FDC/seasonal means = 2000–(last full year); SSI computed
 with app.core.indices (gamma fit per calendar month on the scope's monthly runoff); flood frequency = Log-Pearson III
 on annual maxima of derived daily mean flow (not instantaneous peaks) with a parametric-bootstrap 90 % band.
 """
@@ -27,7 +29,7 @@ import pandas as pd
 from scipy import stats
 
 from app.core import districts
-from app.core.aggregate import sum_fractions, weighted, weighted_scalar, window_normal
+from app.core.aggregate import monthly_normals_pct, sum_fractions, weighted, weighted_scalar, window_normal
 from app.core.data import DataAccess
 from app.core.errors import DataUnavailable, NotFound
 from app.core.indices import calibration_gap, standardized_index
@@ -41,6 +43,7 @@ from app.schemas import contract as c
 
 MODULE = "runoff"
 Q = "runoff_depth_daily"
+ANOM = "runoff_anomaly_monthly"  # 7.2_derived_runoff_indicators_master
 RETURN_PERIODS = [2, 5, 10, 20, 50, 100]  # spec §7.2 flood frequency analysis
 NO_STATIONS = "No gauging-station data in the database (runoff is modelled per district municipality)"
 DRIVER_VAR = Selector("var", ("rain", "aet", "sm"), "rain")
@@ -150,17 +153,19 @@ class RunoffService:
         )
         return g.loc[g["n"] == n_need, "v"]
 
-    async def normals(self, y1: int) -> pd.DataFrame:
-        """District monthly depth normal: same calendar month, full months 2000–y1. Columns district, month, normal."""
+    async def normals(self) -> pd.DataFrame:
+        """District monthly depth normal stored in 7.2 (its anomaly's same-month mean), recovered from complete months:
+        depth / (1 + anomaly / 100). Columns district, month, normal."""
         dm = await self.monthly_depth()
-        dm = dm[dm["date"].dt.year.between(HISTORY_START.year, y1)]
         dm = dm[dm["days"] >= dm["date"].dt.days_in_month]
-        return (
-            dm.assign(month=dm["date"].dt.month)
-            .groupby(["district", "month"], as_index=False)["value"]
-            .mean()
-            .rename(columns={"value": "normal"})
-        )
+        return monthly_normals_pct(dm[["district", "date", "value"]], await self.data.monthly(ANOM))
+
+    async def normal_baseline(self, kind: str = "same-month mean") -> str:
+        """Baseline label: the years the stored anomaly's mean covers (all of 7.2's months)."""
+        a = await self.data.monthly(ANOM)
+        if a.empty:
+            return f"stored {kind} (7.2)"
+        return f"{a['date'].min().year}–{a['date'].max().year} {kind} (stored in 7.2)"
 
     async def window_depth(self, start: dt.date, end: dt.date) -> pd.Series:
         g = await self.data.daily_window_stats(Q, start, end)
@@ -183,10 +188,10 @@ class RunoffService:
         w = self.ctx.weights()
         start, end = await self.rain.window()
         y1 = await self.last_full_year()
-        base = f"{HISTORY_START.year}–{y1}"
+        base = await self.normal_baseline()
         kpis: list[c.Kpi] = []
         depth = await self.window_depth(start, end)
-        normal = window_normal(await self.normals(y1), start, end)
+        normal = window_normal(await self.normals(), start, end)
         q, n = weighted_scalar(depth, w), weighted_scalar(normal, w)
         spark = (await self.scope_monthly_depth()).tail(12)
         kpis.append(
@@ -207,11 +212,11 @@ class RunoffService:
                 id="anomaly",
                 metric="runoffAnomaly",
                 label="Runoff Anomaly",
-                sublabel=f"vs {base} normal",
+                sublabel=f"vs {base}",
                 value=rnd((q - n) / n * 100, 1) if q is not None and n else None,
                 unit="%",
                 decimals=0,
-                **self.kpi_extra(end, Q),
+                **self.kpi_extra(end, Q, ANOM),
             )
         )
         reason_peak = "Peak flows are withheld: the table scales them to a constant 6 500 km² area for every district"
@@ -300,7 +305,7 @@ class RunoffService:
                 c.UnavailableField(field="kpis.normal", reason=NO_STATIONS),
                 c.UnavailableField(field="kpis.low", reason=NO_STATIONS),
             ],
-            **self._prov(as_of, Q, "baseflow_component", "rain_daily", baseline=f"{base} same-month mean"),
+            **self._prov(as_of, Q, "baseflow_component", "rain_daily", baseline=base),
         )
         return body.dump()
 
@@ -378,16 +383,21 @@ class RunoffService:
         )
 
     async def ts_anomaly(self) -> c.SeriesSet:
-        y1 = await self.last_full_year()
         s = await self.scope_monthly_depth()
-        clim = s[(s.index.year >= HISTORY_START.year) & (s.index.year <= y1)]
-        normal = clim.groupby(clim.index.month).mean()
+        nm = await self.normals()
+        normal = weighted(nm.rename(columns={"normal": "value"}), self.ctx.weights(), by="month").set_index("month")[
+            "value"
+        ]
         an = pd.Series(
             {
                 t: (v - normal.get(t.month)) / normal.get(t.month) * 100 if normal.get(t.month) else np.nan
                 for t, v in s.items()
             }
         )
+        if len(w := self.ctx.weights()) == 1:  # one district: the table's own value, not a recomputation
+            st = await self.data.monthly(ANOM)
+            st = st[st["district"].isin(w) & st["date"].isin(s.index)].set_index("date")["value"]
+            an = st.reindex(s.index)
         ma = an.rolling(12, min_periods=12).mean()
         ms = await self._window_months()
         last = ms[-1].date()
@@ -413,7 +423,9 @@ class RunoffService:
                 ),
             ],
             as_of=iso(last),
-            **self._prov(last, Q, baseline=f"{HISTORY_START.year}–{y1} same-month mean", res="monthly"),
+            note="Anomaly vs the same-month mean stored in 7.2_derived_runoff_indicators_master (area-weighted over "
+            "the scope; for one district the table's Runoff_Anomaly_percent itself).",
+            **self._prov(last, Q, ANOM, baseline=await self.normal_baseline(), res="monthly"),
         )
 
     async def ts_ssi(self) -> c.SeriesSet:
@@ -698,9 +710,8 @@ class RunoffService:
         if ov is None or areas is None:
             raise DataUnavailable("WMA volumes need district boundaries", missing=["district boundaries"])
         start, end = await self.rain.window()
-        y1 = await self.last_full_year()
         depth = await self.window_depth(start, end)
-        normal = window_normal(await self.normals(y1), start, end)
+        normal = window_normal(await self.normals(), start, end)
         cats, cur, lt = [], [], []
         missing = [w.name for w in sp.wmas if any(pd.isna(depth.get(k, np.nan)) for k in ov[w.id])]
         if missing:
@@ -726,7 +737,7 @@ class RunoffService:
             ],
             as_of=iso(end),
             **{
-                **self._prov(end, Q, baseline=f"{HISTORY_START.year}–{y1} same-period mean"),
+                **self._prov(end, Q, ANOM, baseline=await self.normal_baseline("same-period mean")),
                 "aggregation": "district-overlap",
             },
         ).dump()
@@ -952,9 +963,9 @@ class RunoffService:
             )
         elif layer == "runoff-anomaly":
             d = await self.window_depth(start, end)
-            n = window_normal(await self.normals(y1), start, end)
+            n = window_normal(await self.normals(), start, end)
             vals, title, scale, unit, date = (d - n) / n * 100, "Runoff anomaly, 12 months (%)", "anomalyPct", "%", end
-            baseline = f"{HISTORY_START.year}–{y1} same-period mean"
+            baseline = await self.normal_baseline("same-period mean")
         elif layer == "monthly-runoff":
             dm = await self.monthly_depth()
             m = pd.Timestamp(newest.replace(day=1))
@@ -994,7 +1005,7 @@ class RunoffService:
         nd = 3 if layer == "runoff-coefficient" else 1
         prov = self.ctx.provenance(
             date,
-            self.src(Q, *(["rain_daily"] if layer == "runoff-coefficient" else [])),
+            self.src(Q, *({"runoff-coefficient": ["rain_daily"], "runoff-anomaly": [ANOM]}.get(layer, []))),
             res="annual" if layer == "runoff-coefficient" else "daily",
         )
         prov["aggregation"] = "district"
@@ -1025,9 +1036,8 @@ class RunoffService:
         a = self.areas()
         newest = await self.newest()
         start = _d(pd.Timestamp(newest) - pd.DateOffset(years=1)) + dt.timedelta(days=1)
-        y1 = await self.last_full_year()
         depth = (await self.window_depth(start, newest)).get(d.code)
-        normal = window_normal(await self.normals(y1), start, newest).get(d.code)
+        normal = window_normal(await self.normals(), start, newest).get(d.code)
         lm = pd.Timestamp(await self.latest_complete_month())
         dm = await self.monthly_depth()
         cur = dm[(dm["district"] == d.code) & (dm["date"] == lm)]

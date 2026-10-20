@@ -328,9 +328,41 @@ definition); `Frost_Day_Flag` (a 0/1 flag: warm districts are always 0); `Heatwa
   long daily series fast on a cold cache is proposed in `migrations/proposed/003_daily_tables_layout.sql`.
 - `5.2_meteorological_drivers_saws_master` and `6.2_rainfall_derived_drought_indices_master` gained a `date` column
   (a key, not a variable; picked up by the catalogue as such).
-- New tables, **not registered and not served**: `7.2_derived_runoff_indicators_master` (spec §7.2: runoff anomaly,
-  runoff-ratio trend, SSI, flood flows at 2–100-year return periods, hydrological response time) and `testing_table`
-  (a copy of the `4_1` temperature columns; looks like a test table). **Ask:** confirm whether 7.2 should replace the
-  API's own runoff anomaly / SSI / flood-frequency calculations (it then needs registering and a plausibility check),
-  and whether `testing_table` can be dropped.
+- New tables: `7.2_derived_runoff_indicators_master` (spec §7.2) — **registered 2026-10-20, see §20** — and
+  `testing_table` (a copy of the `4_1` temperature columns; looks like a test table). `testing_table` is kept out of
+  the catalogue entirely (registry `ignored_tables`; not even listed as unregistered). **Ask:** can `testing_table` be
+  dropped?
 
+## 20. `7.2_derived_runoff_indicators_master` — registered 2026-10-20 (P2)
+
+Monthly, 52 districts, Jan 2000 – Sep 2026 (Sep 2026 is a partial month: its anomaly compares 6 days of runoff with a
+whole-month mean, so the API serves complete months only). Registered for the runoff page (category
+`derived-runoff-indicators`). Plausibility (`scripts/plausibility_checks.sql`, last four blocks) and constancy
+(`scripts/constancy_check.py --all`) checks:
+
+| Column | Result | Evidence |
+| --- | --- | --- |
+| `Runoff_Anomaly_percent` | **passed → served** | = (month's modelled runoff in `runoff_variables_master` − the same-calendar-month mean of all its months 2000–2026) / that mean: r = 1.00000, mean \|difference\| 0.05 pp over 16 692 district-months; range −100 % … +1 104 %; no constancy flag |
+| `SSI_Standardized_Streamflow_Index` | failed → withheld | not a streamflow index: r = 0.996 with SPI-3 of rainfall (`6.2`); r = 0.29 with this table's own runoff anomaly and at most 0.57 with any standardisation of the modelled runoff (API SSI-1/3/6/12: mean r 0.34 / 0.57 / 0.43 / 0.34); never below −1.86 (so D4 "extreme" never occurs), capped at +3 |
+| `Flood_Flow_2yr_m3s` … `Flood_Flow_100yr_m3s` | failed → withheld | a monthly value, not a flood-frequency statistic: the 2-year value = 0.93 × the month's peak flow in `runoff_variables_master` (r = 1.0000, ratio sd 0.0014), which itself assumes the constant 6 500 km² area (D2); the other return periods are fixed multiples (×1.33, 1.75, 2.25, 2.83, 3.50) in every district and month |
+| `Runoff_Ratio_Trend_percent_per_yr` | failed → withheld | one constant (0.04) in every row |
+| `Hydrological_Response_Time_hours` | failed → withheld | one constant (12.5 h) in every row |
+
+**What the API serves from it.** The runoff anomaly everywhere on the runoff page now uses 7.2's baseline instead of the
+API's own: monthly normals per district are recovered from the stored anomaly (normal = depth / (1 + anomaly / 100),
+complete months, median per district and calendar month; anomaly −100 % rows skipped). For a single district the
+monthly anomaly series is the stored value itself; for larger scopes and 12-month windows (summary KPI, anomaly map,
+by-WMA long-term volume, entity card) it is the anomaly of the area-weighted depth against the area-weighted stored
+normals (within 0.07 pp of the stored values on average). Baselines are labelled "2000–2026 same-month mean (stored in
+7.2)". The SSI and flood frequency stay the API's own (gamma SSI on modelled runoff; Log-Pearson III on annual maxima
+of derived daily flow at 2–100 years).
+
+**Cross-check against the API's former calculation** (`tests/integration/test_runoff_anomaly_crosscheck.py`,
+`pytest -m integration -s`; same-calendar-month mean of complete months 2000–2025): r = 0.997, mean |difference|
+2.63 pp, 95th percentile 10.7 pp over 16 640 district-months. The only difference is the baseline period: 7.2's mean
+includes the partial year 2026 (as the DB's rainfall anomalies do, D3).
+
+**Ask:** (1) is a 2000–2026 baseline that includes a partial year intended (D3)? (2) SSI should be computed from
+streamflow (or the modelled runoff), not rainfall; (3) flood flows at return periods need a frequency analysis of
+annual maxima, one value per district (not per month), and real district areas; (4) runoff-ratio trend and response
+time are single constants.
