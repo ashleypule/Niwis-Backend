@@ -16,6 +16,10 @@
 
 version: 1
 
+# Tables in the database that are kept out of the catalogue entirely (not even listed as unregistered), with the reason.
+ignored_tables:
+  testing_table: "a copy of the 4_1 temperature columns, apparently a test table; out of the catalogue until the data team decides whether to drop it"
+
 baseline:
   stored_anomalies: "2000–2026 monthly mean"     # what the DB's anomaly columns are relative to (verified)
   computed_period: [2000, 2025]                 # full years used for anomalies/climatologies the API computes
@@ -134,6 +138,15 @@ variables:
   peak_flow:             {label: Peak flow, unit: m³/s, metric: peakFlow}
   baseflow_component:    {label: Baseflow component (model-area scaled), unit: m³/s}
   land_cover:            {label: Dominant land cover, unit: "—"}
+  runoff_anomaly_monthly: {label: Monthly runoff anomaly, unit: "%", metric: runoffAnomaly}
+  runoff_ratio_trend:    {label: Runoff ratio trend, unit: "%/year"}
+  flood_flow_2yr:        {label: 2-year flood flow, unit: m³/s}
+  flood_flow_5yr:        {label: 5-year flood flow, unit: m³/s}
+  flood_flow_10yr:       {label: 10-year flood flow, unit: m³/s}
+  flood_flow_20yr:       {label: 20-year flood flow, unit: m³/s}
+  flood_flow_50yr:       {label: 50-year flood flow, unit: m³/s}
+  flood_flow_100yr:      {label: 100-year flood flow, unit: m³/s}
+  response_time:         {label: Hydrological response time, unit: h}
   impervious_fraction:   {label: Impervious surface fraction, unit: "%"}
 
 datasets:
@@ -438,3 +451,25 @@ datasets:
                                                raw_reason: "flow scaled to the constant 6 500 km² area for every district; only the baseflow index (a ratio) is served"}
       Dominant_LandCover_Class:               {var: land_cover, role: withheld, reason: "one constant class for every district"}
       Impervious_Surface_Fraction_percent:    {var: impervious_fraction, role: withheld, reason: "constant 4.5 %"}
+
+  # ------------------------------------------------------------------ DB Module 5 — Runoff, derived indicators (spec §7.2)
+  "7.2_derived_runoff_indicators_master":
+    db_module: 5
+    module: runoff
+    serves: [runoff]
+    category_modules: [runoff]
+    location: {column: District_Name}
+    time: {kind: year_month, year: Year, month: Month, resolution: monthly}
+    known_issues: ["added 2026-10-19; only the runoff anomaly passes the plausibility check (DATA_GAPS §20)"]
+    columns:
+      Runoff_Anomaly_percent:            {var: runoff_anomaly_monthly, role: canonical,
+                                           note: "= (month's modelled runoff − same-month mean of all months 2000–2026) / that mean (r = 1.00000 with runoff_variables_master); the baseline includes the partial year 2026, as the DB's rainfall anomalies do"}
+      Runoff_Ratio_Trend_percent_per_yr: {var: runoff_ratio_trend, role: withheld, reason: "one constant (0.04) in every row"}
+      SSI_Standardized_Streamflow_Index: {var: ssi, role: withheld, reason: "not a streamflow index: = SPI-3 of rainfall (r = 0.996 with 6.2 SPI-3), r = 0.29 with this table's own runoff anomaly and at most 0.57 with any standardisation of the modelled runoff; never below −1.86 (D4 impossible), capped at +3"}
+      Flood_Flow_2yr_m3s:                {var: flood_flow_2yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
+      Flood_Flow_5yr_m3s:                {var: flood_flow_5yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
+      Flood_Flow_10yr_m3s:               {var: flood_flow_10yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
+      Flood_Flow_20yr_m3s:               {var: flood_flow_20yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
+      Flood_Flow_50yr_m3s:               {var: flood_flow_50yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
+      Flood_Flow_100yr_m3s:              {var: flood_flow_100yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
+      Hydrological_Response_Time_hours:  {var: response_time, role: withheld, reason: "one constant (12.5 h) in every row"}

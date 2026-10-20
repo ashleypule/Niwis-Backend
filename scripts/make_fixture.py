@@ -6,6 +6,8 @@ Extract: districts Alfred Nzo, City of Cape Town (alias 'cape town' in Module 1 
 Namakwa; daily tables from 2024-01-01, monthly/annual tables complete.
 
 Usage: python scripts/make_fixture.py
+       python scripts/make_fixture.py --tables 7.2_derived_runoff_indicators_master --out 02_runoff_indicators.sql.gz
+       (a supplementary file for a table registered after the main fixture was recorded; files load in name order)
 """
 
 from __future__ import annotations
@@ -43,6 +45,14 @@ def lit(v: object) -> str:
 
 
 def main() -> None:
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tables", help="comma-separated registered tables (default: all)")
+    ap.add_argument("--out", help="file name in tests/fixtures (default: 01_fixture.sql.gz)")
+    args = ap.parse_args()
+    out_path = OUT.with_name(args.out) if args.out else OUT
+    only = {x.strip() for x in args.tables.split(",")} if args.tables else None
     url = dotenv_values(ROOT / ".env")["SUPABASE_DB_URL"]
     reg = load_registry()
     out: list[str] = [
@@ -52,6 +62,8 @@ def main() -> None:
     with psycopg.connect(url, autocommit=True) as c:
         c.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")
         for ds in reg.datasets.values():
+            if only is not None and ds.table not in only:
+                continue
             cols = c.execute(
                 "SELECT column_name, format_type(a.atttypid, a.atttypmod) AS t, NOT a.attnotnull AS nullable "
                 "FROM information_schema.columns ic JOIN pg_attribute a ON a.attrelid = to_regclass(%s) "
@@ -73,10 +85,10 @@ def main() -> None:
             out.extend("\t".join(lit(v) for v in r) + "\n" for r in rows)
             out.append("\\.\n")
             print(f"{ds.table}: {len(rows)} rows")
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(OUT, "wt", encoding="utf-8", newline="\n") as fh:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with gzip.open(out_path, "wt", encoding="utf-8", newline="\n") as fh:
         fh.writelines(out)
-    print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size / 1e6:.2f} MB)")
+    print(f"wrote {out_path.relative_to(ROOT)} ({out_path.stat().st_size / 1e6:.2f} MB)")
 
 
 if __name__ == "__main__":

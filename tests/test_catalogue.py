@@ -139,13 +139,38 @@ def test_every_registered_table_is_a_category() -> None:
     assert len({c.id for c in CAT.categories}) == len(CAT.categories)
 
 
+# tables registered after the Phase 0 inventory: their information_schema columns when registered
+LATER_TABLES = {
+    "7.2_derived_runoff_indicators_master": [
+        "District_Name",
+        "Year",
+        "Month",
+        "date",
+        "Runoff_Anomaly_percent",
+        "Runoff_Ratio_Trend_percent_per_yr",
+        "SSI_Standardized_Streamflow_Index",
+        "Flood_Flow_2yr_m3s",
+        "Flood_Flow_5yr_m3s",
+        "Flood_Flow_10yr_m3s",
+        "Flood_Flow_20yr_m3s",
+        "Flood_Flow_50yr_m3s",
+        "Flood_Flow_100yr_m3s",
+        "Hydrological_Response_Time_hours",
+    ],
+}
+
+
 def test_every_column_appears_exactly_once() -> None:
     """Every column of every registered table (Phase 0 inventory) is a key or a live / withheld / duplicate variable."""
     inventory = json.loads((ROOT / "docs/db_inventory.json").read_text(encoding="utf-8"))["tables"]
     for c in CAT.categories:
         listed = [*c.keys, *(x.column for x in c.columns)]
         assert len(listed) == len(set(listed)), c.table
-        inv = {col["name"] for col in inventory[c.table]["columns"]}
+        inv = (
+            {col["name"] for col in inventory[c.table]["columns"]}
+            if c.table in inventory
+            else set(LATER_TABLES[c.table])
+        )
         assert inv <= set(listed), (c.table, sorted(inv - set(listed)))  # nothing from the inventory is lost
         assert set(listed) - inv <= set(c.keys), c.table  # since then only key columns were added (5.2 / 6.2 `date`)
         assert {x.status for x in c.columns} <= {"live", "withheld", "duplicate"}
@@ -357,3 +382,13 @@ def test_min_max_pairs_are_bands() -> None:
             for grp in p.groups:
                 charts = {x.chart for x in c.columns if x.column in grp.columns}
                 assert grp.chart in ("band", "mixed") or {grp.chart} == charts, (c.table, grp.id)
+
+
+def test_runoff_indicators_registered_and_testing_table_ignored() -> None:
+    cat = next(x for x in CAT.categories if x.table == "7.2_derived_runoff_indicators_master")
+    status = {x.column: x.status for x in cat.columns}
+    assert status.pop("Runoff_Anomaly_percent") == "live"
+    assert set(status.values()) == {"withheld"}  # trend, SSI, flood flows, response time: failed the checks
+    assert "testing_table" in REG.ignored_tables
+    assert all(x.table != "testing_table" for x in CAT.categories)
+    assert all(u.table != "testing_table" for u in CAT.unregistered)

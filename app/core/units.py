@@ -18,6 +18,8 @@ from dataclasses import dataclass
 # suffix (lower case, including the leading underscore) → unit; None = dimensionless (the suffix is dropped)
 _SUFFIXES: dict[str, str | None] = {
     "_million_m3_month": "Mm³/month",
+    "_percent_per_yr": "%/year",
+    "_hours": "h",
     "_million_m3": "Mm³",
     "_mm_per_wet_day": "mm/wet day",
     "_mm_season": "mm/season",

@@ -468,7 +468,7 @@ def build_catalogue(
     ids = [c.id for c in cats]
     if len(set(ids)) != len(ids):
         raise ValueError(f"duplicate category ids: {ids}")
-    known = {ds.table for ds in reg.datasets.values()}
+    known = {ds.table for ds in reg.datasets.values()} | set(reg.ignored_tables)  # ignored: not even listed
     unreg = [Unregistered(table=t, columns=cols) for t, cols in sorted(schema.items()) if t not in known]
     return Catalogue(generated=generated, source=source, categories=cats, unregistered=unreg)
 

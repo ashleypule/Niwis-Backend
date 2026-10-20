@@ -18,7 +18,7 @@ def reg() -> Registry:
 
 
 def test_loads_all_tables(reg: Registry) -> None:
-    assert len(reg.datasets) == 14
+    assert len(reg.datasets) == 15
     assert reg.modules == ["climate", "drought", "rainfall", "runoff", "vegetation"]
 
 

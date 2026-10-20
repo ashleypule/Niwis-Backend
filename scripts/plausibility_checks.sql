@@ -150,3 +150,31 @@ FROM meteorological_drought_master
 ---
 runoff_variables_master soil moisture prior
 SELECT min("Soil_Moisture_Prior_m3m3"), max("Soil_Moisture_Prior_m3m3"), count(DISTINCT "Soil_Moisture_Prior_m3m3") FROM runoff_variables_master
+---
+7.2 ranges and constants (added 2026-10-20, DATA_GAPS §20)
+SELECT min("Runoff_Anomaly_percent"), max("Runoff_Anomaly_percent"), count(DISTINCT "Runoff_Ratio_Trend_percent_per_yr") AS trend_distinct,
+       count(DISTINCT "Hydrological_Response_Time_hours") AS response_distinct,
+       min("SSI_Standardized_Streamflow_Index") AS ssi_min, max("SSI_Standardized_Streamflow_Index") AS ssi_max,
+       min("Year" * 100 + "Month") AS first_month, max("Year" * 100 + "Month") AS last_month, count(DISTINCT "District_Name") AS districts
+FROM "7.2_derived_runoff_indicators_master"
+---
+7.2 runoff anomaly against the same-month mean of all months of runoff_variables_master (expected r = 1.0)
+WITH m AS (SELECT "District_Name" dn, "Year" y, "Month" mo, sum("Daily_Surface_Runoff_Volume_m3_day") v FROM runoff_variables_master GROUP BY 1, 2, 3),
+     n AS (SELECT dn, mo, avg(v) nv FROM m GROUP BY 1, 2)
+SELECT count(*), round(corr(a."Runoff_Anomaly_percent", (m.v - n.nv) / n.nv * 100)::numeric, 5) AS r,
+       round(avg(abs(a."Runoff_Anomaly_percent" - (m.v - n.nv) / n.nv * 100))::numeric, 3) AS mad_pp
+FROM m JOIN n USING (dn, mo) JOIN "7.2_derived_runoff_indicators_master" a ON a."District_Name" = m.dn AND a."Year" = m.y AND a."Month" = m.mo
+WHERE n.nv > 0
+---
+7.2 SSI against 6.2 SPI-3 (expected r about 0.996: a rainfall index, not a streamflow one)
+SELECT round(corr(a."SSI_Standardized_Streamflow_Index", s."SPI_3_Short_Term_Agricultural_Drought")::numeric, 3) AS r_spi3
+FROM "7.2_derived_runoff_indicators_master" a JOIN "6.2_rainfall_derived_drought_indices_master" s
+  ON s."District_Name" = a."District_Name" AND s."Year" = a."Year" AND s."Month" = a."Month"
+---
+7.2 2-year flood flow against the month's peak flow in runoff_variables_master (expected ratio 0.93, constant)
+WITH p AS (SELECT "District_Name" dn, "Year" y, "Month" mo, max("Peak_Flow_Rates_m3s") pk FROM runoff_variables_master GROUP BY 1, 2, 3)
+SELECT round(corr(a."Flood_Flow_2yr_m3s", p.pk)::numeric, 4) AS r, round(avg(a."Flood_Flow_2yr_m3s" / p.pk)::numeric, 4) AS ratio,
+       round(stddev(a."Flood_Flow_2yr_m3s" / p.pk)::numeric, 4) AS ratio_sd,
+       round(avg(a."Flood_Flow_100yr_m3s" / nullif(a."Flood_Flow_2yr_m3s", 0))::numeric, 3) AS ratio_100_2
+FROM p JOIN "7.2_derived_runoff_indicators_master" a ON a."District_Name" = p.dn AND a."Year" = p.y AND a."Month" = p.mo
+WHERE p.pk > 0

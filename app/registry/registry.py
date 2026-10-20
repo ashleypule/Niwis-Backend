@@ -184,6 +184,7 @@ class Baseline(_Strict):
 
 class Registry(_Strict):
     version: int
+    ignored_tables: dict[str, str] = {}  # database tables kept out of the catalogue entirely → why
     baseline: Baseline
     variables: dict[str, Variable]
     datasets: dict[str, Dataset]
