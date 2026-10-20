@@ -1,12 +1,31 @@
 # Progress
 
-## Status: all phases complete (2026-10-14); frontend integration issues #1–#7 fixed (2026-10-15); database category view + spec-audit fixes done (2026-10-16). Waiting on the data team (below).
+## Status: all phases complete (2026-10-14); frontend integration issues #1–#7 fixed (2026-10-15); database category view + spec-audit fixes done (2026-10-16); 7.2 runoff indicators registered (2026-10-20). Waiting on the data team (below).
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### 7.2 derived runoff indicators (2026-10-20)
+
+- [x] `7.2_derived_runoff_indicators_master` registered (runoff page; category `derived-runoff-indicators`).
+      Plausibility + constancy checks (DATA_GAPS §20): runoff anomaly passes (= modelled runoff vs its 2000–2026
+      same-month mean, r = 1.00000); SSI (= SPI-3 of rainfall), flood flows (0.93 × monthly peak × fixed multiples),
+      runoff-ratio trend and response time (constants) fail → withheld with reasons.
+- [x] Runoff anomaly served from 7.2 (KPI, chart — the stored value for one district —, map, by-WMA, entity card);
+      SSI and Log-Pearson III flood frequency stay the API's own. The API's former 2000–2025 anomaly is kept as a
+      cross-check (`tests/integration/test_runoff_anomaly_crosscheck.py`): r = 0.997, mean |diff| 2.63 pp,
+      95th pct 10.7 pp; served multi-district values within 0.07 pp of 7.2.
+- [x] `testing_table` kept out of the catalogue (registry `ignored_tables`) until the data team decides.
+- [x] Fixture `tests/fixtures/02_runoff_indicators.sql.gz` (7.2 extract, 963 rows; `make_fixture.py --tables/--out`);
+      `.env.example` lists 7.2 under module 5.
+- [x] Verification: 766 tests (ruff + mypy clean); integration 5 / 6 on Supabase (the cross-check passes; one
+      cold-cache statement timeout in `runoff/timeseries?metric=seasonal`, a whole-record daily read not changed here —
+      see migrations/proposed/003); Docker rebuilt, healthy, 180 / 180 category entries warmed (4 scopes);
+      frontend `fixtures:record` 1 120 (no failures), `contract:check` 274 ok, 0 schema failures, 0 errors,
+      8 structural differences (unchanged).
 
 ### Issue #14 — scoped seasonal totals timed out (2026-10-19)
 
