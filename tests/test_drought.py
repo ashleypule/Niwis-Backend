@@ -226,5 +226,5 @@ async def test_soil_moisture_fill_before_2015_is_never_read(client: httpx.AsyncC
         df = await state.data.monthly(var)
         assert df.empty or df["date"].min() >= pd.Timestamp("2015-03-01"), var
     ds = state.registry.datasets["satellite_remote_sensing"]
-    assert ds.valid_sql("surface_soil_moisture") == "\"date\"::date >= DATE '2015-03-01'"
-    assert ds.valid_sql("ndvi") == "TRUE"
+    assert ds.valid_sql("surface_soil_moisture") == ds.not_future_sql() + " AND \"date\"::date >= DATE '2015-03-01'"
+    assert ds.valid_sql("ndvi") == ds.not_future_sql()

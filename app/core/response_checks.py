@@ -20,6 +20,8 @@ import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+from app.core.provenance import period_end
+
 Coverage = Mapping[str, tuple[dt.date, dt.date]]  # table → (first record, last record)
 
 YEARS = re.compile(r"^(\d{4})(?:\s*[–-]\s*(\d{4}))?$")
@@ -159,9 +161,20 @@ def coverage_violations(body: Mapping[str, Any], coverage: Coverage) -> list[str
 
     if body.get("xType") == "time":
         for s in body.get("series", []):
+            res = s.get("resolution")
             for point in s.get("data", []):
                 if any(v is not None for v in point[1:]):
-                    check(_date(point[0]), f"series {s.get('key')!r} value")
+                    d = _date(point[0])
+                    if d is not None and res in ("monthly", "annual"):
+                        # stamped at the start of its period: valid when the period overlaps the coverage (10_1 stores
+                        # annual values on 31 Dec, 12.x monthly values on the 25th, 10_2 on the month's last day)
+                        if d > last or period_end(d, res) < first:
+                            out.append(
+                                f"series {s.get('key')!r} value for the period from {d} is outside the "
+                                f"source coverage {first} – {last}"
+                            )
+                        continue
+                    check(d, f"series {s.get('key')!r} value")
     if "categories" in body:
         cats = body.get("categories", [])
         for s in body.get("series", []):

@@ -12,6 +12,8 @@ from app.registry.registry import load_registry
 from tests.conftest import requires_db
 
 pytestmark = [pytest.mark.db, requires_db]
+from app.modules import IMPLEMENTED_MODULES  # noqa: E402
+
 REG = load_registry()
 
 
@@ -22,11 +24,12 @@ async def test_health(client: httpx.AsyncClient) -> None:
     assert body["status"] == "ok"
     assert body["database"]["reachable"] is True
     assert body["database"]["readOnlySession"] is True
-    assert {m["module"] for m in body["modules"]} == {"rainfall", "drought", "climate", "vegetation", "runoff"}
+    assert {m["module"] for m in body["modules"]} == set(REG.modules)
     for m in body["modules"]:
-        assert m["status"] in ("live", "unavailable")
-        if m["status"] == "unavailable":
+        assert m["status"] in ("live", "partial", "unavailable")
+        if m["status"] != "live":
             assert m["reason"]
+        assert m["status"] == ("live" if m["module"] in IMPLEMENTED_MODULES else "partial"), m
 
 
 async def test_sessions_reject_writes(client: httpx.AsyncClient) -> None:
@@ -44,11 +47,14 @@ async def test_meta_sources_match_sql(client: httpx.AsyncClient, fixture_db: Cal
     assert set(items) == set(REG.datasets)
     for table, item in items.items():
         ds = REG.datasets[table]
-        ((n, last),) = fixture_db(f"SELECT count(*), max({ds.date_sql()}) FROM {ds.fq}")
+        # rows dated after today are never served, so they are not counted either (8_1 runs to 2026-12-31)
+        ((n, last),) = fixture_db(f"SELECT count(*), max({ds.date_sql()}) FROM {ds.fq} WHERE {ds.not_future_sql()}")
         assert item["rows"] == n, table
         assert item["asOf"] == last.isoformat(), table
         assert item["error"] is None
-    assert body["newestDataDate"] == "2026-09-06"
+    # the newest daily record not after today: 8_1 / 9_1 (added 2026-10-19) run past the rainfall tables' 2026-09-06
+    ((newest,),) = fixture_db("SELECT least(CURRENT_DATE, DATE '2026-12-31')")
+    assert body["newestDataDate"] == newest.isoformat()
     assert items["satellite_remote_sensing"]["isStale"] is True  # ends 2025-12
     assert items["hydrological_drought_master"]["isStale"] is True
     assert items["6.1_core_rainfall_variables_master"]["isStale"] is False
@@ -67,7 +73,7 @@ async def test_meta_completeness_formula(client: httpx.AsyncClient) -> None:
 async def test_meta_coverage_and_variables(client: httpx.AsyncClient) -> None:
     cov = (await client.get("/api/v1/meta/coverage")).json()
     mods = {m["module"]: m for m in cov["modules"]}
-    assert set(mods) == {"rainfall", "drought", "climate", "vegetation", "runoff"}
+    assert set(mods) == set(REG.modules)
     assert mods["drought"]["isStale"] is True and mods["drought"]["oldestCoveredTo"] == "2025-12-31"
     assert "satellite_remote_sensing" in mods["vegetation"]["tables"]  # D4: one vegetation source for both pages
 

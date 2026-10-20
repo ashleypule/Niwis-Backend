@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from app import __version__
 from app.auth import User, get_current_user
 from app.core.provenance import iso
-from app.modules import IMPLEMENTED_MODULES
+from app.modules import DATABASE_VIEW_MODULES, IMPLEMENTED_MODULES
 from app.state import AppState, get_state
 
 router = APIRouter(prefix="/api/v1", tags=["meta"], dependencies=[Depends(get_current_user)])
@@ -34,6 +34,8 @@ async def health(state: AppState = Depends(get_state), _: User = Depends(get_cur
             status, reason = "unavailable", "database unreachable"
         elif missing:
             status, reason = "unavailable", f"tables missing: {', '.join(missing)}"
+        elif module in DATABASE_VIEW_MODULES and module not in IMPLEMENTED_MODULES:
+            status, reason = "partial", "only the database variables of its tables are served (/categories)"
         elif module not in IMPLEMENTED_MODULES:
             status, reason = "unavailable", "API endpoints not implemented yet"
         else:

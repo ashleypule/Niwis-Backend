@@ -26,7 +26,22 @@ Role = Literal["canonical", "duplicate", "withheld", "unused"]
 Repeats = Literal["monthly", "annual", "record"]
 TimeKind = Literal["date", "text_date", "year_month", "year"]
 Resolution = Literal["daily", "dekadal", "monthly", "annual"]
-ModuleId = Literal["rainfall", "drought", "climate", "vegetation", "runoff"]
+ModuleId = Literal[
+    "rainfall",
+    "drought",
+    "climate",
+    "vegetation",
+    "runoff",
+    "dams",
+    "surface-water",
+    "groundwater",
+    "groundwater-reserve",
+    "water-quality",
+    "green-drop",
+    "blue-drop",
+    "rwqo",
+    "iwrm",
+]
 
 
 class _Strict(BaseModel):
@@ -45,7 +60,9 @@ class Column(_Strict):
     repeats: Repeats | None = None
     reason: str | None = None
     note: str | None = None
-    cast: Literal["double"] | None = None
+    # "double": numbers stored as text; "bool_pct": a yes / no flag served as % (100 = yes; a scope value is the share
+    # of the area where it is yes)
+    cast: Literal["double", "bool_pct"] | None = None
     transform: Literal["model_volume_to_depth_mm"] | None = None
     use: Literal["ratio_only"] | None = None
     # why the raw column is withheld from the database view although the API serves a value derived from it
@@ -55,6 +72,11 @@ class Column(_Strict):
     valid_from: dt.date | None = None
     valid_until: dt.date | None = None
     valid_reason: str | None = None
+    wide: bool = False  # long-format table: this is a real column, not a value of the variable-name column
+    # physically possible values [min, max] (either may be null): values outside are impossible and never served
+    # (e.g. one negative SASS5 score in 16 744 rows); `range_reason` says why
+    valid_range: tuple[float | None, float | None] | None = None
+    range_reason: str | None = None
 
     @model_validator(mode="after")
     def _withheld_needs_reason(self) -> Column:
@@ -64,11 +86,23 @@ class Column(_Strict):
             raise ValueError("columns served only after a transform need a raw_reason for the database view")
         if (self.valid_from or self.valid_until) and not self.valid_reason:
             raise ValueError("valid_from / valid_until need a valid_reason")
+        if self.valid_range is not None and not self.range_reason:
+            raise ValueError("valid_range needs a range_reason")
         return self
 
 
 class Location(_Strict):
     column: str
+
+
+class LongFormat(_Strict):
+    """A long-format table (one row per variable): `name` holds the variable name, `value` its value, `unit` its unit.
+    Registry columns of such a table are keyed by the variable name and read as
+    `CASE WHEN name = '<variable>' THEN value END`, so every loader and aggregate works unchanged."""
+
+    name: str
+    value: str
+    unit: str | None = None
 
 
 class Time(_Strict):
@@ -100,6 +134,13 @@ class Dataset(_Strict):
     model_area_km2: float | None = None
     spec: str | None = None  # spec section (e.g. "3.1"); defaults to the table name's number prefix (4_1 → 4.1)
     category_modules: list[ModuleId] = []  # module pages that show this table in the database view ([module])
+    long: LongFormat | None = None  # long-format table: columns are the values of `long.name`
+    # columns that are neither keys nor variables (labels, sources, geometry): not shown as variables
+    key_columns: list[str] = []
+    # monthly / annual values repeated on daily rows are present on the first day of every period (the category view
+    # then reads only those days); false when they are stamped on another day (10_1: the 15th, 31 Dec)
+    repeats_on_first_day: bool = True
+    duplicate_rows: bool = False  # every period stored more than once (identical rows): loaders read one per period
 
     @property
     def fq(self) -> str:
@@ -147,11 +188,44 @@ class Dataset(_Strict):
             return f"({d} + interval '1 year' - interval '1 day')::date"
         return d
 
+    def not_future_sql(self) -> str:
+        """SQL condition dropping rows dated after today (the database holds rows up to 2026-12-31 in some tables;
+        they are never served). Text dates compare as ISO text so an index on the column stays usable."""
+        if self.time.kind == "text_date":
+            assert self.time.column
+            return f"{ident(self.time.column)} <= to_char(CURRENT_DATE, 'YYYY-MM-DD')"
+        return f"{self.date_sql()} <= CURRENT_DATE"
+
+    def raw_sql(self, column: str) -> str:
+        """The stored value of a column: the column itself, or for a long-format table the value of that variable's
+        rows (NULL on every other row, which every aggregate ignores)."""
+        if self.long is not None and column not in self.wide_columns():
+            name = column.replace("'", "''")  # registry names cannot hold quotes (ident); escaped regardless
+            return f"(CASE WHEN {ident(self.long.name)} = '{name}' THEN {ident(self.long.value)} END)"
+        return ident(column)
+
+    def in_range(self, column: str, expr: str) -> str:
+        """`expr`, or NULL where the value lies outside the column's `valid_range` (impossible values)."""
+        col = self.columns.get(column)
+        if col is None or col.valid_range is None:
+            return expr
+        lo, hi = col.valid_range
+        conds = [f"{expr} >= {float(lo)!r}"] if lo is not None else []
+        conds += [f"{expr} <= {float(hi)!r}"] if hi is not None else []
+        return f"(CASE WHEN {' AND '.join(conds)} THEN {expr} END)" if conds else expr
+
+    def wide_columns(self) -> set[str]:
+        """Registry columns of a long-format table that are real columns (11_1 has both): marked by `wide: true`."""
+        return {n for n, c in self.columns.items() if c.wide}
+
     def column_sql(self, column: str) -> str:
         col = self.columns[column]
-        expr = ident(column)
+        expr = self.raw_sql(column)
         if col.cast == "double":
             expr = f"NULLIF({expr}, '')::double precision"
+        elif col.cast == "bool_pct":
+            expr = f"(CASE WHEN {expr} THEN 100.0 WHEN NOT {expr} THEN 0.0 END)"
+        expr = self.in_range(column, expr)
         if col.transform == "model_volume_to_depth_mm":
             if self.model_area_km2 is None:
                 raise ValueError(f"{self.table}: transform needs model_area_km2")
@@ -160,12 +234,12 @@ class Dataset(_Strict):
         return expr
 
     def valid_sql(self, column: str) -> str:
-        """SQL condition keeping only the column's valid periods (`valid_from` / `valid_until`); "TRUE" when it has
-        none."""
+        """SQL condition keeping only the column's valid periods (`valid_from` / `valid_until`) and never a row dated
+        after today."""
         col = self.columns.get(column)
+        parts = [self.not_future_sql()]
         if col is None or (col.valid_from is None and col.valid_until is None):
-            return "TRUE"
-        parts = []
+            return parts[0]
         if col.valid_from:
             parts.append(f"{self.date_sql()} >= DATE '{col.valid_from.isoformat()}'")
         if col.valid_until:
@@ -211,6 +285,8 @@ class Registry(_Strict):
                 ds.location.column,
                 *ds.columns,
                 *(x for x in (ds.time.column, ds.time.year, ds.time.month) if x),
+                *ds.key_columns,
+                *((ds.long.name, ds.long.value, *([ds.long.unit] if ds.long.unit else [])) if ds.long else ()),
             ]:
                 try:
                     ident(ident_name)

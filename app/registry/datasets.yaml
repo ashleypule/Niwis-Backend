@@ -18,7 +18,8 @@ version: 1
 
 # Tables in the database that are kept out of the catalogue entirely (not even listed as unregistered), with the reason.
 ignored_tables:
-  testing_table: "a copy of the 4_1 temperature columns, apparently a test table; out of the catalogue until the data team decides whether to drop it"
+  testing_table: "a copy of the 4_1 temperature columns, apparently a test table; kept out of the catalogue (no longer in the database on 2026-10-20)"
+  16_2_swsa_strategic_water_matrix_master: "keyed by Strategic Water Source Area (5 SWSAs × 26 years), not by district: the database view aggregates districts, so it has no place to show it yet (docs/DECISIONS.md D14)"
 
 baseline:
   stored_anomalies: "2000–2026 monthly mean"     # what the DB's anomaly columns are relative to (verified)
@@ -149,6 +150,238 @@ variables:
   response_time:         {label: Hydrological response time, unit: h}
   impervious_fraction:   {label: Impervious surface fraction, unit: "%"}
 
+  # ---- §8–§16 tables (added 2026-10-20; generated decisions, evidence in docs/DATA_GAPS.md §21)
+  res_soil_moisture_m3_m3: {label: "Soil Moisture", unit: "m³/m³"}
+  res_rainfall_mm_day: {label: "Rainfall", unit: "mm/day"}
+  res_evaporation_mm_day: {label: "Evaporation", unit: "mm/day"}
+  res_runoff_mm_day: {label: "Runoff", unit: "mm/day"}
+  res_district_area_km2: {label: "District Area", unit: "km²"}
+  res_water_area_km2: {label: "Water Area", unit: "km²"}
+  res_mean_ndwi: {label: "Mean NDWI", unit: "—"}
+  res_storage_volume_m3: {label: "Storage Volume M3", unit: "—"}
+  res_pct_fsc: {label: "Pct FSC", unit: "—"}
+  res_fsl_m_amsl: {label: "Fsl", unit: "m amsl"}
+  res_water_level_m_amsl: {label: "Water Level", unit: "m amsl"}
+  res_inflow_m3_s: {label: "Inflow", unit: "m³/s"}
+  res_seepage_m3_day: {label: "Seepage", unit: "m³/day"}
+  res_outflow_m3_s: {label: "Outflow", unit: "m³/s"}
+  hs_daily_mean_flow: {label: "Daily Mean Flow", unit: "m³/day"}
+  hs_daily_sediment_load_t_day: {label: "Daily Sediment Load", unit: "t/day"}
+  hs_river_discharge_q: {label: "River Discharge Q", unit: "m³/s"}
+  hs_flow_velocity: {label: "Flow Velocity", unit: "m/s"}
+  hs_stage_height: {label: "Stage Height", unit: "m"}
+  hs_monthly_mean_flow: {label: "Monthly Mean Flow", unit: "m³/month"}
+  hs_suspended_sediment_concentration: {label: "Suspended Sediment Concentration", unit: "mg/L"}
+  hs_monthly_sediment_load_t_day: {label: "Monthly Sediment Load", unit: "t/day"}
+  hs_peak_instantaneous_flow: {label: "Peak Instantaneous Flow", unit: "m³/s"}
+  hs_a_coeff: {label: "A Coeff", unit: "—"}
+  hs_b_exponent: {label: "B Exponent", unit: "—"}
+  hs_r_squared: {label: "R Squared", unit: "—"}
+  cc_catchment_area_km2: {label: "Catchment Area", unit: "km²"}
+  cc_water_bodies_pct: {label: "Water Bodies", unit: "%"}
+  cc_tree_cover_pct: {label: "Tree Cover", unit: "%"}
+  cc_shrubland_fynbos_pct: {label: "Shrubland Fynbos", unit: "%"}
+  cc_grassland_pct: {label: "Grassland", unit: "%"}
+  cc_cropland_agri_pct: {label: "Cropland Agri", unit: "%"}
+  cc_wetland_pct: {label: "Wetland", unit: "%"}
+  cc_builtup_urban_pct: {label: "Builtup Urban", unit: "%"}
+  cc_bare_soil_mining_pct: {label: "Bare Soil Mining", unit: "%"}
+  cc_dominant_hsg: {label: "Dominant HSG", unit: "—"}
+  cc_hsg_a_pct: {label: "HSG A", unit: "%"}
+  cc_hsg_b_pct: {label: "HSG B", unit: "%"}
+  cc_hsg_c_pct: {label: "HSG C", unit: "%"}
+  cc_hsg_d_pct: {label: "HSG D", unit: "%"}
+  cc_mean_slope_degrees: {label: "Mean Slope", unit: "°"}
+  cc_mean_twi: {label: "Mean TWI", unit: "—"}
+  cc_vegetation_cover_pct: {label: "Vegetation Cover", unit: "%"}
+  eo_surface_water_extent_km2: {label: "Surface Water Extent", unit: "km²"}
+  eo_ndwi_mean: {label: "NDWI Mean", unit: "—"}
+  eo_turbidity_proxy_ratio: {label: "Turbidity Proxy", unit: "—"}
+  eo_chlorophyll_a_mg_m3: {label: "Chlorophyll A", unit: "mg/m³"}
+  eo_sediment_plume_pct: {label: "Sediment Plume", unit: "%"}
+  eo_flood_inundation_extent_km2: {label: "Flood Inundation Extent", unit: "km²"}
+  bh_groundwater_table_depth_m_bgl: {label: "Groundwater Table Depth", unit: "m bgl"}
+  bh_hydraulic_head_amsl_m: {label: "Hydraulic Head", unit: "m amsl"}
+  bh_hydraulic_head_m_amsl: {label: "Hydraulic Head", unit: "m amsl"}
+  bh_seasonal_water_table_fluctuation_m: {label: "Seasonal Water Table Fluctuation", unit: "m/season"}
+  bh_sgi_dimensionless: {label: "SGI", unit: "—"}
+  bh_annual_recharge_rate_mm_yr: {label: "Annual Recharge Rate", unit: "mm/year"}
+  bh_recharge_fraction_percent: {label: "Recharge Fraction", unit: "%"}
+  bh_borehole_pumping_rate_m3_h: {label: "Borehole Pumping Rate", unit: "m³/h"}
+  bh_annual_abstraction_volume_m3_yr: {label: "Annual Abstraction Volume", unit: "m³/year"}
+  bh_saturated_thickness_m: {label: "Saturated Thickness", unit: "m"}
+  bh_transmissivity_m2_day: {label: "Transmissivity", unit: "m²/day"}
+  bh_hydraulic_conductivity_m_day: {label: "Hydraulic Conductivity", unit: "m/day"}
+  bh_storativity_specific_yield_dimensionless: {label: "Storativity Specific Yield", unit: "—"}
+  rs_monthly_catchment_rainfall_mm: {label: "Monthly Catchment Rainfall", unit: "mm"}
+  rs_vadose_zone_soil_moisture_m3_m3: {label: "Vadose Zone Soil Moisture", unit: "m³/m³"}
+  rs_actual_evapotranspiration_mm: {label: "Actual Evapotranspiration", unit: "mm"}
+  rs_river_baseflow_proxy_m3_day: {label: "River Baseflow Proxy", unit: "m³/day"}
+  rs_urban_agricultural_land_use_pct: {label: "Urban Agricultural Land Use", unit: "%"}
+  rs_water_table_rise_wtf_m: {label: "Water Table Rise WTF", unit: "m"}
+  hg_depth_to_water_table: {label: "Depth to Water Table", unit: "m bgl"}
+  hg_aquifer_extent_map_area: {label: "Aquifer Extent (map Area)", unit: "km²"}
+  hg_aquifer_saturated_thickness: {label: "Aquifer Saturated Thickness", unit: "m"}
+  hg_depth_to_bedrock_aquifer_base: {label: "Depth to Bedrock / Aquifer Base", unit: "m bgl"}
+  hg_dynamic_renewable_reserve: {label: "Dynamic (renewable) Reserve", unit: "Mm³/year"}
+  hg_groundwater_storage_coefficient: {label: "Groundwater Storage Coefficient", unit: "—"}
+  hg_permeability_hydraulic_conductivity: {label: "Permeability / Hydraulic Conductivity", unit: "m/day"}
+  hg_porosity_total_and_effective: {label: "Porosity (total and Effective)", unit: "%"}
+  hg_specific_storage: {label: "Specific Storage", unit: "—"}
+  hg_specific_yield: {label: "Specific Yield", unit: "—"}
+  hg_static_reserve_volume: {label: "Static Reserve Volume", unit: "Mm³"}
+  hg_storage_coefficient_storativity_specific_yield: {label: "Storage Coefficient / Storativity / Specific Yield", unit: "—"}
+  hg_transmissivity: {label: "Transmissivity", unit: "m²/day"}
+  rd_baseflow_discharge: {label: "Baseflow Discharge", unit: "m³/s"}
+  rd_evapotranspiration: {label: "Evapotranspiration", unit: "mm"}
+  rd_spring_discharge: {label: "Spring Discharge", unit: "L/s"}
+  rd_direct_recharge: {label: "Direct Recharge", unit: "mm/year"}
+  rd_indirect_recharge: {label: "Indirect Recharge", unit: "m³/year"}
+  rd_rainfall_infiltration: {label: "Rainfall Infiltration", unit: "mm/year"}
+  as_water_quality_for_use: {label: "Water Quality For Use", unit: "—"}
+  as_aquifer_depletion_rate: {label: "Aquifer Depletion Rate", unit: "m/year"}
+  as_borehole_yield: {label: "Borehole Yield", unit: "m³/h"}
+  as_exploitation_index: {label: "Exploitation Index", unit: "%"}
+  as_recharge_sensitivity: {label: "Recharge Sensitivity", unit: "—"}
+  as_total_abstraction: {label: "Total Abstraction", unit: "m³/year"}
+  wqp_temperature: {label: "Temperature", unit: "°C"}
+  wqp_turbidity: {label: "Turbidity", unit: "NTU"}
+  wqp_colour: {label: "Colour", unit: "Hazen"}
+  wqp_electrical_conductivity_ec: {label: "Electrical Conductivity (EC)", unit: "mS/m"}
+  wqp_total_dissolved_solids_tds: {label: "Total Dissolved Solids (TDS)", unit: "mg/L"}
+  wqp_total_suspended_solids_tss: {label: "Total Suspended Solids (TSS)", unit: "mg/L"}
+  wqp_salinity: {label: "Salinity", unit: "mg/L"}
+  wqc_ph: {label: "pH", unit: "—"}
+  wqc_dissolved_oxygen_do: {label: "Dissolved Oxygen (DO)", unit: "mg/L"}
+  wqc_bod5: {label: "BOD5", unit: "mg/L"}
+  wqc_cod: {label: "COD", unit: "mg/L"}
+  wqc_ammonia_nh3_n: {label: "Ammonia (NH3-N)", unit: "mg/L"}
+  wqc_nitrate_no3_n: {label: "Nitrate (NO3-N)", unit: "mg/L"}
+  wqc_nitrite_no2_n: {label: "Nitrite (NO2-N)", unit: "mg/L"}
+  wqc_total_phosphorus_tp: {label: "Total Phosphorus (TP)", unit: "mg/L"}
+  wqc_orthophosphate_po43: {label: "Orthophosphate (PO43-)", unit: "mg/L"}
+  wqc_lead_cadmium_chromium: {label: "Lead/Cadmium/Chromium", unit: "µg/L"}
+  wqc_arsenic_mercury: {label: "Arsenic/Mercury", unit: "µg/L"}
+  wqc_iron_manganese: {label: "Iron/Manganese", unit: "mg/L"}
+  wqc_toc: {label: "TOC", unit: "mg/L"}
+  wqc_sulphate: {label: "Sulphate", unit: "mg/L"}
+  wqc_chloride: {label: "Chloride", unit: "mg/L"}
+  wqc_fluoride: {label: "Fluoride", unit: "mg/L"}
+  wqb_e_coli: {label: "E. Coli", unit: "cfu/100 mL"}
+  wqb_total_coliforms: {label: "Total Coliforms", unit: "cfu/100 mL"}
+  wqb_chlorophyll_a: {label: "Chlorophyll-a", unit: "µg/L"}
+  wqb_blue_green_algae: {label: "Blue-green Algae", unit: "cells/mL"}
+  wqb_microcystin: {label: "Microcystin", unit: "µg/L"}
+  wqb_macroinvertebrate_index_sass5: {label: "Macroinvertebrate Index (SASS5)", unit: "—"}
+  wqb_pathogens: {label: "Pathogens", unit: "—"}
+  wqs_turbidity: {label: "Turbidity", unit: "—"}
+  wqs_chlorophyll_a: {label: "Chlorophyll-a", unit: "—"}
+  wqs_cyanobacterial_bloom: {label: "Cyanobacterial Bloom", unit: "—"}
+  wqs_cdom: {label: "CDOM", unit: "—"}
+  wqs_total_suspended_matter_tsm: {label: "Total Suspended Matter (TSM)", unit: "—"}
+  ww_temperature: {label: "Temperature", unit: "°C"}
+  ww_turbidity: {label: "Turbidity", unit: "NTU"}
+  ww_ec_salinity: {label: "EC Salinity", unit: "mS/m"}
+  ww_tss: {label: "TSS", unit: "mg/L"}
+  ww_ph: {label: "pH", unit: "—"}
+  ww_do: {label: "DO", unit: "mg/L"}
+  ww_bod5: {label: "BOD5", unit: "mg/L"}
+  ww_cod: {label: "COD", unit: "mg/L"}
+  ww_ammonia_nh3_n: {label: "Ammonia NH3 N", unit: "mg/L"}
+  ww_total_inorganic_nitrogen: {label: "Total Inorganic Nitrogen", unit: "mg/L"}
+  ww_total_phosphorus: {label: "Total Phosphorus", unit: "mg/L"}
+  ww_heavy_metals: {label: "Heavy Metals", unit: "µg/L"}
+  ww_e_coli: {label: "E Coli", unit: "cfu/100 mL"}
+  ww_faecal_coliforms: {label: "Faecal Coliforms", unit: "cfu/100 mL"}
+  ww_helminth_eggs: {label: "Helminth Eggs", unit: "eggs/L"}
+  wo_chlorine_dosing: {label: "Chlorine Dosing", unit: "mg/L"}
+  wo_design_capacity: {label: "Design Capacity", unit: "m³/day"}
+  wo_hydraulic_loading_rate: {label: "Hydraulic Loading Rate", unit: "%"}
+  wo_hydraulic_retention_time: {label: "Hydraulic Retention Time", unit: "h"}
+  wo_inflow_infiltration: {label: "Inflow Infiltration", unit: "m³/day"}
+  wo_influent_flow_rate: {label: "Influent Flow Rate", unit: "m³/day"}
+  wo_power_consumption: {label: "Power Consumption", unit: "kWh/day"}
+  wo_sludge_production: {label: "Sludge Production", unit: "m³/day"}
+  wm_rainfall_mm: {label: "Rainfall", unit: "mm"}
+  wm_flood_events_proxy: {label: "Flood Events Proxy", unit: "—"}
+  wm_temperature_c: {label: "Temperature", unit: "°C"}
+  wm_evaporation_mm: {label: "Evaporation", unit: "mm"}
+  sans_turbidity_value: {label: "Turbidity Value", unit: "NTU"}
+  sans_colour_value: {label: "Colour Value", unit: "TCU"}
+  sans_temperature_value: {label: "Temperature Value", unit: "°C"}
+  sans_e_coli_value: {label: "E Coli Value", unit: "cfu/100 mL"}
+  sans_total_coliforms_value: {label: "Total Coliforms Value", unit: "cfu/100 mL"}
+  sans_ph_value: {label: "pH Value", unit: "—"}
+  sans_ec_value: {label: "EC Value", unit: "mS/m"}
+  sans_free_chlorine_value: {label: "Free Chlorine Value", unit: "mg/L"}
+  sans_nitrate_value: {label: "Nitrate Value", unit: "mg/L"}
+  sans_fluoride_value: {label: "Fluoride Value", unit: "mg/L"}
+  sans_arsenic_value: {label: "Arsenic Value", unit: "mg/L"}
+  sans_lead_value: {label: "Lead Value", unit: "mg/L"}
+  sans_cyanide_value: {label: "Cyanide Value", unit: "mg/L"}
+  sans_total_thms_value: {label: "Total THMs Value", unit: "mg/L"}
+  sans_sans_241_compliance_score: {label: "SANS 241 Compliance Score", unit: "—"}
+  sans_turbidity_compliant: {label: "Turbidity Compliant", unit: "%"}
+  sans_colour_compliant: {label: "Colour Compliant", unit: "%"}
+  sans_temperature_compliant: {label: "Temperature Compliant", unit: "%"}
+  sans_e_coli_compliant: {label: "E Coli Compliant", unit: "%"}
+  sans_total_coliforms_compliant: {label: "Total Coliforms Compliant", unit: "%"}
+  sans_ph_compliant: {label: "pH Compliant", unit: "%"}
+  sans_ec_compliant: {label: "EC Compliant", unit: "%"}
+  sans_free_chlorine_compliant: {label: "Free Chlorine Compliant", unit: "%"}
+  sans_nitrate_compliant: {label: "Nitrate Compliant", unit: "%"}
+  sans_fluoride_compliant: {label: "Fluoride Compliant", unit: "%"}
+  sans_arsenic_compliant: {label: "Arsenic Compliant", unit: "%"}
+  sans_lead_compliant: {label: "Lead Compliant", unit: "%"}
+  sans_cyanide_compliant: {label: "Cyanide Compliant", unit: "%"}
+  sans_total_thms_compliant: {label: "Total THMs Compliant", unit: "%"}
+  eco_aquatic_habitat_integrity: {label: "Aquatic Habitat Integrity", unit: "—"}
+  eco_aspt: {label: "ASPT", unit: "—"}
+  eco_ecological_reserve_q: {label: "Ecological Reserve Q", unit: "—"}
+  eco_fibi: {label: "FIBI", unit: "—"}
+  eco_riparian_vegetation: {label: "Riparian Vegetation", unit: "—"}
+  eco_sass5_score: {label: "SASS5 Score", unit: "—"}
+  rwc_do_value: {label: "DO Value", unit: "mg/L"}
+  rwc_ph_range_value: {label: "pH Range Value", unit: "—"}
+  rwc_ec_target_value: {label: "EC Target Value", unit: "mS/m"}
+  rwc_nutrient_value_tn: {label: "Nutrient Value TN", unit: "mg/L"}
+  rwc_nutrient_value_tp: {label: "Nutrient Value TP", unit: "mg/L"}
+  rwc_toxicant_value_ugl: {label: "Toxicant Value", unit: "µg/L"}
+  rwc_salinity_value_tds: {label: "Salinity Value TDS", unit: "mg/L"}
+  rwc_rwqo_compliance_score: {label: "RWQO Compliance Score", unit: "—"}
+  rwc_do_compliant: {label: "DO Compliant", unit: "%"}
+  rwc_ph_range_compliant: {label: "pH Range Compliant", unit: "%"}
+  rwc_ec_target_compliant: {label: "EC Target Compliant", unit: "%"}
+  rwc_nutrient_compliant: {label: "Nutrient Compliant", unit: "%"}
+  rwc_toxicant_compliant: {label: "Toxicant Compliant", unit: "%"}
+  rwc_salinity_compliant: {label: "Salinity Compliant", unit: "%"}
+  rwh_low_flow_value: {label: "Low Flow Value", unit: "m³/s"}
+  rwh_high_flow_value: {label: "High Flow Value", unit: "—"}
+  rwh_seasonality_value: {label: "Seasonality Value", unit: "—"}
+  rwh_dilution_value: {label: "Dilution Value", unit: "m³/s"}
+  rwh_assimilation_value: {label: "Assimilation Value", unit: "—"}
+  rwh_hydrological_rwqo_score: {label: "Hydrological RWQO Score", unit: "—"}
+  rwh_low_flow_compliant: {label: "Low Flow Compliant", unit: "%"}
+  rwh_high_flow_compliant: {label: "High Flow Compliant", unit: "%"}
+  rwh_seasonality_compliant: {label: "Seasonality Compliant", unit: "%"}
+  rwh_dilution_compliant: {label: "Dilution Compliant", unit: "%"}
+  rwh_assimilation_compliant: {label: "Assimilation Compliant", unit: "%"}
+  wrm_mean_annual_precipitation_map_mm_yr: {label: "Mean Annual Precipitation MAP", unit: "mm/year"}
+  wrm_mean_annual_evapotranspiration_mae_mm_yr: {label: "Mean Annual Evapotranspiration MAE", unit: "mm/year"}
+  wrm_climate_variability_index_cv_rainfall: {label: "Climate Variability Index CV Rainfall", unit: "—"}
+  wrm_mean_annual_runoff_mar_million_m3_yr: {label: "Mean Annual Runoff MAR", unit: "Mm³/year"}
+  wrm_surface_water_availability_index_ratio: {label: "Surface Water Availability Index", unit: "—"}
+  wrm_inter_annual_storage_efficiency_pct: {label: "Inter Annual Storage Efficiency", unit: "%"}
+  wrm_mean_annual_groundwater_recharge_mm_yr: {label: "Mean Annual Groundwater Recharge", unit: "mm/year"}
+  wrm_groundwater_dependency_index_pct: {label: "Groundwater Dependency Index", unit: "%"}
+  wrm_inter_basin_transfer_volumes_million_m3_yr: {label: "Inter Basin Transfer Volumes", unit: "Mm³/year"}
+  wrm_national_water_balance_million_m3_yr: {label: "National Water Balance", unit: "Mm³/year"}
+  wrm_municipal_water_demand_l_cap_day: {label: "Municipal Water Demand", unit: "L/capita/day"}
+  wrm_agricultural_water_demand_m3_ha_season: {label: "Agricultural Water Demand", unit: "m³/ha/season"}
+  wrm_industrial_water_demand_m3_yr: {label: "Industrial Water Demand", unit: "m³/year"}
+  wrm_system_water_losses_pct: {label: "System Water Losses", unit: "%"}
+  wrm_ecological_reserve_water_requirement_m3_yr: {label: "Ecological Reserve Water Requirement", unit: "m³/year"}
+  wrm_return_flow_recycled_water_million_m3_yr: {label: "Return Flow Recycled Water", unit: "Mm³/year"}
 datasets:
   # ------------------------------------------------------------------ DB Module 1 — Drought (spec §3)
   meteorological_drought_master:
@@ -473,3 +706,459 @@ datasets:
       Flood_Flow_50yr_m3s:               {var: flood_flow_50yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
       Flood_Flow_100yr_m3s:              {var: flood_flow_100yr, role: withheld, reason: "a monthly value, not a flood-frequency statistic: = 0.93 × the month's peak flow in runoff_variables_master (r = 1.000, scaled to the constant 6 500 km² area); the return periods are fixed multiples of it (×1.33, 1.75, 2.25, 2.83, 3.50) in every district"}
       Hydrological_Response_Time_hours:  {var: response_time, role: withheld, reason: "one constant (12.5 h) in every row"}
+
+  # ================================================================== §8–§16 (registered 2026-10-20; DATA_GAPS §21)
+  "8_1_reservoir_operational_master":
+    db_module: 6
+    module: dams
+    serves: [dams]
+    category_modules: [dams]
+    location: {column: district_name}
+    time: {kind: date, column: "date", resolution: daily}
+    key_columns: ["dam_name", "district_id", "river"]
+    known_issues: ["added 2026-10-19; rows up to 2026-12-31 (never served after today)", "Siyanda (the pre-2013 name of Z F Mgcawu) is a second copy of that district with the same storage: its rows are not read", "storage, level, area and flows fail the plausibility check (DATA_GAPS §21.1)"]
+    columns:
+      "soil_moisture_m3_m3": {var: res_soil_moisture_m3_m3, role: canonical, note: "catchment soil moisture at the district's reservoirs (r = 0.74 with the satellite surface soil moisture)"}
+      "rainfall_mm_day": {var: res_rainfall_mm_day, role: canonical, valid_until: 2026-08-31, valid_reason: "from 1 Sep 2026 every district repeats its 31 August value on every day (a forward fill, not observations)", note: "catchment rainfall at the district's reservoirs; a different series from 6.1 daily rainfall (r = 0.56, same value on 24 % of days)"}
+      "evaporation_mm_day": {var: res_evaporation_mm_day, role: withheld, reason: "four values in the whole table (4.25–6 mm/day), identical in all 52 districts every day"}
+      "runoff_mm_day": {var: res_runoff_mm_day, role: withheld, reason: "daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years)"}
+      "district_area_km2": {var: res_district_area_km2, role: withheld, reason: "10 000 km² for every district on most days (a placeholder area; real district areas are 1 645–126 836 km²)"}
+      "water_area_km2": {var: res_water_area_km2, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
+      "mean_ndwi": {var: res_mean_ndwi, role: withheld, reason: "44 of 52 districts share one identical series"}
+      "storage_volume_m3": {var: res_storage_volume_m3, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
+      "pct_fsc": {var: res_pct_fsc, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
+      "fsl_m_amsl": {var: res_fsl_m_amsl, role: withheld, reason: "one value (1 200 m) in every row, identical in all 52 districts"}
+      "water_level_m_amsl": {var: res_water_level_m_amsl, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
+      "inflow_m3_s": {var: res_inflow_m3_s, role: withheld, reason: "daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe: 0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes"}
+      "seepage_m3_day": {var: res_seepage_m3_day, role: withheld, reason: "5.5 m³/day in 94 % of days, identical in 51 districts"}
+      "outflow_m3_s": {var: res_outflow_m3_s, role: withheld, reason: "daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe: 0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes"}
+
+  "9_1_hydrological_station_master":
+    db_module: 7
+    module: surface-water
+    serves: [surface-water]
+    category_modules: [surface-water]
+    location: {column: district_name}
+    time: {kind: date, column: "date", resolution: daily, year: "year", month: "month"}
+    known_issues: ["added 2026-10-19; district values (no stations or coordinates)", "river_discharge_q is a monthly mean until Dec 2025 and daily from Jan 2026 (DATA_GAPS §21.2)"]
+    columns:
+      "daily_mean_flow": {var: hs_daily_mean_flow, role: canonical, note: "m³/day (spec §9.1); the flow family consistent with the database's MAR (16_1): summed over the districts ≈ 40 700 Mm³/year (16_1 MAR ≈ 66 300)"}
+      "daily_sediment_load_t_day": {var: hs_daily_sediment_load_t_day, role: canonical, note: "= daily mean flow × suspended sediment concentration (checked)"}
+      "river_discharge_q": {var: hs_river_discharge_q, role: canonical, valid_from: 2026-01-01, valid_reason: "before Jan 2026 the column holds a monthly mean that contradicts the daily flows (1/63 of them on average); from Jan 2026 it is the daily mean flow / 86 400 s, as a discharge should be"}
+      "flow_velocity": {var: hs_flow_velocity, role: canonical, repeats: monthly}
+      "stage_height": {var: hs_stage_height, role: canonical, repeats: monthly, note: "74 % of months at 0.05 m, the series' lowest value"}
+      "monthly_mean_flow": {var: hs_monthly_mean_flow, role: withheld, reason: "contradicts the daily flows of the same table: the month's volume is on average 1/63 of the sum of its daily mean flows, and summed over the districts it gives ≈ 650 Mm³/year where the daily flows give ≈ 40 700 Mm³/year and the database's own MAR (16_1) ≈ 66 300 Mm³/year"}
+      "suspended_sediment_concentration": {var: hs_suspended_sediment_concentration, role: canonical, repeats: monthly}
+      "monthly_sediment_load_t_day": {var: hs_monthly_sediment_load_t_day, role: withheld, reason: "= the monthly discharge (withheld) × sediment concentration; contradicts the daily flows of the same table: the month's volume is on average 1/63 of the sum of its daily mean flows, and summed over the districts it gives ≈ 650 Mm³/year where the daily flows give ≈ 40 700 Mm³/year and the database's own MAR (16_1) ≈ 66 300 Mm³/year"}
+      "peak_instantaneous_flow": {var: hs_peak_instantaneous_flow, role: withheld, reason: "impossible in its unit (m³/s, spec §9.1): median 26 300 m³/s and up to 773 100 m³/s, where South Africa's largest recorded flood peaks are about 16 000 m³/s"}
+      "a_coeff": {var: hs_a_coeff, role: withheld, reason: "failed rating-curve fit: exponents b up to 18.8 and coefficients a up to 8.5 × 10²¹ (real rating curves have b ≈ 1.5–3), r² = 0 in 42 districts"}
+      "b_exponent": {var: hs_b_exponent, role: withheld, reason: "failed rating-curve fit: exponents b up to 18.8 and coefficients a up to 8.5 × 10²¹ (real rating curves have b ≈ 1.5–3), r² = 0 in 42 districts"}
+      "r_squared": {var: hs_r_squared, role: withheld, reason: "failed rating-curve fit: exponents b up to 18.8 and coefficients a up to 8.5 × 10²¹ (real rating curves have b ≈ 1.5–3), r² = 0 in 42 districts"}
+
+  "9_2_catchment_characteristics_master":
+    db_module: 7
+    module: surface-water
+    serves: [surface-water]
+    category_modules: [surface-water]
+    location: {column: district_name}
+    time: {kind: date, column: "date", resolution: monthly, year: "year"}
+    known_issues: ["added 2026-10-19; static attributes repeated every month (read once per year)"]
+    columns:
+      "catchment_area_km2": {var: cc_catchment_area_km2, role: canonical, repeats: annual, note: "= the district's area (r = 0.9993 with 11_1 aquifer extent; Namakwa 126 966 km²)"}
+      "water_bodies_pct": {var: cc_water_bodies_pct, role: canonical, repeats: annual}
+      "tree_cover_pct": {var: cc_tree_cover_pct, role: canonical, repeats: annual}
+      "shrubland_fynbos_pct": {var: cc_shrubland_fynbos_pct, role: canonical, repeats: annual}
+      "grassland_pct": {var: cc_grassland_pct, role: canonical, repeats: annual}
+      "cropland_agri_pct": {var: cc_cropland_agri_pct, role: withheld, reason: "identical to grassland_pct in every row (16 744 / 16 744)"}
+      "wetland_pct": {var: cc_wetland_pct, role: canonical, repeats: annual}
+      "builtup_urban_pct": {var: cc_builtup_urban_pct, role: canonical, repeats: annual}
+      "bare_soil_mining_pct": {var: cc_bare_soil_mining_pct, role: canonical, repeats: annual}
+      "dominant_hsg": {var: cc_dominant_hsg, role: canonical, repeats: annual}
+      "hsg_a_pct": {var: cc_hsg_a_pct, role: canonical, repeats: annual, note: "three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class"}
+      "hsg_b_pct": {var: cc_hsg_b_pct, role: canonical, repeats: annual, note: "three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class"}
+      "hsg_c_pct": {var: cc_hsg_c_pct, role: canonical, repeats: annual, note: "three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class"}
+      "hsg_d_pct": {var: cc_hsg_d_pct, role: canonical, repeats: annual, note: "three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class"}
+      "mean_slope_degrees": {var: cc_mean_slope_degrees, role: withheld, reason: "one value (4.5°) in every row, identical in all 52 districts"}
+      "mean_twi": {var: cc_mean_twi, role: withheld, reason: "one value (7.85) in every row, identical in all 52 districts"}
+      "vegetation_cover_pct": {var: cc_vegetation_cover_pct, role: withheld, reason: "one value (65.4 %) in every row, identical in all 52 districts"}
+
+  "9_3_sansa_earth_observation_master":
+    db_module: 7
+    module: surface-water
+    serves: [surface-water]
+    category_modules: [surface-water]
+    location: {column: district_name}
+    time: {kind: date, column: "date", resolution: monthly, year: "year", month: "month"}
+    known_issues: ["added 2026-10-19; every column fails the constancy check (DATA_GAPS §21.2)"]
+    columns:
+      "surface_water_extent_km2": {var: eo_surface_water_extent_km2, role: withheld, reason: "two distinct values per district over 27 years (a step, not a monthly satellite series), and 33 of 52 districts share one identical series"}
+      "ndwi_mean": {var: eo_ndwi_mean, role: withheld, reason: "two distinct values per district over 27 years (a step, not a monthly satellite series), and 43 of 52 districts share one identical series"}
+      "turbidity_proxy_ratio": {var: eo_turbidity_proxy_ratio, role: withheld, reason: "two distinct values per district over 27 years (a step, not a monthly satellite series), and 36 of 52 districts share one identical series"}
+      "chlorophyll_a_mg_m3": {var: eo_chlorophyll_a_mg_m3, role: withheld, reason: "two distinct values per district over 27 years (a step, not a monthly satellite series), and 38 of 52 districts share one identical series"}
+      "sediment_plume_pct": {var: eo_sediment_plume_pct, role: withheld, reason: "two distinct values per district over 27 years (a step, not a monthly satellite series), and 46 of 52 districts share one identical series"}
+      "flood_inundation_extent_km2": {var: eo_flood_inundation_extent_km2, role: withheld, reason: "two distinct values per district over 27 years (a step, not a monthly satellite series), and 48 of 52 districts share one identical series"}
+
+  "10_1_borehole_and_aquifer_master":
+    db_module: 8
+    module: groundwater
+    serves: [groundwater]
+    category_modules: [groundwater]
+    location: {column: district_name}
+    time: {kind: date, column: "date", resolution: daily, year: "year"}
+    long: {name: variable_name, value: value, unit: unit}
+    key_columns: ["source"]
+    repeats_on_first_day: false
+    known_issues: ["added 2026-10-19; long format (variable_name / value / unit), pivoted per variable", "rows up to 2026-12-31 (never served after today)", "monthly values on the 15th, annual values on 31 December, telemetry on irregular days", "units are stored as valid UTF-8 (m³, m²); they display as 'm�' only in viewers that decode them with a Windows code page (app/core/units.py repairs mojibake anyway)"]
+    columns:
+      "groundwater_table_depth_m_bgl": {var: bh_groundwater_table_depth_m_bgl, role: canonical, note: "NGA telemetry (irregular days, about every 7 weeks); the same 202 dates in every district"}
+      "hydraulic_head_amsl_m": {var: bh_hydraulic_head_amsl_m, role: canonical, repeats: monthly, note: "monthly (15th), source: DWS National Groundwater Archive & DEM interpolation; one of two hydraulic-head series (r = 0.06 between them, 363 m apart on average)"}
+      "hydraulic_head_m_amsl": {var: bh_hydraulic_head_m_amsl, role: canonical, note: "NGA telemetry (irregular days); the unit column says 'm bgl', but the values (448–1 638 m) are elevations as the name says: a water level 1 638 m below ground is impossible in South Africa's aquifers. One of two hydraulic-head series (r = 0.06 between them)"}
+      "seasonal_water_table_fluctuation_m": {var: bh_seasonal_water_table_fluctuation_m, role: canonical, repeats: annual, note: "two values per year (30 Jun, 31 Dec), in m per season; the annual chart shows the larger"}
+      "sgi_dimensionless": {var: bh_sgi_dimensionless, role: withheld, reason: "not a standardised groundwater level: uncorrelated with this table's own water levels (r = −0.007 with depth, 0.001 with head) and with the earlier SGI (r = −0.004); month-to-month autocorrelation 0.01, where groundwater levels persist (0.66–0.83 in this table); every month averages 0 ± 1 across districts, even in the 2015–16 drought"}
+      "annual_recharge_rate_mm_yr": {var: bh_annual_recharge_rate_mm_yr, role: withheld, repeats: annual, reason: "41 of 52 districts share their whole series with another district (13 groups, e.g. Joe Gqabi = Nelson Mandela Bay = Nkangala = Vhembe = West Rand); 71 distinct values in 1 404 district-years"}
+      "recharge_fraction_percent": {var: bh_recharge_fraction_percent, role: canonical, repeats: annual}
+      "borehole_pumping_rate_m3_h": {var: bh_borehole_pumping_rate_m3_h, role: canonical, repeats: annual}
+      "annual_abstraction_volume_m3_yr": {var: bh_annual_abstraction_volume_m3_yr, role: canonical, repeats: annual, note: "per borehole (spec §10.1), not a district total"}
+      "saturated_thickness_m": {var: bh_saturated_thickness_m, role: withheld, reason: "aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1 satisfy it (r = 0.83)"}
+      "transmissivity_m2_day": {var: bh_transmissivity_m2_day, role: withheld, reason: "aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1 satisfy it (r = 0.83)"}
+      "hydraulic_conductivity_m_day": {var: bh_hydraulic_conductivity_m_day, role: withheld, reason: "aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1 satisfy it (r = 0.83)"}
+      "storativity_specific_yield_dimensionless": {var: bh_storativity_specific_yield_dimensionless, role: withheld, reason: "aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1 satisfy it (r = 0.83)"}
+
+  "10_2_recharge_supporting _master":
+    db_module: 8
+    module: groundwater
+    serves: [groundwater]
+    category_modules: [groundwater]
+    location: {column: district_name}
+    time: {kind: date, column: "date", resolution: monthly, year: "year"}
+    known_issues: ["added 2026-10-19; one row per month dated on its last day; rows up to 2026-12-31 (never served after today)"]
+    columns:
+      "monthly_catchment_rainfall_mm": {var: rs_monthly_catchment_rainfall_mm, role: canonical}
+      "vadose_zone_soil_moisture_m3_m3": {var: rs_vadose_zone_soil_moisture_m3_m3, role: canonical}
+      "actual_evapotranspiration_mm": {var: rs_actual_evapotranspiration_mm, role: canonical}
+      "river_baseflow_proxy_m3_day": {var: rs_river_baseflow_proxy_m3_day, role: canonical}
+      "urban_agricultural_land_use_pct": {var: rs_urban_agricultural_land_use_pct, role: canonical}
+      "water_table_rise_wtf_m": {var: rs_water_table_rise_wtf_m, role: canonical}
+
+  "11_1_hydrogeological":
+    db_module: 9
+    module: groundwater-reserve
+    serves: [groundwater-reserve]
+    category_modules: [groundwater-reserve]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    long: {name: variable, value: value, unit: unit}
+    key_columns: ["category", "source"]
+    known_issues: ["added 2026-10-19; one long-format variable (Depth to water table) plus wide columns; static aquifer properties repeated every month"]
+    columns:
+      "Depth to water table": {var: hg_depth_to_water_table, role: canonical, note: "City of Cape Town, Eden, iLembe, Nelson Mandela Bay, Overberg and West Coast share one identical series"}
+      "Aquifer extent (map area)": {var: hg_aquifer_extent_map_area, role: canonical, wide: true, repeats: annual, note: "= the district's area (r = 0.9993 with 9_2 catchment area)"}
+      "Aquifer saturated thickness": {var: hg_aquifer_saturated_thickness, role: canonical, wide: true, repeats: annual}
+      "Depth to bedrock / aquifer base": {var: hg_depth_to_bedrock_aquifer_base, role: withheld, wide: true, reason: "shallower than the water table in 20 % of rows (the aquifer base cannot lie above the water table)"}
+      "Dynamic (renewable) reserve": {var: hg_dynamic_renewable_reserve, role: canonical, wide: true, repeats: annual}
+      "Groundwater storage coefficient": {var: hg_groundwater_storage_coefficient, role: canonical, wide: true, repeats: annual}
+      "Permeability / hydraulic conductivity": {var: hg_permeability_hydraulic_conductivity, role: canonical, wide: true, repeats: annual, note: "with saturated thickness and transmissivity consistent with T = K × b (r = 0.83)"}
+      "Porosity (total and effective)": {var: hg_porosity_total_and_effective, role: canonical, wide: true, repeats: annual, note: "r = 0.999 with specific yield (derived from it)"}
+      "Specific storage": {var: hg_specific_storage, role: canonical, wide: true, repeats: annual}
+      "Specific yield": {var: hg_specific_yield, role: canonical, wide: true, repeats: annual}
+      "Static reserve volume": {var: hg_static_reserve_volume, role: canonical, wide: true, repeats: annual}
+      "Storage coefficient / storativity / specific yield": {var: hg_storage_coefficient_storativity_specific_yield, role: withheld, wide: true, reason: "an exact linear rescaling of the Specific yield column (r = 1.000)"}
+      "Transmissivity": {var: hg_transmissivity, role: canonical, wide: true, repeats: annual}
+
+  "11.2_recharge_and_discharge":
+    db_module: 9
+    module: groundwater-reserve
+    serves: [groundwater-reserve]
+    category_modules: [groundwater-reserve]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    duplicate_rows: true
+    known_issues: ["added 2026-10-19; every district-month stored three times (identical rows: read once)"]
+    columns:
+      "Baseflow discharge": {var: rd_baseflow_discharge, role: withheld, reason: "impossible in its unit (m³/s, spec §11.2): City of Johannesburg averages 1 739 m³/s and Ekurhuleni 1 693 m³/s (rivers of a watershed); 321 district-months exceed 2 100 m³/s, the whole country's mean runoff (16_1 MAR ≈ 66 300 Mm³/year)"}
+      "Evapotranspiration": {var: rd_evapotranspiration, role: canonical, note: "City of Cape Town, Eden, iLembe, Nelson Mandela Bay, Overberg and West Coast share one identical series"}
+      "Spring discharge": {var: rd_spring_discharge, role: canonical, note: "City of Cape Town, Eden, iLembe, Nelson Mandela Bay, Overberg and West Coast share one identical series"}
+      "Direct recharge": {var: rd_direct_recharge, role: canonical, repeats: annual}
+      "Indirect recharge": {var: rd_indirect_recharge, role: canonical, repeats: annual}
+      "Rainfall infiltration": {var: rd_rainfall_infiltration, role: canonical, repeats: annual}
+
+  "11.3_aquifer_sustainability":
+    db_module: 9
+    module: groundwater-reserve
+    serves: [groundwater-reserve]
+    category_modules: [groundwater-reserve]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    known_issues: ["added 2026-10-19"]
+    columns:
+      "Water quality for use": {var: as_water_quality_for_use, role: canonical}
+      "Aquifer depletion rate": {var: as_aquifer_depletion_rate, role: canonical, repeats: annual, note: "three pairs of districts share one series (Nkangala = O.R.Tambo, Lejweleputswa = Xhariep, Umkhanyakude = Waterberg)"}
+      "Borehole yield": {var: as_borehole_yield, role: canonical, repeats: annual}
+      "Exploitation index": {var: as_exploitation_index, role: canonical, repeats: annual, note: "% (abstraction / recharge, spec §11.3); tracks Total abstraction / Indirect recharge (11.2) with r = 0.84"}
+      "Recharge sensitivity": {var: as_recharge_sensitivity, role: canonical, repeats: annual}
+      "Total abstraction": {var: as_total_abstraction, role: canonical, repeats: annual}
+
+  "12.1_physical_water_quality_master":
+    db_module: 10
+    module: water-quality
+    serves: [water-quality]
+    category_modules: [water-quality]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    known_issues: ["added 2026-10-19; district values (no sampling points or coordinates); units from spec §12.1 (the names carry none)"]
+    columns:
+      "Temperature": {var: wqp_temperature, role: canonical}
+      "Turbidity": {var: wqp_turbidity, role: canonical}
+      "Colour": {var: wqp_colour, role: canonical}
+      "Electrical Conductivity (EC)": {var: wqp_electrical_conductivity_ec, role: canonical, note: "TDS = 4.2–6.7 × EC in this table (r = 1.000), as expected for natural waters"}
+      "Total Dissolved Solids (TDS)": {var: wqp_total_dissolved_solids_tds, role: canonical, note: "= 4.2–6.7 × EC in this table (r = 1.000), as expected for natural waters"}
+      "Total Suspended Solids (TSS)": {var: wqp_total_suspended_solids_tss, role: canonical}
+      "Salinity": {var: wqp_salinity, role: canonical}
+
+  "12.2_chemical_water_quality_master":
+    db_module: 10
+    module: water-quality
+    serves: [water-quality]
+    category_modules: [water-quality]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    known_issues: ["added 2026-10-19; units from spec §12.2 (the names carry none)"]
+    columns:
+      "pH": {var: wqc_ph, role: canonical}
+      "Dissolved Oxygen (DO)": {var: wqc_dissolved_oxygen_do, role: canonical}
+      "BOD5": {var: wqc_bod5, role: canonical}
+      "COD": {var: wqc_cod, role: canonical}
+      "Ammonia (NH3-N)": {var: wqc_ammonia_nh3_n, role: canonical}
+      "Nitrate (NO3-N)": {var: wqc_nitrate_no3_n, role: canonical}
+      "Nitrite (NO2-N)": {var: wqc_nitrite_no2_n, role: canonical}
+      "Total Phosphorus (TP)": {var: wqc_total_phosphorus_tp, role: canonical}
+      "Orthophosphate (PO43-)": {var: wqc_orthophosphate_po43, role: canonical}
+      "Lead/Cadmium/Chromium": {var: wqc_lead_cadmium_chromium, role: canonical}
+      "Arsenic/Mercury": {var: wqc_arsenic_mercury, role: canonical}
+      "Iron/Manganese": {var: wqc_iron_manganese, role: canonical}
+      "TOC": {var: wqc_toc, role: canonical}
+      "Sulphate": {var: wqc_sulphate, role: canonical}
+      "Chloride": {var: wqc_chloride, role: canonical}
+      "Fluoride": {var: wqc_fluoride, role: canonical}
+
+  "12.3_biological_water_quality_master":
+    db_module: 10
+    module: water-quality
+    serves: [water-quality]
+    category_modules: [water-quality]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    known_issues: ["added 2026-10-19; units from spec §12.3 (the names carry none)"]
+    columns:
+      "E. coli": {var: wqb_e_coli, role: canonical}
+      "Total coliforms": {var: wqb_total_coliforms, role: canonical}
+      "Chlorophyll-a": {var: wqb_chlorophyll_a, role: canonical}
+      "Blue-green algae": {var: wqb_blue_green_algae, role: canonical}
+      "Microcystin": {var: wqb_microcystin, role: canonical}
+      "Macroinvertebrate index (SASS5)": {var: wqb_macroinvertebrate_index_sass5, role: canonical}
+      "Pathogens": {var: wqb_pathogens, role: canonical}
+
+  "12.4_sansa_water_quality_master":
+    db_module: 10
+    module: water-quality
+    serves: [water-quality]
+    category_modules: [water-quality]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    known_issues: ["added 2026-10-19; satellite proxies without units (spec §12.4 gives none)"]
+    columns:
+      "Turbidity": {var: wqs_turbidity, role: canonical}
+      "Chlorophyll-a": {var: wqs_chlorophyll_a, role: canonical}
+      "Cyanobacterial bloom": {var: wqs_cyanobacterial_bloom, role: canonical}
+      "CDOM": {var: wqs_cdom, role: canonical}
+      "Total Suspended Matter (TSM)": {var: wqs_total_suspended_matter_tsm, role: canonical}
+
+  "13.1_wastewater_effluent_quality_master":
+    db_module: 11
+    module: green-drop
+    serves: [green-drop]
+    category_modules: [green-drop]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: ["shapeID"]
+    known_issues: ["added 2026-10-19; units from spec §13.1 (the names carry none)"]
+    columns:
+      "temperature": {var: ww_temperature, role: canonical}
+      "turbidity": {var: ww_turbidity, role: canonical}
+      "ec_salinity": {var: ww_ec_salinity, role: canonical}
+      "tss": {var: ww_tss, role: canonical}
+      "ph": {var: ww_ph, role: withheld, reason: "impossible values: pH below 4 in all 16 744 rows (−0.54 to 3.33, negative in 8), where treated effluent is pH 6–9 (SA general limit 5.5–9.5)"}
+      "do": {var: ww_do, role: withheld, reason: "impossible values: dissolved oxygen negative in 16 742 of 16 744 rows (−1.20 to 1.90 mg/L)"}
+      "BOD5": {var: ww_bod5, role: withheld, reason: "COD is below BOD₅ in 16 727 of 16 744 rows; COD ≥ BOD₅ by definition, so at least one of the two is wrong"}
+      "COD": {var: ww_cod, role: withheld, reason: "below BOD₅ in 16 727 of 16 744 rows; COD ≥ BOD₅ by definition, so at least one of the two is wrong"}
+      "Ammonia_NH3_N": {var: ww_ammonia_nh3_n, role: canonical, valid_range: [0, null], range_reason: "a concentration cannot be negative (2 of 16 744 rows)"}
+      "Total_Inorganic_Nitrogen": {var: ww_total_inorganic_nitrogen, role: canonical}
+      "Total_Phosphorus": {var: ww_total_phosphorus, role: canonical}
+      "Heavy_Metals": {var: ww_heavy_metals, role: canonical}
+      "E_coli": {var: ww_e_coli, role: canonical}
+      "Faecal_coliforms": {var: ww_faecal_coliforms, role: canonical}
+      "Helminth_eggs": {var: ww_helminth_eggs, role: canonical}
+
+  "13.2_WWTW_operational_master":
+    db_module: 11
+    module: green-drop
+    serves: [green-drop]
+    category_modules: [green-drop]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: [".geo", "shapeID", "system:index"]
+    known_issues: ["added 2026-10-19; .geo is an empty MultiPoint in every row (no coordinates)"]
+    columns:
+      "chlorine_dosing": {var: wo_chlorine_dosing, role: withheld, reason: "one value (2.5) in every row, identical in all 52 districts"}
+      "design_capacity": {var: wo_design_capacity, role: canonical}
+      "hydraulic_loading_rate": {var: wo_hydraulic_loading_rate, role: canonical}
+      "hydraulic_retention_time": {var: wo_hydraulic_retention_time, role: canonical}
+      "inflow_infiltration": {var: wo_inflow_infiltration, role: canonical}
+      "influent_flow_rate": {var: wo_influent_flow_rate, role: canonical}
+      "power_consumption": {var: wo_power_consumption, role: canonical}
+      "sludge_production": {var: wo_sludge_production, role: canonical}
+
+  "13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master":
+    db_module: 11
+    module: green-drop
+    serves: [green-drop]
+    category_modules: [green-drop]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: ["source"]
+    known_issues: ["added 2026-10-19; every column is one constant (DATA_GAPS §21.5)"]
+    columns:
+      "Rainfall_mm": {var: wm_rainfall_mm, role: withheld, reason: "one value (45 mm) in every row, identical in all 52 districts"}
+      "Flood_events_proxy": {var: wm_flood_events_proxy, role: withheld, reason: "one value (5.4) in every row, identical in all 52 districts"}
+      "Temperature_C": {var: wm_temperature_c, role: withheld, reason: "one value (20 °C) in every row, identical in all 52 districts"}
+      "Evaporation_mm": {var: wm_evaporation_mm, role: withheld, reason: "one value (100 mm) in every row, identical in all 52 districts"}
+
+  "14.1_SANS_241_compliance_master":
+    db_module: 12
+    module: blue-drop
+    serves: [blue-drop]
+    category_modules: [blue-drop]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: ["Arsenic_Category", "Arsenic_Class", "Arsenic_Limit", "Arsenic_Parameter", "Arsenic_Source", "Colour_Category", "Colour_Class", "Colour_Limit", "Colour_Parameter", "Colour_Source", "Cyanide_Category", "Cyanide_Class", "Cyanide_Limit", "Cyanide_Parameter", "Cyanide_Source", "EC_Category", "EC_Class", "EC_Limit", "EC_Parameter", "EC_Source", "E_coli_Category", "E_coli_Class", "E_coli_Limit", "E_coli_Parameter", "E_coli_Source", "Fluoride_Category", "Fluoride_Class", "Fluoride_Limit", "Fluoride_Parameter", "Fluoride_Source", "Free_Chlorine_Category", "Free_Chlorine_Class", "Free_Chlorine_Limit", "Free_Chlorine_Parameter", "Free_Chlorine_Source", "Lead_Category", "Lead_Class", "Lead_Limit", "Lead_Parameter", "Lead_Source", "Nitrate_Category", "Nitrate_Class", "Nitrate_Limit", "Nitrate_Parameter", "Nitrate_Source", "Temperature_Category", "Temperature_Class", "Temperature_Limit", "Temperature_Parameter", "Temperature_Source", "Total_Coliforms_Category", "Total_Coliforms_Class", "Total_Coliforms_Limit", "Total_Coliforms_Parameter", "Total_Coliforms_Source", "Total_THMs_Category", "Total_THMs_Class", "Total_THMs_Limit", "Total_THMs_Parameter", "Total_THMs_Source", "Turbidity_Category", "Turbidity_Class", "Turbidity_Limit", "Turbidity_Parameter", "Turbidity_Source", "pH_Category", "pH_Class", "pH_Limit", "pH_Parameter", "pH_Source", "shapeID"]
+    known_issues: ["added 2026-10-19; the parameter values are copies or rescalings of 13.1 wastewater effluent values (DATA_GAPS §21.6)"]
+    columns:
+      "Turbidity_Value": {var: sans_turbidity_value, role: withheld, reason: "identical to 13.1 turbidity (wastewater effluent) in all 16 744 district-months"}
+      "Colour_Value": {var: sans_colour_value, role: canonical}
+      "Temperature_Value": {var: sans_temperature_value, role: withheld, reason: "identical to 13.1 temperature (wastewater effluent) in all 16 744 district-months"}
+      "E_coli_Value": {var: sans_e_coli_value, role: withheld, reason: "identical to 13.1 E_coli (wastewater effluent) in all 16 744 district-months"}
+      "Total_Coliforms_Value": {var: sans_total_coliforms_value, role: canonical}
+      "pH_Value": {var: sans_ph_value, role: withheld, reason: "identical to 13.1 ph (wastewater effluent) in all 16 744 district-months; pH from −0.54 to 3.33 is impossible"}
+      "EC_Value": {var: sans_ec_value, role: withheld, reason: "identical to 13.1 ec_salinity (wastewater effluent) in all 16 744 district-months"}
+      "Free_Chlorine_Value": {var: sans_free_chlorine_value, role: withheld, reason: "one value (1.8 mg/L) in every row, identical in all 52 districts"}
+      "Nitrate_Value": {var: sans_nitrate_value, role: canonical}
+      "Fluoride_Value": {var: sans_fluoride_value, role: canonical}
+      "Arsenic_Value": {var: sans_arsenic_value, role: canonical}
+      "Lead_Value": {var: sans_lead_value, role: withheld, reason: "not an independent value: an exact linear rescaling of 13.1 Heavy_Metals (r = 1.0000)"}
+      "Cyanide_Value": {var: sans_cyanide_value, role: withheld, reason: "not an independent value: an exact linear rescaling of 13.1 Heavy_Metals (r = 1.0000)"}
+      "Total_THMs_Value": {var: sans_total_thms_value, role: canonical}
+      "SANS_241_Compliance_Score": {var: sans_sans_241_compliance_score, role: withheld, reason: "a score computed from the compliance flags, which judge values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Turbidity_Compliant": {var: sans_turbidity_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Colour_Compliant": {var: sans_colour_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Temperature_Compliant": {var: sans_temperature_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "E_coli_Compliant": {var: sans_e_coli_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Total_Coliforms_Compliant": {var: sans_total_coliforms_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "pH_Compliant": {var: sans_ph_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "EC_Compliant": {var: sans_ec_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Free_Chlorine_Compliant": {var: sans_free_chlorine_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Nitrate_Compliant": {var: sans_nitrate_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Fluoride_Compliant": {var: sans_fluoride_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Arsenic_Compliant": {var: sans_arsenic_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Lead_Compliant": {var: sans_lead_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Cyanide_Compliant": {var: sans_cyanide_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+      "Total_THMs_Compliant": {var: sans_total_thms_compliant, role: withheld, cast: bool_pct, reason: "compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)"}
+
+  "15.1_ecological_variables_master":
+    db_module: 13
+    module: rwqo
+    serves: [rwqo]
+    category_modules: [rwqo]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: [".geo", "shapeID", "system:index"]
+    known_issues: ["added 2026-10-19; one impossible row per column (a negative score / flow; 2 rows above 100 for 0–100 scores) is not served"]
+    columns:
+      "aquatic_habitat_integrity": {var: eco_aquatic_habitat_integrity, role: canonical, valid_range: [0, 100], range_reason: "a score on a 0–100 scale (1 row below 0 and 2 above 100 in 16 744)"}
+      "aspt": {var: eco_aspt, role: canonical, valid_range: [0, null], range_reason: "an average score per taxon cannot be negative (1 row in 16 744)"}
+      "ecological_reserve_q": {var: eco_ecological_reserve_q, role: canonical, valid_range: [0, null], range_reason: "a flow requirement cannot be negative (1 row in 16 744)"}
+      "fibi": {var: eco_fibi, role: canonical, valid_range: [0, 100], range_reason: "a score on a 0–100 scale (1 row below 0 and 2 above 100 in 16 744)"}
+      "riparian_vegetation": {var: eco_riparian_vegetation, role: canonical, valid_range: [0, 100], range_reason: "a score on a 0–100 scale (1 row below 0 and 2 above 100 in 16 744)"}
+      "sass5_score": {var: eco_sass5_score, role: canonical, valid_range: [0, null], range_reason: "a SASS5 score cannot be negative (1 row in 16 744)"}
+
+  "15.2_chemical_RWQO_variables_master":
+    db_module: 13
+    module: rwqo
+    serves: [rwqo]
+    category_modules: [rwqo]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: ["DO_Category", "DO_Limit", "DO_Parameter", "DO_Source", "EC_Target_Category", "EC_Target_Limit", "EC_Target_Parameter", "EC_Target_Source", "Nutrient_Category", "Nutrient_Limit", "Nutrient_Parameter", "Nutrient_Source", "Salinity_Category", "Salinity_Limit", "Salinity_Parameter", "Salinity_Source", "Toxicant_Category", "Toxicant_Limit", "Toxicant_Parameter", "Toxicant_Source", "created_at", "pH_Range_Category", "pH_Range_Limit", "pH_Range_Parameter", "pH_Range_Source", "shapeID"]
+    known_issues: ["added 2026-10-19; several values are copies or rescalings of 13.1 wastewater effluent values (DATA_GAPS §21.7)"]
+    columns:
+      "DO_Value": {var: rwc_do_value, role: canonical}
+      "pH_Range_Value": {var: rwc_ph_range_value, role: withheld, reason: "identical to 13.1 ph (wastewater effluent) in all 16 744 district-months; pH from −0.54 to 3.33 is impossible"}
+      "EC_Target_Value": {var: rwc_ec_target_value, role: withheld, reason: "not an independent value: an exact linear rescaling of 13.1 ec_salinity (r = 1.0000)"}
+      "Nutrient_Value_TN": {var: rwc_nutrient_value_tn, role: canonical}
+      "Nutrient_Value_TP": {var: rwc_nutrient_value_tp, role: canonical}
+      "Toxicant_Value_ugL": {var: rwc_toxicant_value_ugl, role: withheld, reason: "not an independent value: an exact linear rescaling of 13.1 Heavy_Metals (r = 1.0000)"}
+      "Salinity_Value_TDS": {var: rwc_salinity_value_tds, role: canonical}
+      "RWQO_Compliance_Score": {var: rwc_rwqo_compliance_score, role: withheld, reason: "a score computed from compliance flags that include the copied pH, EC and toxicant values"}
+      "DO_Compliant": {var: rwc_do_compliant, role: withheld, cast: bool_pct, reason: "compliance flag; part of its inputs are copies of 13.1 wastewater effluent values"}
+      "pH_Range_Compliant": {var: rwc_ph_range_compliant, role: withheld, cast: bool_pct, reason: "compliance flag; part of its inputs are copies of 13.1 wastewater effluent values"}
+      "EC_Target_Compliant": {var: rwc_ec_target_compliant, role: withheld, cast: bool_pct, reason: "compliance flag; part of its inputs are copies of 13.1 wastewater effluent values"}
+      "Nutrient_Compliant": {var: rwc_nutrient_compliant, role: withheld, cast: bool_pct, reason: "compliance flag; part of its inputs are copies of 13.1 wastewater effluent values"}
+      "Toxicant_Compliant": {var: rwc_toxicant_compliant, role: withheld, cast: bool_pct, reason: "compliance flag; part of its inputs are copies of 13.1 wastewater effluent values"}
+      "Salinity_Compliant": {var: rwc_salinity_compliant, role: withheld, cast: bool_pct, reason: "compliance flag; part of its inputs are copies of 13.1 wastewater effluent values"}
+
+  "15.3_hydrological_RWQO_variables_master":
+    db_module: 13
+    module: rwqo
+    serves: [rwqo]
+    category_modules: [rwqo]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: ["Assimilation_Category", "Assimilation_Limit", "Assimilation_Parameter", "Assimilation_Source", "Dilution_Category", "Dilution_Limit", "Dilution_Parameter", "Dilution_Source", "High_Flow_Category", "High_Flow_Limit", "High_Flow_Parameter", "High_Flow_Source", "Low_Flow_Category", "Low_Flow_Limit", "Low_Flow_Parameter", "Low_Flow_Source", "Seasonality_Category", "Seasonality_Limit", "Seasonality_Parameter", "Seasonality_Source", "created_at", "shapeID"]
+    known_issues: ["added 2026-10-19"]
+    columns:
+      "Low_Flow_Value": {var: rwh_low_flow_value, role: canonical}
+      "High_Flow_Value": {var: rwh_high_flow_value, role: withheld, reason: "two values (3.8 / 7.5), identical in all 52 districts in every month"}
+      "Seasonality_Value": {var: rwh_seasonality_value, role: withheld, reason: "one value (0.65) in every row, identical in all 52 districts"}
+      "Dilution_Value": {var: rwh_dilution_value, role: canonical}
+      "Assimilation_Value": {var: rwh_assimilation_value, role: canonical}
+      "Hydrological_RWQO_Score": {var: rwh_hydrological_rwqo_score, role: withheld, reason: "two values (80 / 100), identical in all 52 districts in every month"}
+      "Low_Flow_Compliant": {var: rwh_low_flow_compliant, role: withheld, cast: bool_pct, reason: "one value (compliant) in every row, identical in all 52 districts"}
+      "High_Flow_Compliant": {var: rwh_high_flow_compliant, role: withheld, cast: bool_pct, reason: "judges the withheld high-flow value (identical in all districts)"}
+      "Seasonality_Compliant": {var: rwh_seasonality_compliant, role: withheld, cast: bool_pct, reason: "judges the withheld constant seasonality value"}
+      "Dilution_Compliant": {var: rwh_dilution_compliant, role: withheld, cast: bool_pct, reason: "one value (compliant) in every row, identical in all 52 districts"}
+      "Assimilation_Compliant": {var: rwh_assimilation_compliant, role: withheld, cast: bool_pct, reason: "one value (compliant) in every row, identical in all 52 districts"}
+
+  "16_1_complete_wrm_matrix_master":
+    db_module: 14
+    module: iwrm
+    serves: [iwrm]
+    category_modules: [iwrm]
+    location: {column: district_name}
+    time: {kind: year, column: "year", resolution: annual}
+    known_issues: ["added 2026-10-19; one row per district-year 2000–2025"]
+    columns:
+      "Mean_Annual_Precipitation_MAP_mm_yr": {var: wrm_mean_annual_precipitation_map_mm_yr, role: canonical}
+      "Mean_Annual_Evapotranspiration_MAE_mm_yr": {var: wrm_mean_annual_evapotranspiration_mae_mm_yr, role: canonical}
+      "Climate_Variability_Index_CV_rainfall": {var: wrm_climate_variability_index_cv_rainfall, role: canonical}
+      "Mean_Annual_Runoff_MAR_million_m3_yr": {var: wrm_mean_annual_runoff_mar_million_m3_yr, role: canonical}
+      "Surface_Water_Availability_Index_ratio": {var: wrm_surface_water_availability_index_ratio, role: canonical}
+      "Inter_Annual_Storage_Efficiency_pct": {var: wrm_inter_annual_storage_efficiency_pct, role: canonical}
+      "Mean_Annual_Groundwater_Recharge_mm_yr": {var: wrm_mean_annual_groundwater_recharge_mm_yr, role: canonical}
+      "Groundwater_Dependency_Index_pct": {var: wrm_groundwater_dependency_index_pct, role: canonical}
+      "Inter_Basin_Transfer_Volumes_million_m3_yr": {var: wrm_inter_basin_transfer_volumes_million_m3_yr, role: canonical}
+      "National_Water_Balance_million_m3_yr": {var: wrm_national_water_balance_million_m3_yr, role: canonical, note: "one value per district (the name says national)"}
+      "Municipal_Water_Demand_L_cap_day": {var: wrm_municipal_water_demand_l_cap_day, role: canonical}
+      "Agricultural_Water_Demand_m3_ha_season": {var: wrm_agricultural_water_demand_m3_ha_season, role: canonical}
+      "Industrial_Water_Demand_m3_yr": {var: wrm_industrial_water_demand_m3_yr, role: canonical}
+      "System_Water_Losses_pct": {var: wrm_system_water_losses_pct, role: canonical}
+      "Ecological_Reserve_Water_Requirement_m3_yr": {var: wrm_ecological_reserve_water_requirement_m3_yr, role: canonical}
+      "Return_Flow_Recycled_Water_million_m3_yr": {var: wrm_return_flow_recycled_water_million_m3_yr, role: canonical}

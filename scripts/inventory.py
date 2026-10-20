@@ -531,11 +531,17 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
         )
         ro_roles = [r for r in inv.get("roles", []) if re.search(r"read|ro$|_ro_|viewer|niwis", r, re.I)]
         L.append(f"- Candidate read-only roles found: {', '.join(f'`{r}`' for r in ro_roles) or 'none'}\n")
+    L += table_lines(inv["tables"])
+    path.write_text("\n".join(L), encoding="utf-8", newline="\n")
 
+
+def table_lines(tables: dict[str, Any]) -> list[str]:
+    """Overview table and one section per table (shared by the full inventory and `--append`)."""
+    L: list[str] = []
     L.append("## Overview\n")
     L.append("| Module | Table | Rows | Time column | Resolution | Range | Locations | Coords | Shape |")
     L.append("| --- | --- | ---: | --- | --- | --- | ---: | --- | --- |")
-    for name, t in inv["tables"].items():
+    for name, t in tables.items():
         if "error" in t:
             L.append(f"| {t['module']} | `{name}` | — | — | — | **error:** {fmt(t['error'])} | — | — | — |")
             continue
@@ -548,7 +554,7 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
         )
     L.append("")
 
-    for name, t in inv["tables"].items():
+    for name, t in tables.items():
         L.append(f"## `{name}` ({t['module']})\n")
         if "error" in t:
             L.append(f"**Could not profile:** {t['error']}\n")
@@ -623,7 +629,40 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
         L.append("\n<details><summary>5 sample rows</summary>\n\n```json")
         L.append(json.dumps(t.get("sample_rows", []), indent=1, ensure_ascii=False, default=str))
         L.append("```\n</details>\n")
-    path.write_text("\n".join(L), encoding="utf-8", newline="\n")
+    return L
+
+
+def append(db_url: str, modules: dict[str, list[str]]) -> int:
+    """Profile the listed tables that docs/db_inventory.json does not have yet and append them to both files."""
+    old = json.loads((DOCS / "db_inventory.json").read_text(encoding="utf-8"))
+    new_mods = {m: [t for t in ts if t not in old["tables"]] for m, ts in modules.items()}
+    new_mods = {m: ts for m, ts in new_mods.items() if ts}
+    if not new_mods:
+        print("Nothing to append: every listed table is in docs/db_inventory.json.")
+        return 0
+    added = profile_postgres(db_url, new_mods)
+    stamp = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d %H:%M UTC")
+    old["tables"].update(added["tables"])
+    old.setdefault("appended", []).append({"at": stamp, "tables": list(added["tables"])})
+    (DOCS / "db_inventory.json").write_text(
+        json.dumps(jsonable(old), indent=1, ensure_ascii=False, default=str), encoding="utf-8", newline="\n"
+    )
+    md = (DOCS / "DB_INVENTORY.md").read_text(encoding="utf-8").rstrip("\n")
+    head = [
+        "",
+        "",
+        f"# Tables added after Phase 0 (profiled {stamp} by `scripts/inventory.py --append`)",
+        "",
+        "> Same method as above, read-only. Long-format tables (one row per variable) are profiled as stored; their",
+        "> variables are listed in docs/CATEGORY_CATALOGUE.md. Plausibility results: docs/DATA_GAPS.md §21.",
+        "",
+        "",
+    ]
+    lines = table_lines(added["tables"])
+    lines[0] = "## Overview of the added tables\n"
+    (DOCS / "DB_INVENTORY.md").write_text(md + "\n".join(head) + "\n".join(lines), encoding="utf-8", newline="\n")
+    print(f"Appended {len(added['tables'])} tables to docs/DB_INVENTORY.md and docs/db_inventory.json.")
+    return 0
 
 
 # --------------------------------------------------------------------------- main
@@ -632,6 +671,11 @@ def write_markdown(inv: dict[str, Any], path: Path) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--rest", action="store_true", help="use the Supabase REST API instead of Postgres")
+    ap.add_argument(
+        "--append",
+        action="store_true",
+        help="profile only tables missing from docs/db_inventory.json and append them (keeps the Phase 0 snapshot)",
+    )
     args = ap.parse_args()
 
     load_dotenv(ROOT / ".env")
@@ -641,6 +685,8 @@ def main() -> int:
         return 2
 
     db_url = os.environ.get("SUPABASE_DB_URL", "")
+    if args.append:
+        return append(db_url, modules)
     try:
         if db_url and not args.rest:
             inv = profile_postgres(db_url, modules)

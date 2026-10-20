@@ -68,9 +68,9 @@ class DataAccess:
         """One value per district-month (whole record)."""
         ds, col = self.source(var)
         c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
-        if ds.time.resolution == "monthly":
+        if ds.time.resolution == "monthly" and ds.columns[col].repeats is None and not ds.duplicate_rows:
             sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
-        elif ds.columns[col].repeats == "monthly":
+        elif ds.time.resolution == "monthly" or ds.columns[col].repeats == "monthly":  # one value per month
             sql = (
                 f"SELECT {loc}, date_trunc('month', {d})::date AS m, max({c}) FROM {ds.fq} "
                 f"WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
@@ -83,9 +83,9 @@ class DataAccess:
         """One value per district-year (annual tables, or annual values repeated on daily rows)."""
         ds, col = self.source(var)
         c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
-        if ds.time.resolution == "annual":
+        if ds.time.resolution == "annual" and not ds.duplicate_rows:
             sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
-        elif ds.columns[col].repeats == "annual":
+        elif ds.time.resolution == "annual" or ds.columns[col].repeats == "annual":  # one value per year
             sql = (
                 f"SELECT {loc}, date_trunc('year', {d})::date, max({c}) FROM {ds.fq} "
                 f"WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
@@ -249,7 +249,7 @@ class DataAccess:
         d = ds.date_sql()
 
         async def load() -> dt.date:
-            v = await self.db.fetchval(f"SELECT max({d}) FROM {ds.fq}")
+            v = await self.db.fetchval(f"SELECT max({d}) FROM {ds.fq} WHERE {ds.not_future_sql()}")
             return v if isinstance(v, dt.date) else dt.date.fromisoformat(str(v))
 
         out: dt.date = await self.cache.get_or_set(f"data:newest:{ds.table}", self.settings.cache_ttl_meta_s, load)

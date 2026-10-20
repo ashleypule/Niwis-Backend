@@ -25,7 +25,7 @@ from app.logging_config import configure_logging
 from app.meta.router import router as meta_router
 from app.meta.service import MetaService
 from app.middleware import RateLimitMiddleware, RequestLogMiddleware
-from app.modules import IMPLEMENTED_MODULES
+from app.modules import DATABASE_VIEW_MODULES, IMPLEMENTED_MODULES
 from app.modules.categories import build_category_router
 from app.modules.categories import keep_warm as keep_categories_warm
 from app.modules.climate.router import router as climate_router
@@ -168,7 +168,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(climate_router)
     app.include_router(vegetation_router)
     app.include_router(runoff_router)
-    for module in IMPLEMENTED_MODULES:
+    for module in sorted(IMPLEMENTED_MODULES | DATABASE_VIEW_MODULES):
         app.include_router(build_category_router(module))
     return app
 

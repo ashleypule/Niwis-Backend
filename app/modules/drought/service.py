@@ -1192,7 +1192,7 @@ class DroughtService:
             ],
             rows=rows,
             row_key="id",
-            as_of=meta["newestDataDate"],
+            as_of=max((r["updated"] for r in rows if r["updated"]), default=None),  # its own tables, not the whole DB
             source=sorted(mine),
             is_stale=any(r["status"] != "Online" for r in rows),
         )

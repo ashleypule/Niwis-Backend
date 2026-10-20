@@ -18,8 +18,11 @@ def reg() -> Registry:
 
 
 def test_loads_all_tables(reg: Registry) -> None:
-    assert len(reg.datasets) == 15
-    assert reg.modules == ["climate", "drought", "rainfall", "runoff", "vegetation"]
+    assert len(reg.datasets) == 36  # 15 tables of §3–§7, 21 of §8–§16 (2026-10-20); 16_2 is keyed by SWSA (ignored)
+    first = ["climate", "drought", "rainfall", "runoff", "vegetation"]
+    later = ["dams", "surface-water", "groundwater", "groundwater-reserve", "water-quality"]
+    view_only = ["green-drop", "blue-drop", "rwqo", "iwrm"]
+    assert reg.modules == sorted([*first, *later, *view_only])
 
 
 def test_registered_env_tables_are_in_registry(reg: Registry) -> None:
@@ -167,3 +170,25 @@ def test_ident_quotes_registry_names() -> None:
         == '"4_6_streamflow_and_climate_linkage_annual _master"'
     )
     assert ident("5.1_primary_satellite_vegetation_variables_sansa_master").startswith('"5.1_')
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master",
+        "Electrical Conductivity (EC)",
+        "Lead/Cadmium/Chromium",
+        "Orthophosphate (PO43-)",
+        "E. coli",
+        "system:index",
+        "10_2_recharge_supporting _master",
+    ],
+)
+def test_ident_quotes_section_9_to_16_names(name: str) -> None:
+    assert ident(name) == f'"{name}"'
+
+
+@pytest.mark.parametrize("bad", ['a"b', "a;b", "a--b'", "x" * 64])
+def test_ident_still_rejects_quotes_and_statements(bad: str) -> None:
+    with pytest.raises(ValueError):
+        ident(bad)

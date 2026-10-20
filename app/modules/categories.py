@@ -53,12 +53,15 @@ def _decimals(unit: str | None) -> int:
 
 
 def _value_sql(ds: Dataset, column: str) -> str:
-    """The column as double precision (text-stored numbers cast as the registry says)."""
-    expr = ident(column)
+    """The column as double precision (text-stored numbers cast as the registry says; a long-format table's variable
+    read from its value column)."""
+    expr = ds.raw_sql(column)
     col = ds.columns.get(column)
     if col is not None and col.cast == "double":
         expr = f"NULLIF({expr}, '')"
-    return f"({expr})::double precision"
+    elif col is not None and col.cast == "bool_pct":
+        expr = f"CASE WHEN {expr} THEN 100.0 WHEN NOT {expr} THEN 0.0 END"
+    return ds.in_range(column, f"({expr})::double precision")
 
 
 def _raw_period_sql(ds: Dataset) -> str:
@@ -107,6 +110,12 @@ class CategoryService:
         self.module = module
         self.state: AppState = ctx.state
         self.catalogue: Catalogue = get_catalogue()
+        self.module_newest: dict[int, dt.date] = {}  # newest daily record per db module (complete_cap); see refs()
+
+    async def refs(self) -> None:
+        """Load the per-module completeness reference dates (cached by the meta service)."""
+        if not self.module_newest and self.state.db.configured:
+            self.module_newest = await self.state.meta.newest_by_module()
 
     # ---------------------------------------------------------------- lookups
 
@@ -168,13 +177,13 @@ class CategoryService:
         live = [x for x in cat.columns if x.status != "withheld"]
         p = _raw_period_sql(ds)
         exprs = [
-            f"{_value_sql(ds, x.column) if x.kind == 'numeric' else ident(x.column)} IS NOT NULL "
+            f"{_value_sql(ds, x.column) if x.kind == 'numeric' else ds.raw_sql(x.column)} IS NOT NULL "
             f"AND {ds.valid_sql(x.column)}"
             for x in live
         ]
         filtered = (f"max({p}) FILTER (WHERE {e}) AS c{i}" for i, e in enumerate(exprs))
         parts = [f"max({p}) AS c_all", *filtered]
-        sql = f"SELECT {', '.join(parts)} FROM {ds.fq}"
+        sql = f"SELECT {', '.join(parts)} FROM {ds.fq} WHERE {ds.not_future_sql()}"  # rows after today never count
 
         async def load() -> dict[str, dt.date | None]:
             row = await self.state.db.fetchrow(sql)
@@ -195,32 +204,45 @@ class CategoryService:
             d = dt.date.fromisoformat(newest) if newest else None
             return {"": d, **{x.column: d for x in live}}
 
-    def complete_cap(self, res: Resolution) -> dt.date | None:
-        """Start of the latest complete period relative to the newest record in the database (None: no cap)."""
+    def complete_cap(
+        self, res: Resolution, ds: Dataset | None = None, table_newest: dt.date | None = None
+    ) -> dt.date | None:
+        """Start of the latest complete period (None: no cap).
+
+        Complete relative to the newest daily record of the table's database module (6.2's months are complete only
+        when 6.1, the module's daily table, has their last day), or the newest daily record in the database for modules
+        without a daily table; a daily table is also capped at its own newest day (`refs()` must have run)."""
         newest = self.ctx.newest_db
+        if ds is not None and ds.db_module in self.module_newest:
+            mod = self.module_newest[ds.db_module]
+            newest = min(newest, mod) if newest is not None else mod
+        if ds is not None and ds.time.resolution == "daily" and table_newest is not None:
+            newest = min(newest, table_newest) if newest is not None else table_newest
         if newest is None or res == "daily":
             return newest
         return _period_start(latest_complete_period_end(newest, res), res)
 
-    def as_of(self, x: CatColumn, dates: dict[str, dt.date | None]) -> dt.date | None:
+    def as_of(self, x: CatColumn, dates: dict[str, dt.date | None], ds: Dataset | None = None) -> dt.date | None:
         d = dates.get(x.column)
         if d is None:
             return None
         d = _period_start(d, x.resolution)
-        cap = self.complete_cap(x.resolution)
+        cap = self.complete_cap(x.resolution, ds, dates.get(""))
         return min(d, cap) if cap is not None else d
 
     # ---------------------------------------------------------------- /categories
 
     async def categories(self) -> dict[str, Any]:
+        await self.refs()
         tables, newest_all, sources = [], [], []
         for cat in self.catalogue.for_module(self.module):
             dates = await self.column_dates(cat)
+            ds = self.dataset(cat)
             variables = []
             cols = self.view(cat)
             for x in cols:
                 g = cat.group_of(self.module, x.column)
-                a = self.as_of(x, dates) if x.status == "live" else None
+                a = self.as_of(x, dates, ds) if x.status == "live" else None
                 extra: dict[str, Any] = {}
                 if a is not None:
                     extra = {"as_of": iso(a), **self.ctx.stamp(a, x.resolution)}
@@ -244,7 +266,7 @@ class CategoryService:
                         **extra,
                     )
                 )
-            live_dates = [(d, x.resolution) for x in cols if x.status == "live" and (d := self.as_of(x, dates))]
+            live_dates = [(d, x.resolution) for x in cols if x.status == "live" and (d := self.as_of(x, dates, ds))]
             t_as_of, t_res = max(live_dates) if live_dates else (None, "daily")
             res_t: Resolution = "monthly" if t_res == "monthly" else "annual" if t_res == "annual" else "daily"
             counts = {s: sum(1 for x in cols if x.status == s) for s in ("live", "withheld", "duplicate")}
@@ -290,12 +312,12 @@ class CategoryService:
 
     # ---------------------------------------------------------------- /category/{table}/{group}
 
-    def window(self, g: CatGroup, newest: dt.date) -> tuple[dt.date, dt.date]:
+    def window(self, g: CatGroup, newest: dt.date, ds: Dataset | None = None) -> tuple[dt.date, dt.date]:
         """[start, end] for the group: the page period anchored at the table's newest record; annual groups show the
         whole record unless `from` / `to` or a 5Y / 10Y period narrow it (the climate pages' convention)."""
         win = self.ctx.filters.window
         if g.resolution == "annual":
-            cap_y = self.complete_cap("annual")
+            cap_y = self.complete_cap("annual", ds, newest)
             last = min(newest.year, cap_y.year) if cap_y is not None else newest.year
             if win.date_from or win.date_to:
                 y0 = win.date_from.year if win.date_from else HISTORY_START.year
@@ -306,7 +328,7 @@ class CategoryService:
                 y0, y1 = HISTORY_START.year, last
             return dt.date(y0, 1, 1), dt.date(y1, 12, 31)
         if g.resolution == "monthly":  # whole months, ending with the latest complete month the table has
-            cap = self.complete_cap("monthly")
+            cap = self.complete_cap("monthly", ds, newest)
             last_month = min(newest.replace(day=1), cap) if cap is not None else newest.replace(day=1)
             start, end = win.resolve(period_end(last_month, "monthly"), HISTORY_START)
             return start.replace(day=1), end
@@ -365,7 +387,7 @@ class CategoryService:
         # the (district, date) index that is ~12 / 26 rows per district instead of every daily row: the scoped
         # seasonal totals read 156 rows instead of 57 000 (10 484 cold pages, 6.7 s; BACKEND_ISSUES #14).
         first_days: list[Any] = []
-        if ds.time.resolution == "daily" and g.resolution in ("monthly", "annual"):
+        if ds.time.resolution == "daily" and g.resolution in ("monthly", "annual") and ds.repeats_on_first_day:
             freq = "MS" if g.resolution == "monthly" else "YS"
             days = [t.date() for t in pd.date_range(_period_start(start, g.resolution), end, freq=freq)]
             first_days = [x.isoformat() for x in days] if ds.time.kind == "text_date" else days
@@ -416,11 +438,18 @@ class CategoryService:
         assert dist is not None
         names = list({dist.db_name, dist.db_name.lower(), *dist.aliases})
         sql = (
-            f"SELECT DISTINCT ON (p) {period} AS p, {ident(x.column)} AS v FROM {ds.fq} "
-            f"WHERE {ds.range_sql()} AND {loc} = ANY($3::text[]) ORDER BY p, {d} DESC"
+            f"SELECT DISTINCT ON (p) {period} AS p, {ds.raw_sql(x.column)} AS v FROM {ds.fq} "
+            f"WHERE {ds.range_sql()} AND {ds.valid_sql(x.column)} AND {loc} = ANY($3::text[]) "
+            f"AND {ds.raw_sql(x.column)} IS NOT NULL ORDER BY p, {d} DESC"
         )
-        rows = await self.state.db.fetch(sql, *ds.range_args(start, end), names)
-        return pd.Series([r["v"] for r in rows], index=pd.DatetimeIndex([r["p"] for r in rows]), dtype=object)
+
+        async def load() -> pd.Series:
+            rows = await self.state.db.fetch(sql, *ds.range_args(start, end), names)
+            return pd.Series([r["v"] for r in rows], index=pd.DatetimeIndex([r["p"] for r in rows]), dtype=object)
+
+        key = f"cat:class:{ds.table}:{x.column}:{dist.code}:{start}:{end}"
+        res: pd.Series = await self.state.cache.get_or_set(key, self.state.settings.cache_ttl_long_series_s, load)
+        return res
 
     @staticmethod
     def grid(res: Resolution, start: dt.date, end: dt.date, downsample: bool) -> list[pd.Timestamp]:
@@ -431,15 +460,16 @@ class CategoryService:
         return list(pd.date_range(start, end, freq="D"))
 
     async def series(self, table_id: str, group_id: str) -> dict[str, Any]:
+        await self.refs()
         cat = self.category(table_id)
         g = self.group(cat, group_id)
         cols = self.selected(cat, g)
         ds = self.dataset(cat)
         dates = await self.column_dates(cat)
         newest = dates.get("") or self.ctx.newest_db or dt.date.today()
-        start, end = self.window(g, newest)
+        start, end = self.window(g, newest, ds)
         downsample = g.resolution == "daily" and (end - start).days + 1 > self.state.settings.max_series_points
-        cap = self.complete_cap(g.resolution)
+        cap = self.complete_cap(g.resolution, ds, newest)
         single = self.ctx.filters.scope.level == "municipality"
         values: dict[str, pd.Series] = {}
         unavailable: list[c.UnavailableField] = []
@@ -634,17 +664,27 @@ async def prewarm(state: AppState) -> int:
                 svc = CategoryService(ctx, module)
                 for g in cat.groups_for(module):
                     cols = svc.served(g, svc.view(cat))
-                    if cols:  # the same table + columns on two pages share one cache entry
+                    classes = [
+                        x
+                        for x in svc.view(cat)
+                        if x.column in g.columns and x.kind == "categorical" and x.status == "live"
+                    ]
+                    if cols or (classes and scope.level == "municipality"):  # same table + columns: one cache entry
                         key = (f"{scope.level}:{scope.id}", cat.table, ",".join(x.column for x in cols))
                         jobs.setdefault(key, (svc, cat, g))
 
     async def one(svc: CategoryService, cat: Category, g: CatGroup) -> bool:
         async with sem:
             try:
+                await svc.refs()
                 dts = await svc.column_dates(cat)
-                start, end = svc.window(g, dts.get("") or newest or dt.date.today())
+                start, end = svc.window(g, dts.get("") or newest or dt.date.today(), svc.dataset(cat))
                 down = g.resolution == "daily" and (end - start).days + 1 > state.settings.max_series_points
                 await svc.scope_group(svc.dataset(cat), g, svc.served(g, svc.view(cat)), start, end, down)
+                if svc.ctx.filters.scope.level == "municipality":  # class columns are served for one district
+                    for x in svc.view(cat):
+                        if x.column in g.columns and x.kind == "categorical" and x.status == "live":
+                            await svc.district_categories(svc.dataset(cat), x, start, end)
                 return True
             except Exception:
                 log.exception("category pre-warm failed", extra={"table": cat.table, "group": g.id})

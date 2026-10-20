@@ -1664,3 +1664,3526 @@
 ]
 ```
 </details>
+
+# Tables added after Phase 0 (profiled 2026-10-20 13:53 UTC by `scripts/inventory.py --append`)
+
+> Same method as above, read-only. Long-format tables (one row per variable) are profiled as stored; their
+> variables are listed in docs/CATEGORY_CATALOGUE.md. Plausibility results: docs/DATA_GAPS.md §21.
+
+## Overview of the added tables
+
+| Module | Table | Rows | Time column | Resolution | Range | Locations | Coords | Shape |
+| --- | --- | ---: | --- | --- | --- | ---: | --- | --- |
+| Module 10 | `12.1_physical_water_quality_master` | 16,744 | date | monthly | 2000-01-25 → 2026-10-25 | 52 | no | wide (7 numeric measure columns) |
+| Module 10 | `12.2_chemical_water_quality_master` | 16,744 | date | monthly | 2000-01-25 → 2026-10-25 | 52 | no | wide (16 numeric measure columns) |
+| Module 10 | `12.3_biological_water_quality_master` | 16,744 | date | monthly | 2000-01-25 → 2026-10-25 | 52 | no | wide (7 numeric measure columns) |
+| Module 10 | `12.4_sansa_water_quality_master` | 16,744 | date | monthly | 2000-01-25 → 2026-10-25 | 52 | no | wide (5 numeric measure columns) |
+| Module 11 | `13.1_wastewater_effluent_quality_master` | 16,744 | year+month | monthly | 2000-01-01 → 2026-10-01 | 52 | no | wide (15 numeric measure columns) |
+| Module 11 | `13.2_WWTW_operational_master` | 16,744 | year+month | monthly | 2000-01-01 → 2026-10-01 | 52 | no | wide (8 numeric measure columns) |
+| Module 11 | `13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master` | 16,744 | date | monthly | 2000-01-01 → 2026-10-01 | 52 | no | wide (4 numeric measure columns) |
+| Module 12 | `14.1_SANS_241_compliance_master` | 16,744 | year+month | monthly | 2000-01-01 → 2026-10-01 | 52 | no | wide (15 numeric measure columns) |
+| Module 13 | `15.1_ecological_variables_master` | 16,744 | year+month | monthly | 2000-01-01 → 2026-10-01 | 52 | no | wide (6 numeric measure columns) |
+| Module 13 | `15.2_chemical_RWQO_variables_master` | 16,744 | created_at | unknown (single timestamp) | 2026-10-20 → 2026-10-20 | 52 | no | wide (8 numeric measure columns) |
+| Module 13 | `15.3_hydrological_RWQO_variables_master` | 16,744 | created_at | unknown (single timestamp) | 2026-10-20 → 2026-10-20 | 52 | no | wide (6 numeric measure columns) |
+| Module 14 | `16_1_complete_wrm_matrix_master` | 1,352 | year | annual | 2000-01-01 → 2025-01-01 | 52 | no | wide (16 numeric measure columns) |
+| Module 5 | `7.2_derived_runoff_indicators_master` | 16,692 | date | monthly | 2000-01-25 → 2026-09-25 | 52 | no | wide (10 numeric measure columns) |
+| Module 6 | `8_1_reservoir_operational_master` | 522,686 | date | daily | 2000-01-01 → 2026-12-31 | 53 | no | wide (14 numeric measure columns) |
+| Module 7 | `9_1_hydrological_station_master` | 507,728 | date | daily | 2000-01-01 → 2026-09-24 | 52 | no | wide (12 numeric measure columns) |
+| Module 7 | `9_2_catchment_characteristics_master` | 16,744 | date | monthly | 2000-01-01 → 2026-10-01 | 52 | no | wide (16 numeric measure columns) |
+| Module 7 | `9_3_sansa_earth_observation_master` | 16,692 | date | monthly | 2000-01-01 → 2026-09-01 | 52 | no | wide (6 numeric measure columns) |
+| Module 8 | `10_1_borehole_and_aquifer_master` | 71,448 | date | 16-day composite / semi-monthly | 2000-01-02 → 2026-12-31 | 52 | no | long (variable: variable_name, value: value) |
+| Module 8 | `10_2_recharge_supporting _master` | 16,848 | date | monthly | 2000-01-31 → 2026-12-31 | 52 | no | wide (6 numeric measure columns) |
+| Module 9 | `11_1_hydrogeological` | 16,744 | date | monthly | 2000-01-01 → 2026-10-01 | 52 | no | long (variable: variable, value: value) |
+| Module 9 | `11.2_recharge_and_discharge` | 50,232 | date | monthly | 2000-01-25 → 2026-10-25 | 52 | no | wide (6 numeric measure columns) |
+| Module 9 | `11.3_aquifer_sustainability` | 16,744 | date | monthly | 2000-01-25 → 2026-10-25 | 52 | no | wide (6 numeric measure columns) |
+
+## `12.1_physical_water_quality_master` (Module 10)
+
+- Rows: **16,744** · size 4.8 MB
+- Shape: wide (7 numeric measure columns)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_physical_water_quality_district_date ON public."12.1_physical_water_quality_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality), `province_name` (province); coordinates: **no**
+- Time: `date` · monthly · 2000-01-25 → 2026-10-25 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `province_name` 🗺 | text | 0 | 9 | — | — | — | — | KwaZulu-Natal (3,542), Eastern Cape (2,576), Western Cape (1,932), Gauteng (1,610), Limpopo (1,610), Northern Cape (1,610), Free State (1,610), North West (1,288) |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 2 (1,404), 4 (1,404), 8 (1,404), 10 (1,404), 7 (1,404), 9 (1,404) |
+| `Temperature` | double precision | 0 | 1,000 | 15 | 26.99 | 20.99 | °C |  |
+| `Turbidity` | double precision | 0 | 1,000 | 2 | 16.98 | 9.492 | — |  |
+| `Colour` | double precision | 0 | 1,000 | 5 | 29.98 | 17.49 | — |  |
+| `Electrical Conductivity (EC)` | double precision | 0 | 1,000 | 45 | 119.9 | 82.46 | — |  |
+| `Total Dissolved Solids (TDS)` | double precision | 0 | 1,000 | 300 | 499.8 | 399.9 | — |  |
+| `Total Suspended Solids (TSS)` | double precision | 0 | 1,000 | 3 | 22.98 | 12.99 | — |  |
+| `Salinity` | double precision | 0 | 1,000 | 350 | 599.8 | 474.9 | — |  |
+| `date` | date | 0 | 322 | 2000-01-25 | 2026-10-25 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Vhembe",
+  "province_name": "Limpopo",
+  "year": 2000,
+  "month": 8,
+  "Temperature": 20.11,
+  "Turbidity": 8.39,
+  "Colour": 15.65,
+  "Electrical Conductivity (EC)": 76.95,
+  "Total Dissolved Solids (TDS)": 385.2,
+  "Total Suspended Solids (TSS)": 11.52,
+  "Salinity": 456.5,
+  "date": "2000-08-25"
+ },
+ {
+  "district_name": "Vhembe",
+  "province_name": "Limpopo",
+  "year": 2002,
+  "month": 1,
+  "Temperature": 24.29,
+  "Turbidity": 13.61,
+  "Colour": 24.35,
+  "Electrical Conductivity (EC)": 103.05,
+  "Total Dissolved Solids (TDS)": 454.8,
+  "Total Suspended Solids (TSS)": 18.48,
+  "Salinity": 543.5,
+  "date": "2002-01-25"
+ },
+ {
+  "district_name": "Vhembe",
+  "province_name": "Limpopo",
+  "year": 2003,
+  "month": 6,
+  "Temperature": 22.62,
+  "Turbidity": 11.53,
+  "Colour": 20.88,
+  "Electrical Conductivity (EC)": 92.62,
+  "Total Dissolved Solids (TDS)": 427.0,
+  "Total Suspended Solids (TSS)": 15.7,
+  "Salinity": 508.75,
+  "date": "2003-06-25"
+ },
+ {
+  "district_name": "Vhembe",
+  "province_name": "Limpopo",
+  "year": 2004,
+  "month": 11,
+  "Temperature": 23.62,
+  "Turbidity": 12.77,
+  "Colour": 22.95,
+  "Electrical Conductivity (EC)": 98.85,
+  "Total Dissolved Solids (TDS)": 443.6,
+  "Total Suspended Solids (TSS)": 17.36,
+  "Salinity": 529.5,
+  "date": "2004-11-25"
+ },
+ {
+  "district_name": "Vhembe",
+  "province_name": "Limpopo",
+  "year": 2006,
+  "month": 4,
+  "Temperature": 15.59,
+  "Turbidity": 2.73,
+  "Colour": 6.22,
+  "Electrical Conductivity (EC)": 48.67,
+  "Total Dissolved Solids (TDS)": 309.8,
+  "Total Suspended Solids (TSS)": 3.98,
+  "Salinity": 362.25,
+  "date": "2006-04-25"
+ }
+]
+```
+</details>
+
+## `12.2_chemical_water_quality_master` (Module 10)
+
+- Rows: **16,744** · size 6.9 MB
+- Shape: wide (16 numeric measure columns)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_chemical_water_quality_district_date ON public."12.2_chemical_water_quality_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-25 → 2026-10-25 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `pH` | double precision | 0 | 151 | 6.8 | 8.3 | 7.55 | — |  |
+| `Dissolved Oxygen (DO)` | double precision | 0 | 351 | 6 | 9.5 | 7.751 | — |  |
+| `BOD5` | double precision | 0 | 401 | 1 | 5 | 3.001 | — |  |
+| `COD` | double precision | 0 | 1,000 | 5 | 24.98 | 15.01 | — |  |
+| `Ammonia (NH3-N)` | double precision | 0 | 401 | 0.05 | 0.45 | 0.2501 | — |  |
+| `Nitrate (NO3-N)` | double precision | 0 | 501 | 0.5 | 5.5 | 3.001 | — |  |
+| `Nitrite (NO2-N)` | double precision | 0 | 101 | 0.01 | 0.11 | 0.06 | — |  |
+| `Total Phosphorus (TP)` | double precision | 0 | 301 | 0.02 | 0.32 | 0.1701 | — |  |
+| `Orthophosphate (PO43-)` | double precision | 0 | 201 | 0.01 | 0.21 | 0.1101 | — |  |
+| `Lead/Cadmium/Chromium` | double precision | 0 | 451 | 0.5 | 5 | 2.751 | — |  |
+| `Arsenic/Mercury` | double precision | 0 | 201 | 0.1 | 2.1 | 1.101 | — |  |
+| `Iron/Manganese` | double precision | 0 | 151 | 0.1 | 1.6 | 0.8505 | — |  |
+| `TOC` | double precision | 0 | 800 | 2 | 9.99 | 6.002 | — |  |
+| `Sulphate` | double precision | 0 | 1,000 | 20 | 139.9 | 80.03 | — |  |
+| `Chloride` | double precision | 0 | 1,000 | 15 | 164.8 | 90.04 | — |  |
+| `Fluoride` | double precision | 0 | 121 | 0.2 | 1.4 | 0.8003 | — |  |
+| `date` | date | 0 | 322 | 2000-01-25 | 2026-10-25 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Alfred Nzo",
+  "year": 2000,
+  "month": 1,
+  "pH": 7.75,
+  "Dissolved Oxygen (DO)": 8.21,
+  "BOD5": 3.53,
+  "COD": 17.64,
+  "Ammonia (NH3-N)": 0.303,
+  "Nitrate (NO3-N)": 3.66,
+  "Nitrite (NO2-N)": 0.073,
+  "Total Phosphorus (TP)": 0.21,
+  "Orthophosphate (PO43-)": 0.136,
+  "Lead/Cadmium/Chromium": 3.34,
+  "Arsenic/Mercury": 1.36,
+  "Iron/Manganese": 1.05,
+  "TOC": 7.06,
+  "Sulphate": 95.84,
+  "Chloride": 109.8,
+  "Fluoride": 0.96,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Amajuba",
+  "year": 2000,
+  "month": 1,
+  "pH": 7.82,
+  "Dissolved Oxygen (DO)": 8.37,
+  "BOD5": 3.71,
+  "COD": 18.56,
+  "Ammonia (NH3-N)": 0.321,
+  "Nitrate (NO3-N)": 3.89,
+  "Nitrite (NO2-N)": 0.078,
+  "Total Phosphorus (TP)": 0.223,
+  "Orthophosphate (PO43-)": 0.146,
+  "Lead/Cadmium/Chromium": 3.55,
+  "Arsenic/Mercury": 1.46,
+  "Iron/Manganese": 1.12,
+  "TOC": 7.42,
+  "Sulphate": 101.36,
+  "Chloride": 116.7,
+  "Fluoride": 1.01,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Amathole",
+  "year": 2000,
+  "month": 1,
+  "pH": 6.96,
+  "Dissolved Oxygen (DO)": 6.37,
+  "BOD5": 1.42,
+  "COD": 7.1,
+  "Ammonia (NH3-N)": 0.092,
+  "Nitrate (NO3-N)": 1.02,
+  "Nitrite (NO2-N)": 0.021,
+  "Total Phosphorus (TP)": 0.052,
+  "Orthophosphate (PO43-)": 0.031,
+  "Lead/Cadmium/Chromium": 0.97,
+  "Arsenic/Mercury": 0.31,
+  "Iron/Manganese": 0.26,
+  "TOC": 2.84,
+  "Sulphate": 32.6,
+  "Chloride": 30.75,
+  "Fluoride": 0.33,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Bojanala",
+  "year": 2000,
+  "month": 1,
+  "pH": 7.62,
+  "Dissolved Oxygen (DO)": 7.92,
+  "BOD5": 3.19,
+  "COD": 15.96,
+  "Ammonia (NH3-N)": 0.269,
+  "Nitrate (NO3-N)": 3.24,
+  "Nitrite (NO2-N)": 0.065,
+  "Total Phosphorus (TP)": 0.184,
+  "Orthophosphate (PO43-)": 0.12,
+  "Lead/Cadmium/Chromium": 2.97,
+  "Arsenic/Mercury": 1.2,
+  "Iron/Manganese": 0.92,
+  "TOC": 6.38,
+  "Sulphate": 85.76,
+  "Chloride": 97.2,
+  "Fluoride": 0.86,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Buffalo City",
+  "year": 2000,
+  "month": 1,
+  "pH": 7.39,
+  "Dissolved Oxygen (DO)": 7.38,
+  "BOD5": 2.58,
+  "COD": 12.9,
+  "Ammonia (NH3-N)": 0.208,
+  "Nitrate (NO3-N)": 2.48,
+  "Nitrite (NO2-N)": 0.05,
+  "Total Phosphorus (TP)": 0.138,
+  "Orthophosphate (PO43-)": 0.089,
+  "Lead/Cadmium/Chromium": 2.28,
+  "Arsenic/Mercury": 0.89,
+  "Iron/Manganese": 0.69,
+  "TOC": 5.16,
+  "Sulphate": 67.4,
+  "Chloride": 74.25,
+  "Fluoride": 0.67,
+  "date": "2000-01-25"
+ }
+]
+```
+</details>
+
+## `12.3_biological_water_quality_master` (Module 10)
+
+- Rows: **16,744** · size 4.4 MB
+- Shape: wide (7 numeric measure columns)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_biological_water_quality_district_date ON public."12.3_biological_water_quality_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-25 → 2026-10-25 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `E. coli` | double precision | 0 | 1,000 | 10 | 159.8 | 84.55 | — |  |
+| `Total coliforms` | double precision | 0 | 1,000 | 50 | 549.5 | 298.5 | — |  |
+| `Chlorophyll-a` | double precision | 0 | 1,000 | 2 | 26.98 | 14.43 | — |  |
+| `Blue-green algae` | double precision | 0 | 1,000 | 1,000 | 1.598e+04 | 8,455 | — |  |
+| `Microcystin` | double precision | 0 | 251 | 0.1 | 2.6 | 1.343 | — |  |
+| `Macroinvertebrate index (SASS5)` | double precision | 0 | 1,000 | 60 | 139.9 | 99.76 | — (dimensionless) |  |
+| `Pathogens` | double precision | 0 | 501 | 0 | 5 | 2.485 | — |  |
+| `date` | date | 0 | 322 | 2000-01-25 | 2026-10-25 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Alfred Nzo",
+  "year": 2000,
+  "month": 1,
+  "E. coli": 87.55,
+  "Total coliforms": 308.5,
+  "Chlorophyll-a": 14.93,
+  "Blue-green algae": 8755.0,
+  "Microcystin": 1.39,
+  "Macroinvertebrate index (SASS5)": 101.36,
+  "Pathogens": 2.58,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Amajuba",
+  "year": 2000,
+  "month": 1,
+  "E. coli": 93.55,
+  "Total coliforms": 328.5,
+  "Chlorophyll-a": 15.93,
+  "Blue-green algae": 9355.0,
+  "Microcystin": 1.49,
+  "Macroinvertebrate index (SASS5)": 104.56,
+  "Pathogens": 2.79,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Amathole",
+  "year": 2000,
+  "month": 1,
+  "E. coli": 140.65,
+  "Total coliforms": 485.5,
+  "Chlorophyll-a": 23.77,
+  "Blue-green algae": 14065.0,
+  "Microcystin": 2.28,
+  "Macroinvertebrate index (SASS5)": 129.68,
+  "Pathogens": 4.36,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Bojanala",
+  "year": 2000,
+  "month": 1,
+  "E. coli": 47.35,
+  "Total coliforms": 174.5,
+  "Chlorophyll-a": 8.22,
+  "Blue-green algae": 4735.0,
+  "Microcystin": 0.72,
+  "Macroinvertebrate index (SASS5)": 79.92,
+  "Pathogens": 1.25,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Buffalo City",
+  "year": 2000,
+  "month": 1,
+  "E. coli": 35.8,
+  "Total coliforms": 136.0,
+  "Chlorophyll-a": 6.3,
+  "Blue-green algae": 3580.0,
+  "Microcystin": 0.53,
+  "Macroinvertebrate index (SASS5)": 73.76,
+  "Pathogens": 0.86,
+  "date": "2000-01-25"
+ }
+]
+```
+</details>
+
+## `12.4_sansa_water_quality_master` (Module 10)
+
+- Rows: **16,744** · size 3.9 MB
+- Shape: wide (5 numeric measure columns)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_sansa_water_quality_district_date ON public."12.4_sansa_water_quality_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-25 → 2026-10-25 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `Turbidity` | double precision | 0 | 1,000 | 3 | 27.98 | 15.45 | — |  |
+| `Chlorophyll-a` | double precision | 0 | 1,000 | 2.5 | 32.47 | 17.44 | — |  |
+| `Cyanobacterial bloom` | double precision | 0 | 1,000 | 0 | 84.92 | 42.32 | — |  |
+| `CDOM` | double precision | 0 | 1,000 | 10 | 99.91 | 54.81 | — |  |
+| `Total Suspended Matter (TSM)` | double precision | 0 | 1,000 | 5 | 44.96 | 24.92 | — |  |
+| `date` | date | 0 | 322 | 2000-01-25 | 2026-10-25 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Vhembe",
+  "year": 2002,
+  "month": 5,
+  "Turbidity": 19.53,
+  "Chlorophyll-a": 22.33,
+  "Cyanobacterial bloom": 56.19,
+  "CDOM": 69.49,
+  "Total Suspended Matter (TSM)": 31.44,
+  "date": "2002-05-25"
+ },
+ {
+  "district_name": "Vhembe",
+  "year": 2008,
+  "month": 6,
+  "Turbidity": 17.57,
+  "Chlorophyll-a": 19.99,
+  "Cyanobacterial bloom": 49.55,
+  "CDOM": 62.47,
+  "Total Suspended Matter (TSM)": 28.32,
+  "date": "2008-06-25"
+ },
+ {
+  "district_name": "Vhembe",
+  "year": 2014,
+  "month": 7,
+  "Turbidity": 16.33,
+  "Chlorophyll-a": 18.49,
+  "Cyanobacterial bloom": 45.3,
+  "CDOM": 57.97,
+  "Total Suspended Matter (TSM)": 26.32,
+  "date": "2014-07-25"
+ },
+ {
+  "district_name": "Vhembe",
+  "year": 2020,
+  "month": 8,
+  "Turbidity": 15.83,
+  "Chlorophyll-a": 17.89,
+  "Cyanobacterial bloom": 43.61,
+  "CDOM": 56.17,
+  "Total Suspended Matter (TSM)": 25.52,
+  "date": "2020-08-25"
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "year": 2000,
+  "month": 1,
+  "Turbidity": 6.03,
+  "Chlorophyll-a": 6.13,
+  "Cyanobacterial bloom": 10.29,
+  "CDOM": 20.89,
+  "Total Suspended Matter (TSM)": 9.84,
+  "date": "2000-01-25"
+ }
+]
+```
+</details>
+
+## `13.1_wastewater_effluent_quality_master` (Module 11)
+
+- Rows: **16,744** · size 6.4 MB
+- Shape: wide (15 numeric measure columns)
+- Primary key: `district_name`, `year`, `month`
+- Indexes: `CREATE UNIQUE INDEX wastewater_effluent_pk ON public."13.1_wastewater_effluent_quality_master" USING btree (district_name, year, month)`; `CREATE INDEX idx_13_1_wastewater_year_month ON public."13.1_wastewater_effluent_quality_master" USING btree (year, month)`; `CREATE INDEX idx_13_1_wastewater_shapeid ON public."13.1_wastewater_effluent_quality_master" USING btree ("shapeID")`; `CREATE INDEX idx_13_1_wastewater_bod5 ON public."13.1_wastewater_effluent_quality_master" USING btree ("BOD5")`; `CREATE INDEX idx_13_1_wastewater_cod ON public."13.1_wastewater_effluent_quality_master" USING btree ("COD")`; `CREATE INDEX idx_13_1_wastewater_ecoli ON public."13.1_wastewater_effluent_quality_master" USING btree ("E_coli")`; `CREATE INDEX idx_13_1_wastewater_turbidity ON public."13.1_wastewater_effluent_quality_master" USING btree (turbidity)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `year+month` · monthly · 2000-01-01 → 2026-10-01 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `shapeID` | text NOT NULL | 0 | 52 | — | — | — | — | 47623444B1265322146951, 47623444B12889843225205, 47623444B15418766532839, 47623444B21298621424908 |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `temperature` | double precision | 0 | 16,692 | 6.226 | 51.2 | 27.74 | °C |  |
+| `turbidity` | double precision | 0 | 16,732 | 0.07515 | 1.174 | 0.3883 | — |  |
+| `ec_salinity` | double precision | 0 | 16,732 | 0.07763 | 0.7889 | 0.1486 | — |  |
+| `tss` | double precision | 0 | 16,732 | 0.03033 | 0.8081 | 0.1033 | — |  |
+| `ph` | double precision | 0 | 16,732 | -0.5365 | 3.332 | 0.5525 | — |  |
+| `do` | double precision | 0 | 16,732 | -1.198 | 1.904 | -0.3856 | — |  |
+| `BOD5` | double precision | 0 | 16,732 | 0.9287 | 10.05 | 2.781 | — |  |
+| `COD` | double precision | 0 | 16,732 | 0.02535 | 3.123 | 0.7846 | — |  |
+| `Ammonia_NH3_N` | double precision | 0 | 16,732 | -1.632 | 7.651 | 1.607 | — |  |
+| `Total_Inorganic_Nitrogen` | double precision | 0 | 16,732 | 0.2034 | 2.381 | 1.193 | — |  |
+| `Total_Phosphorus` | double precision | 0 | 16,732 | 0.9548 | 10.89 | 3 | — |  |
+| `Heavy_Metals` | double precision | 0 | 16,732 | 1.073 | 2.404 | 1.519 | — |  |
+| `E_coli` | double precision | 0 | 16,732 | 0.02241 | 5.486 | 0.3039 | — |  |
+| `Faecal_coliforms` | double precision | 0 | 16,732 | 0.008335 | 1.828 | 0.1093 | — |  |
+| `Helminth_eggs` | double precision | 0 | 16,732 | 0.01853 | 2.448 | 0.1454 | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 1,
+  "temperature": 28.5618877327896,
+  "turbidity": 0.654837798282929,
+  "ec_salinity": 0.128027337411767,
+  "tss": 0.0590460588778634,
+  "ph": 0.613734293553749,
+  "do": -0.655108199303532,
+  "BOD5": 5.25552170702602,
+  "COD": 0.403048289498112,
+  "Ammonia_NH3_N": 1.8391412124688,
+  "Total_Inorganic_Nitrogen": 0.899002013386342,
+  "Total_Phosphorus": 4.53205434022668,
+  "Heavy_Metals": 1.85288701645735,
+  "E_coli": 0.240678098293062,
+  "Faecal_coliforms": 0.0658245150130388,
+  "Helminth_eggs": 0.16519218761509
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 2,
+  "temperature": 28.5618877327896,
+  "turbidity": 0.55432687110793,
+  "ec_salinity": 0.154030730398721,
+  "tss": 0.0908179745711637,
+  "ph": 0.708704007229847,
+  "do": -0.535497056475916,
+  "BOD5": 3.72569722881597,
+  "COD": 0.419404359073074,
+  "Ammonia_NH3_N": 1.5076225264729,
+  "Total_Inorganic_Nitrogen": 0.962215875307095,
+  "Total_Phosphorus": 3.45252004988558,
+  "Heavy_Metals": 1.81209979225089,
+  "E_coli": 0.174717087830642,
+  "Faecal_coliforms": 0.0435418282432041,
+  "Helminth_eggs": 0.164988187475763
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 3,
+  "temperature": 27.0986189467775,
+  "turbidity": 0.66684556857745,
+  "ec_salinity": 0.123606046096674,
+  "tss": 0.0577945964775005,
+  "ph": 0.63214271729253,
+  "do": -0.660046597647396,
+  "BOD5": 5.40037434049586,
+  "COD": 0.362516487154741,
+  "Ammonia_NH3_N": 1.7455163803783,
+  "Total_Inorganic_Nitrogen": 0.925414714703779,
+  "Total_Phosphorus": 4.83590964390019,
+  "Heavy_Metals": 1.9745819543856,
+  "E_coli": 0.228294312019651,
+  "Faecal_coliforms": 0.0522173403187225,
+  "Helminth_eggs": 0.183448562303053
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 4,
+  "temperature": 22.9047155128616,
+  "turbidity": 0.569891671634076,
+  "ec_salinity": 0.119168292486042,
+  "tss": 0.0631264374471957,
+  "ph": 0.495755927782267,
+  "do": -0.569402236716691,
+  "BOD5": 3.89637549111877,
+  "COD": 0.457999649712804,
+  "Ammonia_NH3_N": 1.85868727979014,
+  "Total_Inorganic_Nitrogen": 1.09865870882307,
+  "Total_Phosphorus": 4.1629325759189,
+  "Heavy_Metals": 1.86016162433051,
+  "E_coli": 0.338516570226734,
+  "Faecal_coliforms": 0.0577690734223219,
+  "Helminth_eggs": 0.106972915849849
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 5,
+  "temperature": 17.7050174134205,
+  "turbidity": 0.506124872003972,
+  "ec_salinity": 0.0776341470165087,
+  "tss": 0.0467694041126353,
+  "ph": 0.220056752025046,
+  "do": -0.500831691234275,
+  "BOD5": 3.29325196572853,
+  "COD": 0.327493395582736,
+  "Ammonia_NH3_N": 2.73650390060676,
+  "Total_Inorganic_Nitrogen": 1.25437133799638,
+  "Total_Phosphorus": 4.47115079794832,
+  "Heavy_Metals": 1.99412237071533,
+  "E_coli": 5.48634064439438,
+  "Faecal_coliforms": 0.104817683392448,
+  "Helminth_eggs": 0.231249170179894
+ }
+]
+```
+</details>
+
+## `13.2_WWTW_operational_master` (Module 11)
+
+- Rows: **16,744** · size 6.9 MB
+- Shape: wide (8 numeric measure columns)
+- Primary key: `district_name`, `year`, `month`
+- Indexes: `CREATE UNIQUE INDEX wwtw_operational_pk ON public."13.2_WWTW_operational_master" USING btree (district_name, year, month)`; `CREATE INDEX idx_13_2_wwtw_year_month ON public."13.2_WWTW_operational_master" USING btree (year, month)`; `CREATE INDEX idx_13_2_wwtw_shapeid ON public."13.2_WWTW_operational_master" USING btree ("shapeID")`; `CREATE INDEX idx_13_2_wwtw_design_capacity ON public."13.2_WWTW_operational_master" USING btree (design_capacity)`; `CREATE INDEX idx_13_2_wwtw_influent_flow ON public."13.2_WWTW_operational_master" USING btree (influent_flow_rate)`; `CREATE INDEX idx_13_2_wwtw_power_consumption ON public."13.2_WWTW_operational_master" USING btree (power_consumption)`; `CREATE INDEX idx_13_2_wwtw_sludge_production ON public."13.2_WWTW_operational_master" USING btree (sludge_production)`; `CREATE INDEX idx_13_2_wwtw_chlorine_dosing ON public."13.2_WWTW_operational_master" USING btree (chlorine_dosing)`; `CREATE INDEX idx_13_2_wwtw_district ON public."13.2_WWTW_operational_master" USING btree (district_name)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `year+month` · monthly · 2000-01-01 → 2026-10-01 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `shapeID` | text NOT NULL | 0 | 52 | — | — | — | — | 47623444B1265322146951, 47623444B12889843225205, 47623444B15418766532839, 47623444B21298621424908 |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `chlorine_dosing` | double precision | 0 | 1 | 2.5 | 2.5 | 2.5 | — | 2.5 (16,744) |
+| `design_capacity` | double precision | 0 | 16,732 | 1.47e+05 | 8.486e+05 | 2.468e+05 | — |  |
+| `hydraulic_loading_rate` | double precision | 0 | 16,732 | 79.32 | 79.88 | 79.59 | — |  |
+| `hydraulic_retention_time` | double precision | 0 | 16,732 | 15.02 | 15.13 | 15.08 | — |  |
+| `inflow_infiltration` | double precision | 0 | 16,732 | 1.399e+04 | 8.134e+04 | 2.358e+04 | m³/s |  |
+| `influent_flow_rate` | double precision | 0 | 16,732 | 1.166e+05 | 6.778e+05 | 1.965e+05 | m³/s |  |
+| `power_consumption` | double precision | 0 | 16,732 | 5.246e+04 | 3.05e+05 | 8.841e+04 | — |  |
+| `sludge_production` | double precision | 0 | 16,732 | 1,749 | 1.017e+04 | 2,947 | — |  |
+| `system:index` | text | 0 | 2,898 | — | — | — | — (dimensionless) | 5_16, 5_8, 4_241, 3_221 |
+| `.geo` | jsonb | 0 | 1 | — | — | — | — | {'type': 'MultiPoint', 'coordinates': []} (16,744) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 1,
+  "chlorine_dosing": 2.5,
+  "design_capacity": 304672.352048814,
+  "hydraulic_loading_rate": 79.6717785538217,
+  "hydraulic_retention_time": 15.0617950519248,
+  "inflow_infiltration": 29128.5457966861,
+  "influent_flow_rate": 242737.881639051,
+  "power_consumption": 109232.046737573,
+  "sludge_production": 3641.06822458577,
+  "system:index": "0_0",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 2,
+  "chlorine_dosing": 2.5,
+  "design_capacity": 296097.287340784,
+  "hydraulic_loading_rate": 79.662273164006,
+  "hydraulic_retention_time": 15.0635922418317,
+  "inflow_infiltration": 28305.3395847152,
+  "influent_flow_rate": 235877.829872627,
+  "power_consumption": 106145.023442682,
+  "sludge_production": 3538.16744808941,
+  "system:index": "0_1",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 3,
+  "chlorine_dosing": 2.5,
+  "design_capacity": 294891.689122587,
+  "hydraulic_loading_rate": 79.6608924439426,
+  "hydraulic_retention_time": 15.063853331099,
+  "inflow_infiltration": 28189.6021557684,
+  "influent_flow_rate": 234913.35129807,
+  "power_consumption": 105711.008084131,
+  "sludge_production": 3523.70026947105,
+  "system:index": "0_2",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 4,
+  "chlorine_dosing": 2.5,
+  "design_capacity": 249121.855413429,
+  "hydraulic_loading_rate": 79.5985900159822,
+  "hydraulic_retention_time": 15.0756439248366,
+  "inflow_infiltration": 23795.6981196892,
+  "influent_flow_rate": 198297.484330743,
+  "power_consumption": 89233.8679488346,
+  "sludge_production": 2974.46226496115,
+  "system:index": "0_3",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 5,
+  "chlorine_dosing": 2.5,
+  "design_capacity": 151405.248948777,
+  "hydraulic_loading_rate": 79.3395209169146,
+  "hydraulic_retention_time": 15.1248707596389,
+  "inflow_infiltration": 14414.9038990826,
+  "influent_flow_rate": 120124.199159022,
+  "power_consumption": 54055.8896215597,
+  "sludge_production": 1801.86298738532,
+  "system:index": "0_4",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ }
+]
+```
+</details>
+
+## `13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master` (Module 11)
+
+- Rows: **16,744** · size 4.9 MB
+- Shape: wide (4 numeric measure columns)
+- Primary key: `district_name`, `year`, `month`
+- Indexes: `CREATE UNIQUE INDEX meteorological_13_3_pk ON public."13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master" USING btree (district_name, year, month)`; `CREATE INDEX idx_13_3_meteorological_year_month ON public."13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master" USING btree (year, month)`; `CREATE INDEX idx_13_3_meteorological_district ON public."13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master" USING btree (district_name)`; `CREATE INDEX idx_13_3_meteorological_rainfall ON public."13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master" USING btree ("Rainfall_mm")`; `CREATE INDEX idx_13_3_meteorological_flood ON public."13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master" USING btree ("Flood_events_proxy")`; `CREATE INDEX idx_13_3_meteorological_temperature ON public."13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master" USING btree ("Temperature_C")`; `CREATE INDEX idx_13_3_meteorological_evaporation ON public."13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master" USING btree ("Evaporation_mm")`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-01 → 2026-10-01 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `date` | date NOT NULL | 0 | 322 | 2000-01-01 | 2026-10-01 | — | — |  |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `Rainfall_mm` | double precision | 0 | 1 | 45 | 45 | 45 | mm | 45 (16,744) |
+| `Flood_events_proxy` | double precision | 0 | 1 | 5.4 | 5.4 | 5.4 | — | 5.4 (16,744) |
+| `Temperature_C` | double precision | 0 | 1 | 20 | 20 | 20 | °C | 20 (16,744) |
+| `Evaporation_mm` | double precision | 0 | 1 | 100 | 100 | 100 | mm | 100 (16,744) |
+| `source` | text | 0 | 1 | — | — | — | — | CHIRPS & ERA5-Land / GEE (16,744) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "date": "2000-01-01",
+  "district_name": "Alfred Nzo",
+  "year": 2000,
+  "month": 1,
+  "Rainfall_mm": 45.0,
+  "Flood_events_proxy": 5.4,
+  "Temperature_C": 20.0,
+  "Evaporation_mm": 100.0,
+  "source": "CHIRPS & ERA5-Land / GEE"
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "Amajuba",
+  "year": 2000,
+  "month": 1,
+  "Rainfall_mm": 45.0,
+  "Flood_events_proxy": 5.4,
+  "Temperature_C": 20.0,
+  "Evaporation_mm": 100.0,
+  "source": "CHIRPS & ERA5-Land / GEE"
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "Amathole",
+  "year": 2000,
+  "month": 1,
+  "Rainfall_mm": 45.0,
+  "Flood_events_proxy": 5.4,
+  "Temperature_C": 20.0,
+  "Evaporation_mm": 100.0,
+  "source": "CHIRPS & ERA5-Land / GEE"
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "Bojanala",
+  "year": 2000,
+  "month": 1,
+  "Rainfall_mm": 45.0,
+  "Flood_events_proxy": 5.4,
+  "Temperature_C": 20.0,
+  "Evaporation_mm": 100.0,
+  "source": "CHIRPS & ERA5-Land / GEE"
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "Buffalo City",
+  "year": 2000,
+  "month": 1,
+  "Rainfall_mm": 45.0,
+  "Flood_events_proxy": 5.4,
+  "Temperature_C": 20.0,
+  "Evaporation_mm": 100.0,
+  "source": "CHIRPS & ERA5-Land / GEE"
+ }
+]
+```
+</details>
+
+## `14.1_SANS_241_compliance_master` (Module 12)
+
+- Rows: **16,744** · size 15.4 MB
+- Shape: wide (15 numeric measure columns)
+- Primary key: **none**
+- Indexes: **none**
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `year+month` · monthly · 2000-01-01 → 2026-10-01 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | West Rand, Dr Kenneth Kaunda, Waterberg, Ugu |
+| `shapeID` | text | 0 | 52 | — | — | — | — | 47623444B71894478343084, 47623444B82303823139799, 47623444B45932738864801, 47623444B36505680523289 |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `Turbidity_Category` | text | 0 | 1 | — | — | — | — | Physical (16,744) |
+| `Turbidity_Parameter` | text | 0 | 1 | — | — | — | — | Turbidity (16,744) |
+| `Turbidity_Limit` | text | 0 | 1 | — | — | — | — | <= 1 NTU (16,744) |
+| `Turbidity_Class` | text | 0 | 1 | — | — | — | — | Aesthetic (16,744) |
+| `Turbidity_Source` | text | 0 | 1 | — | — | — | — | WTP (16,744) |
+| `Turbidity_Value` | double precision | 0 | 16,732 | 0.07515 | 1.174 | 0.3883 | — |  |
+| `Turbidity_Compliant` | boolean | 0 | 2 | — | — | — | — | 1 (16,743), 0 (1) |
+| `Colour_Category` | text | 0 | 1 | — | — | — | — | Physical (16,744) |
+| `Colour_Parameter` | text | 0 | 1 | — | — | — | — | Colour (16,744) |
+| `Colour_Limit` | text | 0 | 1 | — | — | — | — | <= 15 TCU (16,744) |
+| `Colour_Class` | text | 0 | 1 | — | — | — | — | Aesthetic (16,744) |
+| `Colour_Source` | text | 0 | 1 | — | — | — | — | WTP (16,744) |
+| `Colour_Value` | double precision | 0 | 16,732 | 0.9394 | 14.67 | 4.853 | — |  |
+| `Colour_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Temperature_Category` | text | 0 | 1 | — | — | — | °C | Physical (16,744) |
+| `Temperature_Parameter` | text | 0 | 1 | — | — | — | °C | Temperature (16,744) |
+| `Temperature_Limit` | text | 0 | 1 | — | — | — | °C | <= 25 °C (16,744) |
+| `Temperature_Class` | text | 0 | 1 | — | — | — | °C | Aesthetic (16,744) |
+| `Temperature_Source` | text | 0 | 1 | — | — | — | °C | WTP (16,744) |
+| `Temperature_Value` | double precision | 0 | 16,692 | 6.226 | 51.2 | 27.74 | °C |  |
+| `Temperature_Compliant` | boolean | 0 | 2 | — | — | — | °C | 0 (10,680), 1 (6,064) |
+| `E_coli_Category` | text | 0 | 1 | — | — | — | — | Micro (16,744) |
+| `E_coli_Parameter` | text | 0 | 1 | — | — | — | — | E. coli (16,744) |
+| `E_coli_Limit` | text | 0 | 1 | — | — | — | — | 0 cfu/100 mL (16,744) |
+| `E_coli_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `E_coli_Source` | text | 0 | 1 | — | — | — | — | WTP (16,744) |
+| `E_coli_Value` | double precision | 0 | 16,732 | 0.02241 | 5.486 | 0.3039 | — |  |
+| `E_coli_Compliant` | boolean | 0 | 1 | — | — | — | — | 0 (16,744) |
+| `Total_Coliforms_Category` | text | 0 | 1 | — | — | — | — | Micro (16,744) |
+| `Total_Coliforms_Parameter` | text | 0 | 1 | — | — | — | — | Total coliforms (16,744) |
+| `Total_Coliforms_Limit` | text | 0 | 1 | — | — | — | — | 0 cfu/100 mL (16,744) |
+| `Total_Coliforms_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `Total_Coliforms_Source` | text | 0 | 1 | — | — | — | — | WTP (16,744) |
+| `Total_Coliforms_Value` | double precision | 0 | 16,732 | 0.01 | 2.194 | 0.1311 | — |  |
+| `Total_Coliforms_Compliant` | boolean | 0 | 1 | — | — | — | — | 0 (16,744) |
+| `pH_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `pH_Parameter` | text | 0 | 1 | — | — | — | — | pH (16,744) |
+| `pH_Limit` | text | 0 | 2 | — | — | — | — | 6.0–9.0 (16,743), 6.0��9.0 (1) |
+| `pH_Class` | text | 0 | 1 | — | — | — | — | Aesthetic (16,744) |
+| `pH_Source` | text | 0 | 1 | — | — | — | — | WTP (16,744) |
+| `pH_Value` | double precision | 0 | 16,732 | -0.5365 | 3.332 | 0.5525 | — |  |
+| `pH_Compliant` | boolean | 0 | 1 | — | — | — | — | 0 (16,744) |
+| `EC_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `EC_Parameter` | text | 0 | 1 | — | — | — | — | Electrical conductivity (16,744) |
+| `EC_Limit` | text | 0 | 1 | — | — | — | — | <= 170 mS/m (16,744) |
+| `EC_Class` | text | 0 | 1 | — | — | — | — | Aesthetic (16,744) |
+| `EC_Source` | text | 0 | 1 | — | — | — | — | WTP (16,744) |
+| `EC_Value` | double precision | 0 | 16,732 | 0.07763 | 0.7889 | 0.1486 | — |  |
+| `EC_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Free_Chlorine_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Free_Chlorine_Parameter` | text | 0 | 1 | — | — | — | — | Chlorine residual (free) (16,744) |
+| `Free_Chlorine_Limit` | text | 0 | 1 | — | — | — | — | 0.2–5.0 mg/L (16,744) |
+| `Free_Chlorine_Class` | text | 0 | 1 | — | — | — | — | Treatment (16,744) |
+| `Free_Chlorine_Source` | text | 0 | 1 | — | — | — | — | WTP (16,744) |
+| `Free_Chlorine_Value` | double precision | 0 | 1 | 1.8 | 1.8 | 1.8 | — | 1.8 (16,744) |
+| `Free_Chlorine_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Nitrate_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Nitrate_Parameter` | text | 0 | 1 | — | — | — | — | Nitrate (NO3-N) (16,744) |
+| `Nitrate_Limit` | text | 0 | 1 | — | — | — | — | <= 11 mg/L (16,744) |
+| `Nitrate_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `Nitrate_Source` | text | 0 | 1 | — | — | — | — | WTP labs (16,744) |
+| `Nitrate_Value` | double precision | 0 | 16,732 | 0.1322 | 1.548 | 0.7757 | — |  |
+| `Nitrate_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Fluoride_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Fluoride_Parameter` | text | 0 | 1 | — | — | — | — | Fluoride (16,744) |
+| `Fluoride_Limit` | text | 0 | 1 | — | — | — | — | <= 1.5 mg/L (16,744) |
+| `Fluoride_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `Fluoride_Source` | text | 0 | 1 | — | — | — | — | WTP labs (16,744) |
+| `Fluoride_Value` | double precision | 0 | 16,732 | 0.2864 | 3.266 | 0.9001 | — |  |
+| `Fluoride_Compliant` | boolean | 0 | 2 | — | — | — | — | 1 (16,198), 0 (546) |
+| `Arsenic_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Arsenic_Parameter` | text | 0 | 1 | — | — | — | — | Arsenic (16,744) |
+| `Arsenic_Limit` | text | 0 | 1 | — | — | — | — | <= 0.01 mg/L (16,744) |
+| `Arsenic_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `Arsenic_Source` | text | 0 | 1 | — | — | — | — | WTP labs (16,744) |
+| `Arsenic_Value` | double precision | 0 | 16,732 | 0.002146 | 0.004808 | 0.003 | — |  |
+| `Arsenic_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Lead_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Lead_Parameter` | text | 0 | 1 | — | — | — | — | Lead (16,744) |
+| `Lead_Limit` | text | 0 | 1 | — | — | — | — | <= 0.01 mg/L (16,744) |
+| `Lead_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `Lead_Source` | text | 0 | 1 | — | — | — | — | WTP labs (16,744) |
+| `Lead_Value` | double precision | 0 | 16,732 | 0.003219 | 0.007212 | 0.0046 | — |  |
+| `Lead_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Cyanide_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Cyanide_Parameter` | text | 0 | 1 | — | — | — | — | Cyanide (16,744) |
+| `Cyanide_Limit` | text | 0 | 1 | — | — | — | — | <= 0.07 mg/L (16,744) |
+| `Cyanide_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `Cyanide_Source` | text | 0 | 1 | — | — | — | — | WTP labs (16,744) |
+| `Cyanide_Value` | double precision | 0 | 16,732 | 0.001073 | 0.002404 | 0.0015 | — |  |
+| `Cyanide_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Total_THMs_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Total_THMs_Parameter` | text | 0 | 1 | — | — | — | — | Total THMs (16,744) |
+| `Total_THMs_Limit` | text | 0 | 1 | — | — | — | — | <= 0.2 mg/L (16,744) |
+| `Total_THMs_Class` | text | 0 | 1 | — | — | — | — | Health (16,744) |
+| `Total_THMs_Source` | text | 0 | 1 | — | — | — | — | WTP labs (16,744) |
+| `Total_THMs_Value` | double precision | 0 | 16,732 | 1.268e-05 | 0.001562 | 0.0004 | — |  |
+| `Total_THMs_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `SANS_241_Compliance_Score` | double precision | 0 | 3 | 64.29 | 78.57 | 73.78 | — | 71.43 (10,469), 78.57 (5,896), 64.29 (379) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 1,
+  "Turbidity_Category": "Physical",
+  "Turbidity_Parameter": "Turbidity",
+  "Turbidity_Limit": "<= 1 NTU",
+  "Turbidity_Class": "Aesthetic",
+  "Turbidity_Source": "WTP",
+  "Turbidity_Value": 0.654837798282929,
+  "Turbidity_Compliant": true,
+  "Colour_Category": "Physical",
+  "Colour_Parameter": "Colour",
+  "Colour_Limit": "<= 15 TCU",
+  "Colour_Class": "Aesthetic",
+  "Colour_Source": "WTP",
+  "Colour_Value": 8.18547247853661,
+  "Colour_Compliant": true,
+  "Temperature_Category": "Physical",
+  "Temperature_Parameter": "Temperature",
+  "Temperature_Limit": "<= 25 °C",
+  "Temperature_Class": "Aesthetic",
+  "Temperature_Source": "WTP",
+  "Temperature_Value": 28.5618877327896,
+  "Temperature_Compliant": false,
+  "E_coli_Category": "Micro",
+  "E_coli_Parameter": "E. coli",
+  "E_coli_Limit": "0 cfu/100 mL",
+  "E_coli_Class": "Health",
+  "E_coli_Source": "WTP",
+  "E_coli_Value": 0.240678098293062,
+  "E_coli_Compliant": false,
+  "Total_Coliforms_Category": "Micro",
+  "Total_Coliforms_Parameter": "Total coliforms",
+  "Total_Coliforms_Limit": "0 cfu/100 mL",
+  "Total_Coliforms_Class": "Health",
+  "Total_Coliforms_Source": "WTP",
+  "Total_Coliforms_Value": 0.0789894180156466,
+  "Total_Coliforms_Compliant": false,
+  "pH_Category": "Chemical",
+  "pH_Parameter": "pH",
+  "pH_Limit": "6.0–9.0",
+  "pH_Class": "Aesthetic",
+  "pH_Source": "WTP",
+  "pH_Value": 0.613734293553749,
+  "pH_Compliant": false,
+  "EC_Category": "Chemical",
+  "EC_Parameter": "Electrical conductivity",
+  "EC_Limit": "<= 170 mS/m",
+  "EC_Class": "Aesthetic",
+  "EC_Source": "WTP",
+  "EC_Value": 0.128027337411767,
+  "EC_Compliant": true,
+  "Free_Chlorine_Category": "Chemical",
+  "Free_Chlorine_Parameter": "Chlorine residual (free)",
+  "Free_Chlorine_Limit": "0.2–5.0 mg/L",
+  "Free_Chlorine_Class": "Treatment",
+  "Free_Chlorine_Source": "WTP",
+  "Free_Chlorine_Value": 1.8,
+  "Free_Chlorine_Compliant": true,
+  "Nitrate_Category": "Chemical",
+  "Nitrate_Parameter": "Nitrate (NO3-N)",
+  "Nitrate_Limit": "<= 11 mg/L",
+  "Nitrate_Class": "Health",
+  "Nitrate_Source": "WTP labs",
+  "Nitrate_Value": 0.584351308701122,
+  "Nitrate_Compliant": true,
+  "Fluoride_Category": "Chemical",
+  "Fluoride_Parameter": "Fluoride",
+  "Fluoride_Limit": "<= 1.5 mg/L",
+  "Fluoride_Class": "Health",
+  "Fluoride_Source": "WTP labs",
+  "Fluoride_Value": 1.359616302068,
+  "Fluoride_Compliant": true,
+  "Arsenic_Category": "Chemical",
+  "Arsenic_Parameter": "Arsenic",
+  "Arsenic_Limit": "<= 0.01 mg/L",
+  "Arsenic_Class": "Health",
+  "Arsenic_Source": "WTP labs",
+  "Arsenic_Value": 0.00370577403291471,
+  "Arsenic_Compliant": true,
+  "Lead_Category": "Chemical",
+  "Lead_Parameter": "Lead",
+  "Lead_Limit": "<= 0.01 mg/L",
+  "Lead_Class": "Health",
+  "Lead_Source": "WTP labs",
+  "Lead_Value": 0.00555866104937206,
+  "Lead_Compliant": true,
+  "Cyanide_Category": "Chemical",
+  "Cyanide_Parameter": "Cyanide",
+  "Cyanide_Limit": "<= 0.07 mg/L",
+  "Cyanide_Class": "Health",
+  "Cyanide_Source": "WTP labs",
+  "Cyanide_Value": 0.00185288701645735,
+  "Cyanide_Compliant": true,
+  "Total_THMs_Category": "Chemical",
+  "Total_THMs_Parameter": "Total THMs",
+  "Total_THMs_Limit": "<= 0.2 mg/L",
+  "Total_THMs_Class": "Health",
+  "Total_THMs_Source": "WTP labs",
+  "Total_THMs_Value": 0.000201524144749056,
+  "Total_THMs_Compliant": true,
+  "SANS_241_Compliance_Score": 71.4285714285714
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 2,
+  "Turbidity_Category": "Physical",
+  "Turbidity_Parameter": "Turbidity",
+  "Turbidity_Limit": "<= 1 NTU",
+  "Turbidity_Class": "Aesthetic",
+  "Turbidity_Source": "WTP",
+  "Turbidity_Value": 0.55432687110793,
+  "Turbidity_Compliant": true,
+  "Colour_Category": "Physical",
+  "Colour_Parameter": "Colour",
+  "Colour_Limit": "<= 15 TCU",
+  "Colour_Class": "Aesthetic",
+  "Colour_Source": "WTP",
+  "Colour_Value": 6.92908588884912,
+  "Colour_Compliant": true,
+  "Temperature_Category": "Physical",
+  "Temperature_Parameter": "Temperature",
+  "Temperature_Limit": "<= 25 °C",
+  "Temperature_Class": "Aesthetic",
+  "Temperature_Source": "WTP",
+  "Temperature_Value": 28.5618877327896,
+  "Temperature_Compliant": false,
+  "E_coli_Category": "Micro",
+  "E_coli_Parameter": "E. coli",
+  "E_coli_Limit": "0 cfu/100 mL",
+  "E_coli_Class": "Health",
+  "E_coli_Source": "WTP",
+  "E_coli_Value": 0.174717087830642,
+  "E_coli_Compliant": false,
+  "Total_Coliforms_Category": "Micro",
+  "Total_Coliforms_Parameter": "Total coliforms",
+  "Total_Coliforms_Limit": "0 cfu/100 mL",
+  "Total_Coliforms_Class": "Health",
+  "Total_Coliforms_Source": "WTP",
+  "Total_Coliforms_Value": 0.0522501938918449,
+  "Total_Coliforms_Compliant": false,
+  "pH_Category": "Chemical",
+  "pH_Parameter": "pH",
+  "pH_Limit": "6.0–9.0",
+  "pH_Class": "Aesthetic",
+  "pH_Source": "WTP",
+  "pH_Value": 0.708704007229847,
+  "pH_Compliant": false,
+  "EC_Category": "Chemical",
+  "EC_Parameter": "Electrical conductivity",
+  "EC_Limit": "<= 170 mS/m",
+  "EC_Class": "Aesthetic",
+  "EC_Source": "WTP",
+  "EC_Value": 0.154030730398721,
+  "EC_Compliant": true,
+  "Free_Chlorine_Category": "Chemical",
+  "Free_Chlorine_Parameter": "Chlorine residual (free)",
+  "Free_Chlorine_Limit": "0.2–5.0 mg/L",
+  "Free_Chlorine_Class": "Treatment",
+  "Free_Chlorine_Source": "WTP",
+  "Free_Chlorine_Value": 1.8,
+  "Free_Chlorine_Compliant": true,
+  "Nitrate_Category": "Chemical",
+  "Nitrate_Parameter": "Nitrate (NO3-N)",
+  "Nitrate_Limit": "<= 11 mg/L",
+  "Nitrate_Class": "Health",
+  "Nitrate_Source": "WTP labs",
+  "Nitrate_Value": 0.625440318949612,
+  "Nitrate_Compliant": true,
+  "Fluoride_Category": "Chemical",
+  "Fluoride_Parameter": "Fluoride",
+  "Fluoride_Limit": "<= 1.5 mg/L",
+  "Fluoride_Class": "Health",
+  "Fluoride_Source": "WTP labs",
+  "Fluoride_Value": 1.03575601496567,
+  "Fluoride_Compliant": true,
+  "Arsenic_Category": "Chemical",
+  "Arsenic_Parameter": "Arsenic",
+  "Arsenic_Limit": "<= 0.01 mg/L",
+  "Arsenic_Class": "Health",
+  "Arsenic_Source": "WTP labs",
+  "Arsenic_Value": 0.00362419958450177,
+  "Arsenic_Compliant": true,
+  "Lead_Category": "Chemical",
+  "Lead_Parameter": "Lead",
+  "Lead_Limit": "<= 0.01 mg/L",
+  "Lead_Class": "Health",
+  "Lead_Source": "WTP labs",
+  "Lead_Value": 0.00543629937675266,
+  "Lead_Compliant": true,
+  "Cyanide_Category": "Chemical",
+  "Cyanide_Parameter": "Cyanide",
+  "Cyanide_Limit": "<= 0.07 mg/L",
+  "Cyanide_Class": "Health",
+  "Cyanide_Source": "WTP labs",
+  "Cyanide_Value": 0.00181209979225089,
+  "Cyanide_Compliant": true,
+  "Total_THMs_Category": "Chemical",
+  "Total_THMs_Parameter": "Total THMs",
+  "Total_THMs_Limit": "<= 0.2 mg/L",
+  "Total_THMs_Class": "Health",
+  "Total_THMs_Source": "WTP labs",
+  "Total_THMs_Value": 0.000209702179536537,
+  "Total_THMs_Compliant": true,
+  "SANS_241_Compliance_Score": 71.4285714285714
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 3,
+  "Turbidity_Category": "Physical",
+  "Turbidity_Parameter": "Turbidity",
+  "Turbidity_Limit": "<= 1 NTU",
+  "Turbidity_Class": "Aesthetic",
+  "Turbidity_Source": "WTP",
+  "Turbidity_Value": 0.66684556857745,
+  "Turbidity_Compliant": true,
+  "Colour_Category": "Physical",
+  "Colour_Parameter": "Colour",
+  "Colour_Limit": "<= 15 TCU",
+  "Colour_Class": "Aesthetic",
+  "Colour_Source": "WTP",
+  "Colour_Value": 8.33556960721813,
+  "Colour_Compliant": true,
+  "Temperature_Category": "Physical",
+  "Temperature_Parameter": "Temperature",
+  "Temperature_Limit": "<= 25 °C",
+  "Temperature_Class": "Aesthetic",
+  "Temperature_Source": "WTP",
+  "Temperature_Value": 27.0986189467775,
+  "Temperature_Compliant": false,
+  "E_coli_Category": "Micro",
+  "E_coli_Parameter": "E. coli",
+  "E_coli_Limit": "0 cfu/100 mL",
+  "E_coli_Class": "Health",
+  "E_coli_Source": "WTP",
+  "E_coli_Value": 0.228294312019651,
+  "E_coli_Compliant": false,
+  "Total_Coliforms_Category": "Micro",
+  "Total_Coliforms_Parameter": "Total coliforms",
+  "Total_Coliforms_Limit": "0 cfu/100 mL",
+  "Total_Coliforms_Class": "Health",
+  "Total_Coliforms_Source": "WTP",
+  "Total_Coliforms_Value": 0.062660808382467,
+  "Total_Coliforms_Compliant": false,
+  "pH_Category": "Chemical",
+  "pH_Parameter": "pH",
+  "pH_Limit": "6.0–9.0",
+  "pH_Class": "Aesthetic",
+  "pH_Source": "WTP",
+  "pH_Value": 0.63214271729253,
+  "pH_Compliant": false,
+  "EC_Category": "Chemical",
+  "EC_Parameter": "Electrical conductivity",
+  "EC_Limit": "<= 170 mS/m",
+  "EC_Class": "Aesthetic",
+  "EC_Source": "WTP",
+  "EC_Value": 0.123606046096674,
+  "EC_Compliant": true,
+  "Free_Chlorine_Category": "Chemical",
+  "Free_Chlorine_Parameter": "Chlorine residual (free)",
+  "Free_Chlorine_Limit": "0.2–5.0 mg/L",
+  "Free_Chlorine_Class": "Treatment",
+  "Free_Chlorine_Source": "WTP",
+  "Free_Chlorine_Value": 1.8,
+  "Free_Chlorine_Compliant": true,
+  "Nitrate_Category": "Chemical",
+  "Nitrate_Parameter": "Nitrate (NO3-N)",
+  "Nitrate_Limit": "<= 11 mg/L",
+  "Nitrate_Class": "Health",
+  "Nitrate_Source": "WTP labs",
+  "Nitrate_Value": 0.601519564557456,
+  "Nitrate_Compliant": true,
+  "Fluoride_Category": "Chemical",
+  "Fluoride_Parameter": "Fluoride",
+  "Fluoride_Limit": "<= 1.5 mg/L",
+  "Fluoride_Class": "Health",
+  "Fluoride_Source": "WTP labs",
+  "Fluoride_Value": 1.45077289317006,
+  "Fluoride_Compliant": true,
+  "Arsenic_Category": "Chemical",
+  "Arsenic_Parameter": "Arsenic",
+  "Arsenic_Limit": "<= 0.01 mg/L",
+  "Arsenic_Class": "Health",
+  "Arsenic_Source": "WTP labs",
+  "Arsenic_Value": 0.00394916390877119,
+  "Arsenic_Compliant": true,
+  "Lead_Category": "Chemical",
+  "Lead_Parameter": "Lead",
+  "Lead_Limit": "<= 0.01 mg/L",
+  "Lead_Class": "Health",
+  "Lead_Source": "WTP labs",
+  "Lead_Value": 0.00592374586315679,
+  "Lead_Compliant": true,
+  "Cyanide_Category": "Chemical",
+  "Cyanide_Parameter": "Cyanide",
+  "Cyanide_Limit": "<= 0.07 mg/L",
+  "Cyanide_Class": "Health",
+  "Cyanide_Source": "WTP labs",
+  "Cyanide_Value": 0.0019745819543856,
+  "Cyanide_Compliant": true,
+  "Total_THMs_Category": "Chemical",
+  "Total_THMs_Parameter": "Total THMs",
+  "Total_THMs_Limit": "<= 0.2 mg/L",
+  "Total_THMs_Class": "Health",
+  "Total_THMs_Source": "WTP labs",
+  "Total_THMs_Value": 0.000181258243577371,
+  "Total_THMs_Compliant": true,
+  "SANS_241_Compliance_Score": 71.4285714285714
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 4,
+  "Turbidity_Category": "Physical",
+  "Turbidity_Parameter": "Turbidity",
+  "Turbidity_Limit": "<= 1 NTU",
+  "Turbidity_Class": "Aesthetic",
+  "Turbidity_Source": "WTP",
+  "Turbidity_Value": 0.569891671634076,
+  "Turbidity_Compliant": true,
+  "Colour_Category": "Physical",
+  "Colour_Parameter": "Colour",
+  "Colour_Limit": "<= 15 TCU",
+  "Colour_Class": "Aesthetic",
+  "Colour_Source": "WTP",
+  "Colour_Value": 7.12364589542595,
+  "Colour_Compliant": true,
+  "Temperature_Category": "Physical",
+  "Temperature_Parameter": "Temperature",
+  "Temperature_Limit": "<= 25 °C",
+  "Temperature_Class": "Aesthetic",
+  "Temperature_Source": "WTP",
+  "Temperature_Value": 22.9047155128616,
+  "Temperature_Compliant": true,
+  "E_coli_Category": "Micro",
+  "E_coli_Parameter": "E. coli",
+  "E_coli_Limit": "0 cfu/100 mL",
+  "E_coli_Class": "Health",
+  "E_coli_Source": "WTP",
+  "E_coli_Value": 0.338516570226734,
+  "E_coli_Compliant": false,
+  "Total_Coliforms_Category": "Micro",
+  "Total_Coliforms_Parameter": "Total coliforms",
+  "Total_Coliforms_Limit": "0 cfu/100 mL",
+  "Total_Coliforms_Class": "Health",
+  "Total_Coliforms_Source": "WTP",
+  "Total_Coliforms_Value": 0.0693228881067863,
+  "Total_Coliforms_Compliant": false,
+  "pH_Category": "Chemical",
+  "pH_Parameter": "pH",
+  "pH_Limit": "6.0–9.0",
+  "pH_Class": "Aesthetic",
+  "pH_Source": "WTP",
+  "pH_Value": 0.495755927782267,
+  "pH_Compliant": false,
+  "EC_Category": "Chemical",
+  "EC_Parameter": "Electrical conductivity",
+  "EC_Limit": "<= 170 mS/m",
+  "EC_Class": "Aesthetic",
+  "EC_Source": "WTP",
+  "EC_Value": 0.119168292486042,
+  "EC_Compliant": true,
+  "Free_Chlorine_Category": "Chemical",
+  "Free_Chlorine_Parameter": "Chlorine residual (free)",
+  "Free_Chlorine_Limit": "0.2–5.0 mg/L",
+  "Free_Chlorine_Class": "Treatment",
+  "Free_Chlorine_Source": "WTP",
+  "Free_Chlorine_Value": 1.8,
+  "Free_Chlorine_Compliant": true,
+  "Nitrate_Category": "Chemical",
+  "Nitrate_Parameter": "Nitrate (NO3-N)",
+  "Nitrate_Limit": "<= 11 mg/L",
+  "Nitrate_Class": "Health",
+  "Nitrate_Source": "WTP labs",
+  "Nitrate_Value": 0.714128160734998,
+  "Nitrate_Compliant": true,
+  "Fluoride_Category": "Chemical",
+  "Fluoride_Parameter": "Fluoride",
+  "Fluoride_Limit": "<= 1.5 mg/L",
+  "Fluoride_Class": "Health",
+  "Fluoride_Source": "WTP labs",
+  "Fluoride_Value": 1.24887977277567,
+  "Fluoride_Compliant": true,
+  "Arsenic_Category": "Chemical",
+  "Arsenic_Parameter": "Arsenic",
+  "Arsenic_Limit": "<= 0.01 mg/L",
+  "Arsenic_Class": "Health",
+  "Arsenic_Source": "WTP labs",
+  "Arsenic_Value": 0.00372032324866103,
+  "Arsenic_Compliant": true,
+  "Lead_Category": "Chemical",
+  "Lead_Parameter": "Lead",
+  "Lead_Limit": "<= 0.01 mg/L",
+  "Lead_Class": "Health",
+  "Lead_Source": "WTP labs",
+  "Lead_Value": 0.00558048487299154,
+  "Lead_Compliant": true,
+  "Cyanide_Category": "Chemical",
+  "Cyanide_Parameter": "Cyanide",
+  "Cyanide_Limit": "<= 0.07 mg/L",
+  "Cyanide_Class": "Health",
+  "Cyanide_Source": "WTP labs",
+  "Cyanide_Value": 0.00186016162433051,
+  "Cyanide_Compliant": true,
+  "Total_THMs_Category": "Chemical",
+  "Total_THMs_Parameter": "Total THMs",
+  "Total_THMs_Limit": "<= 0.2 mg/L",
+  "Total_THMs_Class": "Health",
+  "Total_THMs_Source": "WTP labs",
+  "Total_THMs_Value": 0.000228999824856402,
+  "Total_THMs_Compliant": true,
+  "SANS_241_Compliance_Score": 78.5714285714286
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 5,
+  "Turbidity_Category": "Physical",
+  "Turbidity_Parameter": "Turbidity",
+  "Turbidity_Limit": "<= 1 NTU",
+  "Turbidity_Class": "Aesthetic",
+  "Turbidity_Source": "WTP",
+  "Turbidity_Value": 0.506124872003972,
+  "Turbidity_Compliant": true,
+  "Colour_Category": "Physical",
+  "Colour_Parameter": "Colour",
+  "Colour_Limit": "<= 15 TCU",
+  "Colour_Class": "Aesthetic",
+  "Colour_Source": "WTP",
+  "Colour_Value": 6.32656090004966,
+  "Colour_Compliant": true,
+  "Temperature_Category": "Physical",
+  "Temperature_Parameter": "Temperature",
+  "Temperature_Limit": "<= 25 °C",
+  "Temperature_Class": "Aesthetic",
+  "Temperature_Source": "WTP",
+  "Temperature_Value": 17.7050174134205,
+  "Temperature_Compliant": true,
+  "E_coli_Category": "Micro",
+  "E_coli_Parameter": "E. coli",
+  "E_coli_Limit": "0 cfu/100 mL",
+  "E_coli_Class": "Health",
+  "E_coli_Source": "WTP",
+  "E_coli_Value": 5.48634064439438,
+  "E_coli_Compliant": false,
+  "Total_Coliforms_Category": "Micro",
+  "Total_Coliforms_Parameter": "Total coliforms",
+  "Total_Coliforms_Limit": "0 cfu/100 mL",
+  "Total_Coliforms_Class": "Health",
+  "Total_Coliforms_Source": "WTP",
+  "Total_Coliforms_Value": 0.125781220070938,
+  "Total_Coliforms_Compliant": false,
+  "pH_Category": "Chemical",
+  "pH_Parameter": "pH",
+  "pH_Limit": "6.0–9.0",
+  "pH_Class": "Aesthetic",
+  "pH_Source": "WTP",
+  "pH_Value": 0.220056752025046,
+  "pH_Compliant": false,
+  "EC_Category": "Chemical",
+  "EC_Parameter": "Electrical conductivity",
+  "EC_Limit": "<= 170 mS/m",
+  "EC_Class": "Aesthetic",
+  "EC_Source": "WTP",
+  "EC_Value": 0.0776341470165087,
+  "EC_Compliant": true,
+  "Free_Chlorine_Category": "Chemical",
+  "Free_Chlorine_Parameter": "Chlorine residual (free)",
+  "Free_Chlorine_Limit": "0.2–5.0 mg/L",
+  "Free_Chlorine_Class": "Treatment",
+  "Free_Chlorine_Source": "WTP",
+  "Free_Chlorine_Value": 1.8,
+  "Free_Chlorine_Compliant": true,
+  "Nitrate_Category": "Chemical",
+  "Nitrate_Parameter": "Nitrate (NO3-N)",
+  "Nitrate_Limit": "<= 11 mg/L",
+  "Nitrate_Class": "Health",
+  "Nitrate_Source": "WTP labs",
+  "Nitrate_Value": 0.815341369697644,
+  "Nitrate_Compliant": true,
+  "Fluoride_Category": "Chemical",
+  "Fluoride_Parameter": "Fluoride",
+  "Fluoride_Limit": "<= 1.5 mg/L",
+  "Fluoride_Class": "Health",
+  "Fluoride_Source": "WTP labs",
+  "Fluoride_Value": 1.3413452393845,
+  "Fluoride_Compliant": true,
+  "Arsenic_Category": "Chemical",
+  "Arsenic_Parameter": "Arsenic",
+  "Arsenic_Limit": "<= 0.01 mg/L",
+  "Arsenic_Class": "Health",
+  "Arsenic_Source": "WTP labs",
+  "Arsenic_Value": 0.00398824474143065,
+  "Arsenic_Compliant": true,
+  "Lead_Category": "Chemical",
+  "Lead_Parameter": "Lead",
+  "Lead_Limit": "<= 0.01 mg/L",
+  "Lead_Class": "Health",
+  "Lead_Source": "WTP labs",
+  "Lead_Value": 0.00598236711214598,
+  "Lead_Compliant": true,
+  "Cyanide_Category": "Chemical",
+  "Cyanide_Parameter": "Cyanide",
+  "Cyanide_Limit": "<= 0.07 mg/L",
+  "Cyanide_Class": "Health",
+  "Cyanide_Source": "WTP labs",
+  "Cyanide_Value": 0.00199412237071533,
+  "Cyanide_Compliant": true,
+  "Total_THMs_Category": "Chemical",
+  "Total_THMs_Parameter": "Total THMs",
+  "Total_THMs_Limit": "<= 0.2 mg/L",
+  "Total_THMs_Class": "Health",
+  "Total_THMs_Source": "WTP labs",
+  "Total_THMs_Value": 0.000163746697791368,
+  "Total_THMs_Compliant": true,
+  "SANS_241_Compliance_Score": 78.5714285714286
+ }
+]
+```
+</details>
+
+## `15.1_ecological_variables_master` (Module 13)
+
+- Rows: **16,744** · size 7.4 MB
+- Shape: wide (6 numeric measure columns)
+- Primary key: `district_name`, `year`, `month`
+- Indexes: `CREATE UNIQUE INDEX ecological_variables_15_1_pk ON public."15.1_ecological_variables_master" USING btree (district_name, year, month)`; `CREATE INDEX idx_15_1_ecological_year_month ON public."15.1_ecological_variables_master" USING btree (year, month)`; `CREATE INDEX idx_15_1_ecological_shapeid ON public."15.1_ecological_variables_master" USING btree ("shapeID")`; `CREATE INDEX idx_15_1_ecological_aquatic_integrity ON public."15.1_ecological_variables_master" USING btree (aquatic_habitat_integrity)`; `CREATE INDEX idx_15_1_ecological_aspt ON public."15.1_ecological_variables_master" USING btree (aspt)`; `CREATE INDEX idx_15_1_ecological_reserve ON public."15.1_ecological_variables_master" USING btree (ecological_reserve_q)`; `CREATE INDEX idx_15_1_ecological_fibi ON public."15.1_ecological_variables_master" USING btree (fibi)`; `CREATE INDEX idx_15_1_ecological_riparian ON public."15.1_ecological_variables_master" USING btree (riparian_vegetation)`; `CREATE INDEX idx_15_1_ecological_sass5 ON public."15.1_ecological_variables_master" USING btree (sass5_score)`; `CREATE INDEX idx_15_1_ecological_district ON public."15.1_ecological_variables_master" USING btree (district_name)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `year+month` · monthly · 2000-01-01 → 2026-10-01 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `shapeID` | text NOT NULL | 0 | 52 | — | — | — | — | 47623444B1265322146951, 47623444B12889843225205, 47623444B15418766532839, 47623444B21298621424908 |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `aquatic_habitat_integrity` | double precision | 0 | 16,732 | -93.79 | 107.8 | 55.06 | — |  |
+| `aspt` | double precision | 0 | 16,732 | -0.2611 | 7.494 | 5.464 | — |  |
+| `ecological_reserve_q` | double precision | 0 | 16,732 | -21.71 | 17.07 | 6.92 | — |  |
+| `fibi` | double precision | 0 | 16,732 | -108.3 | 108.8 | 51.99 | — |  |
+| `riparian_vegetation` | double precision | 0 | 16,732 | -151.9 | 111.8 | 42.77 | — |  |
+| `sass5_score` | double precision | 0 | 16,732 | -130.4 | 179.8 | 98.56 | — |  |
+| `system:index` | text | 0 | 2,898 | — | — | — | — (dimensionless) | 5_16, 5_8, 4_241, 3_221 |
+| `.geo` | jsonb | 0 | 1 | — | — | — | — | {'type': 'MultiPoint', 'coordinates': []} (16,744) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 1,
+  "aquatic_habitat_integrity": 72.5820329547296,
+  "aspt": 6.13777049825883,
+  "ecological_reserve_q": 10.2888524912941,
+  "fibi": 70.8575739512472,
+  "riparian_vegetation": 65.6841969408002,
+  "sass5_score": 125.510819930353,
+  "system:index": "0_0",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 2,
+  "aquatic_habitat_integrity": 64.8073086709345,
+  "aspt": 5.83874264118979,
+  "ecological_reserve_q": 8.79371320594895,
+  "fibi": 62.4847939533141,
+  "riparian_vegetation": 55.5172498004528,
+  "sass5_score": 113.549705647592,
+  "system:index": "0_1",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 3,
+  "aquatic_habitat_integrity": 72.9030288470808,
+  "aspt": 6.15011649411849,
+  "ecological_reserve_q": 10.3505824705925,
+  "fibi": 71.2032618353178,
+  "riparian_vegetation": 66.1039608000287,
+  "sass5_score": 126.00465976474,
+  "system:index": "0_2",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 4,
+  "aquatic_habitat_integrity": 67.0111453865849,
+  "aspt": 5.92350559179173,
+  "ecological_reserve_q": 9.21752795895864,
+  "fibi": 64.8581565701684,
+  "riparian_vegetation": 58.3991901209187,
+  "sass5_score": 116.940223671669,
+  "system:index": "0_3",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 5,
+  "aquatic_habitat_integrity": 62.5540599302279,
+  "aspt": 5.75207922808569,
+  "ecological_reserve_q": 8.36039614042843,
+  "fibi": 60.0582183863992,
+  "riparian_vegetation": 52.5706937549134,
+  "sass5_score": 110.083169123427,
+  "system:index": "0_4",
+  ".geo": {
+   "type": "MultiPoint",
+   "coordinates": []
+  }
+ }
+]
+```
+</details>
+
+## `15.2_chemical_RWQO_variables_master` (Module 13)
+
+- Rows: **16,744** · size 10.7 MB
+- Shape: wide (8 numeric measure columns)
+- Primary key: `id`
+- Indexes: `CREATE UNIQUE INDEX "15.2_chemical_RWQO_variables_master_pkey" ON public."15.2_chemical_RWQO_variables_master" USING btree (id)`; `CREATE INDEX idx_chemical_rwqo_master_district ON public."15.2_chemical_RWQO_variables_master" USING btree (district_name)`; `CREATE INDEX idx_chemical_rwqo_master_shapeid ON public."15.2_chemical_RWQO_variables_master" USING btree ("shapeID")`; `CREATE INDEX idx_chemical_rwqo_master_year_month ON public."15.2_chemical_RWQO_variables_master" USING btree (year, month)`; `CREATE INDEX idx_chemical_rwqo_master_district_date ON public."15.2_chemical_RWQO_variables_master" USING btree (district_name, year, month)`; `CREATE INDEX idx_chemical_rwqo_master_score ON public."15.2_chemical_RWQO_variables_master" USING btree ("RWQO_Compliance_Score")`; `CREATE INDEX idx_chemical_rwqo_master_do ON public."15.2_chemical_RWQO_variables_master" USING btree ("DO_Compliant")`; `CREATE INDEX idx_chemical_rwqo_master_ph ON public."15.2_chemical_RWQO_variables_master" USING btree ("pH_Range_Compliant")`; `CREATE INDEX idx_chemical_rwqo_master_nutrient ON public."15.2_chemical_RWQO_variables_master" USING btree ("Nutrient_Compliant")`; `CREATE INDEX idx_chemical_rwqo_master_toxicant ON public."15.2_chemical_RWQO_variables_master" USING btree ("Toxicant_Compliant")`; `CREATE INDEX idx_chemical_rwqo_master_salinity ON public."15.2_chemical_RWQO_variables_master" USING btree ("Salinity_Compliant")`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `created_at` · unknown (single timestamp) · 2026-10-20 → 2026-10-20 · 1 distinct dates · 0.0 years
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 0 years
+- ⚠ Duplicate (location, date) pairs: 52
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `id` | bigint NOT NULL | 0 | 16,744 | 1 | 16,744 | 8,372 | — |  |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `shapeID` | text | 0 | 52 | — | — | — | — | 47623444B1265322146951, 47623444B12889843225205, 47623444B15418766532839, 47623444B21298621424908 |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `DO_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `DO_Parameter` | text | 0 | 1 | — | — | — | — | Dissolved oxygen (16,744) |
+| `DO_Limit` | text | 0 | 1 | — | — | — | — | >= 5.0 mg/L (16,744) |
+| `DO_Source` | text | 0 | 1 | — | — | — | — | DWS (16,744) |
+| `DO_Value` | double precision | 0 | 16,692 | 2.356 | 7.753 | 5.171 | — |  |
+| `DO_Compliant` | boolean | 0 | 2 | — | — | — | — | 1 (9,414), 0 (7,330) |
+| `pH_Range_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `pH_Range_Parameter` | text | 0 | 1 | — | — | — | — | pH range (16,744) |
+| `pH_Range_Limit` | text | 0 | 1 | — | — | — | — | 6.5–8.5 (16,744) |
+| `pH_Range_Source` | text | 0 | 1 | — | — | — | — | DWS (16,744) |
+| `pH_Range_Value` | double precision | 0 | 16,732 | -0.5365 | 3.332 | 0.5525 | — |  |
+| `pH_Range_Compliant` | boolean | 0 | 1 | — | — | — | — | 0 (16,744) |
+| `EC_Target_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `EC_Target_Parameter` | text | 0 | 1 | — | — | — | — | Conductivity target (16,744) |
+| `EC_Target_Limit` | text | 0 | 1 | — | — | — | — | <= 70.0 mS/m (16,744) |
+| `EC_Target_Source` | text | 0 | 1 | — | — | — | — | DWS (16,744) |
+| `EC_Target_Value` | double precision | 0 | 16,732 | 0.03494 | 0.355 | 0.0669 | — |  |
+| `EC_Target_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Nutrient_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Nutrient_Parameter` | text | 0 | 1 | — | — | — | — | Nutrient objectives (16,744) |
+| `Nutrient_Limit` | text | 0 | 1 | — | — | — | — | DIN <= 1.5, TP <= 0.12 mg/L (16,744) |
+| `Nutrient_Source` | text | 0 | 1 | — | — | — | — | DWS (16,744) |
+| `Nutrient_Value_TN` | double precision | 0 | 16,732 | 0.04068 | 0.4762 | 0.2387 | — |  |
+| `Nutrient_Value_TP` | double precision | 0 | 16,732 | 0.1432 | 1.633 | 0.4501 | — |  |
+| `Nutrient_Compliant` | boolean | 0 | 1 | — | — | — | — | 0 (16,744) |
+| `Toxicant_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Toxicant_Parameter` | text | 0 | 1 | — | — | — | — | Toxicant thresholds (16,744) |
+| `Toxicant_Limit` | text | 0 | 1 | — | — | — | — | <= 10.0 µg/L (16,744) |
+| `Toxicant_Source` | text | 0 | 1 | — | — | — | — | DWS / CSIR (16,744) |
+| `Toxicant_Value_ugL` | double precision | 0 | 16,732 | 2.683 | 6.01 | 3.796 | — |  |
+| `Toxicant_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Salinity_Category` | text | 0 | 1 | — | — | — | — | Chemical (16,744) |
+| `Salinity_Parameter` | text | 0 | 1 | — | — | — | — | Salinity objectives (16,744) |
+| `Salinity_Limit` | text | 0 | 1 | — | — | — | — | <= 450 mg/L (16,744) |
+| `Salinity_Source` | text | 0 | 1 | — | — | — | — | DWS (16,744) |
+| `Salinity_Value_TDS` | double precision | 0 | 16,732 | 0.4969 | 5.049 | 0.9513 | — |  |
+| `Salinity_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `RWQO_Compliance_Score` | double precision | 0 | 2 | 50 | 66.67 | 59.37 | — | 66.67 (9,414), 50 (7,330) |
+| `created_at` | timestamp with time zone | 0 | 81 | 2026-10-20T07:41:02.523869+00:00 | 2026-10-20T07:42:13.741871+00:00 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "id": 1,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 1,
+  "DO_Category": "Chemical",
+  "DO_Parameter": "Dissolved oxygen",
+  "DO_Limit": ">= 5.0 mg/L",
+  "DO_Source": "DWS",
+  "DO_Value": 5.07257347206525,
+  "DO_Compliant": true,
+  "pH_Range_Category": "Chemical",
+  "pH_Range_Parameter": "pH range",
+  "pH_Range_Limit": "6.5–8.5",
+  "pH_Range_Source": "DWS",
+  "pH_Range_Value": 0.613734293553749,
+  "pH_Range_Compliant": false,
+  "EC_Target_Category": "Chemical",
+  "EC_Target_Parameter": "Conductivity target",
+  "EC_Target_Limit": "<= 70.0 mS/m",
+  "EC_Target_Source": "DWS",
+  "EC_Target_Value": 0.0576123018352949,
+  "EC_Target_Compliant": true,
+  "Nutrient_Category": "Chemical",
+  "Nutrient_Parameter": "Nutrient objectives",
+  "Nutrient_Limit": "DIN <= 1.5, TP <= 0.12 mg/L",
+  "Nutrient_Source": "DWS",
+  "Nutrient_Value_TN": 0.179800402677268,
+  "Nutrient_Value_TP": 0.679808151034002,
+  "Nutrient_Compliant": false,
+  "Toxicant_Category": "Chemical",
+  "Toxicant_Parameter": "Toxicant thresholds",
+  "Toxicant_Limit": "<= 10.0 µg/L",
+  "Toxicant_Source": "DWS / CSIR",
+  "Toxicant_Value_ugL": 4.63221754114338,
+  "Toxicant_Compliant": true,
+  "Salinity_Category": "Chemical",
+  "Salinity_Parameter": "Salinity objectives",
+  "Salinity_Limit": "<= 450 mg/L",
+  "Salinity_Source": "DWS",
+  "Salinity_Value_TDS": 0.819374959435306,
+  "Salinity_Compliant": true,
+  "RWQO_Compliance_Score": 66.6666666666667,
+  "created_at": "2026-10-20T07:41:02.523869+00:00"
+ },
+ {
+  "id": 2,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 2,
+  "DO_Category": "Chemical",
+  "DO_Parameter": "Dissolved oxygen",
+  "DO_Limit": ">= 5.0 mg/L",
+  "DO_Source": "DWS",
+  "DO_Value": 5.07257347206525,
+  "DO_Compliant": true,
+  "pH_Range_Category": "Chemical",
+  "pH_Range_Parameter": "pH range",
+  "pH_Range_Limit": "6.5–8.5",
+  "pH_Range_Source": "DWS",
+  "pH_Range_Value": 0.708704007229847,
+  "pH_Range_Compliant": false,
+  "EC_Target_Category": "Chemical",
+  "EC_Target_Parameter": "Conductivity target",
+  "EC_Target_Limit": "<= 70.0 mS/m",
+  "EC_Target_Source": "DWS",
+  "EC_Target_Value": 0.0693138286794246,
+  "EC_Target_Compliant": true,
+  "Nutrient_Category": "Chemical",
+  "Nutrient_Parameter": "Nutrient objectives",
+  "Nutrient_Limit": "DIN <= 1.5, TP <= 0.12 mg/L",
+  "Nutrient_Source": "DWS",
+  "Nutrient_Value_TN": 0.192443175061419,
+  "Nutrient_Value_TP": 0.517878007482837,
+  "Nutrient_Compliant": false,
+  "Toxicant_Category": "Chemical",
+  "Toxicant_Parameter": "Toxicant thresholds",
+  "Toxicant_Limit": "<= 10.0 µg/L",
+  "Toxicant_Source": "DWS / CSIR",
+  "Toxicant_Value_ugL": 4.53024948062721,
+  "Toxicant_Compliant": true,
+  "Salinity_Category": "Chemical",
+  "Salinity_Parameter": "Salinity objectives",
+  "Salinity_Limit": "<= 450 mg/L",
+  "Salinity_Source": "DWS",
+  "Salinity_Value_TDS": 0.985796674551817,
+  "Salinity_Compliant": true,
+  "RWQO_Compliance_Score": 66.6666666666667,
+  "created_at": "2026-10-20T07:41:02.523869+00:00"
+ },
+ {
+  "id": 3,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 3,
+  "DO_Category": "Chemical",
+  "DO_Parameter": "Dissolved oxygen",
+  "DO_Limit": ">= 5.0 mg/L",
+  "DO_Source": "DWS",
+  "DO_Value": 5.24816572638671,
+  "DO_Compliant": true,
+  "pH_Range_Category": "Chemical",
+  "pH_Range_Parameter": "pH range",
+  "pH_Range_Limit": "6.5–8.5",
+  "pH_Range_Source": "DWS",
+  "pH_Range_Value": 0.63214271729253,
+  "pH_Range_Compliant": false,
+  "EC_Target_Category": "Chemical",
+  "EC_Target_Parameter": "Conductivity target",
+  "EC_Target_Limit": "<= 70.0 mS/m",
+  "EC_Target_Source": "DWS",
+  "EC_Target_Value": 0.0556227207435033,
+  "EC_Target_Compliant": true,
+  "Nutrient_Category": "Chemical",
+  "Nutrient_Parameter": "Nutrient objectives",
+  "Nutrient_Limit": "DIN <= 1.5, TP <= 0.12 mg/L",
+  "Nutrient_Source": "DWS",
+  "Nutrient_Value_TN": 0.185082942940756,
+  "Nutrient_Value_TP": 0.725386446585029,
+  "Nutrient_Compliant": false,
+  "Toxicant_Category": "Chemical",
+  "Toxicant_Parameter": "Toxicant thresholds",
+  "Toxicant_Limit": "<= 10.0 µg/L",
+  "Toxicant_Source": "DWS / CSIR",
+  "Toxicant_Value_ugL": 4.93645488596399,
+  "Toxicant_Compliant": true,
+  "Salinity_Category": "Chemical",
+  "Salinity_Parameter": "Salinity objectives",
+  "Salinity_Limit": "<= 450 mg/L",
+  "Salinity_Source": "DWS",
+  "Salinity_Value_TDS": 0.791078695018713,
+  "Salinity_Compliant": true,
+  "RWQO_Compliance_Score": 66.6666666666667,
+  "created_at": "2026-10-20T07:41:02.523869+00:00"
+ },
+ {
+  "id": 4,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 4,
+  "DO_Category": "Chemical",
+  "DO_Parameter": "Dissolved oxygen",
+  "DO_Limit": ">= 5.0 mg/L",
+  "DO_Source": "DWS",
+  "DO_Value": 5.75143413845661,
+  "DO_Compliant": true,
+  "pH_Range_Category": "Chemical",
+  "pH_Range_Parameter": "pH range",
+  "pH_Range_Limit": "6.5–8.5",
+  "pH_Range_Source": "DWS",
+  "pH_Range_Value": 0.495755927782267,
+  "pH_Range_Compliant": false,
+  "EC_Target_Category": "Chemical",
+  "EC_Target_Parameter": "Conductivity target",
+  "EC_Target_Limit": "<= 70.0 mS/m",
+  "EC_Target_Source": "DWS",
+  "EC_Target_Value": 0.0536257316187189,
+  "EC_Target_Compliant": true,
+  "Nutrient_Category": "Chemical",
+  "Nutrient_Parameter": "Nutrient objectives",
+  "Nutrient_Limit": "DIN <= 1.5, TP <= 0.12 mg/L",
+  "Nutrient_Source": "DWS",
+  "Nutrient_Value_TN": 0.219731741764615,
+  "Nutrient_Value_TP": 0.624439886387835,
+  "Nutrient_Compliant": false,
+  "Toxicant_Category": "Chemical",
+  "Toxicant_Parameter": "Toxicant thresholds",
+  "Toxicant_Limit": "<= 10.0 µg/L",
+  "Toxicant_Source": "DWS / CSIR",
+  "Toxicant_Value_ugL": 4.65040406082628,
+  "Toxicant_Compliant": true,
+  "Salinity_Category": "Chemical",
+  "Salinity_Parameter": "Salinity objectives",
+  "Salinity_Limit": "<= 450 mg/L",
+  "Salinity_Source": "DWS",
+  "Salinity_Value_TDS": 0.762677071910669,
+  "Salinity_Compliant": true,
+  "RWQO_Compliance_Score": 66.6666666666667,
+  "created_at": "2026-10-20T07:41:02.523869+00:00"
+ },
+ {
+  "id": 5,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 5,
+  "DO_Category": "Chemical",
+  "DO_Parameter": "Dissolved oxygen",
+  "DO_Limit": ">= 5.0 mg/L",
+  "DO_Source": "DWS",
+  "DO_Value": 6.37539791038954,
+  "DO_Compliant": true,
+  "pH_Range_Category": "Chemical",
+  "pH_Range_Parameter": "pH range",
+  "pH_Range_Limit": "6.5–8.5",
+  "pH_Range_Source": "DWS",
+  "pH_Range_Value": 0.220056752025046,
+  "pH_Range_Compliant": false,
+  "EC_Target_Category": "Chemical",
+  "EC_Target_Parameter": "Conductivity target",
+  "EC_Target_Limit": "<= 70.0 mS/m",
+  "EC_Target_Source": "DWS",
+  "EC_Target_Value": 0.0349353661574289,
+  "EC_Target_Compliant": true,
+  "Nutrient_Category": "Chemical",
+  "Nutrient_Parameter": "Nutrient objectives",
+  "Nutrient_Limit": "DIN <= 1.5, TP <= 0.12 mg/L",
+  "Nutrient_Source": "DWS",
+  "Nutrient_Value_TN": 0.250874267599275,
+  "Nutrient_Value_TP": 0.670672619692248,
+  "Nutrient_Compliant": false,
+  "Toxicant_Category": "Chemical",
+  "Toxicant_Parameter": "Toxicant thresholds",
+  "Toxicant_Limit": "<= 10.0 µg/L",
+  "Toxicant_Source": "DWS / CSIR",
+  "Toxicant_Value_ugL": 4.98530592678831,
+  "Toxicant_Compliant": true,
+  "Salinity_Category": "Chemical",
+  "Salinity_Parameter": "Salinity objectives",
+  "Salinity_Limit": "<= 450 mg/L",
+  "Salinity_Source": "DWS",
+  "Salinity_Value_TDS": 0.496858540905656,
+  "Salinity_Compliant": true,
+  "RWQO_Compliance_Score": 66.6666666666667,
+  "created_at": "2026-10-20T07:41:02.523869+00:00"
+ }
+]
+```
+</details>
+
+## `15.3_hydrological_RWQO_variables_master` (Module 13)
+
+- Rows: **16,744** · size 10.3 MB
+- Shape: wide (6 numeric measure columns)
+- Primary key: `id`
+- Indexes: `CREATE UNIQUE INDEX "15.3_hydrological_RWQO_variables_master_pkey" ON public."15.3_hydrological_RWQO_variables_master" USING btree (id)`; `CREATE INDEX idx_hyd_rwqo_district ON public."15.3_hydrological_RWQO_variables_master" USING btree (district_name)`; `CREATE INDEX idx_hyd_rwqo_shapeid ON public."15.3_hydrological_RWQO_variables_master" USING btree ("shapeID")`; `CREATE INDEX idx_hyd_rwqo_year_month ON public."15.3_hydrological_RWQO_variables_master" USING btree (year, month)`; `CREATE INDEX idx_hyd_rwqo_district_date ON public."15.3_hydrological_RWQO_variables_master" USING btree (district_name, year, month)`; `CREATE INDEX idx_hyd_rwqo_score ON public."15.3_hydrological_RWQO_variables_master" USING btree ("Hydrological_RWQO_Score")`; `CREATE INDEX idx_hyd_rwqo_low_flow ON public."15.3_hydrological_RWQO_variables_master" USING btree ("Low_Flow_Compliant")`; `CREATE INDEX idx_hyd_rwqo_high_flow ON public."15.3_hydrological_RWQO_variables_master" USING btree ("High_Flow_Compliant")`; `CREATE INDEX idx_hyd_rwqo_seasonality ON public."15.3_hydrological_RWQO_variables_master" USING btree ("Seasonality_Compliant")`; `CREATE INDEX idx_hyd_rwqo_dilution ON public."15.3_hydrological_RWQO_variables_master" USING btree ("Dilution_Compliant")`; `CREATE INDEX idx_hyd_rwqo_assimilation ON public."15.3_hydrological_RWQO_variables_master" USING btree ("Assimilation_Compliant")`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `created_at` · unknown (single timestamp) · 2026-10-20 → 2026-10-20 · 1 distinct dates · 0.0 years
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 0 years
+- ⚠ Duplicate (location, date) pairs: 52
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `id` | bigint NOT NULL | 0 | 16,744 | 1 | 16,744 | 8,372 | — |  |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `shapeID` | text | 0 | 52 | — | — | — | — | 47623444B1265322146951, 47623444B12889843225205, 47623444B15418766532839, 47623444B21298621424908 |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `Low_Flow_Category` | text | 0 | 1 | — | — | — | m³/s | Hydrological (16,744) |
+| `Low_Flow_Parameter` | text | 0 | 1 | — | — | — | m³/s | Ecological flow (low flow) (16,744) |
+| `Low_Flow_Limit` | text | 0 | 1 | — | — | — | m³/s | >= 0.8 m³/s (16,744) |
+| `Low_Flow_Source` | text | 0 | 1 | — | — | — | m³/s | DWS (16,744) |
+| `Low_Flow_Value` | double precision | 0 | 16,732 | 1.204 | 1.259 | 1.219 | m³/s |  |
+| `Low_Flow_Compliant` | boolean | 0 | 1 | — | — | — | m³/s | 1 (16,744) |
+| `High_Flow_Category` | text | 0 | 1 | — | — | — | m³/s | Hydrological (16,744) |
+| `High_Flow_Parameter` | text | 0 | 1 | — | — | — | m³/s | Ecological flow (high flow) (16,744) |
+| `High_Flow_Limit` | text | 0 | 1 | — | — | — | m³/s | >= 5.0 m³/s (16,744) |
+| `High_Flow_Source` | text | 0 | 1 | — | — | — | m³/s | DWS (16,744) |
+| `High_Flow_Value` | double precision | 0 | 2 | 3.8 | 7.5 | 5.638 | m³/s | 3.8 (8,424), 7.5 (8,320) |
+| `High_Flow_Compliant` | boolean | 0 | 2 | — | — | — | m³/s | 0 (8,424), 1 (8,320) |
+| `Seasonality_Category` | text | 0 | 1 | — | — | — | — | Hydrological (16,744) |
+| `Seasonality_Parameter` | text | 0 | 1 | — | — | — | — | Flow seasonality (16,744) |
+| `Seasonality_Limit` | text | 0 | 1 | — | — | — | — | Seasonal index >= 0.4 (16,744) |
+| `Seasonality_Source` | text | 0 | 1 | — | — | — | — | DWS (16,744) |
+| `Seasonality_Value` | double precision | 0 | 1 | 0.65 | 0.65 | 0.65 | — | 0.65 (16,744) |
+| `Seasonality_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Dilution_Category` | text | 0 | 1 | — | — | — | — | Hydrological (16,744) |
+| `Dilution_Parameter` | text | 0 | 1 | — | — | — | — | Dilution flow (16,744) |
+| `Dilution_Limit` | text | 0 | 1 | — | — | — | — | >= 2.0 m³/s (16,744) |
+| `Dilution_Source` | text | 0 | 1 | — | — | — | — | DWS / derived (16,744) |
+| `Dilution_Value` | double precision | 0 | 16,732 | 2.8 | 2.806 | 2.802 | — |  |
+| `Dilution_Compliant` | boolean | 0 | 1 | — | — | — | — | 1 (16,744) |
+| `Assimilation_Category` | text | 0 | 1 | — | — | — | — (dimensionless) | Hydrological (16,744) |
+| `Assimilation_Parameter` | text | 0 | 1 | — | — | — | — (dimensionless) | Assimilation capacity (16,744) |
+| `Assimilation_Limit` | text | 0 | 1 | — | — | — | — (dimensionless) | Capacity >= 50% (16,744) |
+| `Assimilation_Source` | text | 0 | 1 | — | — | — | — (dimensionless) | DWS (16,744) |
+| `Assimilation_Value` | double precision | 0 | 16,732 | 56.17 | 71.07 | 68 | — (dimensionless) |  |
+| `Assimilation_Compliant` | boolean | 0 | 1 | — | — | — | — (dimensionless) | 1 (16,744) |
+| `Hydrological_RWQO_Score` | double precision | 0 | 2 | 80 | 100 | 89.94 | — | 80 (8,424), 100 (8,320) |
+| `created_at` | timestamp with time zone | 0 | 67 | 2026-10-20T07:29:09.824573+00:00 | 2026-10-20T07:30:08.753957+00:00 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "id": 1,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 1,
+  "Low_Flow_Category": "Hydrological",
+  "Low_Flow_Parameter": "Ecological flow (low flow)",
+  "Low_Flow_Limit": ">= 0.8 m³/s",
+  "Low_Flow_Source": "DWS",
+  "Low_Flow_Value": 1.23274188991415,
+  "Low_Flow_Compliant": true,
+  "High_Flow_Category": "Hydrological",
+  "High_Flow_Parameter": "Ecological flow (high flow)",
+  "High_Flow_Limit": ">= 5.0 m³/s",
+  "High_Flow_Source": "DWS",
+  "High_Flow_Value": 7.5,
+  "High_Flow_Compliant": true,
+  "Seasonality_Category": "Hydrological",
+  "Seasonality_Parameter": "Flow seasonality",
+  "Seasonality_Limit": "Seasonal index >= 0.4",
+  "Seasonality_Source": "DWS",
+  "Seasonality_Value": 0.65,
+  "Seasonality_Compliant": true,
+  "Dilution_Category": "Hydrological",
+  "Dilution_Parameter": "Dilution flow",
+  "Dilution_Limit": ">= 2.0 m³/s",
+  "Dilution_Source": "DWS / derived",
+  "Dilution_Value": 2.800806096579,
+  "Dilution_Compliant": true,
+  "Assimilation_Category": "Hydrological",
+  "Assimilation_Parameter": "Assimilation capacity",
+  "Assimilation_Limit": "Capacity >= 50%",
+  "Assimilation_Source": "DWS",
+  "Assimilation_Value": 65.70191848966,
+  "Assimilation_Compliant": true,
+  "Hydrological_RWQO_Score": 100.0,
+  "created_at": "2026-10-20T07:29:09.824573+00:00"
+ },
+ {
+  "id": 2,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 2,
+  "Low_Flow_Category": "Hydrological",
+  "Low_Flow_Parameter": "Ecological flow (low flow)",
+  "Low_Flow_Limit": ">= 0.8 m³/s",
+  "Low_Flow_Source": "DWS",
+  "Low_Flow_Value": 1.2277163435554,
+  "Low_Flow_Compliant": true,
+  "High_Flow_Category": "Hydrological",
+  "High_Flow_Parameter": "Ecological flow (high flow)",
+  "High_Flow_Limit": ">= 5.0 m³/s",
+  "High_Flow_Source": "DWS",
+  "High_Flow_Value": 7.5,
+  "High_Flow_Compliant": true,
+  "Seasonality_Category": "Hydrological",
+  "Seasonality_Parameter": "Flow seasonality",
+  "Seasonality_Limit": "Seasonal index >= 0.4",
+  "Seasonality_Source": "DWS",
+  "Seasonality_Value": 0.65,
+  "Seasonality_Compliant": true,
+  "Dilution_Category": "Hydrological",
+  "Dilution_Parameter": "Dilution flow",
+  "Dilution_Limit": ">= 2.0 m³/s",
+  "Dilution_Source": "DWS / derived",
+  "Dilution_Value": 2.80083880871815,
+  "Dilution_Compliant": true,
+  "Assimilation_Category": "Hydrological",
+  "Assimilation_Parameter": "Assimilation capacity",
+  "Assimilation_Limit": "Capacity >= 50%",
+  "Assimilation_Source": "DWS",
+  "Assimilation_Value": 67.3212199251716,
+  "Assimilation_Compliant": true,
+  "Hydrological_RWQO_Score": 100.0,
+  "created_at": "2026-10-20T07:29:09.824573+00:00"
+ },
+ {
+  "id": 3,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 3,
+  "Low_Flow_Category": "Hydrological",
+  "Low_Flow_Parameter": "Ecological flow (low flow)",
+  "Low_Flow_Limit": ">= 0.8 m³/s",
+  "Low_Flow_Source": "DWS",
+  "Low_Flow_Value": 1.23334227842887,
+  "Low_Flow_Compliant": true,
+  "High_Flow_Category": "Hydrological",
+  "High_Flow_Parameter": "Ecological flow (high flow)",
+  "High_Flow_Limit": ">= 5.0 m³/s",
+  "High_Flow_Source": "DWS",
+  "High_Flow_Value": 7.5,
+  "High_Flow_Compliant": true,
+  "Seasonality_Category": "Hydrological",
+  "Seasonality_Parameter": "Flow seasonality",
+  "Seasonality_Limit": "Seasonal index >= 0.4",
+  "Seasonality_Source": "DWS",
+  "Seasonality_Value": 0.65,
+  "Seasonality_Compliant": true,
+  "Dilution_Category": "Hydrological",
+  "Dilution_Parameter": "Dilution flow",
+  "Dilution_Limit": ">= 2.0 m³/s",
+  "Dilution_Source": "DWS / derived",
+  "Dilution_Value": 2.80072503297431,
+  "Dilution_Compliant": true,
+  "Assimilation_Category": "Hydrological",
+  "Assimilation_Parameter": "Assimilation capacity",
+  "Assimilation_Limit": "Capacity >= 50%",
+  "Assimilation_Source": "DWS",
+  "Assimilation_Value": 65.2461355341497,
+  "Assimilation_Compliant": true,
+  "Hydrological_RWQO_Score": 100.0,
+  "created_at": "2026-10-20T07:29:09.824573+00:00"
+ },
+ {
+  "id": 4,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 4,
+  "Low_Flow_Category": "Hydrological",
+  "Low_Flow_Parameter": "Ecological flow (low flow)",
+  "Low_Flow_Limit": ">= 0.8 m³/s",
+  "Low_Flow_Source": "DWS",
+  "Low_Flow_Value": 1.2284945835817,
+  "Low_Flow_Compliant": true,
+  "High_Flow_Category": "Hydrological",
+  "High_Flow_Parameter": "Ecological flow (high flow)",
+  "High_Flow_Limit": ">= 5.0 m³/s",
+  "High_Flow_Source": "DWS",
+  "High_Flow_Value": 3.8,
+  "High_Flow_Compliant": false,
+  "Seasonality_Category": "Hydrological",
+  "Seasonality_Parameter": "Flow seasonality",
+  "Seasonality_Limit": "Seasonal index >= 0.4",
+  "Seasonality_Source": "DWS",
+  "Seasonality_Value": 0.65,
+  "Seasonality_Compliant": true,
+  "Dilution_Category": "Hydrological",
+  "Dilution_Parameter": "Dilution flow",
+  "Dilution_Limit": ">= 2.0 m³/s",
+  "Dilution_Source": "DWS / derived",
+  "Dilution_Value": 2.80091599929943,
+  "Dilution_Compliant": true,
+  "Assimilation_Category": "Hydrological",
+  "Assimilation_Parameter": "Assimilation capacity",
+  "Assimilation_Limit": "Capacity >= 50%",
+  "Assimilation_Source": "DWS",
+  "Assimilation_Value": 66.2556011361216,
+  "Assimilation_Compliant": true,
+  "Hydrological_RWQO_Score": 80.0,
+  "created_at": "2026-10-20T07:29:09.824573+00:00"
+ },
+ {
+  "id": 5,
+  "district_name": "Alfred Nzo",
+  "shapeID": "47623444B30321887561170",
+  "year": 2000,
+  "month": 5,
+  "Low_Flow_Category": "Hydrological",
+  "Low_Flow_Parameter": "Ecological flow (low flow)",
+  "Low_Flow_Limit": ">= 0.8 m³/s",
+  "Low_Flow_Source": "DWS",
+  "Low_Flow_Value": 1.2253062436002,
+  "Low_Flow_Compliant": true,
+  "High_Flow_Category": "Hydrological",
+  "High_Flow_Parameter": "Ecological flow (high flow)",
+  "High_Flow_Limit": ">= 5.0 m³/s",
+  "High_Flow_Source": "DWS",
+  "High_Flow_Value": 3.8,
+  "High_Flow_Compliant": false,
+  "Seasonality_Category": "Hydrological",
+  "Seasonality_Parameter": "Flow seasonality",
+  "Seasonality_Limit": "Seasonal index >= 0.4",
+  "Seasonality_Source": "DWS",
+  "Seasonality_Value": 0.65,
+  "Seasonality_Compliant": true,
+  "Dilution_Category": "Hydrological",
+  "Dilution_Parameter": "Dilution flow",
+  "Dilution_Limit": ">= 2.0 m³/s",
+  "Dilution_Source": "DWS / derived",
+  "Dilution_Value": 2.80065498679117,
+  "Dilution_Compliant": true,
+  "Assimilation_Category": "Hydrological",
+  "Assimilation_Parameter": "Assimilation capacity",
+  "Assimilation_Limit": "Capacity >= 50%",
+  "Assimilation_Source": "DWS",
+  "Assimilation_Value": 65.7932738030775,
+  "Assimilation_Compliant": true,
+  "Hydrological_RWQO_Score": 80.0,
+  "created_at": "2026-10-20T07:29:09.824573+00:00"
+ }
+]
+```
+</details>
+
+## `16_1_complete_wrm_matrix_master` (Module 14)
+
+- Rows: **1,352** · size 0.5 MB
+- Shape: wide (16 numeric measure columns)
+- Primary key: `id`
+- Indexes: `CREATE UNIQUE INDEX "16_1_complete_wrm_matrix_master_pkey" ON public."16_1_complete_wrm_matrix_master" USING btree (id)`; `CREATE UNIQUE INDEX unique_wrm_district_year ON public."16_1_complete_wrm_matrix_master" USING btree (year, district_name)`; `CREATE INDEX idx_wrm_year ON public."16_1_complete_wrm_matrix_master" USING btree (year)`; `CREATE INDEX idx_wrm_district ON public."16_1_complete_wrm_matrix_master" USING btree (district_name)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `year` · annual · 2000-01-01 → 2025-01-01 · 26 distinct dates · 25.0 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 26 records · median span 25 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `id` | bigint NOT NULL | 0 | 1,352 | 1 | 1,352 | 676.5 | — |  |
+| `year` | integer NOT NULL | 0 | 26 | 2,000 | 2,025 | 2,012 | — | 2,000 (52), 2,001 (52), 2,002 (52), 2,003 (52), 2,004 (52), 2,005 (52), 2,006 (52), 2,007 (52) |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `Mean_Annual_Precipitation_MAP_mm_yr` | double precision | 0 | 1,352 | 77.56 | 1,322 | 594.1 | mm |  |
+| `Mean_Annual_Evapotranspiration_MAE_mm_yr` | double precision | 0 | 1,352 | 450.4 | 1,260 | 786.1 | mm |  |
+| `Climate_Variability_Index_CV_rainfall` | double precision | 0 | 52 | 0.1235 | 0.3288 | 0.2049 | mm |  |
+| `Mean_Annual_Runoff_MAR_million_m3_yr` | double precision | 0 | 1,352 | 73.61 | 5,862 | 1,275 | Mm³ |  |
+| `Surface_Water_Availability_Index_ratio` | double precision | 0 | 1,352 | 1.636 | 130.3 | 28.34 | — (dimensionless) |  |
+| `Inter_Annual_Storage_Efficiency_pct` | double precision | 0 | 1,317 | 48.1 | 85 | 68.65 | % |  |
+| `Mean_Annual_Groundwater_Recharge_mm_yr` | double precision | 0 | 1,352 | 10.08 | 171.9 | 77.23 | mm |  |
+| `Groundwater_Dependency_Index_pct` | double precision | 0 | 1,346 | 22.1 | 70 | 51.23 | % |  |
+| `Inter_Basin_Transfer_Volumes_million_m3_yr` | double precision | 0 | 1,352 | 13.25 | 1,055 | 229.5 | Mm³ |  |
+| `National_Water_Balance_million_m3_yr` | double precision | 0 | 1,352 | 71.86 | 6,902 | 1,490 | Mm³ |  |
+| `Municipal_Water_Demand_L_cap_day` | double precision | 0 | 1,352 | 171.1 | 257.9 | 189.1 | days |  |
+| `Agricultural_Water_Demand_m3_ha_season` | double precision | 0 | 1,342 | 3,876 | 5,089 | 4,379 | — |  |
+| `Industrial_Water_Demand_m3_yr` | double precision | 0 | 1,352 | 2.576e+07 | 2.052e+09 | 4.463e+08 | m³ per period |  |
+| `System_Water_Losses_pct` | double precision | 0 | 777 | 21.85 | 41.22 | 33.4 | % |  |
+| `Ecological_Reserve_Water_Requirement_m3_yr` | double precision | 0 | 1,352 | 1.84e+07 | 1.465e+09 | 3.188e+08 | m³ per period |  |
+| `Return_Flow_Recycled_Water_million_m3_yr` | double precision | 0 | 1,352 | 11.04 | 879.3 | 191.3 | Mm³ |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "id": 1,
+  "year": 2000,
+  "district_name": "Alfred Nzo",
+  "Mean_Annual_Precipitation_MAP_mm_yr": 920.426884461657,
+  "Mean_Annual_Evapotranspiration_MAE_mm_yr": 998.277474900078,
+  "Climate_Variability_Index_CV_rainfall": 0.128682412928928,
+  "Mean_Annual_Runoff_MAR_million_m3_yr": 1186.62669504946,
+  "Surface_Water_Availability_Index_ratio": 26.3694821122098,
+  "Inter_Annual_Storage_Efficiency_pct": 81.8170753784663,
+  "Mean_Annual_Groundwater_Recharge_mm_yr": 119.655494980015,
+  "Groundwater_Dependency_Index_pct": 38.1829246215337,
+  "Inter_Basin_Transfer_Volumes_million_m3_yr": 213.592805108899,
+  "National_Water_Balance_million_m3_yr": 1385.21950015834,
+  "Municipal_Water_Demand_L_cap_day": 187.799400425742,
+  "Agricultural_Water_Demand_m3_ha_season": 4697.42,
+  "Industrial_Water_Demand_m3_yr": 415319343.267304,
+  "System_Water_Losses_pct": 30.23,
+  "Ecological_Reserve_Water_Requirement_m3_yr": 296656673.76236,
+  "Return_Flow_Recycled_Water_million_m3_yr": 177.994004257416
+ },
+ {
+  "id": 2,
+  "year": 2000,
+  "district_name": "Amajuba",
+  "Mean_Annual_Precipitation_MAP_mm_yr": 721.848701671781,
+  "Mean_Annual_Evapotranspiration_MAE_mm_yr": 869.201656086658,
+  "Climate_Variability_Index_CV_rainfall": 0.213117487121423,
+  "Mean_Annual_Runoff_MAR_million_m3_yr": 614.982653133064,
+  "Surface_Water_Availability_Index_ratio": 13.6662811807346,
+  "Inter_Annual_Storage_Efficiency_pct": 73.8739480668713,
+  "Mean_Annual_Groundwater_Recharge_mm_yr": 93.8403312173316,
+  "Groundwater_Dependency_Index_pct": 46.1260519331287,
+  "Inter_Basin_Transfer_Volumes_million_m3_yr": 110.696877563951,
+  "National_Water_Balance_million_m3_yr": 710.67953069701,
+  "Municipal_Water_Demand_L_cap_day": 179.224739796996,
+  "Agricultural_Water_Demand_m3_ha_season": 4503.8,
+  "Industrial_Water_Demand_m3_yr": 215243928.596571,
+  "System_Water_Losses_pct": 35.75,
+  "Ecological_Reserve_Water_Requirement_m3_yr": 153745663.283265,
+  "Return_Flow_Recycled_Water_million_m3_yr": 92.2473979699589
+ },
+ {
+  "id": 3,
+  "year": 2000,
+  "district_name": "Amathole",
+  "Mean_Annual_Precipitation_MAP_mm_yr": 727.506938626468,
+  "Mean_Annual_Evapotranspiration_MAE_mm_yr": 872.879510107203,
+  "Climate_Variability_Index_CV_rainfall": 0.134368799422442,
+  "Mean_Annual_Runoff_MAR_million_m3_yr": 1843.06740571351,
+  "Surface_Water_Availability_Index_ratio": 40.9570534603307,
+  "Inter_Annual_Storage_Efficiency_pct": 74.1002775450587,
+  "Mean_Annual_Groundwater_Recharge_mm_yr": 94.5759020214408,
+  "Groundwater_Dependency_Index_pct": 45.8997224549413,
+  "Inter_Basin_Transfer_Volumes_million_m3_yr": 331.752133028679,
+  "National_Water_Balance_million_m3_yr": 2159.81953874356,
+  "Municipal_Water_Demand_L_cap_day": 197.646011085703,
+  "Agricultural_Water_Demand_m3_ha_season": 4509.32,
+  "Industrial_Water_Demand_m3_yr": 645073592.000209,
+  "System_Water_Losses_pct": 28.52,
+  "Ecological_Reserve_Water_Requirement_m3_yr": 460766851.428721,
+  "Return_Flow_Recycled_Water_million_m3_yr": 276.460110857233
+ },
+ {
+  "id": 4,
+  "year": 2000,
+  "district_name": "Bojanala",
+  "Mean_Annual_Precipitation_MAP_mm_yr": 732.979735387916,
+  "Mean_Annual_Evapotranspiration_MAE_mm_yr": 876.436828002145,
+  "Climate_Variability_Index_CV_rainfall": 0.211127053766826,
+  "Mean_Annual_Runoff_MAR_million_m3_yr": 1616.64891219891,
+  "Surface_Water_Availability_Index_ratio": 35.9255313821979,
+  "Inter_Annual_Storage_Efficiency_pct": 74.3191894155166,
+  "Mean_Annual_Groundwater_Recharge_mm_yr": 95.2873656004291,
+  "Groundwater_Dependency_Index_pct": 45.6808105844834,
+  "Inter_Basin_Transfer_Volumes_million_m3_yr": 290.996804195803,
+  "National_Water_Balance_million_m3_yr": 1892.64571639471,
+  "Municipal_Water_Demand_L_cap_day": 194.249733682984,
+  "Agricultural_Water_Demand_m3_ha_season": 4514.66,
+  "Industrial_Water_Demand_m3_yr": 565827119.269617,
+  "System_Water_Losses_pct": 32.65,
+  "Ecological_Reserve_Water_Requirement_m3_yr": 404162228.049727,
+  "Return_Flow_Recycled_Water_million_m3_yr": 242.497336829836
+ },
+ {
+  "id": 5,
+  "year": 2000,
+  "district_name": "Buffalo City",
+  "Mean_Annual_Precipitation_MAP_mm_yr": 773.840214436839,
+  "Mean_Annual_Evapotranspiration_MAE_mm_yr": 902.996139383945,
+  "Climate_Variability_Index_CV_rainfall": 0.144100076295743,
+  "Mean_Annual_Runoff_MAR_million_m3_yr": 254.401461985572,
+  "Surface_Water_Availability_Index_ratio": 5.65336582190167,
+  "Inter_Annual_Storage_Efficiency_pct": 75.9536085774736,
+  "Mean_Annual_Groundwater_Recharge_mm_yr": 100.599227876789,
+  "Groundwater_Dependency_Index_pct": 44.0463914225264,
+  "Inter_Basin_Transfer_Volumes_million_m3_yr": 45.7922631574035,
+  "National_Water_Balance_million_m3_yr": 285.193725142979,
+  "Municipal_Water_Demand_L_cap_day": 173.816021929784,
+  "Agricultural_Water_Demand_m3_ha_season": 4554.49,
+  "Industrial_Water_Demand_m3_yr": 89040511.6949513,
+  "System_Water_Losses_pct": 33.72,
+  "Ecological_Reserve_Water_Requirement_m3_yr": 63600365.4963938,
+  "Return_Flow_Recycled_Water_million_m3_yr": 38.1602192978363
+ }
+]
+```
+</details>
+
+## `7.2_derived_runoff_indicators_master` (Module 5)
+
+- Rows: **16,692** · size 8.8 MB
+- Shape: wide (10 numeric measure columns)
+- Primary key: `District_Name`, `Year`, `Month`
+- Indexes: `CREATE UNIQUE INDEX runoff_indicators_pk ON public."7.2_derived_runoff_indicators_master" USING btree ("District_Name", "Year", "Month")`; `CREATE INDEX idx_runoff_7_2_year_month ON public."7.2_derived_runoff_indicators_master" USING btree ("Year", "Month")`; `CREATE INDEX idx_runoff_7_2_anomaly ON public."7.2_derived_runoff_indicators_master" USING btree ("Runoff_Anomaly_percent")`; `CREATE INDEX idx_runoff_7_2_ssi ON public."7.2_derived_runoff_indicators_master" USING btree ("SSI_Standardized_Streamflow_Index")`; `CREATE INDEX idx_runoff_district_date ON public."7.2_derived_runoff_indicators_master" USING btree ("District_Name", date)`
+- Row-level security enabled: True
+- Location columns: `District_Name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-25 → 2026-09-25 · 321 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (District_Name): 52 locations · median 321 records · median span 26.67 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `District_Name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `Year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `Month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.458 | — | 6 (1,404), 3 (1,404), 5 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 9 (1,404), 7 (1,404) |
+| `Runoff_Anomaly_percent` | double precision | 0 | 15,975 | -100 | 1,104 | -0 | % |  |
+| `Runoff_Ratio_Trend_percent_per_yr` | double precision | 0 | 1 | 0.04 | 0.04 | 0.04 | % | 0.04 (16,692) |
+| `SSI_Standardized_Streamflow_Index` | double precision | 0 | 3,755 | -1.857 | 3 | 0.0095 | m³/s |  |
+| `Flood_Flow_2yr_m3s` | double precision | 0 | 16,430 | 0 | 6,881 | 378 | m³/s |  |
+| `Flood_Flow_5yr_m3s` | double precision | 0 | 16,476 | 0 | 9,174 | 504 | m³/s |  |
+| `Flood_Flow_10yr_m3s` | double precision | 0 | 16,517 | 0 | 1.204e+04 | 661.5 | m³/s |  |
+| `Flood_Flow_20yr_m3s` | double precision | 0 | 16,535 | 0 | 1.548e+04 | 850.5 | m³/s |  |
+| `Flood_Flow_50yr_m3s` | double precision | 0 | 16,557 | 0 | 1.95e+04 | 1,071 | m³/s |  |
+| `Flood_Flow_100yr_m3s` | double precision | 0 | 16,564 | 0 | 2.408e+04 | 1,323 | m³/s |  |
+| `Hydrological_Response_Time_hours` | double precision | 0 | 1 | 12.5 | 12.5 | 12.5 | — | 12.5 (16,692) |
+| `date` | date | 0 | 321 | 2000-01-25 | 2026-09-25 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "District_Name": "Alfred Nzo",
+  "Year": 2000,
+  "Month": 1,
+  "Runoff_Anomaly_percent": 53.491,
+  "Runoff_Ratio_Trend_percent_per_yr": 0.04,
+  "SSI_Standardized_Streamflow_Index": 2.818,
+  "Flood_Flow_2yr_m3s": 1063.474,
+  "Flood_Flow_5yr_m3s": 1417.965,
+  "Flood_Flow_10yr_m3s": 1861.079,
+  "Flood_Flow_20yr_m3s": 2392.815,
+  "Flood_Flow_50yr_m3s": 3013.175,
+  "Flood_Flow_100yr_m3s": 3722.157,
+  "Hydrological_Response_Time_hours": 12.5,
+  "date": "2000-01-25"
+ },
+ {
+  "District_Name": "Alfred Nzo",
+  "Year": 2000,
+  "Month": 2,
+  "Runoff_Anomaly_percent": 27.666,
+  "Runoff_Ratio_Trend_percent_per_yr": 0.04,
+  "SSI_Standardized_Streamflow_Index": 2.818,
+  "Flood_Flow_2yr_m3s": 987.307,
+  "Flood_Flow_5yr_m3s": 1316.409,
+  "Flood_Flow_10yr_m3s": 1727.787,
+  "Flood_Flow_20yr_m3s": 2221.44,
+  "Flood_Flow_50yr_m3s": 2797.369,
+  "Flood_Flow_100yr_m3s": 3455.574,
+  "Hydrological_Response_Time_hours": 12.5,
+  "date": "2000-02-25"
+ },
+ {
+  "District_Name": "Alfred Nzo",
+  "Year": 2000,
+  "Month": 3,
+  "Runoff_Anomaly_percent": 136.732,
+  "Runoff_Ratio_Trend_percent_per_yr": 0.04,
+  "SSI_Standardized_Streamflow_Index": 2.818,
+  "Flood_Flow_2yr_m3s": 1089.649,
+  "Flood_Flow_5yr_m3s": 1452.865,
+  "Flood_Flow_10yr_m3s": 1906.885,
+  "Flood_Flow_20yr_m3s": 2451.71,
+  "Flood_Flow_50yr_m3s": 3087.338,
+  "Flood_Flow_100yr_m3s": 3813.77,
+  "Hydrological_Response_Time_hours": 12.5,
+  "date": "2000-03-25"
+ },
+ {
+  "District_Name": "Alfred Nzo",
+  "Year": 2000,
+  "Month": 4,
+  "Runoff_Anomaly_percent": 41.812,
+  "Runoff_Ratio_Trend_percent_per_yr": 0.04,
+  "SSI_Standardized_Streamflow_Index": 1.981,
+  "Flood_Flow_2yr_m3s": 867.785,
+  "Flood_Flow_5yr_m3s": 1157.046,
+  "Flood_Flow_10yr_m3s": 1518.623,
+  "Flood_Flow_20yr_m3s": 1952.516,
+  "Flood_Flow_50yr_m3s": 2458.723,
+  "Flood_Flow_100yr_m3s": 3037.246,
+  "Hydrological_Response_Time_hours": 12.5,
+  "date": "2000-04-25"
+ },
+ {
+  "District_Name": "Alfred Nzo",
+  "Year": 2000,
+  "Month": 5,
+  "Runoff_Anomaly_percent": 71.452,
+  "Runoff_Ratio_Trend_percent_per_yr": 0.04,
+  "SSI_Standardized_Streamflow_Index": 1.177,
+  "Flood_Flow_2yr_m3s": 404.218,
+  "Flood_Flow_5yr_m3s": 538.958,
+  "Flood_Flow_10yr_m3s": 707.382,
+  "Flood_Flow_20yr_m3s": 909.491,
+  "Flood_Flow_50yr_m3s": 1145.285,
+  "Flood_Flow_100yr_m3s": 1414.763,
+  "Hydrological_Response_Time_hours": 12.5,
+  "date": "2000-05-25"
+ }
+]
+```
+</details>
+
+## `8_1_reservoir_operational_master` (Module 6)
+
+- Rows: **522,686** · size 157.8 MB
+- Shape: wide (14 numeric measure columns)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_reservoir_operational_district_date ON public."8_1_reservoir_operational_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_id` (municipality), `district_name` (municipality), `province` (province), `dam_name` (station_name); coordinates: **no**
+- Time: `date` · daily · 2000-01-01 → 2026-12-31 · 9,862 distinct dates · 27.0 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (dam_name): 53 locations · median 9,862 records · median span 27 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_id` 🗺 | text | 0 | 51 | — | — | — | — | D_UNMAPPED, D001, D002, D003 |
+| `district_name` 🗺 | text | 0 | 53 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `province` 🗺 | text | 13.21 | 9 | — | — | — | — | Eastern Cape (69,034), — (69,034), KwaZulu-Natal (59,172), Western Cape (59,172), Gauteng (49,310), Limpopo (49,310), Northern Cape (49,310), Free State (49,310) |
+| `dam_name` 🗺 | text | 0 | 53 | — | — | — | — | Alfred Nzo Reservoir (GDW_794) / Alfred Nzo Reservoir (GD…, Amajuba Reservoir (GDW_23) / Amajuba Reservoir (GDW_302), Amathole Reservoir (GDW_137) / Amathole Reservoir (GDW_139), Bloemhof Dam / Dr Ruth Segomotsi Mompati Reservoir (GDW_24) |
+| `river` | text | 0 | 50 | — | — | — | — | Regional Catchment Basin (29,586), Vaal River (19,724), Amathole Catchment Drainage (9,862), Assegaai River (9,862), Bojanala Catchment Drainage (9,862), Buffalo City Catchment Drainage (9,862), Cacadu Catchment Drainage (9,862), Cape Winelands Catchment Drainage (9,862) |
+| `date` | date | 0 | 9,862 | 2000-01-01 | 2026-12-31 | — | — |  |
+| `soil_moisture_m3_m3` | double precision | 0 | 507,937 | 0.0316 | 0.3578 | 0.2065 | m³/m³ |  |
+| `rainfall_mm_day` | double precision | 0 | 23,147 | 0 | 134.1 | 0.8065 | days |  |
+| `evaporation_mm_day` | double precision | 0 | 4 | 4.25 | 6 | 4.612 | days | 4.25 (391,034), 5.531 (44,361), 6 (44,361), 5.531 (42,930) |
+| `runoff_mm_day` | double precision | 0 | 18,988 | 6.029e-06 | 38.06 | 0.0953 | days |  |
+| `district_area_km2` | double precision | 0 | 53 | 1,645 | 1.268e+05 | 1.049e+04 | km² |  |
+| `water_area_km2` | double precision | 0 | 114 | 52.5 | 110.5 | 52.6 | km² |  |
+| `mean_ndwi` | double precision | 0 | 23,842 | -0.5387 | 0.0001208 | -0.3364 | — |  |
+| `storage_volume_m3` | double precision | 0 | 114 | 2.52e+08 | 6.883e+08 | 2.527e+08 | Mm³ |  |
+| `pct_fsc` | double precision | 0 | 97 | 42.96 | 100 | 99.04 | % |  |
+| `fsl_m_amsl` | double precision | 0 | 1 | 1,200 | 1,200 | 1,200 | — | 1,200 (522,686) |
+| `water_level_m_amsl` | double precision | 0 | 97 | 1,197 | 1,200 | 1,200 | — |  |
+| `inflow_m3_s` | double precision | 0 | 19,041 | 0.007151 | 4,954 | 11.5 | m³/s |  |
+| `seepage_m3_day` | double precision | 0 | 20 | 5.5 | 5.595 | 5.5 | m³ per period | 5.5 (522,137), 5.595 (31), 5.532 (31), 5.532 (31), 5.535 (31), 5.535 (31), 5.546 (31), 5.549 (31) |
+| `outflow_m3_s` | double precision | 0 | 19,181 | 0.01 | 4,954 | 11.49 | m³/s |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_id": "D001",
+  "district_name": "Alfred Nzo",
+  "province": "Eastern Cape",
+  "dam_name": "Alfred Nzo Reservoir (GDW_794) / Alfred Nzo Reservoir (GDW_796)",
+  "river": "Alfred Nzo Catchment Drainage",
+  "date": "2000-01-01",
+  "soil_moisture_m3_m3": 0.299753614503385,
+  "rainfall_mm_day": 4.2215,
+  "evaporation_mm_day": 5.53108891324554,
+  "runoff_mm_day": 0.51396330235,
+  "district_area_km2": 10731.2184813536,
+  "water_area_km2": 52.5,
+  "mean_ndwi": -0.33596511,
+  "storage_volume_m3": 251997542.568276,
+  "pct_fsc": 100.0,
+  "fsl_m_amsl": 1200.0,
+  "water_level_m_amsl": 1200.0,
+  "inflow_m3_s": 63.8362556587483,
+  "seepage_m3_day": 5.5,
+  "outflow_m3_s": 63.8329911397012
+ },
+ {
+  "district_id": "D001",
+  "district_name": "Alfred Nzo",
+  "province": "Eastern Cape",
+  "dam_name": "Alfred Nzo Reservoir (GDW_794) / Alfred Nzo Reservoir (GDW_796)",
+  "river": "Alfred Nzo Catchment Drainage",
+  "date": "2000-01-02",
+  "soil_moisture_m3_m3": 0.312359248863008,
+  "rainfall_mm_day": 0.003,
+  "evaporation_mm_day": 5.53108891324554,
+  "runoff_mm_day": 0.1165906106,
+  "district_area_km2": 10731.2184813536,
+  "water_area_km2": 52.5,
+  "mean_ndwi": -0.33596511,
+  "storage_volume_m3": 251997542.568276,
+  "pct_fsc": 100.0,
+  "fsl_m_amsl": 1200.0,
+  "water_level_m_amsl": 1200.0,
+  "inflow_m3_s": 14.481010592859,
+  "seepage_m3_day": 5.5,
+  "outflow_m3_s": 14.477746073812
+ },
+ {
+  "district_id": "D001",
+  "district_name": "Alfred Nzo",
+  "province": "Eastern Cape",
+  "dam_name": "Alfred Nzo Reservoir (GDW_794) / Alfred Nzo Reservoir (GDW_796)",
+  "river": "Alfred Nzo Catchment Drainage",
+  "date": "2000-01-03",
+  "soil_moisture_m3_m3": 0.311707755254445,
+  "rainfall_mm_day": 0.0025,
+  "evaporation_mm_day": 5.53108891324554,
+  "runoff_mm_day": 0.12646184585,
+  "district_area_km2": 10731.2184813536,
+  "water_area_km2": 52.5,
+  "mean_ndwi": -0.33596511,
+  "storage_volume_m3": 251997542.568276,
+  "pct_fsc": 100.0,
+  "fsl_m_amsl": 1200.0,
+  "water_level_m_amsl": 1200.0,
+  "inflow_m3_s": 15.7070566825418,
+  "seepage_m3_day": 5.5,
+  "outflow_m3_s": 15.7037921634948
+ },
+ {
+  "district_id": "D001",
+  "district_name": "Alfred Nzo",
+  "province": "Eastern Cape",
+  "dam_name": "Alfred Nzo Reservoir (GDW_794) / Alfred Nzo Reservoir (GDW_796)",
+  "river": "Alfred Nzo Catchment Drainage",
+  "date": "2000-01-04",
+  "soil_moisture_m3_m3": 0.304323454276959,
+  "rainfall_mm_day": 0.0,
+  "evaporation_mm_day": 5.53108891324554,
+  "runoff_mm_day": 0.35177337595,
+  "district_area_km2": 10731.2184813536,
+  "water_area_km2": 52.5,
+  "mean_ndwi": -0.33596511,
+  "storage_volume_m3": 251997542.568276,
+  "pct_fsc": 100.0,
+  "fsl_m_amsl": 1200.0,
+  "water_level_m_amsl": 1200.0,
+  "inflow_m3_s": 43.691631403273,
+  "seepage_m3_day": 5.5,
+  "outflow_m3_s": 43.688366884226
+ },
+ {
+  "district_id": "D001",
+  "district_name": "Alfred Nzo",
+  "province": "Eastern Cape",
+  "dam_name": "Alfred Nzo Reservoir (GDW_794) / Alfred Nzo Reservoir (GDW_796)",
+  "river": "Alfred Nzo Catchment Drainage",
+  "date": "2000-01-05",
+  "soil_moisture_m3_m3": 0.300962274260964,
+  "rainfall_mm_day": 0.518,
+  "evaporation_mm_day": 5.53108891324554,
+  "runoff_mm_day": 0.2436204222,
+  "district_area_km2": 10731.2184813536,
+  "water_area_km2": 52.5,
+  "mean_ndwi": -0.33596511,
+  "storage_volume_m3": 251997542.568276,
+  "pct_fsc": 100.0,
+  "fsl_m_amsl": 1200.0,
+  "water_level_m_amsl": 1200.0,
+  "inflow_m3_s": 30.2586108466181,
+  "seepage_m3_day": 5.5,
+  "outflow_m3_s": 30.2553463275711
+ }
+]
+```
+</details>
+
+## `9_1_hydrological_station_master` (Module 7)
+
+- Rows: **507,728** · size 112.9 MB
+- Shape: wide (12 numeric measure columns)
+- Primary key: `date`, `district_name`
+- Indexes: `CREATE UNIQUE INDEX unified_master_2000_2026_pkey ON public."9_1_hydrological_station_master" USING btree (date, district_name)`; `CREATE INDEX idx_hydrological_station_district_date ON public."9_1_hydrological_station_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · daily · 2000-01-01 → 2026-09-24 · 9,764 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 9,764 records · median span 26.73 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `date` | date NOT NULL | 0 | 9,764 | 2000-01-01 | 2026-09-24 | — | — |  |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,008 (19,032), 2,020 (19,032), 2,004 (19,032), 2,016 (19,032), 2,012 (19,032), 2,024 (19,032), 2,000 (19,032), 2,009 (18,980) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.479 | — | 1 (43,524), 3 (43,524), 5 (43,524), 7 (43,524), 8 (43,524), 6 (42,120), 4 (42,120), 10 (41,912) |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `daily_mean_flow` | double precision | 0 | 489,147 | 0 | 2.741e+09 | 2.215e+06 | m³/s |  |
+| `daily_sediment_load_t_day` | double precision | 0 | 319,004 | 0 | 8.054e+05 | 229.2 | days |  |
+| `river_discharge_q` | double precision | 0 | 16,412 | 0 | 3.172e+04 | 1.892 | m³/s |  |
+| `flow_velocity` | double precision | 0 | 1,466 | 0.0018 | 0.2401 | 0.0502 | m³/s |  |
+| `stage_height` | double precision | 0 | 1,558 | 0.05 | 1.012 | 0.0659 | — |  |
+| `monthly_mean_flow` | double precision | 0 | 17,885 | 34.2 | 1.996e+09 | 1.191e+06 | m³/s |  |
+| `suspended_sediment_concentration` | double precision | 0 | 12,213 | 16.62 | 449.2 | 134.8 | — |  |
+| `monthly_sediment_load_t_day` | double precision | 0 | 23,797 | 0 | 8.054e+05 | 20 | days |  |
+| `peak_instantaneous_flow` | double precision | 0 | 1,404 | 66.65 | 7.731e+05 | 4.196e+04 | m³/s |  |
+| `a_coeff` | double precision | 0 | 52 | 56.24 | 8.474e+21 | 1.63e+20 | — |  |
+| `b_exponent` | double precision | 0 | 52 | 1.802 | 18.79 | 4.46 | — |  |
+| `r_squared` | double precision | 0 | 11 | 0 | 0.9866 | 0.1319 | — | 0 (410,088), 0.1292 (9,764), 0.4663 (9,764), 0.5175 (9,764), 0.5806 (9,764), 0.5904 (9,764), 0.6703 (9,764), 0.9515 (9,764) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "City of Cape Town",
+  "daily_mean_flow": 201414.71,
+  "daily_sediment_load_t_day": 42.0876,
+  "river_discharge_q": 0.0297,
+  "flow_velocity": 0.0521,
+  "stage_height": 0.05,
+  "monthly_mean_flow": 79442.25,
+  "suspended_sediment_concentration": 208.96,
+  "monthly_sediment_load_t_day": 0.5362,
+  "peak_instantaneous_flow": 1426.5045,
+  "a_coeff": 55387293.3256,
+  "b_exponent": 6.9922,
+  "r_squared": 0.0
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "West Coast",
+  "daily_mean_flow": 52676.08,
+  "daily_sediment_load_t_day": 18.8651,
+  "river_discharge_q": 0.0213,
+  "flow_velocity": 0.0274,
+  "stage_height": 0.05,
+  "monthly_mean_flow": 57009.85,
+  "suspended_sediment_concentration": 358.135,
+  "monthly_sediment_load_t_day": 0.6591,
+  "peak_instantaneous_flow": 11341.935,
+  "a_coeff": 82178.6849,
+  "b_exponent": 4.7766,
+  "r_squared": 0.0
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "Cacadu",
+  "daily_mean_flow": 3196550.6,
+  "daily_sediment_load_t_day": 571.0797,
+  "river_discharge_q": 0.9573,
+  "flow_velocity": 0.0613,
+  "stage_height": 0.0928,
+  "monthly_mean_flow": 2564144.64,
+  "suspended_sediment_concentration": 178.655,
+  "monthly_sediment_load_t_day": 14.7767,
+  "peak_instantaneous_flow": 136966.9356,
+  "a_coeff": 1903.6569,
+  "b_exponent": 3.297,
+  "r_squared": 0.0
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "Amathole",
+  "daily_mean_flow": 2902133.56,
+  "daily_sediment_load_t_day": 136.4003,
+  "river_discharge_q": 2.4407,
+  "flow_velocity": 0.1125,
+  "stage_height": 0.1552,
+  "monthly_mean_flow": 6537230.02,
+  "suspended_sediment_concentration": 47.0,
+  "monthly_sediment_load_t_day": 9.9112,
+  "peak_instantaneous_flow": 76826.2402,
+  "a_coeff": 1455.1038,
+  "b_exponent": 3.1534,
+  "r_squared": 0.0
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "Chris Hani",
+  "daily_mean_flow": 22613547.68,
+  "daily_sediment_load_t_day": 2998.8956,
+  "river_discharge_q": 3.9518,
+  "flow_velocity": 0.1063,
+  "stage_height": 0.2121,
+  "monthly_mean_flow": 10584534.34,
+  "suspended_sediment_concentration": 132.615,
+  "monthly_sediment_load_t_day": 45.2795,
+  "peak_instantaneous_flow": 112888.1925,
+  "a_coeff": 256.7874,
+  "b_exponent": 2.4334,
+  "r_squared": 0.4663
+ }
+]
+```
+</details>
+
+## `9_2_catchment_characteristics_master` (Module 7)
+
+- Rows: **16,744** · size 8.6 MB
+- Shape: wide (16 numeric measure columns)
+- Primary key: `district_name`, `year`, `month`
+- Indexes: `CREATE UNIQUE INDEX catchment_characteristics_9_2_pk ON public."9_2_catchment_characteristics_master" USING btree (district_name, year, month)`; `CREATE INDEX idx_9_2_catchment_year_month ON public."9_2_catchment_characteristics_master" USING btree (year, month)`; `CREATE INDEX idx_9_2_catchment_date ON public."9_2_catchment_characteristics_master" USING btree (date)`; `CREATE INDEX idx_9_2_catchment_district ON public."9_2_catchment_characteristics_master" USING btree (district_name)`; `CREATE INDEX idx_9_2_catchment_area ON public."9_2_catchment_characteristics_master" USING btree (catchment_area_km2)`; `CREATE INDEX idx_9_2_catchment_vegetation ON public."9_2_catchment_characteristics_master" USING btree (vegetation_cover_pct)`; `CREATE INDEX idx_9_2_catchment_wetland ON public."9_2_catchment_characteristics_master" USING btree (wetland_pct)`; `CREATE INDEX idx_9_2_catchment_tree_cover ON public."9_2_catchment_characteristics_master" USING btree (tree_cover_pct)`; `CREATE INDEX idx_9_2_catchment_builtup ON public."9_2_catchment_characteristics_master" USING btree (builtup_urban_pct)`; `CREATE INDEX idx_9_2_catchment_slope ON public."9_2_catchment_characteristics_master" USING btree (mean_slope_degrees)`; `CREATE INDEX idx_9_2_catchment_twi ON public."9_2_catchment_characteristics_master" USING btree (mean_twi)`; `CREATE INDEX idx_9_2_catchment_hsg ON public."9_2_catchment_characteristics_master" USING btree (dominant_hsg)`; `CREATE INDEX idx_catchment_district_date ON public."9_2_catchment_characteristics_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-01 → 2026-10-01 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `date` | date NOT NULL | 0 | 322 | 2000-01-01 | 2026-10-01 | — | — |  |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,000 (624), 2,001 (624), 2,002 (624), 2,003 (624), 2,004 (624), 2,005 (624), 2,006 (624), 2,007 (624) |
+| `month` | text NOT NULL | 0 | 322 | — | — | — | — | 2005-09, 2021-04, 2013-05, 2003-10 |
+| `catchment_area_km2` | double precision | 0 | 52 | 1,645 | 1.268e+05 | 2.346e+04 | km² |  |
+| `water_bodies_pct` | double precision | 0 | 41 | 0 | 3.26 | 0.4233 | % | 0.14 (1,288), 0.6 (644), 0.25 (644), 0.23 (644), 0.05 (644), 0.13 (644), 0.15 (644), 0.41 (644) |
+| `tree_cover_pct` | double precision | 0 | 51 | 0.07 | 59.65 | 15.19 | % |  |
+| `shrubland_fynbos_pct` | double precision | 0 | 52 | 21.21 | 98.17 | 63.26 | % |  |
+| `grassland_pct` | double precision | 0 | 51 | 0.17 | 35.81 | 13.94 | % |  |
+| `cropland_agri_pct` | double precision | 0 | 51 | 0.17 | 35.81 | 13.94 | % |  |
+| `wetland_pct` | double precision | 0 | 35 | 0.01 | 2.01 | 0.304 | % | 0.32 (1,610), 0.43 (1,288), 0.25 (966), 0.15 (966), 0.01 (644), 0.02 (644), 0.19 (644), 0.2 (644) |
+| `builtup_urban_pct` | double precision | 0 | 46 | 0.05 | 49.65 | 4.101 | % | 1.93 (644), 0.62 (644), 0.18 (644), 0.47 (644), 0.71 (644), 0.05 (644), 0.22 (322), 0.25 (322) |
+| `bare_soil_mining_pct` | double precision | 0 | 27 | 0 | 52.26 | 2.783 | % | 0.01 (2,254), 0 (2,254), 0.04 (1,932), 0.03 (1,288), 0.11 (966), 0.05 (966), 0.17 (644), 0.07 (322) |
+| `dominant_hsg` | text | 0 | 3 | — | — | — | — | A (9,660), C (5,796), B (1,288) |
+| `hsg_a_pct` | double precision | 0 | 3 | 10 | 65 | 42.5 | % | 65 (9,660), 10 (5,796), 20 (1,288) |
+| `hsg_b_pct` | double precision | 0 | 3 | 20 | 55 | 24.42 | % | 20 (9,660), 25 (5,796), 55 (1,288) |
+| `hsg_c_pct` | double precision | 0 | 3 | 10 | 45 | 22.88 | % | 10 (9,660), 45 (5,796), 20 (1,288) |
+| `hsg_d_pct` | double precision | 0 | 2 | 5 | 20 | 10.19 | % | 5 (10,948), 20 (5,796) |
+| `mean_slope_degrees` | double precision | 0 | 1 | 4.5 | 4.5 | 4.5 | — | 4.5 (16,744) |
+| `mean_twi` | double precision | 0 | 1 | 7.85 | 7.85 | 7.85 | — | 7.85 (16,744) |
+| `vegetation_cover_pct` | double precision | 0 | 1 | 65.4 | 65.4 | 65.4 | % | 65.4 (16,744) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "date": "2000-01-01",
+  "district_name": "City of Cape Town",
+  "year": 2000,
+  "month": "2000-01",
+  "catchment_area_km2": 2458.11,
+  "water_bodies_pct": 1.61,
+  "tree_cover_pct": 3.67,
+  "shrubland_fynbos_pct": 52.61,
+  "grassland_pct": 17.68,
+  "cropland_agri_pct": 17.68,
+  "wetland_pct": 0.59,
+  "builtup_urban_pct": 23.72,
+  "bare_soil_mining_pct": 0.1,
+  "dominant_hsg": "A",
+  "hsg_a_pct": 65.0,
+  "hsg_b_pct": 20.0,
+  "hsg_c_pct": 10.0,
+  "hsg_d_pct": 5.0,
+  "mean_slope_degrees": 4.5,
+  "mean_twi": 7.85,
+  "vegetation_cover_pct": 65.4
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "West Coast",
+  "year": 2000,
+  "month": "2000-01",
+  "catchment_area_km2": 31118.47,
+  "water_bodies_pct": 0.14,
+  "tree_cover_pct": 0.22,
+  "shrubland_fynbos_pct": 81.04,
+  "grassland_pct": 15.77,
+  "cropland_agri_pct": 15.77,
+  "wetland_pct": 0.11,
+  "builtup_urban_pct": 0.3,
+  "bare_soil_mining_pct": 2.42,
+  "dominant_hsg": "A",
+  "hsg_a_pct": 65.0,
+  "hsg_b_pct": 20.0,
+  "hsg_c_pct": 10.0,
+  "hsg_d_pct": 5.0,
+  "mean_slope_degrees": 4.5,
+  "mean_twi": 7.85,
+  "vegetation_cover_pct": 65.4
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "Cacadu",
+  "year": 2000,
+  "month": "2000-01",
+  "catchment_area_km2": 58240.03,
+  "water_bodies_pct": 0.18,
+  "tree_cover_pct": 7.82,
+  "shrubland_fynbos_pct": 86.61,
+  "grassland_pct": 1.73,
+  "cropland_agri_pct": 1.73,
+  "wetland_pct": 0.09,
+  "builtup_urban_pct": 0.18,
+  "bare_soil_mining_pct": 3.39,
+  "dominant_hsg": "A",
+  "hsg_a_pct": 65.0,
+  "hsg_b_pct": 20.0,
+  "hsg_c_pct": 10.0,
+  "hsg_d_pct": 5.0,
+  "mean_slope_degrees": 4.5,
+  "mean_twi": 7.85,
+  "vegetation_cover_pct": 65.4
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "Amathole",
+  "year": 2000,
+  "month": "2000-01",
+  "catchment_area_km2": 21596.88,
+  "water_bodies_pct": 0.15,
+  "tree_cover_pct": 23.45,
+  "shrubland_fynbos_pct": 66.58,
+  "grassland_pct": 9.11,
+  "cropland_agri_pct": 9.11,
+  "wetland_pct": 0.25,
+  "builtup_urban_pct": 0.41,
+  "bare_soil_mining_pct": 0.05,
+  "dominant_hsg": "C",
+  "hsg_a_pct": 10.0,
+  "hsg_b_pct": 25.0,
+  "hsg_c_pct": 45.0,
+  "hsg_d_pct": 20.0,
+  "mean_slope_degrees": 4.5,
+  "mean_twi": 7.85,
+  "vegetation_cover_pct": 65.4
+ },
+ {
+  "date": "2000-01-01",
+  "district_name": "Chris Hani",
+  "year": 2000,
+  "month": "2000-01",
+  "catchment_area_km2": 36143.54,
+  "water_bodies_pct": 0.16,
+  "tree_cover_pct": 1.96,
+  "shrubland_fynbos_pct": 93.25,
+  "grassland_pct": 4.23,
+  "cropland_agri_pct": 4.23,
+  "wetland_pct": 0.15,
+  "builtup_urban_pct": 0.22,
+  "bare_soil_mining_pct": 0.04,
+  "dominant_hsg": "B",
+  "hsg_a_pct": 20.0,
+  "hsg_b_pct": 55.0,
+  "hsg_c_pct": 20.0,
+  "hsg_d_pct": 5.0,
+  "mean_slope_degrees": 4.5,
+  "mean_twi": 7.85,
+  "vegetation_cover_pct": 65.4
+ }
+]
+```
+</details>
+
+## `9_3_sansa_earth_observation_master` (Module 7)
+
+- Rows: **16,692** · size 3.0 MB
+- Shape: wide (6 numeric measure columns)
+- Primary key: `date`, `district_name`
+- Indexes: `CREATE UNIQUE INDEX "9_3_sansa_earth_observation_master_pkey" ON public."9_3_sansa_earth_observation_master" USING btree (date, district_name)`; `CREATE INDEX idx_sansa_earth_observation_district_date ON public."9_3_sansa_earth_observation_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-01 → 2026-09-01 · 321 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 321 records · median span 26.67 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `date` | date NOT NULL | 0 | 321 | 2000-01-01 | 2026-09-01 | — | — |  |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.458 | — | 6 (1,404), 3 (1,404), 5 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 9 (1,404), 7 (1,404) |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `surface_water_extent_km2` | double precision | 0 | 64 | 11 | 64.97 | 33.99 | km² |  |
+| `ndwi_mean` | double precision | 0 | 45 | -0.15 | 0.37 | 0.1199 | — | 0.13 (963), 0.11 (940), 0.12 (885), 0.08 (830), 0.04 (752), 0.34 (665), -0.1 (564), 0.1 (564) |
+| `turbidity_proxy_ratio` | double precision | 0 | 58 | 0.37 | 1.06 | 0.7095 | — |  |
+| `chlorophyll_a_mg_m3` | double precision | 0 | 54 | 3.5 | 26.8 | 13.17 | — |  |
+| `sediment_plume_pct` | double precision | 0 | 40 | 6.8 | 42.5 | 22.1 | % | 11.8 (1,070), 28.8 (856), 29.8 (856), 15.8 (856), 26.8 (856), 17.8 (856), 7.8 (642), 6.8 (642) |
+| `flood_inundation_extent_km2` | double precision | 0 | 28 | 0.5 | 26.25 | 3.964 | km² | 5 (2,781), 4 (2,163), 1 (1,854), 3.5 (1,617), 1.5 (1,236), 2.5 (1,236), 3 (1,236), 6 (927) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "City of Cape Town",
+  "surface_water_extent_km2": 51.17,
+  "ndwi_mean": 0.33,
+  "turbidity_proxy_ratio": 0.95,
+  "chlorophyll_a_mg_m3": 19.8,
+  "sediment_plume_pct": 18.5,
+  "flood_inundation_extent_km2": 7.0
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "West Coast",
+  "surface_water_extent_km2": 43.12,
+  "ndwi_mean": 0.35,
+  "turbidity_proxy_ratio": 1.0,
+  "chlorophyll_a_mg_m3": 25.8,
+  "sediment_plume_pct": 25.5,
+  "flood_inundation_extent_km2": 5.0
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "Cacadu",
+  "surface_water_extent_km2": 51.17,
+  "ndwi_mean": 0.14,
+  "turbidity_proxy_ratio": 0.82,
+  "chlorophyll_a_mg_m3": 12.3,
+  "sediment_plume_pct": 20.5,
+  "flood_inundation_extent_km2": 5.0
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "Amathole",
+  "surface_water_extent_km2": 22.42,
+  "ndwi_mean": 0.08,
+  "turbidity_proxy_ratio": 0.81,
+  "chlorophyll_a_mg_m3": 16.8,
+  "sediment_plume_pct": 41.5,
+  "flood_inundation_extent_km2": 5.5
+ },
+ {
+  "date": "2000-01-01",
+  "year": 2000,
+  "month": 1,
+  "district_name": "Chris Hani",
+  "surface_water_extent_km2": 23.57,
+  "ndwi_mean": 0.34,
+  "turbidity_proxy_ratio": 0.99,
+  "chlorophyll_a_mg_m3": 20.3,
+  "sediment_plume_pct": 18.5,
+  "flood_inundation_extent_km2": 4.0
+ }
+]
+```
+</details>
+
+## `10_1_borehole_and_aquifer_master` (Module 8)
+
+- Rows: **71,448** · size 11.4 MB
+- Shape: long (variable: variable_name, value: value)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_borehole_aquifer_district_date ON public."10_1_borehole_and_aquifer_master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · 16-day composite / semi-monthly · 2000-01-02 → 2026-12-31 · 571 distinct dates · 27.0 years
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 1,374 records · median span 27 years
+- ⚠ Duplicate (location, date) pairs: 29,588
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `date` | date | 0 | 571 | 2000-01-02 | 2026-12-31 | — | — |  |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,008 (2,704), 2,019 (2,704), 2,024 (2,704), 2,002 (2,704), 2,013 (2,704), 2,004 (2,704), 2,006 (2,704), 2,000 (2,704) |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `variable_name` | text | 0 | 13 | — | — | — | — | sgi_dimensionless (16,848), hydraulic_head_amsl_m (16,744), groundwater_table_depth_m_bgl (10,504), hydraulic_head_m_amsl (10,504), seasonal_water_table_fluctuation_m (5,616), storativity_specific_yield_dimensionless (1,404), saturated_thickness_m (1,404), annual_recharge_rate_mm_yr (1,404) |
+| `value` | double precision | 0 | 21,506 | -3 | 1.118e+05 | 1,353 | — |  |
+| `unit` | text | 0 | 11 | — | — | — | — | m bgl (21,008), dimensionless (18,252), m amsl (16,744), m/season (5,616), m³/h (1,404), % (1,404), mm/year (1,404), m³/year (1,404) |
+| `source` | text | 0 | 11 | — | — | — | — | DWS / derived (22,464), DWS NGA (Daily/Weekly Telemetry) (21,008), DWS National Groundwater Archive & Spatial DEM Interpolation (16,744), DWS National Groundwater Archive / Pumping Test Analyses (1,404), DWS Hydrogeological Mapping / Chloride Mass Balance & Wat… (1,404), DWS National Groundwater Archive / Aquifer Parameter Data… (1,404), DWS National Groundwater Archive / Hydrogeological Aquife… (1,404), DWS National Groundwater Archive / Hydrogeological Mappin… (1,404) |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "date": "2000-12-31",
+  "year": 2000,
+  "district_name": "City of Cape Town",
+  "variable_name": "annual_abstraction_volume_m3_yr",
+  "value": 12745.1,
+  "unit": "m³/year",
+  "source": "DWS National Groundwater Archive / Municipal Water Use Returns"
+ },
+ {
+  "date": "2000-12-31",
+  "year": 2000,
+  "district_name": "West Coast",
+  "variable_name": "annual_abstraction_volume_m3_yr",
+  "value": 14242.6,
+  "unit": "m³/year",
+  "source": "DWS National Groundwater Archive / Municipal Water Use Returns"
+ },
+ {
+  "date": "2000-12-31",
+  "year": 2000,
+  "district_name": "Cacadu",
+  "variable_name": "annual_abstraction_volume_m3_yr",
+  "value": 17871.5,
+  "unit": "m³/year",
+  "source": "DWS National Groundwater Archive / Municipal Water Use Returns"
+ },
+ {
+  "date": "2000-12-31",
+  "year": 2000,
+  "district_name": "Amathole",
+  "variable_name": "annual_abstraction_volume_m3_yr",
+  "value": 21634.5,
+  "unit": "m³/year",
+  "source": "DWS National Groundwater Archive / Municipal Water Use Returns"
+ },
+ {
+  "date": "2000-12-31",
+  "year": 2000,
+  "district_name": "Chris Hani",
+  "variable_name": "annual_abstraction_volume_m3_yr",
+  "value": 21448.8,
+  "unit": "m³/year",
+  "source": "DWS National Groundwater Archive / Municipal Water Use Returns"
+ }
+]
+```
+</details>
+
+## `10_2_recharge_supporting _master` (Module 8)
+
+- Rows: **16,848** · size 2.4 MB
+- Shape: wide (6 numeric measure columns)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_recharge_supporting_district_date ON public."10_2_recharge_supporting _master" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality); coordinates: **no**
+- Time: `date` · monthly · 2000-01-31 → 2026-12-31 · 324 distinct dates · 26.9 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 324 records · median span 26.92 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `date` | date | 0 | 324 | 2000-01-31 | 2026-12-31 | — | — |  |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,017 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `monthly_catchment_rainfall_mm` | double precision | 0 | 9,387 | 2.5 | 198.6 | 62.52 | mm |  |
+| `vadose_zone_soil_moisture_m3_m3` | double precision | 0 | 3,198 | 0.1361 | 0.48 | 0.2801 | m³/m³ |  |
+| `actual_evapotranspiration_mm` | double precision | 0 | 9,241 | 35.19 | 204.8 | 104.6 | mm |  |
+| `river_baseflow_proxy_m3_day` | double precision | 0 | 7,757 | 0.073 | 17.94 | 4.225 | m³ per period |  |
+| `urban_agricultural_land_use_pct` | double precision | 0 | 3,754 | 11.9 | 53.05 | 28.45 | % |  |
+| `water_table_rise_wtf_m` | double precision | 0 | 3,942 | 0.0026 | 0.4784 | 0.1501 | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "date": "2000-01-31",
+  "year": 2000,
+  "district_name": "City of Cape Town",
+  "monthly_catchment_rainfall_mm": 117.09,
+  "vadose_zone_soil_moisture_m3_m3": 0.3901,
+  "actual_evapotranspiration_mm": 75.59,
+  "river_baseflow_proxy_m3_day": 9.592,
+  "urban_agricultural_land_use_pct": 36.08,
+  "water_table_rise_wtf_m": 0.2808
+ },
+ {
+  "date": "2000-02-29",
+  "year": 2000,
+  "district_name": "City of Cape Town",
+  "monthly_catchment_rainfall_mm": 118.62,
+  "vadose_zone_soil_moisture_m3_m3": 0.4211,
+  "actual_evapotranspiration_mm": 88.6,
+  "river_baseflow_proxy_m3_day": 10.49,
+  "urban_agricultural_land_use_pct": 35.98,
+  "water_table_rise_wtf_m": 0.2852
+ },
+ {
+  "date": "2000-03-31",
+  "year": 2000,
+  "district_name": "City of Cape Town",
+  "monthly_catchment_rainfall_mm": 119.57,
+  "vadose_zone_soil_moisture_m3_m3": 0.4057,
+  "actual_evapotranspiration_mm": 102.25,
+  "river_baseflow_proxy_m3_day": 10.187,
+  "urban_agricultural_land_use_pct": 35.9,
+  "water_table_rise_wtf_m": 0.2852
+ },
+ {
+  "date": "2000-04-30",
+  "year": 2000,
+  "district_name": "City of Cape Town",
+  "monthly_catchment_rainfall_mm": 18.53,
+  "vadose_zone_soil_moisture_m3_m3": 0.2437,
+  "actual_evapotranspiration_mm": 119.49,
+  "river_baseflow_proxy_m3_day": 0.948,
+  "urban_agricultural_land_use_pct": 35.95,
+  "water_table_rise_wtf_m": 0.0431
+ },
+ {
+  "date": "2000-05-31",
+  "year": 2000,
+  "district_name": "City of Cape Town",
+  "monthly_catchment_rainfall_mm": 33.76,
+  "vadose_zone_soil_moisture_m3_m3": 0.2436,
+  "actual_evapotranspiration_mm": 130.3,
+  "river_baseflow_proxy_m3_day": 1.727,
+  "urban_agricultural_land_use_pct": 35.93,
+  "water_table_rise_wtf_m": 0.0805
+ }
+]
+```
+</details>
+
+## `11_1_hydrogeological` (Module 9)
+
+- Rows: **16,744** · size 5.6 MB
+- Shape: long (variable: variable, value: value)
+- Primary key: `id`
+- Indexes: `CREATE UNIQUE INDEX "11_1_hydrogeological_pkey" ON public."11_1_hydrogeological" USING btree (id)`; `CREATE INDEX idx_hydrogeological_district_date ON public."11_1_hydrogeological" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality), `province_name` (province); coordinates: **no**
+- Time: `date` · monthly · 2000-01-01 → 2026-10-01 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `id` | bigint NOT NULL | 0 | 16,744 | 1 | 16,744 | 8,372 | — |  |
+| `category` | text NOT NULL | 0 | 1 | — | — | — | — | Geometry (16,744) |
+| `variable` | text NOT NULL | 0 | 1 | — | — | — | — | Depth to water table (16,744) |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `province_name` 🗺 | text NOT NULL | 0 | 9 | — | — | — | — | KwaZulu-Natal (3,542), Eastern Cape (2,576), Western Cape (1,932), Gauteng (1,610), Limpopo (1,610), Northern Cape (1,610), Free State (1,610), North West (1,288) |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `date` | date NOT NULL | 0 | 322 | 2000-01-01 | 2026-10-01 | — | — |  |
+| `value` | double precision NOT NULL | 0 | 3,649 | 3.5 | 50.36 | 21.19 | — |  |
+| `unit` | text NOT NULL | 0 | 1 | — | — | — | — | m bgl (16,744) |
+| `source` | text NOT NULL | 0 | 1 | — | — | — | — | DWS NGA / GEE NASA GLDAS Subsurface Hydrology (16,744) |
+| `Aquifer extent (map area)` | double precision | 0 | 52 | 1,648 | 1.27e+05 | 2.351e+04 | — |  |
+| `Aquifer saturated thickness` | double precision | 0 | 52 | 23.96 | 78.73 | 54.98 | — |  |
+| `Depth to bedrock / aquifer base` | double precision | 0 | 978 | 24.28 | 58.85 | 40.29 | — |  |
+| `Dynamic (renewable) reserve` | double precision | 0 | 1,344 | 31.46 | 565.5 | 235.3 | — |  |
+| `Groundwater storage coefficient` | double precision | 0 | 47 | 0.00628 | 0.06504 | 0.0322 | — | 0.029 (1,932), 0.0421 (322), 0.02498 (322), 0.01791 (322), 0.01675 (322), 0.02599 (322), 0.03159 (322), 0.02677 (322) |
+| `Permeability / hydraulic conductivity` | double precision | 0 | 45 | 0.78 | 9.4 | 4.583 | — | 4.11 (1,932), 7.57 (644), 3.52 (644), 6.16 (322), 8.34 (322), 4.38 (322), 4.23 (322), 6.55 (322) |
+| `Porosity (total and effective)` | double precision | 0 | 45 | 16 | 42 | 28.08 | — | 26.6 (1,932), 37.6 (644), 24.72 (644), 33.39 (322), 26.47 (322), 33.13 (322), 25.19 (322), 26.98 (322) |
+| `Specific storage` | double precision | 0 | 51 | 0.00112 | 0.006892 | 0.004 | — |  |
+| `Specific yield` | double precision | 0 | 47 | 0.0414 | 0.1981 | 0.1106 | — | 0.102 (1,932), 0.1042 (322), 0.1369 (322), 0.1146 (322), 0.0984 (322), 0.1013 (322), 0.1342 (322), 0.092 (322) |
+| `Static reserve volume` | double precision | 0 | 52 | 2.778e+04 | 9.453e+04 | 5.161e+04 | Mm³ |  |
+| `Storage coefficient / storativity / specific yield` | double precision | 0 | 45 | 0.03 | 0.1671 | 0.0905 | — | 0.083 (1,932), 0.138 (644), 0.0736 (644), 0.1255 (322), 0.076 (322), 0.0882 (322), 0.0761 (322), 0.0811 (322) |
+| `Transmissivity` | double precision | 0 | 52 | 24.06 | 259.6 | 101.1 | — (dimensionless) |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "id": 1,
+  "category": "Geometry",
+  "variable": "Depth to water table",
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 1,
+  "date": "2000-01-01",
+  "value": 3.5,
+  "unit": "m bgl",
+  "source": "DWS NGA / GEE NASA GLDAS Subsurface Hydrology",
+  "Aquifer extent (map area)": 10741.85,
+  "Aquifer saturated thickness": 63.26,
+  "Depth to bedrock / aquifer base": 44.01,
+  "Dynamic (renewable) reserve": 384.81,
+  "Groundwater storage coefficient": 0.04875,
+  "Permeability / hydraulic conductivity": 7.01,
+  "Porosity (total and effective)": 35.82,
+  "Specific storage": 0.005603,
+  "Specific yield": 0.1547,
+  "Static reserve volume": 66314.15,
+  "Storage coefficient / storativity / specific yield": 0.1291,
+  "Transmissivity": 161.45
+ },
+ {
+  "id": 2,
+  "category": "Geometry",
+  "variable": "Depth to water table",
+  "district_name": "Amajuba",
+  "province_name": "KwaZulu-Natal",
+  "year": 2000,
+  "month": 1,
+  "date": "2000-01-01",
+  "value": 3.5,
+  "unit": "m bgl",
+  "source": "DWS NGA / GEE NASA GLDAS Subsurface Hydrology",
+  "Aquifer extent (map area)": 7113.69,
+  "Aquifer saturated thickness": 70.03,
+  "Depth to bedrock / aquifer base": 50.39,
+  "Dynamic (renewable) reserve": 274.23,
+  "Groundwater storage coefficient": 0.04405,
+  "Permeability / hydraulic conductivity": 6.32,
+  "Porosity (total and effective)": 33.62,
+  "Specific storage": 0.003934,
+  "Specific yield": 0.1421,
+  "Static reserve volume": 67123.96,
+  "Storage coefficient / storativity / specific yield": 0.1181,
+  "Transmissivity": 147.43
+ },
+ {
+  "id": 3,
+  "category": "Geometry",
+  "variable": "Depth to water table",
+  "district_name": "Amathole",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 1,
+  "date": "2000-01-01",
+  "value": 18.39,
+  "unit": "m bgl",
+  "source": "DWS NGA / GEE NASA GLDAS Subsurface Hydrology",
+  "Aquifer extent (map area)": 21129.79,
+  "Aquifer saturated thickness": 43.39,
+  "Depth to bedrock / aquifer base": 35.94,
+  "Dynamic (renewable) reserve": 332.57,
+  "Groundwater storage coefficient": 0.02819,
+  "Permeability / hydraulic conductivity": 3.99,
+  "Porosity (total and effective)": 26.22,
+  "Specific storage": 0.005369,
+  "Specific yield": 0.0998,
+  "Static reserve volume": 47307.92,
+  "Storage coefficient / storativity / specific yield": 0.0811,
+  "Transmissivity": 100.42
+ },
+ {
+  "id": 4,
+  "category": "Geometry",
+  "variable": "Depth to water table",
+  "district_name": "Bojanala",
+  "province_name": "North West",
+  "year": 2000,
+  "month": 1,
+  "date": "2000-01-01",
+  "value": 3.5,
+  "unit": "m bgl",
+  "source": "DWS NGA / GEE NASA GLDAS Subsurface Hydrology",
+  "Aquifer extent (map area)": 18370.24,
+  "Aquifer saturated thickness": 61.56,
+  "Depth to bedrock / aquifer base": 45.74,
+  "Dynamic (renewable) reserve": 273.33,
+  "Groundwater storage coefficient": 0.043,
+  "Permeability / hydraulic conductivity": 6.16,
+  "Porosity (total and effective)": 33.13,
+  "Specific storage": 0.004906,
+  "Specific yield": 0.1393,
+  "Static reserve volume": 63079.33,
+  "Storage coefficient / storativity / specific yield": 0.1157,
+  "Transmissivity": 145.31
+ },
+ {
+  "id": 5,
+  "category": "Geometry",
+  "variable": "Depth to water table",
+  "district_name": "Buffalo City",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 1,
+  "date": "2000-01-01",
+  "value": 21.63,
+  "unit": "m bgl",
+  "source": "DWS NGA / GEE NASA GLDAS Subsurface Hydrology",
+  "Aquifer extent (map area)": 2751.69,
+  "Aquifer saturated thickness": 30.66,
+  "Depth to bedrock / aquifer base": 33.95,
+  "Dynamic (renewable) reserve": 302.7,
+  "Groundwater storage coefficient": 0.02639,
+  "Permeability / hydraulic conductivity": 3.73,
+  "Porosity (total and effective)": 25.38,
+  "Specific storage": 0.004065,
+  "Specific yield": 0.095,
+  "Static reserve volume": 40100.49,
+  "Storage coefficient / storativity / specific yield": 0.0769,
+  "Transmissivity": 70.53
+ }
+]
+```
+</details>
+
+## `11.2_recharge_and_discharge` (Module 9)
+
+- Rows: **50,232** · size 15.9 MB
+- Shape: wide (6 numeric measure columns)
+- Primary key: `id`
+- Indexes: `CREATE UNIQUE INDEX "11.2_recharge_and_discharge_pkey" ON public."11.2_recharge_and_discharge" USING btree (id)`; `CREATE INDEX idx_recharge_discharge_district_date ON public."11.2_recharge_and_discharge" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality), `province_name` (province); coordinates: **no**
+- Time: `date` · monthly · 2000-01-25 → 2026-10-25 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 966 records · median span 26.75 years
+- ⚠ Duplicate (location, date) pairs: 16,744
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `id` | bigint NOT NULL | 0 | 50,232 | 1 | 50,232 | 2.512e+04 | — |  |
+| `district_name` 🗺 | text NOT NULL | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `province_name` 🗺 | text NOT NULL | 0 | 9 | — | — | — | — | KwaZulu-Natal (10,626), Eastern Cape (7,728), Western Cape (5,796), Gauteng (4,830), Limpopo (4,830), Northern Cape (4,830), Free State (4,830), North West (3,864) |
+| `year` | integer NOT NULL | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (1,872), 2,016 (1,872), 2,012 (1,872), 2,018 (1,872), 2,009 (1,872), 2,005 (1,872), 2,024 (1,872), 2,013 (1,872) |
+| `month` | integer NOT NULL | 0 | 12 | 1 | 12 | 6.469 | — | 6 (4,212), 3 (4,212), 4 (4,212), 2 (4,212), 8 (4,212), 10 (4,212), 9 (4,212), 7 (4,212) |
+| `Baseflow discharge` | double precision | 0 | 11,482 | 0.08 | 1.122e+04 | 164.4 | m³/s |  |
+| `Evapotranspiration` | double precision | 0 | 7,865 | 5 | 166.8 | 47.03 | — (dimensionless) |  |
+| `Spring discharge` | double precision | 0 | 2,874 | 4.56 | 66.19 | 18.62 | m³/s |  |
+| `Direct recharge` | double precision | 0 | 1,195 | 1.97 | 113.1 | 40.16 | — |  |
+| `Indirect recharge` | double precision | 0 | 1,378 | 1.259e+07 | 2.262e+08 | 9.413e+07 | — |  |
+| `Rainfall infiltration` | double precision | 0 | 1,291 | 9.44 | 169.6 | 70.6 | mm |  |
+| `date` | date | 0 | 322 | 2000-01-25 | 2026-10-25 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "id": 1,
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 1,
+  "Baseflow discharge": 1181.734,
+  "Evapotranspiration": 115.7,
+  "Spring discharge": 32.6,
+  "Direct recharge": 76.96,
+  "Indirect recharge": 153924174.59,
+  "Rainfall infiltration": 115.44,
+  "date": "2000-01-25"
+ },
+ {
+  "id": 2,
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 2,
+  "Baseflow discharge": 2238.997,
+  "Evapotranspiration": 112.68,
+  "Spring discharge": 33.47,
+  "Direct recharge": 76.96,
+  "Indirect recharge": 153924174.59,
+  "Rainfall infiltration": 115.44,
+  "date": "2000-02-25"
+ },
+ {
+  "id": 3,
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 3,
+  "Baseflow discharge": 2305.5,
+  "Evapotranspiration": 100.5,
+  "Spring discharge": 34.02,
+  "Direct recharge": 76.96,
+  "Indirect recharge": 153924174.59,
+  "Rainfall infiltration": 115.44,
+  "date": "2000-03-25"
+ },
+ {
+  "id": 4,
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 4,
+  "Baseflow discharge": 1558.689,
+  "Evapotranspiration": 67.92,
+  "Spring discharge": 32.72,
+  "Direct recharge": 76.96,
+  "Indirect recharge": 153924174.59,
+  "Rainfall infiltration": 115.44,
+  "date": "2000-04-25"
+ },
+ {
+  "id": 5,
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 5,
+  "Baseflow discharge": 1748.774,
+  "Evapotranspiration": 45.15,
+  "Spring discharge": 32.73,
+  "Direct recharge": 76.96,
+  "Indirect recharge": 153924174.59,
+  "Rainfall infiltration": 115.44,
+  "date": "2000-05-25"
+ }
+]
+```
+</details>
+
+## `11.3_aquifer_sustainability` (Module 9)
+
+- Rows: **16,744** · size 4.5 MB
+- Shape: wide (6 numeric measure columns)
+- Primary key: **none**
+- Indexes: `CREATE INDEX idx_aquifer_sustainability_district_date ON public."11.3_aquifer_sustainability" USING btree (district_name, date)`
+- Row-level security enabled: True
+- Location columns: `district_name` (municipality), `province_name` (province); coordinates: **no**
+- Time: `date` · monthly · 2000-01-25 → 2026-10-25 · 322 distinct dates · 26.7 years
+- Gaps (> 1.5 × step): 0
+- Covers 1981–2010 baseline: **False**
+- Per location (district_name): 52 locations · median 322 records · median span 26.75 years
+
+| Column | Type | Null % | Distinct | Min | Max | Mean | Unit hint | Values / examples |
+| --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
+| `district_name` 🗺 | text | 0 | 52 | — | — | — | — | Alfred Nzo, Amajuba, Amathole, Bojanala |
+| `province_name` 🗺 | text | 0 | 9 | — | — | — | — | KwaZulu-Natal (3,542), Eastern Cape (2,576), Western Cape (1,932), Gauteng (1,610), Limpopo (1,610), Northern Cape (1,610), Free State (1,610), North West (1,288) |
+| `year` | integer | 0 | 27 | 2,000 | 2,026 | 2,013 | — | 2,001 (624), 2,016 (624), 2,012 (624), 2,018 (624), 2,009 (624), 2,005 (624), 2,024 (624), 2,013 (624) |
+| `month` | integer | 0 | 12 | 1 | 12 | 6.469 | — | 6 (1,404), 3 (1,404), 4 (1,404), 2 (1,404), 8 (1,404), 10 (1,404), 9 (1,404), 7 (1,404) |
+| `Water quality for use` | double precision | 0 | 9,436 | 35.13 | 348.9 | 101 | — |  |
+| `Aquifer depletion rate` | double precision | 0 | 97 | 0.057 | 0.732 | 0.2791 | — |  |
+| `Borehole yield` | double precision | 0 | 52 | 1.34 | 12.37 | 5.494 | — |  |
+| `Exploitation index` | double precision | 0 | 1,064 | 0.72 | 104.7 | 15.35 | — (dimensionless) |  |
+| `Recharge sensitivity` | double precision | 0 | 103 | 25.18 | 100 | 53.93 | — |  |
+| `Total abstraction` | double precision | 0 | 1,404 | 6.617e+06 | 8.087e+07 | 2.538e+07 | — |  |
+| `date` | date | 0 | 322 | 2000-01-25 | 2026-10-25 | — | — |  |
+
+<details><summary>5 sample rows</summary>
+
+```json
+[
+ {
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 1,
+  "Water quality for use": 121.38,
+  "Aquifer depletion rate": 0.257,
+  "Borehole yield": 1.82,
+  "Exploitation index": 2.41,
+  "Recharge sensitivity": 52.2,
+  "Total abstraction": 14474000.0,
+  "date": "2000-01-25"
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 2,
+  "Water quality for use": 120.22,
+  "Aquifer depletion rate": 0.257,
+  "Borehole yield": 1.82,
+  "Exploitation index": 2.41,
+  "Recharge sensitivity": 52.2,
+  "Total abstraction": 14474000.0,
+  "date": "2000-02-25"
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 3,
+  "Water quality for use": 115.54,
+  "Aquifer depletion rate": 0.257,
+  "Borehole yield": 1.82,
+  "Exploitation index": 2.41,
+  "Recharge sensitivity": 52.2,
+  "Total abstraction": 14474000.0,
+  "date": "2000-03-25"
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 4,
+  "Water quality for use": 103.01,
+  "Aquifer depletion rate": 0.257,
+  "Borehole yield": 1.82,
+  "Exploitation index": 2.41,
+  "Recharge sensitivity": 52.2,
+  "Total abstraction": 14474000.0,
+  "date": "2000-04-25"
+ },
+ {
+  "district_name": "Alfred Nzo",
+  "province_name": "Eastern Cape",
+  "year": 2000,
+  "month": 5,
+  "Water quality for use": 94.25,
+  "Aquifer depletion rate": 0.257,
+  "Borehole yield": 1.82,
+  "Exploitation index": 2.41,
+  "Recharge sensitivity": 52.2,
+  "Total abstraction": 14474000.0,
+  "date": "2000-05-25"
+ }
+]
+```
+</details>

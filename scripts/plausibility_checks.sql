@@ -178,3 +178,100 @@ SELECT round(corr(a."Flood_Flow_2yr_m3s", p.pk)::numeric, 4) AS r, round(avg(a."
        round(avg(a."Flood_Flow_100yr_m3s" / nullif(a."Flood_Flow_2yr_m3s", 0))::numeric, 3) AS ratio_100_2
 FROM p JOIN "7.2_derived_runoff_indicators_master" a ON a."District_Name" = p.dn AND a."Year" = p.y AND a."Month" = p.mo
 WHERE p.pk > 0
+---
+§8.1 reservoirs (8_1): how many district-days share one storage / % FSC / level / water area (2026-10-20)
+SELECT storage_volume_m3, pct_fsc, water_level_m_amsl, water_area_km2, count(*) AS days, count(DISTINCT district_name) AS districts
+FROM "8_1_reservoir_operational_master" WHERE district_name <> 'Siyanda' AND date <= CURRENT_DATE
+GROUP BY 1, 2, 3, 4 ORDER BY days DESC LIMIT 3
+---
+§8.1 reservoirs (8_1): runoff and inflow vary in 2000 only (distinct values per year, Vhembe)
+SELECT extract(year FROM date) AS y, count(DISTINCT runoff_mm_day) AS runoff_values, count(DISTINCT inflow_m3_s) AS inflow_values
+FROM "8_1_reservoir_operational_master" WHERE district_name = 'Vhembe' GROUP BY 1 ORDER BY 1 LIMIT 4
+---
+§8.1 reservoirs (8_1): inflow = runoff depth × 10 000 km² (Vhembe, one day)
+SELECT date, inflow_m3_s, runoff_mm_day / 1000 * 10000e6 / 86400 AS runoff_x_10000km2_m3s, outflow_m3_s, district_area_km2
+FROM "8_1_reservoir_operational_master" WHERE district_name = 'Vhembe' AND date = '2015-01-28'
+---
+§8.1 reservoirs (8_1): Siyanda (old name of Z F Mgcawu) repeats Z F Mgcawu's storage
+SELECT count(*) AS days, count(*) FILTER (WHERE a.storage_volume_m3 = b.storage_volume_m3) AS same_storage
+FROM "8_1_reservoir_operational_master" a JOIN "8_1_reservoir_operational_master" b ON a.date = b.date
+WHERE a.district_name = 'Siyanda' AND b.district_name = 'Z F Mgcawu'
+---
+§9.1 surface water (9_1): monthly vs daily flow families (monthly volume / sum of daily flows; national totals)
+WITH m AS (SELECT district_name, year, month, max(monthly_mean_flow) AS mv, sum(daily_mean_flow) AS dsum
+           FROM "9_1_hydrological_station_master" WHERE date < '2026-01-01' GROUP BY 1, 2, 3)
+SELECT round(avg(dsum / NULLIF(mv, 0))::numeric, 1) AS daily_sum_over_monthly,
+       round((sum(dsum) / count(DISTINCT year) / 1e6)::numeric, 0) AS daily_family_mm3_per_year,
+       round((sum(mv) / count(DISTINCT year) / 1e6)::numeric, 0) AS monthly_family_mm3_per_year
+FROM m
+---
+§9.1 surface water (9_1): from Jan 2026 the discharge column is daily = daily mean flow / 86 400
+SELECT date, river_discharge_q, daily_mean_flow / 86400 AS daily_flow_m3s, monthly_mean_flow
+FROM "9_1_hydrological_station_master" WHERE district_name = 'City of Cape Town' AND date BETWEEN '2026-01-02' AND '2026-01-05'
+---
+§9.1 surface water (9_1): peak flows and rating-curve parameters
+SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY peak_instantaneous_flow) AS median_peak, max(peak_instantaneous_flow) AS max_peak,
+       max(b_exponent) AS max_b, max(a_coeff) AS max_a, count(DISTINCT district_name) FILTER (WHERE r_squared = 0) AS districts_r2_zero
+FROM "9_1_hydrological_station_master" WHERE date = date_trunc('month', date)
+---
+§9.2 catchment characteristics: constants and identical columns
+SELECT count(DISTINCT mean_slope_degrees) AS slope_values, count(DISTINCT mean_twi) AS twi_values, count(DISTINCT vegetation_cover_pct) AS veg_values,
+       count(*) FILTER (WHERE grassland_pct = cropland_agri_pct) AS grass_eq_crop, count(*) AS rows_
+FROM "9_2_catchment_characteristics_master"
+---
+§9.3 SANSA EO: distinct values per district over 27 years
+SELECT max(n) AS max_distinct_per_district FROM (SELECT district_name, count(DISTINCT surface_water_extent_km2) AS n
+FROM "9_3_sansa_earth_observation_master" GROUP BY 1) x
+---
+§10.1 groundwater (10_1): stored unit bytes are valid UTF-8 (m³ = 6d c2 b3)
+SELECT DISTINCT variable_name, unit, convert_to(unit, 'UTF8') AS bytes FROM "10_1_borehole_and_aquifer_master" ORDER BY 1
+---
+§10.1 groundwater (10_1): lag-1 autocorrelation per variable (SGI ≈ 0; water levels 0.66–0.83)
+SELECT variable_name, round(avg(r)::numeric, 3) AS mean_lag1_r FROM (
+  SELECT variable_name, district_name, corr(value, pv) AS r FROM (
+    SELECT variable_name, district_name, value, lag(value) OVER (PARTITION BY variable_name, district_name ORDER BY date) AS pv
+    FROM "10_1_borehole_and_aquifer_master" WHERE date <= CURRENT_DATE) x GROUP BY 1, 2) y GROUP BY 1 ORDER BY 1
+---
+§10.1 groundwater (10_1): SGI against the table's own depth and head
+WITH s AS (SELECT district_name n, date_trunc('month', date) m, value v FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'sgi_dimensionless'),
+d AS (SELECT district_name n, date_trunc('month', date) m, avg(value) v FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'groundwater_table_depth_m_bgl' GROUP BY 1, 2),
+h AS (SELECT district_name n, date_trunc('month', date) m, avg(value) v FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'hydraulic_head_amsl_m' GROUP BY 1, 2)
+SELECT round(corr(s.v, d.v)::numeric, 3) AS r_depth, round(corr(s.v, h.v)::numeric, 3) AS r_head FROM s LEFT JOIN d USING (n, m) LEFT JOIN h USING (n, m)
+---
+§10.1 groundwater (10_1): T = K × saturated thickness? (and the same identity in 11_1)
+WITH t AS (SELECT district_name n, extract(year FROM date) y, value v FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'transmissivity_m2_day'),
+k AS (SELECT district_name n, extract(year FROM date) y, value v FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'hydraulic_conductivity_m_day'),
+b AS (SELECT district_name n, extract(year FROM date) y, value v FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'saturated_thickness_m')
+SELECT round(corr(t.v, k.v * b.v)::numeric, 3) AS r_10_1,
+       (SELECT round(corr("Transmissivity", "Permeability / hydraulic conductivity" * "Aquifer saturated thickness")::numeric, 3)
+        FROM "11_1_hydrogeological" WHERE year = 2020 AND month = 1) AS r_11_1
+FROM t JOIN k USING (n, y) JOIN b USING (n, y)
+---
+§11 reserve: water table below the aquifer base (11_1), baseflow magnitude and triplicate rows (11.2), exploitation index
+SELECT (SELECT round(100.0 * avg(("Depth to bedrock / aquifer base" < value)::int)::numeric, 1) FROM "11_1_hydrogeological") AS pct_base_above_water,
+       (SELECT round(avg("Baseflow discharge")::numeric, 1) FROM "11.2_recharge_and_discharge") AS mean_baseflow_m3s,
+       (SELECT count(*) || ' rows / ' || count(DISTINCT (district_name, year, month)) FROM "11.2_recharge_and_discharge") AS rows_per_period,
+       (SELECT round(corr(s."Exploitation index", s."Total abstraction" / r."Indirect recharge")::numeric, 3)
+        FROM "11.3_aquifer_sustainability" s JOIN "11.2_recharge_and_discharge" r USING (district_name, year, month)) AS r_ei
+---
+§12.1 water quality: EC and TDS (r ≈ 0, whereas TDS ≈ 5.5–7.5 × EC in natural waters)
+SELECT round(corr("Electrical Conductivity (EC)", "Total Dissolved Solids (TDS)")::numeric, 3) AS r_ec_tds,
+       round(min("Total Dissolved Solids (TDS)" / "Electrical Conductivity (EC)")::numeric, 2) AS min_ratio,
+       round(max("Total Dissolved Solids (TDS)" / "Electrical Conductivity (EC)")::numeric, 2) AS max_ratio
+FROM "12.1_physical_water_quality_master"
+---
+§13–§15: copies of 13.1 effluent values in 14.1 (drinking water) and 15.2 (RWQO), impossible values
+SELECT count(*) AS rows_,
+       count(*) FILTER (WHERE a.temperature = b."Temperature_Value" AND a.turbidity = b."Turbidity_Value" AND a.ph = b."pH_Value"
+                        AND a.ec_salinity = b."EC_Value" AND a."E_coli" = b."E_coli_Value") AS identical_14_1,
+       count(*) FILTER (WHERE a.ph = c."pH_Range_Value") AS identical_ph_15_2,
+       round(corr(a."Heavy_Metals", b."Lead_Value")::numeric, 4) AS r_lead, round(corr(a."Heavy_Metals", c."Toxicant_Value_ugL")::numeric, 4) AS r_toxicant,
+       count(*) FILTER (WHERE a."COD" < a."BOD5") AS cod_below_bod, min(a.ph) AS min_ph, min(a.do) AS min_do
+FROM "13.1_wastewater_effluent_quality_master" a
+JOIN "14.1_SANS_241_compliance_master" b USING (district_name, year, month)
+JOIN "15.2_chemical_RWQO_variables_master" c USING (district_name, year, month)
+---
+§15.1 ecology: share of negative scores
+SELECT round(100.0 * avg((sass5_score < 0)::int)::numeric, 1) AS sass5, round(100.0 * avg((fibi < 0)::int)::numeric, 1) AS fibi,
+       round(100.0 * avg((riparian_vegetation < 0)::int)::numeric, 1) AS riparian, round(100.0 * avg((ecological_reserve_q < 0)::int)::numeric, 1) AS reserve_q
+FROM "15.1_ecological_variables_master"

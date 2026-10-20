@@ -20,7 +20,10 @@ from app.config import Settings
 
 log = logging.getLogger("niwis.db")
 
-_IDENT_OK = re.compile(r"^[A-Za-z0-9_. ]{1,63}$")  # registry names include digits, dots and one space (4_6 table)
+# Registry names include digits, dots, spaces (4_6, 10_2 tables) and, in the §9–§16 tables, parentheses, slashes,
+# hyphens and colons ("Electrical Conductivity (EC)", "Lead/Cadmium/Chromium", "Ammonia (NH3-N)", "system:index").
+# Never a double quote, so quoting cannot be broken out of.
+_IDENT_OK = re.compile(r"^[A-Za-z0-9_. ()/:\-]{1,63}$")
 
 
 def ident(name: str) -> str:

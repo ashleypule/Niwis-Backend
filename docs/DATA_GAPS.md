@@ -32,7 +32,8 @@
 | 15 | Plausibility checks for the database view (2026-10-15): **reservoir columns, solar radiation, GRACE, the `4_3` record statistics and `4_6` fail and are withheld** | `hydrological_drought_master`, `meteorological_drought_master`, `satellite_remote_sensing`, `4_3`, `4_6` | P1 |
 | 18 | Constancy check (2026-10-16): **SGI frozen since Sep 2024 — served May 2002 – Aug 2024 only**; satellite soil moisture a constant fill before Mar 2015 (served from Mar 2015) | `hydrological_drought_master`, `satellite_remote_sensing` | P1 |
 | 17 | Rain on the newest day in 42 of 52 districts (2026-09-06): verify the last load | `6.1` | P3 |
-| 16 | 13 new tables (§8–§12: reservoirs, surface water, groundwater, water quality) appeared on 2026-10-15; not registered, not served | `8_1` … `12.4` | P2 |
+| 16 | ~~New tables not registered~~ — registered 2026-10-20 (§21) | `8_1` … `16_1` | done |
+| 21 | §8–§16 tables checked (2026-10-20): **`8_1` reservoir storage is a placeholder** (51 districts at 100 % FSC every day); `9_1` flow families disagree; `10_1` SGI is white noise; `14.1` drinking-water values are copies of `13.1` effluent; no coordinates anywhere; rows dated up to 2026-12-31 | 21 tables | P1 |
 
 ---
 
@@ -275,7 +276,7 @@ Raw columns kept out of the database view although the API uses them: `Daily_Sur
 on the constant 6 500 km² area; the runoff page serves depth × real district area) and `Baseflow_Component_m3s` (same
 scaling; only the baseflow index, a ratio, is served).
 
-## 16. New tables not registered yet (P2) — found 2026-10-15
+## 16. New tables not registered yet (P2) — found 2026-10-15 · **resolved 2026-10-20 (§21)**
 
 The database now holds **27** tables. 13 appeared after the Phase 0 inventory (2026-10-14):
 `8_1_reservoir_operational_master`, `9_1_hydrological_station_master`, `9_2_catchment_master`,
@@ -284,8 +285,8 @@ The database now holds **27** tables. 13 appeared after the Phase 0 inventory (2
 `11.3_aquifer_sustainability` and the four `12.x` water-quality tables. They cover spec §8–§12, for which the backend
 has no module yet. They are **not served**: each needs a page, its keys and time columns registered, and a
 plausibility check. First observations: `8_1` and `10_1` hold rows dated up to **2026-12-31**, after the newest record
-in every other table (2026-09-06), and future-dated rows cannot be observations; `10_1` units are stored with broken
-encoding (`m�/day`); `10_1` has two variables called hydraulic head with different units (`hydraulic_head_amsl_m` in
+in every other table (2026-09-06), and future-dated rows cannot be observations; `10_1` units looked broken
+(`m�/day`) — on 2026-10-20 they proved to be valid UTF-8 shown with the wrong code page (§21); `10_1` has two variables called hydraulic head with different units (`hydraulic_head_amsl_m` in
 m amsl, `hydraulic_head_m_amsl` in m bgl). The catalogue generator lists them (`app/registry/catalogue.yaml` →
 `unregistered`, and `docs/CATEGORY_CATALOGUE.md`) so nothing in the database is hidden.
 
@@ -366,3 +367,40 @@ includes the partial year 2026 (as the DB's rainfall anomalies do, D3).
 streamflow (or the modelled runoff), not rainfall; (3) flood flows at return periods need a frequency analysis of
 annual maxima, one value per district (not per month), and real district areas; (4) runoff-ratio trend and response
 time are single constants.
+
+## 21. §8–§16 tables — registered and checked on 2026-10-20 (P1)
+
+The database holds **37** tables. The 22 added since Phase 0 were profiled (`docs/DB_INVENTORY.md`, "Tables added after
+Phase 0"), registered and checked with `scripts/constancy_check.py` and the §8–§15 blocks of
+`scripts/plausibility_checks.sql`. The rules that decide "withheld" are in `docs/DECISIONS.md` D1; every withheld
+column's reason is in `docs/CATEGORY_CATALOGUE.md` and in the API (`/categories`). Rows dated after today are never
+served (D4); every new table is keyed by the 52 districts — **none has coordinates** (`.geo` in `13.2` / `15.1` is an
+empty MultiPoint), so there are no station, borehole or sampling-point layers (D12).
+
+| Table | Live | Withheld | Main findings |
+| --- | ---: | ---: | --- |
+| `8_1_reservoir_operational_master` (§8) | 2 | 12 | **Storage is a placeholder**: 51 of 52 districts hold 251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² on 499 290 district-days 2000 – today; FSL 1 200 m in every row; district area 10 000 km² for every district; runoff / inflow vary only in 2000; inflow = runoff × 10 000 km², outflow ≈ inflow; evaporation has 4 values; NDWI shared by 44 districts. Rainfall forward-filled from 1 Sep 2026 (served to 31 Aug). "Siyanda" duplicates Z F Mgcawu (not read). Rows to 2026-12-31. |
+| `9_1_hydrological_station_master` (§9.1) | 6 | 6 | Two flow families disagree: the monthly mean flow is 1/63 of the month's daily flows; nationally the daily family gives ≈ 40 700 Mm³/year, the monthly ≈ 650 (16_1 MAR ≈ 66 300) → daily family served, monthly withheld (D10). `river_discharge_q` = monthly until Dec 2025, daily (= daily flow / 86 400) from Jan 2026 → served from Jan 2026. Peak flow median 26 300 m³/s (max 773 100): impossible in m³/s. Rating curves failed (b up to 18.8, a up to 8.5 × 10²¹, r² = 0 in 42 districts). Stage at 0.05 m in 74 % of months (served, noted). |
+| `9_2_catchment_characteristics_master` (§9.2) | 13 | 4 | Static attributes repeated monthly (read once per year). Slope 4.5°, TWI 7.85, vegetation cover 65.4 % in every district; cropland = grassland in every row. HSG % are three fixed profiles keyed by the dominant group (served, noted). Catchment area = district area. |
+| `9_3_sansa_earth_observation_master` (§9.3) | 0 | 6 | Two values per district over 27 years and 33–48 districts sharing one series in every column. |
+| `10_1_borehole_and_aquifer_master` (§10.1, long format) | 7 | 6 | Units are valid UTF-8 (`m³` = `6d c2 b3`; "m�" is a viewer artefact; `app/core/units.py` repairs mojibake anyway). `hydraulic_head_m_amsl` is stored as "m bgl" but holds elevations 448–1 638 m → served in m amsl next to `hydraulic_head_amsl_m` (D7). SGI is white noise (lag-1 r 0.008) and uncorrelated with the table's own levels (D8). Aquifer constants change at random every year and fail T = K × b (D9). Recharge rate shared by 41 districts. Rows to 2026-12-31; monthly values on the 15th, annual on 31 Dec. |
+| `10_2_recharge_supporting _master` (§10.2) | 6 | 0 | All pass. One row per month dated on its last day; rows to 2026-12-31. |
+| `11_1_hydrogeological` (§11.1) | 11 | 2 | Static aquifer properties consistent with T = K × b (r = 0.83). Depth to bedrock above the water table in 20 % of rows; the storativity column is a rescaling of specific yield (r = 1.000). Six coastal districts share one water-table series (noted). |
+| `11.2_recharge_and_discharge` (§11.2) | 5 | 1 | Every district-month stored **three times** (identical). Baseflow impossible in m³/s (Johannesburg averages 1 739 m³/s; 321 district-months above the whole country's mean runoff). |
+| `11.3_aquifer_sustainability` (§11.3) | 6 | 0 | All pass; exploitation index tracks abstraction / indirect recharge (r = 0.84). |
+| `12.1` … `12.4` water quality (§12) | 35 | 0 | All pass D1. Many columns are spread evenly between round bounds (e.g. TDS 300–499.8 mg/L with exactly 1 000 distinct values; temperature 15–26.99 °C) and show no seasonal cycle — please confirm they are measurements. EC and TDS are consistent (TDS = 4.2–6.7 × EC, r = 1.000). Units from spec §12 (the names carry none). |
+| `13.1_wastewater_effluent_quality_master` (§13.1) | 11 | 4 | pH below 4 in every row (negative in 8), DO negative in 16 742 of 16 744 rows, COD < BOD₅ in 16 727 rows. Ammonia served without its 2 negative values. |
+| `13.2_WWTW_operational_master` (§13.2) | 7 | 1 | Chlorine dosing 2.5 in every row. |
+| `13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master` (§13.3) | 0 | 4 | Every column one constant (rainfall 45 mm, flood proxy 5.4, temperature 20 °C, evaporation 100 mm). |
+| `14.1_SANS_241_compliance_master` (§14.1) | 6 | 23 | **Drinking-water values copied from wastewater effluent**: turbidity, temperature, pH, EC and E. coli identical to `13.1` in all 16 744 rows; lead and cyanide exact rescalings of `13.1` heavy metals; free chlorine 1.8 in every row; compliance flags / score judge those copies. |
+| `15.1_ecological_variables_master` (§15.1) | 6 | 0 | Served without one impossible row per column (a negative score / flow; two rows above 100 for 0–100 scores). |
+| `15.2_chemical_RWQO_variables_master` (§15.2) | 4 | 10 | pH = `13.1` pH; EC target and toxicants rescalings of `13.1`; compliance flags / score depend on them. |
+| `15.3_hydrological_RWQO_variables_master` (§15.3) | 3 | 8 | High flow and score identical in all districts; seasonality and three compliance flags constant. |
+| `16_1_complete_wrm_matrix_master` (§16.1) | 16 | 0 | All pass (annual 2000–2025). |
+| `16_2_swsa_strategic_water_matrix_master` (§16.2) | — | — | Keyed by Strategic Water Source Area, not district: not registered (D14). |
+
+**What it unblocks / what to fix.** (1) Real reservoir storage per dam with capacities and coordinates (the Dam page
+and the drought Dam Storage KPI need it; `8_1` storage is a placeholder). (2) Station / borehole / sampling-point
+coordinates for point layers. (3) One consistent flow family in `9_1`. (4) An SGI computed from the borehole levels.
+(5) `14.1` must hold drinking-water results, not copies of effluent values; `13.1` pH / DO / COD need their real units.
+(6) Remove rows dated after the load date and forward-filled days.

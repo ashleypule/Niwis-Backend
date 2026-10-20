@@ -313,11 +313,18 @@ def _note(col: Column | None) -> str | None:
         parts.append(f"Served from {col.valid_from:%b %Y}: {col.valid_reason}")
     elif col.valid_until:
         parts.append(f"Served up to {col.valid_until:%b %Y}: {col.valid_reason}")
+    if col.valid_range is not None:
+        lo, hi = col.valid_range
+        span = f"below {lo:g}" if hi is None else f"above {hi:g}" if lo is None else f"outside {lo:g}–{hi:g}"
+        parts.append(f"Values {span} are not served: {col.range_reason}")
     return "; ".join(parts) or None
 
 
 def _columns(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> tuple[list[str], list[CatColumn]]:
     keys_named = {x for x in (ds.location.column, ds.time.column, ds.time.year, ds.time.month) if x}
+    keys_named |= set(ds.key_columns)
+    if ds.long is not None:
+        keys_named |= {x for x in (ds.long.name, ds.long.value, ds.long.unit) if x}
     keys, out = [], []
     for sc in schema:
         if sc.column in keys_named or sc.column.lower() in KEY_NAMES:
@@ -325,6 +332,8 @@ def _columns(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> tuple[li
             continue
         name, unit, why = units.column_label(ds.table, sc.column)
         reg_col = ds.columns.get(sc.column)
+        if reg_col is not None and reg_col.cast == "bool_pct":
+            unit, why = units.BOOL_PCT.unit, units.BOOL_PCT.why
         categorical = sc.db_type in TEXT_TYPES and not (reg_col and reg_col.cast)
         status, reason, dup = _status(reg, ds, sc.column)
         out.append(
@@ -442,6 +451,18 @@ def build_category(
         columns=cols,
         pages=pages,
     )
+
+
+def expand_long(reg: Registry, schema: dict[str, list[SchemaColumn]], variables: dict[str, list[str]]) -> None:
+    """For each long-format table, add one schema column per stored variable name (`variables`: table → the distinct
+    values of its `long.name` column, read from the database) after the table's real columns, so the long table looks
+    like a wide one to the catalogue."""
+    for ds in reg.datasets.values():
+        if ds.long is not None and ds.table in schema:
+            have = {s.column for s in schema[ds.table]}
+            schema[ds.table] = schema[ds.table] + [
+                SchemaColumn(column=v, db_type="double precision") for v in variables.get(ds.table, []) if v not in have
+            ]
 
 
 def build_catalogue(

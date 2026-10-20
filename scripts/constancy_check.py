@@ -11,7 +11,8 @@ For each column, at its own resolution (values the database repeats on daily row
 A column is flagged when `identical %` > 50, `frozen tail` ≥ 3 periods (30 for daily columns), `frozen %` > 20 (except
 binary flags and rainfall-type columns, which legitimately repeat 0), or it has twins. Prints a Markdown table.
 
-Usage: python scripts/constancy_check.py [--all]   (--all: also withheld and duplicate columns)
+Usage: python scripts/constancy_check.py [--all] [--tables t1,t2]   (--all: also withheld and duplicate columns;
+       --tables: only these registered tables)
 """
 
 from __future__ import annotations
@@ -33,10 +34,8 @@ ZERO_HEAVY = ("rain", "precip", "prcptot", "chirps", "tamsat", "intensity", "run
 
 def column_sql(ds: Dataset, column: str, resolution: str) -> str:
     loc, d = ident(ds.location.column), ds.date_sql()
-    col = ds.columns.get(column)
-    v = ident(column)
-    if col is not None and col.cast == "double":
-        v = f"NULLIF({v}, '')::double precision"
+    # the value as the API reads it: casts, yes / no flags as %, long-format variables, impossible values dropped
+    v = ds.column_sql(column) if column in ds.columns else ds.raw_sql(column)
     period = (
         d if resolution == "daily" else f"date_trunc('{'month' if resolution == 'monthly' else 'year'}', {d})::date"
     )
@@ -62,11 +61,14 @@ def main() -> int:
     url = dotenv_values(ROOT / ".env")["SUPABASE_DB_URL"]
     reg = load_registry()
     every = "--all" in sys.argv
+    only = set(sys.argv[sys.argv.index("--tables") + 1].split(",")) if "--tables" in sys.argv else None
     rows = []
     with psycopg.connect(url, autocommit=True) as conn:
         conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")
         conn.execute("SET statement_timeout = 600000")
         for cat in get_catalogue().categories:
+            if only is not None and cat.table not in only:
+                continue
             ds = reg.datasets[cat.table]
             for x in cat.columns:
                 if x.kind != "numeric" or (x.status != "live" and not every):

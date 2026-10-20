@@ -273,13 +273,25 @@ async def test_prewarm_puts_every_group_in_the_cache(
         state = c2._transport.app.state.niwis  # type: ignore[attr-defined]
         await state.meta.sources()  # the response checks read the table coverage
         warmed = await prewarm(state)
-        expected = {  # one entry per table + served columns (withheld-only groups need no data)
-            (cat.table, tuple(k for k in g.columns if cat.column(k).status != "withheld"))  # type: ignore[union-attr]
+
+        def served(cat: Any, k: str) -> bool:  # class columns are read per district on request: nothing to pre-load
+            x = cat.column(k)
+            return x.status != "withheld" and x.kind == "numeric"
+
+        expected = {  # one entry per table + served numeric columns (withheld-only / class-only groups need no data)
+            (cat.table, tuple(k for k in g.columns if served(cat, k)))
             for module, cat, g in GROUPS
-            if any(cat.column(k).status != "withheld" for k in g.columns)  # type: ignore[union-attr]
+            if any(served(cat, k) for k in g.columns)
         }
         scopes = [{}, {"province": "WC"}, {"municipality": "DC32"}, {"wma": "WMA5"}]  # PREWARM_SCOPES default (#14)
-        assert warmed == len(expected) * len(scopes) and len(expected) > 30, (warmed, len(expected))
+        class_only = {  # groups of class columns only: pre-loaded for the district scope (served per district)
+            (cat.table, g.id)
+            for module, cat, g in GROUPS
+            if all(cat.column(k).kind == "categorical" for k in g.columns)  # type: ignore[union-attr]
+            and any(cat.column(k).status != "withheld" for k in g.columns)  # type: ignore[union-attr]
+        }
+        assert warmed == len(expected) * len(scopes) + len(class_only), (warmed, len(expected), len(class_only))
+        assert len(expected) > 30
 
         async def no_db(self: Database, query: str, *args: Any) -> Any:
             raise AssertionError(f"not served from cache: {query[:80]}")

@@ -15,6 +15,7 @@ from __future__ import annotations
 import datetime as dt
 import decimal
 import gzip
+import json
 import sys
 from pathlib import Path
 
@@ -40,6 +41,8 @@ def lit(v: object) -> str:
         return v.isoformat()
     if isinstance(v, float | decimal.Decimal):
         return repr(float(v))
+    if isinstance(v, dict | list):  # jsonb (13.2 / 15.1 `.geo`)
+        return json.dumps(v).replace("\\", "\\\\")
     s = str(v)
     return s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n")
 

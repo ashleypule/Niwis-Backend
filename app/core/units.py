@@ -7,7 +7,12 @@ The column name is the source of truth (docs/CATEGORY_CATALOGUE.md):
   `SPI_3_Short_Term_Agricultural_Drought` → "SPI 3 – Short Term Agricultural Drought".
 
 `LABEL_OVERRIDES` may only fix a parsing failure (the name carries no unit, or the wrong one) or unit typography, and
-every entry says why. Variables are never renamed to friendlier wording.
+every entry says why. Variables are never renamed to friendlier wording. The §9–§16 tables (2026-10-19) name many
+columns after the parameter only ("Turbidity", "pH"): their units come from the spec table for that section, listed per
+column in `SPEC_UNITS` with the section.
+
+`repair_unit` maps unit text stored in the database (long-format tables have a `unit` column) to clean typography,
+including mojibake: UTF-8 "m³" decoded as Windows-1252 ("mÂ³") or replaced by U+FFFD ("m�") by a viewer.
 """
 
 from __future__ import annotations
@@ -18,6 +23,21 @@ from dataclasses import dataclass
 # suffix (lower case, including the leading underscore) → unit; None = dimensionless (the suffix is dropped)
 _SUFFIXES: dict[str, str | None] = {
     "_million_m3_month": "Mm³/month",
+    "_million_m3_yr": "Mm³/year",
+    "_m3_ha_season": "m³/ha/season",
+    "_l_cap_day": "L/capita/day",
+    "_degrees": "°",
+    "_m3_m3": "m³/m³",
+    "_m3_yr": "m³/year",
+    "_m3_h": "m³/h",
+    "_m2_day": "m²/day",
+    "_m_day": "m/day",
+    "_amsl_m": "m amsl",
+    "_m_amsl": "m amsl",
+    "_t_day": "t/day",
+    "_mg_m3": "mg/m³",
+    "_ugl": "µg/L",
+    "_m": "m",
     "_percent_per_yr": "%/year",
     "_hours": "h",
     "_million_m3": "Mm³",
@@ -101,8 +121,29 @@ _ACRONYM_LIST = (
     "JAS",
     "SANSA",
     "SAWS",
+    "NDWI",
+    "HSG",
+    "TWI",
+    "WTF",
+    "MAP",
+    "MAE",
+    "WRM",
+    "THMS",
+    "TDS",
+    "TN",
+    "TP",
+    "EC",
+    "DO",
+    "TSS",
+    "NH3",
+    "ASPT",
+    "FIBI",
+    "SASS5",
+    "BOD5",
+    "COD",
+    "TIN",
 )
-ACRONYMS: dict[str, str] = {w.lower(): w for w in _ACRONYM_LIST} | {"et0": "ET₀"}
+ACRONYMS: dict[str, str] = {w.lower(): w for w in _ACRONYM_LIST} | {"et0": "ET₀", "thms": "THMs", "ph": "pH"}
 SMALL_WORDS = {"of", "and", "from", "per", "the", "to", "in", "on"}
 # standardised indices share one "index" axis; vegetation / water indices (−1 … +1) share another (axis rule A3)
 STANDARDISED_INDICES = {"SPI", "SPEI", "SSI", "SGI", "RAI", "SVI"}
@@ -133,6 +174,238 @@ LABEL_OVERRIDES: dict[tuple[str, str], Override] = {
         "daily temperatures",
     ),
 }
+
+
+_SPEC = {
+    "8": "spec §8.1",
+    "9.1": "spec §9.1",
+    "9.3": "spec §9.3",
+    "11.1": "spec §11.1",
+    "11.2": "spec §11.2",
+    "11.3": "spec §11.3",
+    "12.1": "spec §12.1",
+    "12.2": "spec §12.2",
+    "12.3": "spec §12.3",
+    "13.1": "spec §13.1",
+    "13.2": "spec §13.2",
+    "14.1": "spec §14.1",
+    "15.2": "spec §15.2",
+    "15.3": "spec §15.3",
+    "15.1": "spec §15.1",
+}
+
+
+def _spec_units(table: str, sec: str, units: dict[str, str]) -> dict[tuple[str, str], Override]:
+    return {(table, c): Override(u, f"name has no unit; {_SPEC[sec]} gives {u}") for c, u in units.items()}
+
+
+# (table, column) → unit from the spec table of the column's section, for columns named after the parameter only.
+SPEC_UNITS: dict[tuple[str, str], Override] = {
+    **_spec_units(
+        "9_1_hydrological_station_master",
+        "9.1",
+        {
+            "daily_mean_flow": "m³/day",
+            "river_discharge_q": "m³/s",
+            "flow_velocity": "m/s",
+            "stage_height": "m",
+            "monthly_mean_flow": "m³/month",
+            "suspended_sediment_concentration": "mg/L",
+            "peak_instantaneous_flow": "m³/s",
+        },
+    ),
+    **_spec_units(
+        "11_1_hydrogeological",
+        "11.1",
+        {
+            "Depth to water table": "m bgl",
+            "Aquifer extent (map area)": "km²",
+            "Aquifer saturated thickness": "m",
+            "Depth to bedrock / aquifer base": "m bgl",
+            "Dynamic (renewable) reserve": "Mm³/year",
+            "Permeability / hydraulic conductivity": "m/day",
+            "Porosity (total and effective)": "%",
+            "Static reserve volume": "Mm³",
+            "Transmissivity": "m²/day",
+        },
+    ),
+    **_spec_units(
+        "11.2_recharge_and_discharge",
+        "11.2",
+        {
+            "Baseflow discharge": "m³/s",
+            "Evapotranspiration": "mm",
+            "Spring discharge": "L/s",
+            "Direct recharge": "mm/year",
+            "Indirect recharge": "m³/year",
+            "Rainfall infiltration": "mm/year",
+        },
+    ),
+    **_spec_units(
+        "11.3_aquifer_sustainability",
+        "11.3",
+        {
+            "Aquifer depletion rate": "m/year",
+            "Borehole yield": "m³/h",
+            "Exploitation index": "%",
+            "Total abstraction": "m³/year",
+        },
+    ),
+    **_spec_units(
+        "12.1_physical_water_quality_master",
+        "12.1",
+        {
+            "Temperature": "°C",
+            "Turbidity": "NTU",
+            "Colour": "Hazen",
+            "Electrical Conductivity (EC)": "mS/m",
+            "Total Dissolved Solids (TDS)": "mg/L",
+            "Total Suspended Solids (TSS)": "mg/L",
+            "Salinity": "mg/L",
+        },
+    ),
+    **_spec_units(
+        "12.2_chemical_water_quality_master",
+        "12.2",
+        {
+            "Dissolved Oxygen (DO)": "mg/L",
+            "BOD5": "mg/L",
+            "COD": "mg/L",
+            "Ammonia (NH3-N)": "mg/L",
+            "Nitrate (NO3-N)": "mg/L",
+            "Nitrite (NO2-N)": "mg/L",
+            "Total Phosphorus (TP)": "mg/L",
+            "Orthophosphate (PO43-)": "mg/L",
+            "Lead/Cadmium/Chromium": "µg/L",
+            "Arsenic/Mercury": "µg/L",
+            "Iron/Manganese": "mg/L",
+            "TOC": "mg/L",
+            "Sulphate": "mg/L",
+            "Chloride": "mg/L",
+            "Fluoride": "mg/L",
+        },
+    ),
+    **_spec_units(
+        "12.3_biological_water_quality_master",
+        "12.3",
+        {
+            "E. coli": "cfu/100 mL",
+            "Total coliforms": "cfu/100 mL",
+            "Chlorophyll-a": "µg/L",
+            "Blue-green algae": "cells/mL",
+            "Microcystin": "µg/L",
+        },
+    ),
+    **_spec_units(
+        "13.1_wastewater_effluent_quality_master",
+        "13.1",
+        {
+            "temperature": "°C",
+            "turbidity": "NTU",
+            "ec_salinity": "mS/m",
+            "tss": "mg/L",
+            "do": "mg/L",
+            "BOD5": "mg/L",
+            "COD": "mg/L",
+            "Ammonia_NH3_N": "mg/L",
+            "Total_Inorganic_Nitrogen": "mg/L",
+            "Total_Phosphorus": "mg/L",
+            "Heavy_Metals": "µg/L",
+            "E_coli": "cfu/100 mL",
+            "Faecal_coliforms": "cfu/100 mL",
+            "Helminth_eggs": "eggs/L",
+        },
+    ),
+    **_spec_units(
+        "13.2_WWTW_operational_master",
+        "13.2",
+        {
+            "chlorine_dosing": "mg/L",
+            "design_capacity": "m³/day",
+            "hydraulic_loading_rate": "%",
+            "hydraulic_retention_time": "h",
+            "inflow_infiltration": "m³/day",
+            "influent_flow_rate": "m³/day",
+            "power_consumption": "kWh/day",
+            "sludge_production": "m³/day",
+        },
+    ),
+    **_spec_units(
+        "14.1_SANS_241_compliance_master",
+        "14.1",
+        {
+            "Turbidity_Value": "NTU",
+            "Colour_Value": "TCU",
+            "Temperature_Value": "°C",
+            "E_coli_Value": "cfu/100 mL",
+            "Total_Coliforms_Value": "cfu/100 mL",
+            "EC_Value": "mS/m",
+            "Free_Chlorine_Value": "mg/L",
+            "Nitrate_Value": "mg/L",
+            "Fluoride_Value": "mg/L",
+            "Arsenic_Value": "mg/L",
+            "Lead_Value": "mg/L",
+            "Cyanide_Value": "mg/L",
+            "Total_THMs_Value": "mg/L",
+        },
+    ),
+    **_spec_units(
+        "15.2_chemical_RWQO_variables_master",
+        "15.2",
+        {
+            "DO_Value": "mg/L",
+            "EC_Target_Value": "mS/m",
+            "Nutrient_Value_TN": "mg/L",
+            "Nutrient_Value_TP": "mg/L",
+            "Salinity_Value_TDS": "mg/L",
+        },
+    ),
+    **_spec_units(
+        "15.3_hydrological_RWQO_variables_master", "15.3", {"Low_Flow_Value": "m³/s", "Dilution_Value": "m³/s"}
+    ),
+    **_spec_units("15.1_ecological_variables_master", "15.1", {"ecological_reserve_q": "m³/s"}),
+}
+LABEL_OVERRIDES.update(SPEC_UNITS)
+LABEL_OVERRIDES.update(
+    {
+        ("10_1_borehole_and_aquifer_master", "seasonal_water_table_fluctuation_m"): Override(
+            "m/season", "suffix `_m` reads as m; the unit column and spec §10.1 give m/season"
+        ),
+        ("10_1_borehole_and_aquifer_master", "hydraulic_head_m_amsl"): Override(
+            "m amsl",
+            "the unit column says 'm bgl', but the values (448–1 638 m) are elevations, as the name says: a water "
+            "level 1 638 m below ground is impossible in South Africa's aquifers",
+        ),
+    }
+)
+# 0/1 compliance flags are served as % compliant (100 = compliant; scope values = share of the area compliant)
+BOOL_PCT = Override(
+    "%", "a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)"
+)
+
+# unit text stored in the database → clean unit. Mojibake seen in exports: UTF-8 bytes decoded as Windows-1252 ("Â³")
+# or replaced by U+FFFD ("�"); the 10_1 values themselves are valid UTF-8 (checked 2026-10-20).
+UNIT_REPAIRS: dict[str, str] = {
+    "m\ufffd/year": "m³/year",
+    "m\ufffd/h": "m³/h",
+    "m\ufffd/day": "m²/day",  # only transmissivity is stored per day with a superscript (m²/day)
+    "mÂ³/year": "m³/year",
+    "mÂ³/h": "m³/h",
+    "mÂ²/day": "m²/day",
+    "m3/year": "m³/year",
+    "m3/h": "m³/h",
+    "m2/day": "m²/day",
+    "dimensionless": "",
+}
+
+
+def repair_unit(stored: str | None) -> str | None:
+    """Clean unit text stored in a long-format table's `unit` column (`UNIT_REPAIRS`); empty → None."""
+    if stored is None:
+        return None
+    text = stored.strip()
+    fixed = UNIT_REPAIRS.get(text, text)
+    return fixed or None
 
 
 def split_unit(column: str) -> tuple[str, str | None]:

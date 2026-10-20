@@ -172,7 +172,10 @@ def test_every_column_appears_exactly_once() -> None:
             else set(LATER_TABLES[c.table])
         )
         assert inv <= set(listed), (c.table, sorted(inv - set(listed)))  # nothing from the inventory is lost
-        assert set(listed) - inv <= set(c.keys), c.table  # since then only key columns were added (5.2 / 6.2 `date`)
+        extra = set(listed) - inv
+        if REG.datasets[c.table].long is not None:  # a long table's variables are values of its name column
+            extra -= {x.column for x in c.columns if x.column not in REG.datasets[c.table].wide_columns()}
+        assert extra <= set(c.keys), c.table  # since then only key columns were added (5.2 / 6.2 `date`)
         assert {x.status for x in c.columns} <= {"live", "withheld", "duplicate"}
 
 
@@ -344,7 +347,11 @@ def test_fixture_database_has_the_catalogued_columns() -> None:
         have.setdefault(str(t), set()).add(str(col))
     for c in CAT.categories:
         cols = have.get(c.table, set())
-        assert cols - set(c.keys) == {x.column for x in c.columns}, c.table
+        ds = REG.datasets[c.table]
+        catalogued = {x.column for x in c.columns}
+        if ds.long is not None:  # a long table's variables are values of its name column, not columns
+            catalogued &= ds.wide_columns() | (cols - set(c.keys))
+        assert cols - set(c.keys) == catalogued, c.table
         assert cols & set(c.keys) <= set(c.keys), c.table
 
 

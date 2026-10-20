@@ -3645,882 +3645,5086 @@ categories:
       - Hydrological_Response_Time_hours
       chart: line
       band: null
-unregistered:
-- table: 10_1_borehole_and_aquifer_master
+- id: reservoir-operational
+  table: 8_1_reservoir_operational_master
+  label: Reservoir Operational
+  spec: '8.1'
+  modules:
+  - dams
+  resolution: daily
+  keys:
+  - district_id
+  - district_name
+  - province
+  - dam_name
+  - river
+  - date
   columns:
-  - column: date
-    db_type: date
-  - column: year
-    db_type: integer
-  - column: district_name
-    db_type: text
-  - column: variable_name
-    db_type: text
-  - column: value
-    db_type: double precision
-  - column: unit
-    db_type: text
-  - column: source
-    db_type: text
-- table: 10_2_recharge_supporting _master
-  columns:
-  - column: date
-    db_type: date
-  - column: year
-    db_type: integer
-  - column: district_name
-    db_type: text
-  - column: monthly_catchment_rainfall_mm
-    db_type: double precision
-  - column: vadose_zone_soil_moisture_m3_m3
-    db_type: double precision
-  - column: actual_evapotranspiration_mm
-    db_type: double precision
-  - column: river_baseflow_proxy_m3_day
-    db_type: double precision
-  - column: urban_agricultural_land_use_pct
-    db_type: double precision
-  - column: water_table_rise_wtf_m
-    db_type: double precision
-- table: 11.2_recharge_and_discharge
-  columns:
-  - column: id
-    db_type: bigint
-  - column: district_name
-    db_type: text
-  - column: province_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: Baseflow discharge
-    db_type: double precision
-  - column: Evapotranspiration
-    db_type: double precision
-  - column: Spring discharge
-    db_type: double precision
-  - column: Direct recharge
-    db_type: double precision
-  - column: Indirect recharge
-    db_type: double precision
-  - column: Rainfall infiltration
-    db_type: double precision
-  - column: date
-    db_type: date
-- table: 11.3_aquifer_sustainability
-  columns:
-  - column: district_name
-    db_type: text
-  - column: province_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: Water quality for use
-    db_type: double precision
-  - column: Aquifer depletion rate
-    db_type: double precision
-  - column: Borehole yield
-    db_type: double precision
-  - column: Exploitation index
-    db_type: double precision
-  - column: Recharge sensitivity
-    db_type: double precision
-  - column: Total abstraction
-    db_type: double precision
-  - column: date
-    db_type: date
-- table: 11_1_hydrogeological
-  columns:
-  - column: id
-    db_type: bigint
-  - column: category
-    db_type: text
-  - column: variable
-    db_type: text
-  - column: district_name
-    db_type: text
-  - column: province_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: date
-    db_type: date
-  - column: value
-    db_type: double precision
-  - column: unit
-    db_type: text
-  - column: source
-    db_type: text
-  - column: Aquifer extent (map area)
-    db_type: double precision
-  - column: Aquifer saturated thickness
-    db_type: double precision
-  - column: Depth to bedrock / aquifer base
-    db_type: double precision
-  - column: Dynamic (renewable) reserve
-    db_type: double precision
-  - column: Groundwater storage coefficient
-    db_type: double precision
-  - column: Permeability / hydraulic conductivity
-    db_type: double precision
-  - column: Porosity (total and effective)
-    db_type: double precision
-  - column: Specific storage
-    db_type: double precision
-  - column: Specific yield
-    db_type: double precision
-  - column: Static reserve volume
-    db_type: double precision
-  - column: Storage coefficient / storativity / specific yield
-    db_type: double precision
-  - column: Transmissivity
-    db_type: double precision
-- table: 12.1_physical_water_quality_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: province_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: Temperature
-    db_type: double precision
-  - column: Turbidity
-    db_type: double precision
-  - column: Colour
-    db_type: double precision
-  - column: Electrical Conductivity (EC)
-    db_type: double precision
-  - column: Total Dissolved Solids (TDS)
-    db_type: double precision
-  - column: Total Suspended Solids (TSS)
-    db_type: double precision
-  - column: Salinity
-    db_type: double precision
-  - column: date
-    db_type: date
-- table: 12.2_chemical_water_quality_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: pH
-    db_type: double precision
-  - column: Dissolved Oxygen (DO)
-    db_type: double precision
-  - column: BOD5
-    db_type: double precision
-  - column: COD
-    db_type: double precision
-  - column: Ammonia (NH3-N)
-    db_type: double precision
-  - column: Nitrate (NO3-N)
-    db_type: double precision
-  - column: Nitrite (NO2-N)
-    db_type: double precision
-  - column: Total Phosphorus (TP)
-    db_type: double precision
-  - column: Orthophosphate (PO43-)
-    db_type: double precision
-  - column: Lead/Cadmium/Chromium
-    db_type: double precision
-  - column: Arsenic/Mercury
-    db_type: double precision
-  - column: Iron/Manganese
-    db_type: double precision
-  - column: TOC
-    db_type: double precision
-  - column: Sulphate
-    db_type: double precision
-  - column: Chloride
-    db_type: double precision
-  - column: Fluoride
-    db_type: double precision
-  - column: date
-    db_type: date
-- table: 12.3_biological_water_quality_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: E. coli
-    db_type: double precision
-  - column: Total coliforms
-    db_type: double precision
-  - column: Chlorophyll-a
-    db_type: double precision
-  - column: Blue-green algae
-    db_type: double precision
-  - column: Microcystin
-    db_type: double precision
-  - column: Macroinvertebrate index (SASS5)
-    db_type: double precision
-  - column: Pathogens
-    db_type: double precision
-  - column: date
-    db_type: date
-- table: 12.4_sansa_water_quality_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: Turbidity
-    db_type: double precision
-  - column: Chlorophyll-a
-    db_type: double precision
-  - column: Cyanobacterial bloom
-    db_type: double precision
-  - column: CDOM
-    db_type: double precision
-  - column: Total Suspended Matter (TSM)
-    db_type: double precision
-  - column: date
-    db_type: date
-- table: 13.1_wastewater_effluent_quality_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: shapeID
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: temperature
-    db_type: double precision
-  - column: turbidity
-    db_type: double precision
-  - column: ec_salinity
-    db_type: double precision
-  - column: tss
-    db_type: double precision
-  - column: ph
-    db_type: double precision
-  - column: do
-    db_type: double precision
-  - column: BOD5
-    db_type: double precision
-  - column: COD
-    db_type: double precision
-  - column: Ammonia_NH3_N
-    db_type: double precision
-  - column: Total_Inorganic_Nitrogen
-    db_type: double precision
-  - column: Total_Phosphorus
-    db_type: double precision
-  - column: Heavy_Metals
-    db_type: double precision
-  - column: E_coli
-    db_type: double precision
-  - column: Faecal_coliforms
-    db_type: double precision
-  - column: Helminth_eggs
-    db_type: double precision
-- table: 13.2_WWTW_operational_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: shapeID
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: chlorine_dosing
-    db_type: double precision
-  - column: design_capacity
-    db_type: double precision
-  - column: hydraulic_loading_rate
-    db_type: double precision
-  - column: hydraulic_retention_time
-    db_type: double precision
-  - column: inflow_infiltration
-    db_type: double precision
-  - column: influent_flow_rate
-    db_type: double precision
-  - column: power_consumption
-    db_type: double precision
-  - column: sludge_production
-    db_type: double precision
-  - column: system:index
-    db_type: text
-  - column: .geo
-    db_type: jsonb
-- table: 13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master
-  columns:
-  - column: date
-    db_type: date
-  - column: district_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: Rainfall_mm
-    db_type: double precision
-  - column: Flood_events_proxy
-    db_type: double precision
-  - column: Temperature_C
-    db_type: double precision
-  - column: Evaporation_mm
-    db_type: double precision
-  - column: source
-    db_type: text
-- table: 14.1_SANS_241_compliance_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: shapeID
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: Turbidity_Category
-    db_type: text
-  - column: Turbidity_Parameter
-    db_type: text
-  - column: Turbidity_Limit
-    db_type: text
-  - column: Turbidity_Class
-    db_type: text
-  - column: Turbidity_Source
-    db_type: text
-  - column: Turbidity_Value
-    db_type: double precision
-  - column: Turbidity_Compliant
-    db_type: boolean
-  - column: Colour_Category
-    db_type: text
-  - column: Colour_Parameter
-    db_type: text
-  - column: Colour_Limit
-    db_type: text
-  - column: Colour_Class
-    db_type: text
-  - column: Colour_Source
-    db_type: text
-  - column: Colour_Value
-    db_type: double precision
-  - column: Colour_Compliant
-    db_type: boolean
-  - column: Temperature_Category
-    db_type: text
-  - column: Temperature_Parameter
-    db_type: text
-  - column: Temperature_Limit
-    db_type: text
-  - column: Temperature_Class
-    db_type: text
-  - column: Temperature_Source
-    db_type: text
-  - column: Temperature_Value
-    db_type: double precision
-  - column: Temperature_Compliant
-    db_type: boolean
-  - column: E_coli_Category
-    db_type: text
-  - column: E_coli_Parameter
-    db_type: text
-  - column: E_coli_Limit
-    db_type: text
-  - column: E_coli_Class
-    db_type: text
-  - column: E_coli_Source
-    db_type: text
-  - column: E_coli_Value
-    db_type: double precision
-  - column: E_coli_Compliant
-    db_type: boolean
-  - column: Total_Coliforms_Category
-    db_type: text
-  - column: Total_Coliforms_Parameter
-    db_type: text
-  - column: Total_Coliforms_Limit
-    db_type: text
-  - column: Total_Coliforms_Class
-    db_type: text
-  - column: Total_Coliforms_Source
-    db_type: text
-  - column: Total_Coliforms_Value
-    db_type: double precision
-  - column: Total_Coliforms_Compliant
-    db_type: boolean
-  - column: pH_Category
-    db_type: text
-  - column: pH_Parameter
-    db_type: text
-  - column: pH_Limit
-    db_type: text
-  - column: pH_Class
-    db_type: text
-  - column: pH_Source
-    db_type: text
-  - column: pH_Value
-    db_type: double precision
-  - column: pH_Compliant
-    db_type: boolean
-  - column: EC_Category
-    db_type: text
-  - column: EC_Parameter
-    db_type: text
-  - column: EC_Limit
-    db_type: text
-  - column: EC_Class
-    db_type: text
-  - column: EC_Source
-    db_type: text
-  - column: EC_Value
-    db_type: double precision
-  - column: EC_Compliant
-    db_type: boolean
-  - column: Free_Chlorine_Category
-    db_type: text
-  - column: Free_Chlorine_Parameter
-    db_type: text
-  - column: Free_Chlorine_Limit
-    db_type: text
-  - column: Free_Chlorine_Class
-    db_type: text
-  - column: Free_Chlorine_Source
-    db_type: text
-  - column: Free_Chlorine_Value
-    db_type: double precision
-  - column: Free_Chlorine_Compliant
-    db_type: boolean
-  - column: Nitrate_Category
-    db_type: text
-  - column: Nitrate_Parameter
-    db_type: text
-  - column: Nitrate_Limit
-    db_type: text
-  - column: Nitrate_Class
-    db_type: text
-  - column: Nitrate_Source
-    db_type: text
-  - column: Nitrate_Value
-    db_type: double precision
-  - column: Nitrate_Compliant
-    db_type: boolean
-  - column: Fluoride_Category
-    db_type: text
-  - column: Fluoride_Parameter
-    db_type: text
-  - column: Fluoride_Limit
-    db_type: text
-  - column: Fluoride_Class
-    db_type: text
-  - column: Fluoride_Source
-    db_type: text
-  - column: Fluoride_Value
-    db_type: double precision
-  - column: Fluoride_Compliant
-    db_type: boolean
-  - column: Arsenic_Category
-    db_type: text
-  - column: Arsenic_Parameter
-    db_type: text
-  - column: Arsenic_Limit
-    db_type: text
-  - column: Arsenic_Class
-    db_type: text
-  - column: Arsenic_Source
-    db_type: text
-  - column: Arsenic_Value
-    db_type: double precision
-  - column: Arsenic_Compliant
-    db_type: boolean
-  - column: Lead_Category
-    db_type: text
-  - column: Lead_Parameter
-    db_type: text
-  - column: Lead_Limit
-    db_type: text
-  - column: Lead_Class
-    db_type: text
-  - column: Lead_Source
-    db_type: text
-  - column: Lead_Value
-    db_type: double precision
-  - column: Lead_Compliant
-    db_type: boolean
-  - column: Cyanide_Category
-    db_type: text
-  - column: Cyanide_Parameter
-    db_type: text
-  - column: Cyanide_Limit
-    db_type: text
-  - column: Cyanide_Class
-    db_type: text
-  - column: Cyanide_Source
-    db_type: text
-  - column: Cyanide_Value
-    db_type: double precision
-  - column: Cyanide_Compliant
-    db_type: boolean
-  - column: Total_THMs_Category
-    db_type: text
-  - column: Total_THMs_Parameter
-    db_type: text
-  - column: Total_THMs_Limit
-    db_type: text
-  - column: Total_THMs_Class
-    db_type: text
-  - column: Total_THMs_Source
-    db_type: text
-  - column: Total_THMs_Value
-    db_type: double precision
-  - column: Total_THMs_Compliant
-    db_type: boolean
-  - column: SANS_241_Compliance_Score
-    db_type: double precision
-- table: 15.1_ecological_variables_master
-  columns:
-  - column: district_name
-    db_type: text
-  - column: shapeID
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: aquatic_habitat_integrity
-    db_type: double precision
-  - column: aspt
-    db_type: double precision
-  - column: ecological_reserve_q
-    db_type: double precision
-  - column: fibi
-    db_type: double precision
-  - column: riparian_vegetation
-    db_type: double precision
-  - column: sass5_score
-    db_type: double precision
-  - column: system:index
-    db_type: text
-  - column: .geo
-    db_type: jsonb
-- table: 15.2_chemical_RWQO_variables_master
-  columns:
-  - column: id
-    db_type: bigint
-  - column: district_name
-    db_type: text
-  - column: shapeID
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: DO_Category
-    db_type: text
-  - column: DO_Parameter
-    db_type: text
-  - column: DO_Limit
-    db_type: text
-  - column: DO_Source
-    db_type: text
-  - column: DO_Value
-    db_type: double precision
-  - column: DO_Compliant
-    db_type: boolean
-  - column: pH_Range_Category
-    db_type: text
-  - column: pH_Range_Parameter
-    db_type: text
-  - column: pH_Range_Limit
-    db_type: text
-  - column: pH_Range_Source
-    db_type: text
-  - column: pH_Range_Value
-    db_type: double precision
-  - column: pH_Range_Compliant
-    db_type: boolean
-  - column: EC_Target_Category
-    db_type: text
-  - column: EC_Target_Parameter
-    db_type: text
-  - column: EC_Target_Limit
-    db_type: text
-  - column: EC_Target_Source
-    db_type: text
-  - column: EC_Target_Value
-    db_type: double precision
-  - column: EC_Target_Compliant
-    db_type: boolean
-  - column: Nutrient_Category
-    db_type: text
-  - column: Nutrient_Parameter
-    db_type: text
-  - column: Nutrient_Limit
-    db_type: text
-  - column: Nutrient_Source
-    db_type: text
-  - column: Nutrient_Value_TN
-    db_type: double precision
-  - column: Nutrient_Value_TP
-    db_type: double precision
-  - column: Nutrient_Compliant
-    db_type: boolean
-  - column: Toxicant_Category
-    db_type: text
-  - column: Toxicant_Parameter
-    db_type: text
-  - column: Toxicant_Limit
-    db_type: text
-  - column: Toxicant_Source
-    db_type: text
-  - column: Toxicant_Value_ugL
-    db_type: double precision
-  - column: Toxicant_Compliant
-    db_type: boolean
-  - column: Salinity_Category
-    db_type: text
-  - column: Salinity_Parameter
-    db_type: text
-  - column: Salinity_Limit
-    db_type: text
-  - column: Salinity_Source
-    db_type: text
-  - column: Salinity_Value_TDS
-    db_type: double precision
-  - column: Salinity_Compliant
-    db_type: boolean
-  - column: RWQO_Compliance_Score
-    db_type: double precision
-  - column: created_at
-    db_type: timestamp with time zone
-- table: 15.3_hydrological_RWQO_variables_master
-  columns:
-  - column: id
-    db_type: bigint
-  - column: district_name
-    db_type: text
-  - column: shapeID
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: Low_Flow_Category
-    db_type: text
-  - column: Low_Flow_Parameter
-    db_type: text
-  - column: Low_Flow_Limit
-    db_type: text
-  - column: Low_Flow_Source
-    db_type: text
-  - column: Low_Flow_Value
-    db_type: double precision
-  - column: Low_Flow_Compliant
-    db_type: boolean
-  - column: High_Flow_Category
-    db_type: text
-  - column: High_Flow_Parameter
-    db_type: text
-  - column: High_Flow_Limit
-    db_type: text
-  - column: High_Flow_Source
-    db_type: text
-  - column: High_Flow_Value
-    db_type: double precision
-  - column: High_Flow_Compliant
-    db_type: boolean
-  - column: Seasonality_Category
-    db_type: text
-  - column: Seasonality_Parameter
-    db_type: text
-  - column: Seasonality_Limit
-    db_type: text
-  - column: Seasonality_Source
-    db_type: text
-  - column: Seasonality_Value
-    db_type: double precision
-  - column: Seasonality_Compliant
-    db_type: boolean
-  - column: Dilution_Category
-    db_type: text
-  - column: Dilution_Parameter
-    db_type: text
-  - column: Dilution_Limit
-    db_type: text
-  - column: Dilution_Source
-    db_type: text
-  - column: Dilution_Value
-    db_type: double precision
-  - column: Dilution_Compliant
-    db_type: boolean
-  - column: Assimilation_Category
-    db_type: text
-  - column: Assimilation_Parameter
-    db_type: text
-  - column: Assimilation_Limit
-    db_type: text
-  - column: Assimilation_Source
-    db_type: text
-  - column: Assimilation_Value
-    db_type: double precision
-  - column: Assimilation_Compliant
-    db_type: boolean
-  - column: Hydrological_RWQO_Score
-    db_type: double precision
-  - column: created_at
-    db_type: timestamp with time zone
-- table: 8_1_reservoir_operational_master
-  columns:
-  - column: district_id
-    db_type: text
-  - column: district_name
-    db_type: text
-  - column: province
-    db_type: text
-  - column: dam_name
-    db_type: text
-  - column: river
-    db_type: text
-  - column: date
-    db_type: date
   - column: soil_moisture_m3_m3
+    name: Soil Moisture
+    label: Soil Moisture (m³/m³)
+    unit: m³/m³
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: catchment soil moisture at the district's reservoirs (r = 0.74 with the satellite surface soil moisture)
+    unit_override: null
   - column: rainfall_mm_day
+    name: Rainfall
+    label: Rainfall (mm/day)
+    unit: mm/day
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: 'catchment rainfall at the district''s reservoirs; a different series from 6.1 daily rainfall (r = 0.56, same value on 24 % of days); Served up to Aug 2026: from 1 Sep 2026 every district repeats
+      its 31 August value on every day (a forward fill, not observations)'
+    unit_override: null
   - column: evaporation_mm_day
+    name: Evaporation
+    label: Evaporation (mm/day)
+    unit: mm/day
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: four values in the whole table (4.25–6 mm/day), identical in all 52 districts every day
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: runoff_mm_day
+    name: Runoff
+    label: Runoff (mm/day)
+    unit: mm/day
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: district_area_km2
+    name: District Area
+    label: District Area (km²)
+    unit: km²
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 10 000 km² for every district on most days (a placeholder area; real district areas are 1 645–126 836 km²)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: water_area_km2
+    name: Water Area
+    label: Water Area (km²)
+    unit: km²
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: mean_ndwi
+    name: Mean NDWI
+    label: Mean NDWI
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 44 of 52 districts share one identical series
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: storage_volume_m3
+    name: Storage Volume M3
+    label: Storage Volume M3
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: pct_fsc
+    name: Pct FSC
+    label: Pct FSC
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: fsl_m_amsl
+    name: Fsl
+    label: Fsl (m amsl)
+    unit: m amsl
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: one value (1 200 m) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: water_level_m_amsl
+    name: Water Level
+    label: Water Level (m amsl)
+    unit: m amsl
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: inflow_m3_s
+    name: Inflow
+    label: Inflow (m³/s)
+    unit: m³/s
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe:
+      0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: seepage_m3_day
+    name: Seepage
+    label: Seepage (m³/day)
+    unit: m³/day
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 5.5 m³/day in 94 % of days, identical in 51 districts
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
   - column: outflow_m3_s
+    name: Outflow
+    label: Outflow (m³/s)
+    unit: m³/s
     db_type: double precision
-- table: 9_1_hydrological_station_master
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe:
+      0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: dams
+    shown_duplicates: []
+    groups:
+    - id: soil-moisture-m3-m3
+      label: Soil Moisture (m³/m³)
+      unit: m³/m³
+      resolution: daily
+      columns:
+      - soil_moisture_m3_m3
+      default_visible:
+      - soil_moisture_m3_m3
+      chart: line
+      band: null
+    - id: rainfall-evaporation-runoff-mm-day
+      label: Rainfall / Evaporation / Runoff (mm/day)
+      unit: mm/day
+      resolution: daily
+      columns:
+      - rainfall_mm_day
+      - evaporation_mm_day
+      - runoff_mm_day
+      default_visible:
+      - rainfall_mm_day
+      chart: mixed
+      band: null
+    - id: district-area-water-area-km2
+      label: District Area / Water Area (km²)
+      unit: km²
+      resolution: daily
+      columns:
+      - district_area_km2
+      - water_area_km2
+      default_visible:
+      - district_area_km2
+      - water_area_km2
+      chart: line
+      band: null
+    - id: mean-ndwi
+      label: Mean NDWI
+      unit: —
+      resolution: daily
+      columns:
+      - mean_ndwi
+      default_visible:
+      - mean_ndwi
+      chart: line
+      band: null
+    - id: storage-volume-m3
+      label: Storage Volume M3
+      unit: —
+      resolution: daily
+      columns:
+      - storage_volume_m3
+      default_visible:
+      - storage_volume_m3
+      chart: line
+      band: null
+    - id: pct-fsc
+      label: Pct FSC
+      unit: —
+      resolution: daily
+      columns:
+      - pct_fsc
+      default_visible:
+      - pct_fsc
+      chart: line
+      band: null
+    - id: fsl-water-level-m-amsl
+      label: Fsl / Water Level (m amsl)
+      unit: m amsl
+      resolution: daily
+      columns:
+      - fsl_m_amsl
+      - water_level_m_amsl
+      default_visible:
+      - fsl_m_amsl
+      - water_level_m_amsl
+      chart: line
+      band: null
+    - id: inflow-outflow-m3-s
+      label: Inflow / Outflow (m³/s)
+      unit: m³/s
+      resolution: daily
+      columns:
+      - inflow_m3_s
+      - outflow_m3_s
+      default_visible:
+      - inflow_m3_s
+      - outflow_m3_s
+      chart: line
+      band: null
+    - id: seepage-m3-day
+      label: Seepage (m³/day)
+      unit: m³/day
+      resolution: daily
+      columns:
+      - seepage_m3_day
+      default_visible:
+      - seepage_m3_day
+      chart: bar
+      band: null
+- id: hydrological-station
+  table: 9_1_hydrological_station_master
+  label: Hydrological Station
+  spec: '9.1'
+  modules:
+  - surface-water
+  resolution: daily
+  keys:
+  - date
+  - year
+  - month
+  - district_name
   columns:
-  - column: date
-    db_type: date
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: district_name
-    db_type: text
   - column: daily_mean_flow
+    name: Daily Mean Flow
+    label: Daily Mean Flow (m³/day)
+    unit: m³/day
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: 'm³/day (spec §9.1); the flow family consistent with the database''s MAR (16_1): summed over the districts ≈ 40 700 Mm³/year (16_1 MAR ≈ 66 300)'
+    unit_override: name has no unit; spec §9.1 gives m³/day
   - column: daily_sediment_load_t_day
+    name: Daily Sediment Load
+    label: Daily Sediment Load (t/day)
+    unit: t/day
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: = daily mean flow × suspended sediment concentration (checked)
+    unit_override: null
   - column: river_discharge_q
+    name: River Discharge Q
+    label: River Discharge Q (m³/s)
+    unit: m³/s
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Served from Jan 2026: before Jan 2026 the column holds a monthly mean that contradicts the daily flows (1/63 of them on average); from Jan 2026 it is the daily mean flow / 86 400 s, as a discharge
+      should be'
+    unit_override: name has no unit; spec §9.1 gives m³/s
   - column: flow_velocity
+    name: Flow Velocity
+    label: Flow Velocity (m/s)
+    unit: m/s
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §9.1 gives m/s
   - column: stage_height
+    name: Stage Height
+    label: Stage Height (m)
+    unit: m
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 74 % of months at 0.05 m, the series' lowest value
+    unit_override: name has no unit; spec §9.1 gives m
   - column: monthly_mean_flow
+    name: Monthly Mean Flow
+    label: Monthly Mean Flow (m³/month)
+    unit: m³/month
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'contradicts the daily flows of the same table: the month''s volume is on average 1/63 of the sum of its daily mean flows, and summed over the districts it gives ≈ 650 Mm³/year where the daily
+      flows give ≈ 40 700 Mm³/year and the database''s own MAR (16_1) ≈ 66 300 Mm³/year'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §9.1 gives m³/month
   - column: suspended_sediment_concentration
+    name: Suspended Sediment Concentration
+    label: Suspended Sediment Concentration (mg/L)
+    unit: mg/L
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §9.1 gives mg/L
   - column: monthly_sediment_load_t_day
+    name: Monthly Sediment Load
+    label: Monthly Sediment Load (t/day)
+    unit: t/day
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: '= the monthly discharge (withheld) × sediment concentration; contradicts the daily flows of the same table: the month''s volume is on average 1/63 of the sum of its daily mean flows, and summed
+      over the districts it gives ≈ 650 Mm³/year where the daily flows give ≈ 40 700 Mm³/year and the database''s own MAR (16_1) ≈ 66 300 Mm³/year'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: peak_instantaneous_flow
+    name: Peak Instantaneous Flow
+    label: Peak Instantaneous Flow (m³/s)
+    unit: m³/s
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'impossible in its unit (m³/s, spec §9.1): median 26 300 m³/s and up to 773 100 m³/s, where South Africa''s largest recorded flood peaks are about 16 000 m³/s'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §9.1 gives m³/s
   - column: a_coeff
+    name: A Coeff
+    label: A Coeff
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'failed rating-curve fit: exponents b up to 18.8 and coefficients a up to 8.5 × 10²¹ (real rating curves have b ≈ 1.5–3), r² = 0 in 42 districts'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: b_exponent
+    name: B Exponent
+    label: B Exponent
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'failed rating-curve fit: exponents b up to 18.8 and coefficients a up to 8.5 × 10²¹ (real rating curves have b ≈ 1.5–3), r² = 0 in 42 districts'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: r_squared
+    name: R Squared
+    label: R Squared
+    unit: null
     db_type: double precision
-- table: 9_2_catchment_characteristics_master
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'failed rating-curve fit: exponents b up to 18.8 and coefficients a up to 8.5 × 10²¹ (real rating curves have b ≈ 1.5–3), r² = 0 in 42 districts'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: surface-water
+    shown_duplicates: []
+    groups:
+    - id: daily-mean-flow-m3-day
+      label: Daily Mean Flow (m³/day)
+      unit: m³/day
+      resolution: daily
+      columns:
+      - daily_mean_flow
+      default_visible:
+      - daily_mean_flow
+      chart: bar
+      band: null
+    - id: daily-sediment-load-monthly-sediment-load-t-day
+      label: Daily Sediment Load / Monthly Sediment Load (t/day)
+      unit: t/day
+      resolution: daily
+      columns:
+      - daily_sediment_load_t_day
+      - monthly_sediment_load_t_day
+      default_visible:
+      - daily_sediment_load_t_day
+      chart: line
+      band: null
+    - id: river-discharge-q-peak-instantaneous-flow-m3-s
+      label: River Discharge Q / Peak Instantaneous Flow (m³/s)
+      unit: m³/s
+      resolution: daily
+      columns:
+      - river_discharge_q
+      - peak_instantaneous_flow
+      default_visible:
+      - river_discharge_q
+      chart: line
+      band: null
+    - id: flow-velocity-m-s
+      label: Flow Velocity (m/s)
+      unit: m/s
+      resolution: monthly
+      columns:
+      - flow_velocity
+      default_visible:
+      - flow_velocity
+      chart: line
+      band: null
+    - id: stage-height-m
+      label: Stage Height (m)
+      unit: m
+      resolution: monthly
+      columns:
+      - stage_height
+      default_visible:
+      - stage_height
+      chart: line
+      band: null
+    - id: monthly-mean-flow-m3-month
+      label: Monthly Mean Flow (m³/month)
+      unit: m³/month
+      resolution: daily
+      columns:
+      - monthly_mean_flow
+      default_visible:
+      - monthly_mean_flow
+      chart: line
+      band: null
+    - id: suspended-sediment-concentration-mg-l
+      label: Suspended Sediment Concentration (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - suspended_sediment_concentration
+      default_visible:
+      - suspended_sediment_concentration
+      chart: line
+      band: null
+    - id: a-coeff
+      label: A Coeff
+      unit: —
+      resolution: daily
+      columns:
+      - a_coeff
+      default_visible:
+      - a_coeff
+      chart: line
+      band: null
+    - id: b-exponent
+      label: B Exponent
+      unit: —
+      resolution: daily
+      columns:
+      - b_exponent
+      default_visible:
+      - b_exponent
+      chart: line
+      band: null
+    - id: r-squared
+      label: R Squared
+      unit: —
+      resolution: daily
+      columns:
+      - r_squared
+      default_visible:
+      - r_squared
+      chart: line
+      band: null
+- id: catchment-characteristics
+  table: 9_2_catchment_characteristics_master
+  label: Catchment Characteristics
+  spec: '9.2'
+  modules:
+  - surface-water
+  resolution: monthly
+  keys:
+  - date
+  - district_name
+  - year
+  - month
   columns:
-  - column: date
-    db_type: date
-  - column: district_name
-    db_type: text
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: text
   - column: catchment_area_km2
+    name: Catchment Area
+    label: Catchment Area (km²)
+    unit: km²
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: = the district's area (r = 0.9993 with 11_1 aquifer extent; Namakwa 126 966 km²)
+    unit_override: null
   - column: water_bodies_pct
+    name: Water Bodies
+    label: Water Bodies (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: tree_cover_pct
+    name: Tree Cover
+    label: Tree Cover (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: shrubland_fynbos_pct
+    name: Shrubland Fynbos
+    label: Shrubland Fynbos (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: grassland_pct
+    name: Grassland
+    label: Grassland (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: cropland_agri_pct
+    name: Cropland Agri
+    label: Cropland Agri (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: identical to grassland_pct in every row (16 744 / 16 744)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: wetland_pct
+    name: Wetland
+    label: Wetland (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: builtup_urban_pct
+    name: Builtup Urban
+    label: Builtup Urban (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: bare_soil_mining_pct
+    name: Bare Soil Mining
+    label: Bare Soil Mining (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: dominant_hsg
+    name: Dominant HSG
+    label: Dominant HSG
+    unit: null
     db_type: text
+    kind: categorical
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: hsg_a_pct
+    name: HSG A
+    label: HSG A (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class'
+    unit_override: null
   - column: hsg_b_pct
+    name: HSG B
+    label: HSG B (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class'
+    unit_override: null
   - column: hsg_c_pct
+    name: HSG C
+    label: HSG C (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class'
+    unit_override: null
   - column: hsg_d_pct
+    name: HSG D
+    label: HSG D (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'three fixed profiles, one per dominant soil group (A: 30 districts, B: 4, C: 18); they restate the class'
+    unit_override: null
   - column: mean_slope_degrees
+    name: Mean Slope
+    label: Mean Slope (°)
+    unit: °
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (4.5°) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: mean_twi
+    name: Mean TWI
+    label: Mean TWI
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (7.85) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: vegetation_cover_pct
+    name: Vegetation Cover
+    label: Vegetation Cover (%)
+    unit: '%'
     db_type: double precision
-- table: 9_3_sansa_earth_observation_master
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (65.4 %) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: surface-water
+    shown_duplicates: []
+    groups:
+    - id: catchment-area-km2
+      label: Catchment Area (km²)
+      unit: km²
+      resolution: annual
+      columns:
+      - catchment_area_km2
+      default_visible:
+      - catchment_area_km2
+      chart: line
+      band: null
+    - id: water-bodies-tree-cover-shrubland-fynbos-grassland-wetland-builtup-urban-bare-soil-mining-pct
+      label: Water Bodies / Tree Cover / Shrubland Fynbos / Grassland / Wetland / Builtup Urban / Bare Soil Mining (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - water_bodies_pct
+      - tree_cover_pct
+      - shrubland_fynbos_pct
+      - grassland_pct
+      - wetland_pct
+      - builtup_urban_pct
+      - bare_soil_mining_pct
+      default_visible:
+      - water_bodies_pct
+      - tree_cover_pct
+      - shrubland_fynbos_pct
+      chart: line
+      band: null
+    - id: cropland-agri-vegetation-cover-pct
+      label: Cropland Agri / Vegetation Cover (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - cropland_agri_pct
+      - vegetation_cover_pct
+      default_visible:
+      - cropland_agri_pct
+      - vegetation_cover_pct
+      chart: line
+      band: null
+    - id: dominant-hsg-class
+      label: Dominant HSG (class)
+      unit: class
+      resolution: annual
+      columns:
+      - dominant_hsg
+      default_visible:
+      - dominant_hsg
+      chart: line
+      band: null
+    - id: hsg-a-hsg-b-hsg-c-hsg-d-pct
+      label: HSG A / HSG B / HSG C / HSG D (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - hsg_a_pct
+      - hsg_b_pct
+      - hsg_c_pct
+      - hsg_d_pct
+      default_visible:
+      - hsg_a_pct
+      - hsg_b_pct
+      - hsg_c_pct
+      chart: line
+      band: null
+    - id: mean-slope
+      label: Mean Slope (°)
+      unit: °
+      resolution: monthly
+      columns:
+      - mean_slope_degrees
+      default_visible:
+      - mean_slope_degrees
+      chart: line
+      band: null
+    - id: mean-twi
+      label: Mean TWI
+      unit: —
+      resolution: monthly
+      columns:
+      - mean_twi
+      default_visible:
+      - mean_twi
+      chart: line
+      band: null
+- id: sansa-earth-observation
+  table: 9_3_sansa_earth_observation_master
+  label: SANSA Earth Observation
+  spec: '9.3'
+  modules:
+  - surface-water
+  resolution: monthly
+  keys:
+  - date
+  - year
+  - month
+  - district_name
   columns:
-  - column: date
-    db_type: date
-  - column: year
-    db_type: integer
-  - column: month
-    db_type: integer
-  - column: district_name
-    db_type: text
   - column: surface_water_extent_km2
+    name: Surface Water Extent
+    label: Surface Water Extent (km²)
+    unit: km²
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two distinct values per district over 27 years (a step, not a monthly satellite series), and 33 of 52 districts share one identical series
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: ndwi_mean
+    name: NDWI Mean
+    label: NDWI Mean
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two distinct values per district over 27 years (a step, not a monthly satellite series), and 43 of 52 districts share one identical series
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: turbidity_proxy_ratio
+    name: Turbidity Proxy Ratio
+    label: Turbidity Proxy Ratio
+    unit: null
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two distinct values per district over 27 years (a step, not a monthly satellite series), and 36 of 52 districts share one identical series
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: chlorophyll_a_mg_m3
+    name: Chlorophyll A
+    label: Chlorophyll A (mg/m³)
+    unit: mg/m³
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two distinct values per district over 27 years (a step, not a monthly satellite series), and 38 of 52 districts share one identical series
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: sediment_plume_pct
+    name: Sediment Plume
+    label: Sediment Plume (%)
+    unit: '%'
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two distinct values per district over 27 years (a step, not a monthly satellite series), and 46 of 52 districts share one identical series
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
   - column: flood_inundation_extent_km2
+    name: Flood Inundation Extent
+    label: Flood Inundation Extent (km²)
+    unit: km²
     db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two distinct values per district over 27 years (a step, not a monthly satellite series), and 48 of 52 districts share one identical series
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: surface-water
+    shown_duplicates: []
+    groups:
+    - id: surface-water-extent-flood-inundation-extent-km2
+      label: Surface Water Extent / Flood Inundation Extent (km²)
+      unit: km²
+      resolution: monthly
+      columns:
+      - surface_water_extent_km2
+      - flood_inundation_extent_km2
+      default_visible:
+      - surface_water_extent_km2
+      - flood_inundation_extent_km2
+      chart: line
+      band: null
+    - id: ndwi-index
+      label: NDWI (index)
+      unit: index
+      resolution: monthly
+      columns:
+      - ndwi_mean
+      default_visible:
+      - ndwi_mean
+      chart: line
+      band: null
+    - id: turbidity-proxy-ratio
+      label: Turbidity Proxy Ratio
+      unit: —
+      resolution: monthly
+      columns:
+      - turbidity_proxy_ratio
+      default_visible:
+      - turbidity_proxy_ratio
+      chart: line
+      band: null
+    - id: chlorophyll-a-mg-m3
+      label: Chlorophyll A (mg/m³)
+      unit: mg/m³
+      resolution: monthly
+      columns:
+      - chlorophyll_a_mg_m3
+      default_visible:
+      - chlorophyll_a_mg_m3
+      chart: line
+      band: null
+    - id: sediment-plume-pct
+      label: Sediment Plume (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - sediment_plume_pct
+      default_visible:
+      - sediment_plume_pct
+      chart: line
+      band: null
+- id: borehole-and-aquifer
+  table: 10_1_borehole_and_aquifer_master
+  label: Borehole and Aquifer
+  spec: '10.1'
+  modules:
+  - groundwater
+  resolution: daily
+  keys:
+  - date
+  - year
+  - district_name
+  - variable_name
+  - value
+  - unit
+  - source
+  columns:
+  - column: annual_abstraction_volume_m3_yr
+    name: Annual Abstraction Volume
+    label: Annual Abstraction Volume (m³/year)
+    unit: m³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: per borehole (spec §10.1), not a district total
+    unit_override: null
+  - column: annual_recharge_rate_mm_yr
+    name: Annual Recharge Rate
+    label: Annual Recharge Rate (mm/year)
+    unit: mm/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: withheld
+    reason: 41 of 52 districts share their whole series with another district (13 groups, e.g. Joe Gqabi = Nelson Mandela Bay = Nkangala = Vhembe = West Rand); 71 distinct values in 1 404 district-years
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: borehole_pumping_rate_m3_h
+    name: Borehole Pumping Rate
+    label: Borehole Pumping Rate (m³/h)
+    unit: m³/h
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: groundwater_table_depth_m_bgl
+    name: Groundwater Table Depth
+    label: Groundwater Table Depth (m bgl)
+    unit: m bgl
+    db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: NGA telemetry (irregular days, about every 7 weeks); the same 202 dates in every district
+    unit_override: null
+  - column: hydraulic_conductivity_m_day
+    name: Hydraulic Conductivity
+    label: Hydraulic Conductivity (m/day)
+    unit: m/day
+    db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1
+      satisfy it (r = 0.83)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: hydraulic_head_amsl_m
+    name: Hydraulic Head
+    label: Hydraulic Head (m amsl)
+    unit: m amsl
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'monthly (15th), source: DWS National Groundwater Archive & DEM interpolation; one of two hydraulic-head series (r = 0.06 between them, 363 m apart on average)'
+    unit_override: null
+  - column: hydraulic_head_m_amsl
+    name: Hydraulic Head
+    label: Hydraulic Head (m amsl)
+    unit: m amsl
+    db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'NGA telemetry (irregular days); the unit column says ''m bgl'', but the values (448–1 638 m) are elevations as the name says: a water level 1 638 m below ground is impossible in South Africa''s
+      aquifers. One of two hydraulic-head series (r = 0.06 between them)'
+    unit_override: 'the unit column says ''m bgl'', but the values (448–1 638 m) are elevations, as the name says: a water level 1 638 m below ground is impossible in South Africa''s aquifers'
+  - column: recharge_fraction_percent
+    name: Recharge Fraction
+    label: Recharge Fraction (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: saturated_thickness_m
+    name: Saturated Thickness
+    label: Saturated Thickness (m)
+    unit: m
+    db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1
+      satisfy it (r = 0.83)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: seasonal_water_table_fluctuation_m
+    name: Seasonal Water Table Fluctuation
+    label: Seasonal Water Table Fluctuation (m/season)
+    unit: m/season
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: two values per year (30 Jun, 31 Dec), in m per season; the annual chart shows the larger
+    unit_override: suffix `_m` reads as m; the unit column and spec §10.1 give m/season
+  - column: sgi_dimensionless
+    name: SGI
+    label: SGI
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: 'not a standardised groundwater level: uncorrelated with this table''s own water levels (r = −0.007 with depth, 0.001 with head) and with the earlier SGI (r = −0.004); month-to-month autocorrelation
+      0.01, where groundwater levels persist (0.66–0.83 in this table); every month averages 0 ± 1 across districts, even in the 2015–16 drought'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: storativity_specific_yield_dimensionless
+    name: Storativity Specific Yield
+    label: Storativity Specific Yield
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1
+      satisfy it (r = 0.83)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: transmissivity_m2_day
+    name: Transmissivity
+    label: Transmissivity (m²/day)
+    unit: m²/day
+    db_type: double precision
+    kind: numeric
+    resolution: daily
+    status: withheld
+    reason: aquifer constants that change at random every year (year-to-year correlation −0.02) and fail T = K × saturated thickness (r = −0.004, ratio 0.7 ± 1.4); the static aquifer properties in 11_1
+      satisfy it (r = 0.83)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: groundwater
+    shown_duplicates: []
+    groups:
+    - id: annual-abstraction-volume-m3-year
+      label: Annual Abstraction Volume (m³/year)
+      unit: m³/year
+      resolution: annual
+      columns:
+      - annual_abstraction_volume_m3_yr
+      default_visible:
+      - annual_abstraction_volume_m3_yr
+      chart: bar
+      band: null
+    - id: annual-recharge-rate-mm-year
+      label: Annual Recharge Rate (mm/year)
+      unit: mm/year
+      resolution: annual
+      columns:
+      - annual_recharge_rate_mm_yr
+      default_visible:
+      - annual_recharge_rate_mm_yr
+      chart: line
+      band: null
+    - id: borehole-pumping-rate-m3-h
+      label: Borehole Pumping Rate (m³/h)
+      unit: m³/h
+      resolution: annual
+      columns:
+      - borehole_pumping_rate_m3_h
+      default_visible:
+      - borehole_pumping_rate_m3_h
+      chart: line
+      band: null
+    - id: groundwater-table-depth-m-bgl
+      label: Groundwater Table Depth (m bgl)
+      unit: m bgl
+      resolution: daily
+      columns:
+      - groundwater_table_depth_m_bgl
+      default_visible:
+      - groundwater_table_depth_m_bgl
+      chart: line
+      band: null
+    - id: hydraulic-conductivity-m-day
+      label: Hydraulic Conductivity (m/day)
+      unit: m/day
+      resolution: daily
+      columns:
+      - hydraulic_conductivity_m_day
+      default_visible:
+      - hydraulic_conductivity_m_day
+      chart: line
+      band: null
+    - id: hydraulic-head-m-amsl
+      label: Hydraulic Head (m amsl)
+      unit: m amsl
+      resolution: monthly
+      columns:
+      - hydraulic_head_amsl_m
+      default_visible:
+      - hydraulic_head_amsl_m
+      chart: line
+      band: null
+    - id: hydraulic-head-m-amsl-2
+      label: Hydraulic Head (m amsl)
+      unit: m amsl
+      resolution: daily
+      columns:
+      - hydraulic_head_m_amsl
+      default_visible:
+      - hydraulic_head_m_amsl
+      chart: line
+      band: null
+    - id: recharge-fraction-pct
+      label: Recharge Fraction (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - recharge_fraction_percent
+      default_visible:
+      - recharge_fraction_percent
+      chart: line
+      band: null
+    - id: saturated-thickness-m
+      label: Saturated Thickness (m)
+      unit: m
+      resolution: daily
+      columns:
+      - saturated_thickness_m
+      default_visible:
+      - saturated_thickness_m
+      chart: line
+      band: null
+    - id: seasonal-water-table-fluctuation-m-season
+      label: Seasonal Water Table Fluctuation (m/season)
+      unit: m/season
+      resolution: annual
+      columns:
+      - seasonal_water_table_fluctuation_m
+      default_visible:
+      - seasonal_water_table_fluctuation_m
+      chart: line
+      band: null
+    - id: sgi-index
+      label: SGI (index)
+      unit: index
+      resolution: daily
+      columns:
+      - sgi_dimensionless
+      default_visible:
+      - sgi_dimensionless
+      chart: line
+      band: null
+    - id: storativity-specific-yield
+      label: Storativity Specific Yield
+      unit: —
+      resolution: daily
+      columns:
+      - storativity_specific_yield_dimensionless
+      default_visible:
+      - storativity_specific_yield_dimensionless
+      chart: line
+      band: null
+    - id: transmissivity-m2-day
+      label: Transmissivity (m²/day)
+      unit: m²/day
+      resolution: daily
+      columns:
+      - transmissivity_m2_day
+      default_visible:
+      - transmissivity_m2_day
+      chart: line
+      band: null
+- id: recharge-supporting
+  table: 10_2_recharge_supporting _master
+  label: Recharge Supporting
+  spec: '10.2'
+  modules:
+  - groundwater
+  resolution: monthly
+  keys:
+  - date
+  - year
+  - district_name
+  columns:
+  - column: monthly_catchment_rainfall_mm
+    name: Monthly Catchment Rainfall
+    label: Monthly Catchment Rainfall (mm)
+    unit: mm
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
+  - column: vadose_zone_soil_moisture_m3_m3
+    name: Vadose Zone Soil Moisture
+    label: Vadose Zone Soil Moisture (m³/m³)
+    unit: m³/m³
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: actual_evapotranspiration_mm
+    name: Actual Evapotranspiration
+    label: Actual Evapotranspiration (mm)
+    unit: mm
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
+  - column: river_baseflow_proxy_m3_day
+    name: River Baseflow Proxy
+    label: River Baseflow Proxy (m³/day)
+    unit: m³/day
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
+  - column: urban_agricultural_land_use_pct
+    name: Urban Agricultural Land Use
+    label: Urban Agricultural Land Use (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: water_table_rise_wtf_m
+    name: Water Table Rise WTF
+    label: Water Table Rise WTF (m)
+    unit: m
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: groundwater
+    shown_duplicates: []
+    groups:
+    - id: monthly-catchment-rainfall-actual-evapotranspiration-mm
+      label: Monthly Catchment Rainfall / Actual Evapotranspiration (mm)
+      unit: mm
+      resolution: monthly
+      columns:
+      - monthly_catchment_rainfall_mm
+      - actual_evapotranspiration_mm
+      default_visible:
+      - monthly_catchment_rainfall_mm
+      - actual_evapotranspiration_mm
+      chart: bar
+      band: null
+    - id: vadose-zone-soil-moisture-m3-m3
+      label: Vadose Zone Soil Moisture (m³/m³)
+      unit: m³/m³
+      resolution: monthly
+      columns:
+      - vadose_zone_soil_moisture_m3_m3
+      default_visible:
+      - vadose_zone_soil_moisture_m3_m3
+      chart: line
+      band: null
+    - id: river-baseflow-proxy-m3-day
+      label: River Baseflow Proxy (m³/day)
+      unit: m³/day
+      resolution: monthly
+      columns:
+      - river_baseflow_proxy_m3_day
+      default_visible:
+      - river_baseflow_proxy_m3_day
+      chart: bar
+      band: null
+    - id: urban-agricultural-land-use-pct
+      label: Urban Agricultural Land Use (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - urban_agricultural_land_use_pct
+      default_visible:
+      - urban_agricultural_land_use_pct
+      chart: line
+      band: null
+    - id: water-table-rise-wtf-m
+      label: Water Table Rise WTF (m)
+      unit: m
+      resolution: monthly
+      columns:
+      - water_table_rise_wtf_m
+      default_visible:
+      - water_table_rise_wtf_m
+      chart: line
+      band: null
+- id: hydrogeological
+  table: 11_1_hydrogeological
+  label: Hydrogeological
+  spec: '11.1'
+  modules:
+  - groundwater-reserve
+  resolution: monthly
+  keys:
+  - id
+  - category
+  - variable
+  - district_name
+  - province_name
+  - year
+  - month
+  - date
+  - value
+  - unit
+  - source
+  columns:
+  - column: Aquifer extent (map area)
+    name: Aquifer Extent (map Area)
+    label: Aquifer Extent (map Area) (km²)
+    unit: km²
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: = the district's area (r = 0.9993 with 9_2 catchment area)
+    unit_override: name has no unit; spec §11.1 gives km²
+  - column: Aquifer saturated thickness
+    name: Aquifer Saturated Thickness
+    label: Aquifer Saturated Thickness (m)
+    unit: m
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.1 gives m
+  - column: Depth to bedrock / aquifer base
+    name: Depth to Bedrock / Aquifer Base
+    label: Depth to Bedrock / Aquifer Base (m bgl)
+    unit: m bgl
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: shallower than the water table in 20 % of rows (the aquifer base cannot lie above the water table)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.1 gives m bgl
+  - column: Dynamic (renewable) reserve
+    name: Dynamic (renewable) Reserve
+    label: Dynamic (renewable) Reserve (Mm³/year)
+    unit: Mm³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.1 gives Mm³/year
+  - column: Groundwater storage coefficient
+    name: Groundwater Storage Coefficient
+    label: Groundwater Storage Coefficient
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Permeability / hydraulic conductivity
+    name: Permeability / Hydraulic Conductivity
+    label: Permeability / Hydraulic Conductivity (m/day)
+    unit: m/day
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: with saturated thickness and transmissivity consistent with T = K × b (r = 0.83)
+    unit_override: name has no unit; spec §11.1 gives m/day
+  - column: Porosity (total and effective)
+    name: Porosity (total and Effective)
+    label: Porosity (total and Effective) (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: r = 0.999 with specific yield (derived from it)
+    unit_override: name has no unit; spec §11.1 gives %
+  - column: Specific storage
+    name: Specific Storage
+    label: Specific Storage
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Specific yield
+    name: Specific Yield
+    label: Specific Yield
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Static reserve volume
+    name: Static Reserve Volume
+    label: Static Reserve Volume (Mm³)
+    unit: Mm³
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: name has no unit; spec §11.1 gives Mm³
+  - column: Storage coefficient / storativity / specific yield
+    name: Storage Coefficient / Storativity / Specific Yield
+    label: Storage Coefficient / Storativity / Specific Yield
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: an exact linear rescaling of the Specific yield column (r = 1.000)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Transmissivity
+    name: Transmissivity
+    label: Transmissivity (m²/day)
+    unit: m²/day
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.1 gives m²/day
+  - column: Depth to water table
+    name: Depth to Water Table
+    label: Depth to Water Table (m bgl)
+    unit: m bgl
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: City of Cape Town, Eden, iLembe, Nelson Mandela Bay, Overberg and West Coast share one identical series
+    unit_override: name has no unit; spec §11.1 gives m bgl
+  pages:
+  - module: groundwater-reserve
+    shown_duplicates: []
+    groups:
+    - id: aquifer-extent-map-area-km2
+      label: Aquifer Extent (map Area) (km²)
+      unit: km²
+      resolution: annual
+      columns:
+      - Aquifer extent (map area)
+      default_visible:
+      - Aquifer extent (map area)
+      chart: line
+      band: null
+    - id: aquifer-saturated-thickness-m
+      label: Aquifer Saturated Thickness (m)
+      unit: m
+      resolution: annual
+      columns:
+      - Aquifer saturated thickness
+      default_visible:
+      - Aquifer saturated thickness
+      chart: line
+      band: null
+    - id: depth-to-m-bgl
+      label: Depth to (m bgl)
+      unit: m bgl
+      resolution: monthly
+      columns:
+      - Depth to bedrock / aquifer base
+      - Depth to water table
+      default_visible:
+      - Depth to water table
+      chart: line
+      band: null
+    - id: dynamic-renewable-reserve-mm3-year
+      label: Dynamic (renewable) Reserve (Mm³/year)
+      unit: Mm³/year
+      resolution: annual
+      columns:
+      - Dynamic (renewable) reserve
+      default_visible:
+      - Dynamic (renewable) reserve
+      chart: line
+      band: null
+    - id: groundwater-storage-coefficient
+      label: Groundwater Storage Coefficient
+      unit: —
+      resolution: annual
+      columns:
+      - Groundwater storage coefficient
+      default_visible:
+      - Groundwater storage coefficient
+      chart: line
+      band: null
+    - id: permeability-hydraulic-conductivity-m-day
+      label: Permeability / Hydraulic Conductivity (m/day)
+      unit: m/day
+      resolution: annual
+      columns:
+      - Permeability / hydraulic conductivity
+      default_visible:
+      - Permeability / hydraulic conductivity
+      chart: line
+      band: null
+    - id: porosity-total-and-effective-pct
+      label: Porosity (total and Effective) (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - Porosity (total and effective)
+      default_visible:
+      - Porosity (total and effective)
+      chart: line
+      band: null
+    - id: specific-storage-specific-yield
+      label: Specific Storage / Specific Yield
+      unit: —
+      resolution: annual
+      columns:
+      - Specific storage
+      - Specific yield
+      default_visible:
+      - Specific storage
+      - Specific yield
+      chart: line
+      band: null
+    - id: static-reserve-volume-mm3
+      label: Static Reserve Volume (Mm³)
+      unit: Mm³
+      resolution: annual
+      columns:
+      - Static reserve volume
+      default_visible:
+      - Static reserve volume
+      chart: bar
+      band: null
+    - id: storage-coefficient-storativity-specific-yield
+      label: Storage Coefficient / Storativity / Specific Yield
+      unit: —
+      resolution: monthly
+      columns:
+      - Storage coefficient / storativity / specific yield
+      default_visible:
+      - Storage coefficient / storativity / specific yield
+      chart: line
+      band: null
+    - id: transmissivity-m2-day
+      label: Transmissivity (m²/day)
+      unit: m²/day
+      resolution: annual
+      columns:
+      - Transmissivity
+      default_visible:
+      - Transmissivity
+      chart: line
+      band: null
+- id: recharge-and-discharge
+  table: 11.2_recharge_and_discharge
+  label: Recharge and Discharge
+  spec: '11.2'
+  modules:
+  - groundwater-reserve
+  resolution: monthly
+  keys:
+  - id
+  - district_name
+  - province_name
+  - year
+  - month
+  - date
+  columns:
+  - column: Baseflow discharge
+    name: Baseflow Discharge
+    label: Baseflow Discharge (m³/s)
+    unit: m³/s
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: 'impossible in its unit (m³/s, spec §11.2): City of Johannesburg averages 1 739 m³/s and Ekurhuleni 1 693 m³/s (rivers of a watershed); 321 district-months exceed 2 100 m³/s, the whole country''s
+      mean runoff (16_1 MAR ≈ 66 300 Mm³/year)'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.2 gives m³/s
+  - column: Evapotranspiration
+    name: Evapotranspiration
+    label: Evapotranspiration (mm)
+    unit: mm
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: City of Cape Town, Eden, iLembe, Nelson Mandela Bay, Overberg and West Coast share one identical series
+    unit_override: name has no unit; spec §11.2 gives mm
+  - column: Spring discharge
+    name: Spring Discharge
+    label: Spring Discharge (L/s)
+    unit: L/s
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: City of Cape Town, Eden, iLembe, Nelson Mandela Bay, Overberg and West Coast share one identical series
+    unit_override: name has no unit; spec §11.2 gives L/s
+  - column: Direct recharge
+    name: Direct Recharge
+    label: Direct Recharge (mm/year)
+    unit: mm/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.2 gives mm/year
+  - column: Indirect recharge
+    name: Indirect Recharge
+    label: Indirect Recharge (m³/year)
+    unit: m³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: name has no unit; spec §11.2 gives m³/year
+  - column: Rainfall infiltration
+    name: Rainfall Infiltration
+    label: Rainfall Infiltration (mm/year)
+    unit: mm/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.2 gives mm/year
+  pages:
+  - module: groundwater-reserve
+    shown_duplicates: []
+    groups:
+    - id: baseflow-discharge-m3-s
+      label: Baseflow Discharge (m³/s)
+      unit: m³/s
+      resolution: monthly
+      columns:
+      - Baseflow discharge
+      default_visible:
+      - Baseflow discharge
+      chart: line
+      band: null
+    - id: evapotranspiration-mm
+      label: Evapotranspiration (mm)
+      unit: mm
+      resolution: monthly
+      columns:
+      - Evapotranspiration
+      default_visible:
+      - Evapotranspiration
+      chart: bar
+      band: null
+    - id: spring-discharge-l-s
+      label: Spring Discharge (L/s)
+      unit: L/s
+      resolution: monthly
+      columns:
+      - Spring discharge
+      default_visible:
+      - Spring discharge
+      chart: line
+      band: null
+    - id: direct-recharge-rainfall-infiltration-mm-year
+      label: Direct Recharge / Rainfall Infiltration (mm/year)
+      unit: mm/year
+      resolution: annual
+      columns:
+      - Direct recharge
+      - Rainfall infiltration
+      default_visible:
+      - Direct recharge
+      - Rainfall infiltration
+      chart: line
+      band: null
+    - id: indirect-recharge-m3-year
+      label: Indirect Recharge (m³/year)
+      unit: m³/year
+      resolution: annual
+      columns:
+      - Indirect recharge
+      default_visible:
+      - Indirect recharge
+      chart: bar
+      band: null
+- id: aquifer-sustainability
+  table: 11.3_aquifer_sustainability
+  label: Aquifer Sustainability
+  spec: '11.3'
+  modules:
+  - groundwater-reserve
+  resolution: monthly
+  keys:
+  - district_name
+  - province_name
+  - year
+  - month
+  - date
+  columns:
+  - column: Water quality for use
+    name: Water Quality For Use
+    label: Water Quality For Use
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Aquifer depletion rate
+    name: Aquifer Depletion Rate
+    label: Aquifer Depletion Rate (m/year)
+    unit: m/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: three pairs of districts share one series (Nkangala = O.R.Tambo, Lejweleputswa = Xhariep, Umkhanyakude = Waterberg)
+    unit_override: name has no unit; spec §11.3 gives m/year
+  - column: Borehole yield
+    name: Borehole Yield
+    label: Borehole Yield (m³/h)
+    unit: m³/h
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §11.3 gives m³/h
+  - column: Exploitation index
+    name: Exploitation Index
+    label: Exploitation Index (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: '% (abstraction / recharge, spec §11.3); tracks Total abstraction / Indirect recharge (11.2) with r = 0.84'
+    unit_override: name has no unit; spec §11.3 gives %
+  - column: Recharge sensitivity
+    name: Recharge Sensitivity
+    label: Recharge Sensitivity
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Total abstraction
+    name: Total Abstraction
+    label: Total Abstraction (m³/year)
+    unit: m³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: name has no unit; spec §11.3 gives m³/year
+  pages:
+  - module: groundwater-reserve
+    shown_duplicates: []
+    groups:
+    - id: water-quality-for-use
+      label: Water Quality For Use
+      unit: —
+      resolution: monthly
+      columns:
+      - Water quality for use
+      default_visible:
+      - Water quality for use
+      chart: line
+      band: null
+    - id: aquifer-depletion-rate-m-year
+      label: Aquifer Depletion Rate (m/year)
+      unit: m/year
+      resolution: annual
+      columns:
+      - Aquifer depletion rate
+      default_visible:
+      - Aquifer depletion rate
+      chart: line
+      band: null
+    - id: borehole-yield-m3-h
+      label: Borehole Yield (m³/h)
+      unit: m³/h
+      resolution: annual
+      columns:
+      - Borehole yield
+      default_visible:
+      - Borehole yield
+      chart: line
+      band: null
+    - id: exploitation-index-pct
+      label: Exploitation Index (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - Exploitation index
+      default_visible:
+      - Exploitation index
+      chart: line
+      band: null
+    - id: recharge-sensitivity
+      label: Recharge Sensitivity
+      unit: —
+      resolution: annual
+      columns:
+      - Recharge sensitivity
+      default_visible:
+      - Recharge sensitivity
+      chart: line
+      band: null
+    - id: total-abstraction-m3-year
+      label: Total Abstraction (m³/year)
+      unit: m³/year
+      resolution: annual
+      columns:
+      - Total abstraction
+      default_visible:
+      - Total abstraction
+      chart: bar
+      band: null
+- id: physical-water-quality
+  table: 12.1_physical_water_quality_master
+  label: Physical Water Quality
+  spec: '12.1'
+  modules:
+  - water-quality
+  resolution: monthly
+  keys:
+  - district_name
+  - province_name
+  - year
+  - month
+  - date
+  columns:
+  - column: Temperature
+    name: Temperature
+    label: Temperature (°C)
+    unit: °C
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.1 gives °C
+  - column: Turbidity
+    name: Turbidity
+    label: Turbidity (NTU)
+    unit: NTU
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.1 gives NTU
+  - column: Colour
+    name: Colour
+    label: Colour (Hazen)
+    unit: Hazen
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.1 gives Hazen
+  - column: Electrical Conductivity (EC)
+    name: Electrical Conductivity (EC)
+    label: Electrical Conductivity (EC) (mS/m)
+    unit: mS/m
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: TDS = 4.2–6.7 × EC in this table (r = 1.000), as expected for natural waters
+    unit_override: name has no unit; spec §12.1 gives mS/m
+  - column: Total Dissolved Solids (TDS)
+    name: Total Dissolved Solids (TDS)
+    label: Total Dissolved Solids (TDS) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: = 4.2–6.7 × EC in this table (r = 1.000), as expected for natural waters
+    unit_override: name has no unit; spec §12.1 gives mg/L
+  - column: Total Suspended Solids (TSS)
+    name: Total Suspended Solids (TSS)
+    label: Total Suspended Solids (TSS) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.1 gives mg/L
+  - column: Salinity
+    name: Salinity
+    label: Salinity (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.1 gives mg/L
+  pages:
+  - module: water-quality
+    shown_duplicates: []
+    groups:
+    - id: temperature-c
+      label: Temperature (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - Temperature
+      default_visible:
+      - Temperature
+      chart: line
+      band: null
+    - id: turbidity-ntu
+      label: Turbidity (NTU)
+      unit: NTU
+      resolution: monthly
+      columns:
+      - Turbidity
+      default_visible:
+      - Turbidity
+      chart: line
+      band: null
+    - id: colour-hazen
+      label: Colour (Hazen)
+      unit: Hazen
+      resolution: monthly
+      columns:
+      - Colour
+      default_visible:
+      - Colour
+      chart: line
+      band: null
+    - id: electrical-conductivity-ec-ms-m
+      label: Electrical Conductivity (EC) (mS/m)
+      unit: mS/m
+      resolution: monthly
+      columns:
+      - Electrical Conductivity (EC)
+      default_visible:
+      - Electrical Conductivity (EC)
+      chart: line
+      band: null
+    - id: total-mg-l
+      label: Total (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - Total Dissolved Solids (TDS)
+      - Total Suspended Solids (TSS)
+      default_visible:
+      - Total Dissolved Solids (TDS)
+      - Total Suspended Solids (TSS)
+      chart: line
+      band: null
+    - id: salinity-mg-l
+      label: Salinity (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - Salinity
+      default_visible:
+      - Salinity
+      chart: line
+      band: null
+- id: chemical-water-quality
+  table: 12.2_chemical_water_quality_master
+  label: Chemical Water Quality
+  spec: '12.2'
+  modules:
+  - water-quality
+  resolution: monthly
+  keys:
+  - district_name
+  - year
+  - month
+  - date
+  columns:
+  - column: pH
+    name: pH
+    label: pH
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Dissolved Oxygen (DO)
+    name: Dissolved Oxygen (DO)
+    label: Dissolved Oxygen (DO) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: BOD5
+    name: BOD5
+    label: BOD5 (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: COD
+    name: COD
+    label: COD (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Ammonia (NH3-N)
+    name: Ammonia (NH3-N)
+    label: Ammonia (NH3-N) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Nitrate (NO3-N)
+    name: Nitrate (NO3-N)
+    label: Nitrate (NO3-N) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Nitrite (NO2-N)
+    name: Nitrite (NO2-N)
+    label: Nitrite (NO2-N) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Total Phosphorus (TP)
+    name: Total Phosphorus (TP)
+    label: Total Phosphorus (TP) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Orthophosphate (PO43-)
+    name: Orthophosphate (PO43-)
+    label: Orthophosphate (PO43-) (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Lead/Cadmium/Chromium
+    name: Lead/Cadmium/Chromium
+    label: Lead/Cadmium/Chromium (µg/L)
+    unit: µg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives µg/L
+  - column: Arsenic/Mercury
+    name: Arsenic/Mercury
+    label: Arsenic/Mercury (µg/L)
+    unit: µg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives µg/L
+  - column: Iron/Manganese
+    name: Iron/Manganese
+    label: Iron/Manganese (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: TOC
+    name: TOC
+    label: TOC (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Sulphate
+    name: Sulphate
+    label: Sulphate (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Chloride
+    name: Chloride
+    label: Chloride (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  - column: Fluoride
+    name: Fluoride
+    label: Fluoride (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.2 gives mg/L
+  pages:
+  - module: water-quality
+    shown_duplicates: []
+    groups:
+    - id: ph
+      label: pH
+      unit: —
+      resolution: monthly
+      columns:
+      - pH
+      default_visible:
+      - pH
+      chart: line
+      band: null
+    - id: dissolved-oxygen-do-bod5-cod-ammonia-nh3-n-nitrate-no3-n-nitrite-no2-n-total-phosphorus-tp-orthophosphate-po43-iron-manganese-toc-sulphate-chloride-fluoride-mg-l
+      label: Dissolved Oxygen (DO) / BOD5 / COD / Ammonia (NH3-N) / Nitrate (NO3-N) / Nitrite (NO2-N) / Total Phosphorus (TP) / Orthophosphate (PO43-) / Iron/Manganese / TOC / Sulphate / Chloride / Fluoride
+        (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - Dissolved Oxygen (DO)
+      - BOD5
+      - COD
+      - Ammonia (NH3-N)
+      - Nitrate (NO3-N)
+      - Nitrite (NO2-N)
+      - Total Phosphorus (TP)
+      - Orthophosphate (PO43-)
+      - Iron/Manganese
+      - TOC
+      - Sulphate
+      - Chloride
+      - Fluoride
+      default_visible:
+      - Dissolved Oxygen (DO)
+      - BOD5
+      - COD
+      chart: line
+      band: null
+    - id: lead-cadmium-chromium-arsenic-mercury-g-l
+      label: Lead/Cadmium/Chromium / Arsenic/Mercury (µg/L)
+      unit: µg/L
+      resolution: monthly
+      columns:
+      - Lead/Cadmium/Chromium
+      - Arsenic/Mercury
+      default_visible:
+      - Lead/Cadmium/Chromium
+      - Arsenic/Mercury
+      chart: line
+      band: null
+- id: biological-water-quality
+  table: 12.3_biological_water_quality_master
+  label: Biological Water Quality
+  spec: '12.3'
+  modules:
+  - water-quality
+  resolution: monthly
+  keys:
+  - district_name
+  - year
+  - month
+  - date
+  columns:
+  - column: E. coli
+    name: E. Coli
+    label: E. Coli (cfu/100 mL)
+    unit: cfu/100 mL
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.3 gives cfu/100 mL
+  - column: Total coliforms
+    name: Total Coliforms
+    label: Total Coliforms (cfu/100 mL)
+    unit: cfu/100 mL
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.3 gives cfu/100 mL
+  - column: Chlorophyll-a
+    name: Chlorophyll-a
+    label: Chlorophyll-a (µg/L)
+    unit: µg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.3 gives µg/L
+  - column: Blue-green algae
+    name: Blue-green Algae
+    label: Blue-green Algae (cells/mL)
+    unit: cells/mL
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.3 gives cells/mL
+  - column: Microcystin
+    name: Microcystin
+    label: Microcystin (µg/L)
+    unit: µg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §12.3 gives µg/L
+  - column: Macroinvertebrate index (SASS5)
+    name: Macroinvertebrate Index (SASS5)
+    label: Macroinvertebrate Index (SASS5)
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Pathogens
+    name: Pathogens
+    label: Pathogens
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: water-quality
+    shown_duplicates: []
+    groups:
+    - id: e-coli-total-coliforms-cfu-100-ml
+      label: E. Coli / Total Coliforms (cfu/100 mL)
+      unit: cfu/100 mL
+      resolution: monthly
+      columns:
+      - E. coli
+      - Total coliforms
+      default_visible:
+      - E. coli
+      - Total coliforms
+      chart: line
+      band: null
+    - id: chlorophyll-a-microcystin-g-l
+      label: Chlorophyll-a / Microcystin (µg/L)
+      unit: µg/L
+      resolution: monthly
+      columns:
+      - Chlorophyll-a
+      - Microcystin
+      default_visible:
+      - Chlorophyll-a
+      - Microcystin
+      chart: line
+      band: null
+    - id: blue-green-algae-cells-ml
+      label: Blue-green Algae (cells/mL)
+      unit: cells/mL
+      resolution: monthly
+      columns:
+      - Blue-green algae
+      default_visible:
+      - Blue-green algae
+      chart: line
+      band: null
+    - id: macroinvertebrate-index-sass5
+      label: Macroinvertebrate Index (SASS5)
+      unit: —
+      resolution: monthly
+      columns:
+      - Macroinvertebrate index (SASS5)
+      default_visible:
+      - Macroinvertebrate index (SASS5)
+      chart: line
+      band: null
+    - id: pathogens
+      label: Pathogens
+      unit: —
+      resolution: monthly
+      columns:
+      - Pathogens
+      default_visible:
+      - Pathogens
+      chart: line
+      band: null
+- id: sansa-water-quality
+  table: 12.4_sansa_water_quality_master
+  label: SANSA Water Quality
+  spec: '12.4'
+  modules:
+  - water-quality
+  resolution: monthly
+  keys:
+  - district_name
+  - year
+  - month
+  - date
+  columns:
+  - column: Turbidity
+    name: Turbidity
+    label: Turbidity
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Chlorophyll-a
+    name: Chlorophyll-a
+    label: Chlorophyll-a
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Cyanobacterial bloom
+    name: Cyanobacterial Bloom
+    label: Cyanobacterial Bloom
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: CDOM
+    name: CDOM
+    label: CDOM
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Total Suspended Matter (TSM)
+    name: Total Suspended Matter (TSM)
+    label: Total Suspended Matter (TSM)
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: water-quality
+    shown_duplicates: []
+    groups:
+    - id: turbidity
+      label: Turbidity
+      unit: —
+      resolution: monthly
+      columns:
+      - Turbidity
+      default_visible:
+      - Turbidity
+      chart: line
+      band: null
+    - id: chlorophyll-a
+      label: Chlorophyll-a
+      unit: —
+      resolution: monthly
+      columns:
+      - Chlorophyll-a
+      default_visible:
+      - Chlorophyll-a
+      chart: line
+      band: null
+    - id: cyanobacterial-bloom
+      label: Cyanobacterial Bloom
+      unit: —
+      resolution: monthly
+      columns:
+      - Cyanobacterial bloom
+      default_visible:
+      - Cyanobacterial bloom
+      chart: line
+      band: null
+    - id: cdom
+      label: CDOM
+      unit: —
+      resolution: monthly
+      columns:
+      - CDOM
+      default_visible:
+      - CDOM
+      chart: line
+      band: null
+    - id: total-suspended-matter-tsm
+      label: Total Suspended Matter (TSM)
+      unit: —
+      resolution: monthly
+      columns:
+      - Total Suspended Matter (TSM)
+      default_visible:
+      - Total Suspended Matter (TSM)
+      chart: line
+      band: null
+- id: wastewater-effluent-quality
+  table: 13.1_wastewater_effluent_quality_master
+  label: Wastewater Effluent Quality
+  spec: '13.1'
+  modules:
+  - green-drop
+  resolution: monthly
+  keys:
+  - district_name
+  - shapeID
+  - year
+  - month
+  columns:
+  - column: temperature
+    name: Temperature
+    label: Temperature (°C)
+    unit: °C
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives °C
+  - column: turbidity
+    name: Turbidity
+    label: Turbidity (NTU)
+    unit: NTU
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives NTU
+  - column: ec_salinity
+    name: EC Salinity
+    label: EC Salinity (mS/m)
+    unit: mS/m
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives mS/m
+  - column: tss
+    name: TSS
+    label: TSS (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives mg/L
+  - column: ph
+    name: pH
+    label: pH
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: 'impossible values: pH below 4 in all 16 744 rows (−0.54 to 3.33, negative in 8), where treated effluent is pH 6–9 (SA general limit 5.5–9.5)'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: do
+    name: DO
+    label: DO (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: 'impossible values: dissolved oxygen negative in 16 742 of 16 744 rows (−1.20 to 1.90 mg/L)'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives mg/L
+  - column: BOD5
+    name: BOD5
+    label: BOD5 (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: COD is below BOD₅ in 16 727 of 16 744 rows; COD ≥ BOD₅ by definition, so at least one of the two is wrong
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives mg/L
+  - column: COD
+    name: COD
+    label: COD (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: below BOD₅ in 16 727 of 16 744 rows; COD ≥ BOD₅ by definition, so at least one of the two is wrong
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives mg/L
+  - column: Ammonia_NH3_N
+    name: Ammonia NH3 N
+    label: Ammonia NH3 N (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Values below 0 are not served: a concentration cannot be negative (2 of 16 744 rows)'
+    unit_override: name has no unit; spec §13.1 gives mg/L
+  - column: Total_Inorganic_Nitrogen
+    name: Total Inorganic Nitrogen
+    label: Total Inorganic Nitrogen (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives mg/L
+  - column: Total_Phosphorus
+    name: Total Phosphorus
+    label: Total Phosphorus (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives mg/L
+  - column: Heavy_Metals
+    name: Heavy Metals
+    label: Heavy Metals (µg/L)
+    unit: µg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives µg/L
+  - column: E_coli
+    name: E Coli
+    label: E Coli (cfu/100 mL)
+    unit: cfu/100 mL
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives cfu/100 mL
+  - column: Faecal_coliforms
+    name: Faecal Coliforms
+    label: Faecal Coliforms (cfu/100 mL)
+    unit: cfu/100 mL
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives cfu/100 mL
+  - column: Helminth_eggs
+    name: Helminth Eggs
+    label: Helminth Eggs (eggs/L)
+    unit: eggs/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.1 gives eggs/L
+  pages:
+  - module: green-drop
+    shown_duplicates: []
+    groups:
+    - id: temperature-c
+      label: Temperature (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - temperature
+      default_visible:
+      - temperature
+      chart: line
+      band: null
+    - id: turbidity-ntu
+      label: Turbidity (NTU)
+      unit: NTU
+      resolution: monthly
+      columns:
+      - turbidity
+      default_visible:
+      - turbidity
+      chart: line
+      band: null
+    - id: ec-salinity-ms-m
+      label: EC Salinity (mS/m)
+      unit: mS/m
+      resolution: monthly
+      columns:
+      - ec_salinity
+      default_visible:
+      - ec_salinity
+      chart: line
+      band: null
+    - id: tss-do-bod5-cod-ammonia-nh3-n-mg-l
+      label: TSS / DO / BOD5 / COD / Ammonia NH3 N (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - tss
+      - do
+      - BOD5
+      - COD
+      - Ammonia_NH3_N
+      default_visible:
+      - tss
+      - Ammonia_NH3_N
+      chart: line
+      band: null
+    - id: ph
+      label: pH
+      unit: —
+      resolution: monthly
+      columns:
+      - ph
+      default_visible:
+      - ph
+      chart: line
+      band: null
+    - id: total-mg-l
+      label: Total (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - Total_Inorganic_Nitrogen
+      - Total_Phosphorus
+      default_visible:
+      - Total_Inorganic_Nitrogen
+      - Total_Phosphorus
+      chart: line
+      band: null
+    - id: heavy-metals-g-l
+      label: Heavy Metals (µg/L)
+      unit: µg/L
+      resolution: monthly
+      columns:
+      - Heavy_Metals
+      default_visible:
+      - Heavy_Metals
+      chart: line
+      band: null
+    - id: e-coli-faecal-coliforms-cfu-100-ml
+      label: E Coli / Faecal Coliforms (cfu/100 mL)
+      unit: cfu/100 mL
+      resolution: monthly
+      columns:
+      - E_coli
+      - Faecal_coliforms
+      default_visible:
+      - E_coli
+      - Faecal_coliforms
+      chart: line
+      band: null
+    - id: helminth-eggs-eggs-l
+      label: Helminth Eggs (eggs/L)
+      unit: eggs/L
+      resolution: monthly
+      columns:
+      - Helminth_eggs
+      default_visible:
+      - Helminth_eggs
+      chart: line
+      band: null
+- id: wwtw-operational
+  table: 13.2_WWTW_operational_master
+  label: WWTW Operational
+  spec: '13.2'
+  modules:
+  - green-drop
+  resolution: monthly
+  keys:
+  - district_name
+  - shapeID
+  - year
+  - month
+  - system:index
+  - .geo
+  columns:
+  - column: chlorine_dosing
+    name: Chlorine Dosing
+    label: Chlorine Dosing (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (2.5) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.2 gives mg/L
+  - column: design_capacity
+    name: Design Capacity
+    label: Design Capacity (m³/day)
+    unit: m³/day
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: name has no unit; spec §13.2 gives m³/day
+  - column: hydraulic_loading_rate
+    name: Hydraulic Loading Rate
+    label: Hydraulic Loading Rate (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.2 gives %
+  - column: hydraulic_retention_time
+    name: Hydraulic Retention Time
+    label: Hydraulic Retention Time (h)
+    unit: h
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.2 gives h
+  - column: inflow_infiltration
+    name: Inflow Infiltration
+    label: Inflow Infiltration (m³/day)
+    unit: m³/day
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: name has no unit; spec §13.2 gives m³/day
+  - column: influent_flow_rate
+    name: Influent Flow Rate
+    label: Influent Flow Rate (m³/day)
+    unit: m³/day
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: name has no unit; spec §13.2 gives m³/day
+  - column: power_consumption
+    name: Power Consumption
+    label: Power Consumption (kWh/day)
+    unit: kWh/day
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §13.2 gives kWh/day
+  - column: sludge_production
+    name: Sludge Production
+    label: Sludge Production (m³/day)
+    unit: m³/day
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: name has no unit; spec §13.2 gives m³/day
+  pages:
+  - module: green-drop
+    shown_duplicates: []
+    groups:
+    - id: chlorine-dosing-mg-l
+      label: Chlorine Dosing (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - chlorine_dosing
+      default_visible:
+      - chlorine_dosing
+      chart: line
+      band: null
+    - id: design-capacity-inflow-infiltration-influent-flow-rate-sludge-production-m3-day
+      label: Design Capacity / Inflow Infiltration / Influent Flow Rate / Sludge Production (m³/day)
+      unit: m³/day
+      resolution: monthly
+      columns:
+      - design_capacity
+      - inflow_infiltration
+      - influent_flow_rate
+      - sludge_production
+      default_visible:
+      - design_capacity
+      - inflow_infiltration
+      - influent_flow_rate
+      chart: bar
+      band: null
+    - id: hydraulic-loading-rate-pct
+      label: Hydraulic Loading Rate (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - hydraulic_loading_rate
+      default_visible:
+      - hydraulic_loading_rate
+      chart: line
+      band: null
+    - id: hydraulic-retention-time-h
+      label: Hydraulic Retention Time (h)
+      unit: h
+      resolution: monthly
+      columns:
+      - hydraulic_retention_time
+      default_visible:
+      - hydraulic_retention_time
+      chart: line
+      band: null
+    - id: power-consumption-kwh-day
+      label: Power Consumption (kWh/day)
+      unit: kWh/day
+      resolution: monthly
+      columns:
+      - power_consumption
+      default_visible:
+      - power_consumption
+      chart: line
+      band: null
+- id: meteorological-variables-saws-for-wwtw-compliance
+  table: 13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master
+  label: Meteorological Variables (SAWS) For WWTW Compliance
+  spec: '13.3'
+  modules:
+  - green-drop
+  resolution: monthly
+  keys:
+  - date
+  - district_name
+  - year
+  - month
+  - source
+  columns:
+  - column: Rainfall_mm
+    name: Rainfall
+    label: Rainfall (mm)
+    unit: mm
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (45 mm) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
+  - column: Flood_events_proxy
+    name: Flood Events Proxy
+    label: Flood Events Proxy
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (5.4) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Temperature_C
+    name: Temperature
+    label: Temperature (°C)
+    unit: °C
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (20 °C) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Evaporation_mm
+    name: Evaporation
+    label: Evaporation (mm)
+    unit: mm
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (100 mm) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
+  pages:
+  - module: green-drop
+    shown_duplicates: []
+    groups:
+    - id: rainfall-evaporation-mm
+      label: Rainfall / Evaporation (mm)
+      unit: mm
+      resolution: monthly
+      columns:
+      - Rainfall_mm
+      - Evaporation_mm
+      default_visible:
+      - Rainfall_mm
+      - Evaporation_mm
+      chart: bar
+      band: null
+    - id: flood-events-proxy
+      label: Flood Events Proxy
+      unit: —
+      resolution: monthly
+      columns:
+      - Flood_events_proxy
+      default_visible:
+      - Flood_events_proxy
+      chart: line
+      band: null
+    - id: temperature-c
+      label: Temperature (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - Temperature_C
+      default_visible:
+      - Temperature_C
+      chart: line
+      band: null
+- id: sans-241-compliance
+  table: 14.1_SANS_241_compliance_master
+  label: SANS 241 Compliance
+  spec: '14.1'
+  modules:
+  - blue-drop
+  resolution: monthly
+  keys:
+  - district_name
+  - shapeID
+  - year
+  - month
+  - Turbidity_Category
+  - Turbidity_Parameter
+  - Turbidity_Limit
+  - Turbidity_Class
+  - Turbidity_Source
+  - Colour_Category
+  - Colour_Parameter
+  - Colour_Limit
+  - Colour_Class
+  - Colour_Source
+  - Temperature_Category
+  - Temperature_Parameter
+  - Temperature_Limit
+  - Temperature_Class
+  - Temperature_Source
+  - E_coli_Category
+  - E_coli_Parameter
+  - E_coli_Limit
+  - E_coli_Class
+  - E_coli_Source
+  - Total_Coliforms_Category
+  - Total_Coliforms_Parameter
+  - Total_Coliforms_Limit
+  - Total_Coliforms_Class
+  - Total_Coliforms_Source
+  - pH_Category
+  - pH_Parameter
+  - pH_Limit
+  - pH_Class
+  - pH_Source
+  - EC_Category
+  - EC_Parameter
+  - EC_Limit
+  - EC_Class
+  - EC_Source
+  - Free_Chlorine_Category
+  - Free_Chlorine_Parameter
+  - Free_Chlorine_Limit
+  - Free_Chlorine_Class
+  - Free_Chlorine_Source
+  - Nitrate_Category
+  - Nitrate_Parameter
+  - Nitrate_Limit
+  - Nitrate_Class
+  - Nitrate_Source
+  - Fluoride_Category
+  - Fluoride_Parameter
+  - Fluoride_Limit
+  - Fluoride_Class
+  - Fluoride_Source
+  - Arsenic_Category
+  - Arsenic_Parameter
+  - Arsenic_Limit
+  - Arsenic_Class
+  - Arsenic_Source
+  - Lead_Category
+  - Lead_Parameter
+  - Lead_Limit
+  - Lead_Class
+  - Lead_Source
+  - Cyanide_Category
+  - Cyanide_Parameter
+  - Cyanide_Limit
+  - Cyanide_Class
+  - Cyanide_Source
+  - Total_THMs_Category
+  - Total_THMs_Parameter
+  - Total_THMs_Limit
+  - Total_THMs_Class
+  - Total_THMs_Source
+  columns:
+  - column: Turbidity_Value
+    name: Turbidity Value
+    label: Turbidity Value (NTU)
+    unit: NTU
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: identical to 13.1 turbidity (wastewater effluent) in all 16 744 district-months
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives NTU
+  - column: Turbidity_Compliant
+    name: Turbidity Compliant
+    label: Turbidity Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Colour_Value
+    name: Colour Value
+    label: Colour Value (TCU)
+    unit: TCU
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives TCU
+  - column: Colour_Compliant
+    name: Colour Compliant
+    label: Colour Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Temperature_Value
+    name: Temperature Value
+    label: Temperature Value (°C)
+    unit: °C
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: identical to 13.1 temperature (wastewater effluent) in all 16 744 district-months
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives °C
+  - column: Temperature_Compliant
+    name: Temperature Compliant
+    label: Temperature Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: E_coli_Value
+    name: E Coli Value
+    label: E Coli Value (cfu/100 mL)
+    unit: cfu/100 mL
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: identical to 13.1 E_coli (wastewater effluent) in all 16 744 district-months
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives cfu/100 mL
+  - column: E_coli_Compliant
+    name: E Coli Compliant
+    label: E Coli Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Total_Coliforms_Value
+    name: Total Coliforms Value
+    label: Total Coliforms Value (cfu/100 mL)
+    unit: cfu/100 mL
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives cfu/100 mL
+  - column: Total_Coliforms_Compliant
+    name: Total Coliforms Compliant
+    label: Total Coliforms Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: pH_Value
+    name: pH Value
+    label: pH Value
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: identical to 13.1 ph (wastewater effluent) in all 16 744 district-months; pH from −0.54 to 3.33 is impossible
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: pH_Compliant
+    name: pH Compliant
+    label: pH Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: EC_Value
+    name: EC Value
+    label: EC Value (mS/m)
+    unit: mS/m
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: identical to 13.1 ec_salinity (wastewater effluent) in all 16 744 district-months
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mS/m
+  - column: EC_Compliant
+    name: EC Compliant
+    label: EC Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Free_Chlorine_Value
+    name: Free Chlorine Value
+    label: Free Chlorine Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (1.8 mg/L) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mg/L
+  - column: Free_Chlorine_Compliant
+    name: Free Chlorine Compliant
+    label: Free Chlorine Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Nitrate_Value
+    name: Nitrate Value
+    label: Nitrate Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mg/L
+  - column: Nitrate_Compliant
+    name: Nitrate Compliant
+    label: Nitrate Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Fluoride_Value
+    name: Fluoride Value
+    label: Fluoride Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mg/L
+  - column: Fluoride_Compliant
+    name: Fluoride Compliant
+    label: Fluoride Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Arsenic_Value
+    name: Arsenic Value
+    label: Arsenic Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mg/L
+  - column: Arsenic_Compliant
+    name: Arsenic Compliant
+    label: Arsenic Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Lead_Value
+    name: Lead Value
+    label: Lead Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: 'not an independent value: an exact linear rescaling of 13.1 Heavy_Metals (r = 1.0000)'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mg/L
+  - column: Lead_Compliant
+    name: Lead Compliant
+    label: Lead Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Cyanide_Value
+    name: Cyanide Value
+    label: Cyanide Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: 'not an independent value: an exact linear rescaling of 13.1 Heavy_Metals (r = 1.0000)'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mg/L
+  - column: Cyanide_Compliant
+    name: Cyanide Compliant
+    label: Cyanide Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Total_THMs_Value
+    name: Total THMs Value
+    label: Total THMs Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §14.1 gives mg/L
+  - column: Total_THMs_Compliant
+    name: Total THMs Compliant
+    label: Total THMs Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: SANS_241_Compliance_Score
+    name: SANS 241 Compliance Score
+    label: SANS 241 Compliance Score
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: a score computed from the compliance flags, which judge values copied from 13.1 wastewater effluent (impossible pH included)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: blue-drop
+    shown_duplicates: []
+    groups:
+    - id: turbidity-value-ntu
+      label: Turbidity Value (NTU)
+      unit: NTU
+      resolution: monthly
+      columns:
+      - Turbidity_Value
+      default_visible:
+      - Turbidity_Value
+      chart: line
+      band: null
+    - id: turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct
+      label: Turbidity Compliant / Colour Compliant / Temperature Compliant / E Coli Compliant / pH Compliant / EC Compliant / Free Chlorine Compliant / Nitrate Compliant / Fluoride Compliant / Arsenic
+        Compliant / Lead Compliant / Cyanide Compliant (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - Turbidity_Compliant
+      - Colour_Compliant
+      - Temperature_Compliant
+      - E_coli_Compliant
+      - pH_Compliant
+      - EC_Compliant
+      - Free_Chlorine_Compliant
+      - Nitrate_Compliant
+      - Fluoride_Compliant
+      - Arsenic_Compliant
+      - Lead_Compliant
+      - Cyanide_Compliant
+      default_visible:
+      - Turbidity_Compliant
+      - Colour_Compliant
+      - Temperature_Compliant
+      chart: line
+      band: null
+    - id: colour-value-tcu
+      label: Colour Value (TCU)
+      unit: TCU
+      resolution: monthly
+      columns:
+      - Colour_Value
+      default_visible:
+      - Colour_Value
+      chart: line
+      band: null
+    - id: temperature-value-c
+      label: Temperature Value (°C)
+      unit: °C
+      resolution: monthly
+      columns:
+      - Temperature_Value
+      default_visible:
+      - Temperature_Value
+      chart: line
+      band: null
+    - id: e-coli-value-total-coliforms-value-cfu-100-ml
+      label: E Coli Value / Total Coliforms Value (cfu/100 mL)
+      unit: cfu/100 mL
+      resolution: monthly
+      columns:
+      - E_coli_Value
+      - Total_Coliforms_Value
+      default_visible:
+      - Total_Coliforms_Value
+      chart: line
+      band: null
+    - id: total-pct
+      label: Total (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - Total_Coliforms_Compliant
+      - Total_THMs_Compliant
+      default_visible:
+      - Total_Coliforms_Compliant
+      - Total_THMs_Compliant
+      chart: line
+      band: null
+    - id: ph-value
+      label: pH Value
+      unit: —
+      resolution: monthly
+      columns:
+      - pH_Value
+      default_visible:
+      - pH_Value
+      chart: line
+      band: null
+    - id: ec-value-ms-m
+      label: EC Value (mS/m)
+      unit: mS/m
+      resolution: monthly
+      columns:
+      - EC_Value
+      default_visible:
+      - EC_Value
+      chart: line
+      band: null
+    - id: free-chlorine-value-nitrate-value-fluoride-value-arsenic-value-lead-value-cyanide-value-total-thms-value-mg-l
+      label: Free Chlorine Value / Nitrate Value / Fluoride Value / Arsenic Value / Lead Value / Cyanide Value / Total THMs Value (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - Free_Chlorine_Value
+      - Nitrate_Value
+      - Fluoride_Value
+      - Arsenic_Value
+      - Lead_Value
+      - Cyanide_Value
+      - Total_THMs_Value
+      default_visible:
+      - Nitrate_Value
+      - Fluoride_Value
+      - Arsenic_Value
+      chart: line
+      band: null
+    - id: sans-241-compliance-score
+      label: SANS 241 Compliance Score
+      unit: —
+      resolution: monthly
+      columns:
+      - SANS_241_Compliance_Score
+      default_visible:
+      - SANS_241_Compliance_Score
+      chart: line
+      band: null
+- id: ecological-variables
+  table: 15.1_ecological_variables_master
+  label: Ecological Variables
+  spec: '15.1'
+  modules:
+  - rwqo
+  resolution: monthly
+  keys:
+  - district_name
+  - shapeID
+  - year
+  - month
+  - system:index
+  - .geo
+  columns:
+  - column: aquatic_habitat_integrity
+    name: Aquatic Habitat Integrity
+    label: Aquatic Habitat Integrity
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Values outside 0–100 are not served: a score on a 0–100 scale (1 row below 0 and 2 above 100 in 16 744)'
+    unit_override: null
+  - column: aspt
+    name: ASPT
+    label: ASPT
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Values below 0 are not served: an average score per taxon cannot be negative (1 row in 16 744)'
+    unit_override: null
+  - column: ecological_reserve_q
+    name: Ecological Reserve Q
+    label: Ecological Reserve Q (m³/s)
+    unit: m³/s
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Values below 0 are not served: a flow requirement cannot be negative (1 row in 16 744)'
+    unit_override: name has no unit; spec §15.1 gives m³/s
+  - column: fibi
+    name: FIBI
+    label: FIBI
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Values outside 0–100 are not served: a score on a 0–100 scale (1 row below 0 and 2 above 100 in 16 744)'
+    unit_override: null
+  - column: riparian_vegetation
+    name: Riparian Vegetation
+    label: Riparian Vegetation
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Values outside 0–100 are not served: a score on a 0–100 scale (1 row below 0 and 2 above 100 in 16 744)'
+    unit_override: null
+  - column: sass5_score
+    name: SASS5 Score
+    label: SASS5 Score
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: 'Values below 0 are not served: a SASS5 score cannot be negative (1 row in 16 744)'
+    unit_override: null
+  pages:
+  - module: rwqo
+    shown_duplicates: []
+    groups:
+    - id: aquatic-habitat-integrity
+      label: Aquatic Habitat Integrity
+      unit: —
+      resolution: monthly
+      columns:
+      - aquatic_habitat_integrity
+      default_visible:
+      - aquatic_habitat_integrity
+      chart: line
+      band: null
+    - id: aspt
+      label: ASPT
+      unit: —
+      resolution: monthly
+      columns:
+      - aspt
+      default_visible:
+      - aspt
+      chart: line
+      band: null
+    - id: ecological-reserve-q-m3-s
+      label: Ecological Reserve Q (m³/s)
+      unit: m³/s
+      resolution: monthly
+      columns:
+      - ecological_reserve_q
+      default_visible:
+      - ecological_reserve_q
+      chart: line
+      band: null
+    - id: fibi
+      label: FIBI
+      unit: —
+      resolution: monthly
+      columns:
+      - fibi
+      default_visible:
+      - fibi
+      chart: line
+      band: null
+    - id: riparian-vegetation
+      label: Riparian Vegetation
+      unit: —
+      resolution: monthly
+      columns:
+      - riparian_vegetation
+      default_visible:
+      - riparian_vegetation
+      chart: line
+      band: null
+    - id: sass5-score
+      label: SASS5 Score
+      unit: —
+      resolution: monthly
+      columns:
+      - sass5_score
+      default_visible:
+      - sass5_score
+      chart: line
+      band: null
+- id: chemical-rwqo-variables
+  table: 15.2_chemical_RWQO_variables_master
+  label: Chemical RWQO Variables
+  spec: '15.2'
+  modules:
+  - rwqo
+  resolution: monthly
+  keys:
+  - id
+  - district_name
+  - shapeID
+  - year
+  - month
+  - DO_Category
+  - DO_Parameter
+  - DO_Limit
+  - DO_Source
+  - pH_Range_Category
+  - pH_Range_Parameter
+  - pH_Range_Limit
+  - pH_Range_Source
+  - EC_Target_Category
+  - EC_Target_Parameter
+  - EC_Target_Limit
+  - EC_Target_Source
+  - Nutrient_Category
+  - Nutrient_Parameter
+  - Nutrient_Limit
+  - Nutrient_Source
+  - Toxicant_Category
+  - Toxicant_Parameter
+  - Toxicant_Limit
+  - Toxicant_Source
+  - Salinity_Category
+  - Salinity_Parameter
+  - Salinity_Limit
+  - Salinity_Source
+  - created_at
+  columns:
+  - column: DO_Value
+    name: DO Value
+    label: DO Value (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §15.2 gives mg/L
+  - column: DO_Compliant
+    name: DO Compliant
+    label: DO Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag; part of its inputs are copies of 13.1 wastewater effluent values
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: pH_Range_Value
+    name: pH Range Value
+    label: pH Range Value
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: identical to 13.1 ph (wastewater effluent) in all 16 744 district-months; pH from −0.54 to 3.33 is impossible
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: pH_Range_Compliant
+    name: pH Range Compliant
+    label: pH Range Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag; part of its inputs are copies of 13.1 wastewater effluent values
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: EC_Target_Value
+    name: EC Target Value
+    label: EC Target Value (mS/m)
+    unit: mS/m
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: 'not an independent value: an exact linear rescaling of 13.1 ec_salinity (r = 1.0000)'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §15.2 gives mS/m
+  - column: EC_Target_Compliant
+    name: EC Target Compliant
+    label: EC Target Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag; part of its inputs are copies of 13.1 wastewater effluent values
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Nutrient_Value_TN
+    name: Nutrient Value TN
+    label: Nutrient Value TN (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §15.2 gives mg/L
+  - column: Nutrient_Value_TP
+    name: Nutrient Value TP
+    label: Nutrient Value TP (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §15.2 gives mg/L
+  - column: Nutrient_Compliant
+    name: Nutrient Compliant
+    label: Nutrient Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag; part of its inputs are copies of 13.1 wastewater effluent values
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Toxicant_Value_ugL
+    name: Toxicant Value
+    label: Toxicant Value (µg/L)
+    unit: µg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: 'not an independent value: an exact linear rescaling of 13.1 Heavy_Metals (r = 1.0000)'
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Toxicant_Compliant
+    name: Toxicant Compliant
+    label: Toxicant Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag; part of its inputs are copies of 13.1 wastewater effluent values
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Salinity_Value_TDS
+    name: Salinity Value TDS
+    label: Salinity Value TDS (mg/L)
+    unit: mg/L
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §15.2 gives mg/L
+  - column: Salinity_Compliant
+    name: Salinity Compliant
+    label: Salinity Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: compliance flag; part of its inputs are copies of 13.1 wastewater effluent values
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: RWQO_Compliance_Score
+    name: RWQO Compliance Score
+    label: RWQO Compliance Score
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: a score computed from compliance flags that include the copied pH, EC and toxicant values
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: rwqo
+    shown_duplicates: []
+    groups:
+    - id: do-value-salinity-value-tds-mg-l
+      label: DO Value / Salinity Value TDS (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - DO_Value
+      - Salinity_Value_TDS
+      default_visible:
+      - DO_Value
+      - Salinity_Value_TDS
+      chart: line
+      band: null
+    - id: do-compliant-ph-range-compliant-ec-target-compliant-nutrient-compliant-toxicant-compliant-salinity-compliant-pct
+      label: DO Compliant / pH Range Compliant / EC Target Compliant / Nutrient Compliant / Toxicant Compliant / Salinity Compliant (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - DO_Compliant
+      - pH_Range_Compliant
+      - EC_Target_Compliant
+      - Nutrient_Compliant
+      - Toxicant_Compliant
+      - Salinity_Compliant
+      default_visible:
+      - DO_Compliant
+      - pH_Range_Compliant
+      - EC_Target_Compliant
+      chart: line
+      band: null
+    - id: ph-range-value
+      label: pH Range Value
+      unit: —
+      resolution: monthly
+      columns:
+      - pH_Range_Value
+      default_visible:
+      - pH_Range_Value
+      chart: line
+      band: null
+    - id: ec-target-value-ms-m
+      label: EC Target Value (mS/m)
+      unit: mS/m
+      resolution: monthly
+      columns:
+      - EC_Target_Value
+      default_visible:
+      - EC_Target_Value
+      chart: line
+      band: null
+    - id: nutrient-value-tn-nutrient-value-tp-mg-l
+      label: Nutrient Value TN / Nutrient Value TP (mg/L)
+      unit: mg/L
+      resolution: monthly
+      columns:
+      - Nutrient_Value_TN
+      - Nutrient_Value_TP
+      default_visible:
+      - Nutrient_Value_TN
+      - Nutrient_Value_TP
+      chart: line
+      band: null
+    - id: toxicant-value-g-l
+      label: Toxicant Value (µg/L)
+      unit: µg/L
+      resolution: monthly
+      columns:
+      - Toxicant_Value_ugL
+      default_visible:
+      - Toxicant_Value_ugL
+      chart: line
+      band: null
+    - id: rwqo-compliance-score
+      label: RWQO Compliance Score
+      unit: —
+      resolution: monthly
+      columns:
+      - RWQO_Compliance_Score
+      default_visible:
+      - RWQO_Compliance_Score
+      chart: line
+      band: null
+- id: hydrological-rwqo-variables
+  table: 15.3_hydrological_RWQO_variables_master
+  label: Hydrological RWQO Variables
+  spec: '15.3'
+  modules:
+  - rwqo
+  resolution: monthly
+  keys:
+  - id
+  - district_name
+  - shapeID
+  - year
+  - month
+  - Low_Flow_Category
+  - Low_Flow_Parameter
+  - Low_Flow_Limit
+  - Low_Flow_Source
+  - High_Flow_Category
+  - High_Flow_Parameter
+  - High_Flow_Limit
+  - High_Flow_Source
+  - Seasonality_Category
+  - Seasonality_Parameter
+  - Seasonality_Limit
+  - Seasonality_Source
+  - Dilution_Category
+  - Dilution_Parameter
+  - Dilution_Limit
+  - Dilution_Source
+  - Assimilation_Category
+  - Assimilation_Parameter
+  - Assimilation_Limit
+  - Assimilation_Source
+  - created_at
+  columns:
+  - column: Low_Flow_Value
+    name: Low Flow Value
+    label: Low Flow Value (m³/s)
+    unit: m³/s
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §15.3 gives m³/s
+  - column: Low_Flow_Compliant
+    name: Low Flow Compliant
+    label: Low Flow Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (compliant) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: High_Flow_Value
+    name: High Flow Value
+    label: High Flow Value
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two values (3.8 / 7.5), identical in all 52 districts in every month
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: High_Flow_Compliant
+    name: High Flow Compliant
+    label: High Flow Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: judges the withheld high-flow value (identical in all districts)
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Seasonality_Value
+    name: Seasonality Value
+    label: Seasonality Value
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (0.65) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Seasonality_Compliant
+    name: Seasonality Compliant
+    label: Seasonality Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: judges the withheld constant seasonality value
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Dilution_Value
+    name: Dilution Value
+    label: Dilution Value (m³/s)
+    unit: m³/s
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: name has no unit; spec §15.3 gives m³/s
+  - column: Dilution_Compliant
+    name: Dilution Compliant
+    label: Dilution Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (compliant) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Assimilation_Value
+    name: Assimilation Value
+    label: Assimilation Value
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Assimilation_Compliant
+    name: Assimilation Compliant
+    label: Assimilation Compliant (%)
+    unit: '%'
+    db_type: boolean
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: one value (compliant) in every row, identical in all 52 districts
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
+  - column: Hydrological_RWQO_Score
+    name: Hydrological RWQO Score
+    label: Hydrological RWQO Score
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: monthly
+    status: withheld
+    reason: two values (80 / 100), identical in all 52 districts in every month
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: rwqo
+    shown_duplicates: []
+    groups:
+    - id: low-flow-value-dilution-value-m3-s
+      label: Low Flow Value / Dilution Value (m³/s)
+      unit: m³/s
+      resolution: monthly
+      columns:
+      - Low_Flow_Value
+      - Dilution_Value
+      default_visible:
+      - Low_Flow_Value
+      - Dilution_Value
+      chart: line
+      band: null
+    - id: low-flow-compliant-high-flow-compliant-seasonality-compliant-dilution-compliant-assimilation-compliant-pct
+      label: Low Flow Compliant / High Flow Compliant / Seasonality Compliant / Dilution Compliant / Assimilation Compliant (%)
+      unit: '%'
+      resolution: monthly
+      columns:
+      - Low_Flow_Compliant
+      - High_Flow_Compliant
+      - Seasonality_Compliant
+      - Dilution_Compliant
+      - Assimilation_Compliant
+      default_visible:
+      - Low_Flow_Compliant
+      - High_Flow_Compliant
+      - Seasonality_Compliant
+      chart: line
+      band: null
+    - id: high-flow-value
+      label: High Flow Value
+      unit: —
+      resolution: monthly
+      columns:
+      - High_Flow_Value
+      default_visible:
+      - High_Flow_Value
+      chart: line
+      band: null
+    - id: seasonality-value
+      label: Seasonality Value
+      unit: —
+      resolution: monthly
+      columns:
+      - Seasonality_Value
+      default_visible:
+      - Seasonality_Value
+      chart: line
+      band: null
+    - id: assimilation-value
+      label: Assimilation Value
+      unit: —
+      resolution: monthly
+      columns:
+      - Assimilation_Value
+      default_visible:
+      - Assimilation_Value
+      chart: line
+      band: null
+    - id: hydrological-rwqo-score
+      label: Hydrological RWQO Score
+      unit: —
+      resolution: monthly
+      columns:
+      - Hydrological_RWQO_Score
+      default_visible:
+      - Hydrological_RWQO_Score
+      chart: line
+      band: null
+- id: complete-wrm-matrix
+  table: 16_1_complete_wrm_matrix_master
+  label: Complete WRM Matrix
+  spec: '16.1'
+  modules:
+  - iwrm
+  resolution: annual
+  keys:
+  - id
+  - year
+  - district_name
+  columns:
+  - column: Mean_Annual_Precipitation_MAP_mm_yr
+    name: Mean Annual Precipitation MAP
+    label: Mean Annual Precipitation MAP (mm/year)
+    unit: mm/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Mean_Annual_Evapotranspiration_MAE_mm_yr
+    name: Mean Annual Evapotranspiration MAE
+    label: Mean Annual Evapotranspiration MAE (mm/year)
+    unit: mm/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Climate_Variability_Index_CV_rainfall
+    name: Climate Variability Index CV Rainfall
+    label: Climate Variability Index CV Rainfall
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Mean_Annual_Runoff_MAR_million_m3_yr
+    name: Mean Annual Runoff MAR
+    label: Mean Annual Runoff MAR (Mm³/year)
+    unit: Mm³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Surface_Water_Availability_Index_ratio
+    name: Surface Water Availability Index Ratio
+    label: Surface Water Availability Index Ratio
+    unit: null
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Inter_Annual_Storage_Efficiency_pct
+    name: Inter Annual Storage Efficiency
+    label: Inter Annual Storage Efficiency (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Mean_Annual_Groundwater_Recharge_mm_yr
+    name: Mean Annual Groundwater Recharge
+    label: Mean Annual Groundwater Recharge (mm/year)
+    unit: mm/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Groundwater_Dependency_Index_pct
+    name: Groundwater Dependency Index
+    label: Groundwater Dependency Index (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Inter_Basin_Transfer_Volumes_million_m3_yr
+    name: Inter Basin Transfer Volumes
+    label: Inter Basin Transfer Volumes (Mm³/year)
+    unit: Mm³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: National_Water_Balance_million_m3_yr
+    name: National Water Balance
+    label: National Water Balance (Mm³/year)
+    unit: Mm³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: one value per district (the name says national)
+    unit_override: null
+  - column: Municipal_Water_Demand_L_cap_day
+    name: Municipal Water Demand
+    label: Municipal Water Demand (L/capita/day)
+    unit: L/capita/day
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Agricultural_Water_Demand_m3_ha_season
+    name: Agricultural Water Demand
+    label: Agricultural Water Demand (m³/ha/season)
+    unit: m³/ha/season
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Industrial_Water_Demand_m3_yr
+    name: Industrial Water Demand
+    label: Industrial Water Demand (m³/year)
+    unit: m³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
+  - column: System_Water_Losses_pct
+    name: System Water Losses
+    label: System Water Losses (%)
+    unit: '%'
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  - column: Ecological_Reserve_Water_Requirement_m3_yr
+    name: Ecological Reserve Water Requirement
+    label: Ecological Reserve Water Requirement (m³/year)
+    unit: m³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: bar
+    note: null
+    unit_override: null
+  - column: Return_Flow_Recycled_Water_million_m3_yr
+    name: Return Flow Recycled Water
+    label: Return Flow Recycled Water (Mm³/year)
+    unit: Mm³/year
+    db_type: double precision
+    kind: numeric
+    resolution: annual
+    status: live
+    reason: null
+    duplicate_of: null
+    chart: line
+    note: null
+    unit_override: null
+  pages:
+  - module: iwrm
+    shown_duplicates: []
+    groups:
+    - id: mean-annual-mm-year
+      label: Mean Annual (mm/year)
+      unit: mm/year
+      resolution: annual
+      columns:
+      - Mean_Annual_Precipitation_MAP_mm_yr
+      - Mean_Annual_Evapotranspiration_MAE_mm_yr
+      - Mean_Annual_Groundwater_Recharge_mm_yr
+      default_visible:
+      - Mean_Annual_Precipitation_MAP_mm_yr
+      - Mean_Annual_Evapotranspiration_MAE_mm_yr
+      - Mean_Annual_Groundwater_Recharge_mm_yr
+      chart: line
+      band: null
+    - id: climate-variability-index-cv-rainfall
+      label: Climate Variability Index CV Rainfall
+      unit: —
+      resolution: annual
+      columns:
+      - Climate_Variability_Index_CV_rainfall
+      default_visible:
+      - Climate_Variability_Index_CV_rainfall
+      chart: line
+      band: null
+    - id: mean-annual-runoff-mar-inter-basin-transfer-volumes-national-water-balance-return-flow-recycled-water-mm3-year
+      label: Mean Annual Runoff MAR / Inter Basin Transfer Volumes / National Water Balance / Return Flow Recycled Water (Mm³/year)
+      unit: Mm³/year
+      resolution: annual
+      columns:
+      - Mean_Annual_Runoff_MAR_million_m3_yr
+      - Inter_Basin_Transfer_Volumes_million_m3_yr
+      - National_Water_Balance_million_m3_yr
+      - Return_Flow_Recycled_Water_million_m3_yr
+      default_visible:
+      - Mean_Annual_Runoff_MAR_million_m3_yr
+      - Inter_Basin_Transfer_Volumes_million_m3_yr
+      - National_Water_Balance_million_m3_yr
+      chart: line
+      band: null
+    - id: surface-water-availability-index-ratio
+      label: Surface Water Availability Index Ratio
+      unit: —
+      resolution: annual
+      columns:
+      - Surface_Water_Availability_Index_ratio
+      default_visible:
+      - Surface_Water_Availability_Index_ratio
+      chart: line
+      band: null
+    - id: inter-annual-storage-efficiency-groundwater-dependency-index-system-water-losses-pct
+      label: Inter Annual Storage Efficiency / Groundwater Dependency Index / System Water Losses (%)
+      unit: '%'
+      resolution: annual
+      columns:
+      - Inter_Annual_Storage_Efficiency_pct
+      - Groundwater_Dependency_Index_pct
+      - System_Water_Losses_pct
+      default_visible:
+      - Inter_Annual_Storage_Efficiency_pct
+      - Groundwater_Dependency_Index_pct
+      - System_Water_Losses_pct
+      chart: line
+      band: null
+    - id: municipal-water-demand-l-capita-day
+      label: Municipal Water Demand (L/capita/day)
+      unit: L/capita/day
+      resolution: annual
+      columns:
+      - Municipal_Water_Demand_L_cap_day
+      default_visible:
+      - Municipal_Water_Demand_L_cap_day
+      chart: line
+      band: null
+    - id: agricultural-water-demand-m3-ha-season
+      label: Agricultural Water Demand (m³/ha/season)
+      unit: m³/ha/season
+      resolution: annual
+      columns:
+      - Agricultural_Water_Demand_m3_ha_season
+      default_visible:
+      - Agricultural_Water_Demand_m3_ha_season
+      chart: line
+      band: null
+    - id: industrial-water-demand-ecological-reserve-water-requirement-m3-year
+      label: Industrial Water Demand / Ecological Reserve Water Requirement (m³/year)
+      unit: m³/year
+      resolution: annual
+      columns:
+      - Industrial_Water_Demand_m3_yr
+      - Ecological_Reserve_Water_Requirement_m3_yr
+      default_visible:
+      - Industrial_Water_Demand_m3_yr
+      - Ecological_Reserve_Water_Requirement_m3_yr
+      chart: bar
+      band: null
+unregistered: []

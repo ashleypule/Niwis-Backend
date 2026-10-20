@@ -30,15 +30,17 @@ from dotenv import dotenv_values
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from app.core.units import LABEL_OVERRIDES, SUFFIXES  # noqa: E402
+from app.db import ident  # noqa: E402
 from app.registry.catalogue import (  # noqa: E402
     CATALOGUE_PATH,
     Catalogue,
     SchemaColumn,
     build_catalogue,
     dump_yaml,
+    expand_long,
     load_catalogue,
 )
-from app.registry.registry import load_registry  # noqa: E402
+from app.registry.registry import Registry, load_registry  # noqa: E402
 
 DOC = ROOT / "docs" / "CATEGORY_CATALOGUE.md"
 SCHEMA_SQL = """
@@ -49,12 +51,21 @@ ORDER BY table_name, ordinal_position
 """
 
 
-def read_schema(url: str) -> dict[str, list[SchemaColumn]]:
+def read_schema(url: str, reg: Registry) -> dict[str, list[SchemaColumn]]:
+    """Columns of every table; for long-format tables also their variable names (the distinct values of `long.name`),
+    which the catalogue treats as columns."""
     out: dict[str, list[SchemaColumn]] = {}
+    variables: dict[str, list[str]] = {}
     with psycopg.connect(url, autocommit=True, connect_timeout=15) as conn:
         conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")
         for table, column, dtype in conn.execute(SCHEMA_SQL).fetchall():
             out.setdefault(str(table), []).append(SchemaColumn(column=str(column), db_type=str(dtype)))
+        for ds in reg.datasets.values():
+            if ds.long is not None and ds.table in out:
+                name = ident(ds.long.name)
+                rows = conn.execute(f"SELECT DISTINCT {name} FROM {ds.fq} WHERE {name} IS NOT NULL ORDER BY 1")  # type: ignore[arg-type]
+                variables[ds.table] = [str(r[0]) for r in rows.fetchall()]
+    expand_long(reg, out, variables)
     return out
 
 
@@ -192,9 +203,10 @@ def main() -> int:
     if not url:
         print("SUPABASE_DB_URL is not set (.env) and --db-url was not given", file=sys.stderr)
         return 2
-    schema = read_schema(url)
+    reg = load_registry()
+    schema = read_schema(url, reg)
     today = dt.date.today().isoformat()
-    cat = build_catalogue(load_registry(), schema, today)
+    cat = build_catalogue(reg, schema, today)
     if args.check:
         current = load_catalogue()
         if current.model_copy(update={"generated": today}) != cat:

@@ -65,7 +65,7 @@ class MetaService:
             d, end, loc = ds.date_sql(), ds.period_end_sql(), ident(ds.location.column)
             row = await self.db.fetchrow(
                 f"SELECT count(*) AS n, count(DISTINCT {loc}) AS locs, min({d}) AS first, max({d}) AS last, "
-                f"max({end}) AS covered_to FROM {ds.fq}"
+                f"max({end}) AS covered_to FROM {ds.fq} WHERE {ds.not_future_sql()}"  # rows after today never count
             )
             assert row is not None
             st.rows, st.locations = int(row["n"]), int(row["locs"])
@@ -100,13 +100,29 @@ class MetaService:
         return stats
 
     async def newest_date(self) -> dt.date | None:
-        """Newest daily record in the database — the reference point for staleness.
+        """Newest daily record in the database (never after today) — the reference point for staleness.
 
         Monthly / annual rows cover their whole period, so only daily tables define "newest". A cheap max() per daily
         table, cached separately from the full statistics so the first data request does not wait for them.
         """
+        per_table = await self.newest_daily()
+        return max(per_table.values()) if per_table else None
 
-        async def load() -> dt.date | None:
+    async def newest_by_module(self) -> dict[int, dt.date]:
+        """Newest daily record per database module (`db_module`): the date to which that module's monthly / annual
+        tables can be complete. 6.2 (monthly SPI) stores a September row computed from 6.1 rainfall that ends on
+        6 September, so September is incomplete in module 4 even when another module's daily table (9_1, 8_1) runs
+        further. Modules without a daily table are not listed (callers use `newest_date`)."""
+        out: dict[int, dt.date] = {}
+        for table, d in (await self.newest_daily()).items():
+            m = self.registry.datasets[table].db_module
+            out[m] = max(out.get(m, d), d)
+        return out
+
+    async def newest_daily(self) -> dict[str, dt.date]:
+        """Newest record (not after today) of every daily table, cached."""
+
+        async def load() -> dict[str, dt.date]:
             daily = [ds for ds in self.registry.datasets.values() if ds.time.resolution == "daily"]
             sem = asyncio.Semaphore(max(1, self.settings.db_pool_max - 1))
 
@@ -121,10 +137,12 @@ class MetaService:
                     log.exception("newest date failed", extra={"table": ds.table})
                     return None
 
-            found = [d for d in await asyncio.gather(*(one(ds) for ds in daily)) if d]
-            return max(found) if found else None
+            found = await asyncio.gather(*(one(ds) for ds in daily))
+            return {ds.table: d for ds, d in zip(daily, found, strict=True) if d}
 
-        newest: dt.date | None = await self.cache.get_or_set("meta:newest", self.settings.cache_ttl_meta_s, load)
+        newest: dict[str, dt.date] = await self.cache.get_or_set(
+            "meta:newest_daily", self.settings.cache_ttl_meta_s, load
+        )
         return newest
 
     async def _newest_sql(self, ds: Dataset) -> str:
@@ -146,13 +164,14 @@ class MetaService:
             loc,
             col,
         )
+        cap = ds.not_future_sql()  # rows dated after today are never served, so never "newest"
         if not leading:
-            return f"SELECT max({c}) FROM {t}"
+            return f"SELECT max({c}) FROM {t} WHERE {cap}"
         return (
             f"WITH RECURSIVE k(v) AS ("
             f"(SELECT {lc} FROM {t} WHERE {lc} IS NOT NULL ORDER BY {lc} LIMIT 1) UNION ALL "
             f"SELECT (SELECT {lc} FROM {t} WHERE {lc} > k.v ORDER BY {lc} LIMIT 1) FROM k WHERE k.v IS NOT NULL) "
-            f"SELECT max((SELECT max({c}) FROM {t} WHERE {lc} = k.v)) FROM k WHERE k.v IS NOT NULL"
+            f"SELECT max((SELECT max({c}) FROM {t} WHERE {lc} = k.v AND {cap})) FROM k WHERE k.v IS NOT NULL"
         )
 
     # ---------------------------------------------------------------- payloads

@@ -1,12 +1,33 @@
 # Progress
 
-## Status: all phases complete (2026-10-14); frontend integration issues #1–#7 fixed (2026-10-15); database category view + spec-audit fixes done (2026-10-16); 7.2 runoff indicators registered (2026-10-20). Waiting on the data team (below).
+## Status (2026-10-20): completing the system from the database — Part 1 (every table registered) done; Part 2 (dams, surface water, groundwater, groundwater reserve, water quality) in progress. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Completion from the database — Part 1: every table registered (2026-10-20)
+
+- [x] 37 tables in `public`; the 22 added since Phase 0 profiled (`scripts/inventory.py --append` → `docs/DB_INVENTORY.md`
+      "Tables added after Phase 0") and 21 registered (`app/registry/datasets.yaml`, modules dams / surface-water /
+      groundwater / groundwater-reserve / water-quality / green-drop / blue-drop / rwqo / iwrm); `16_2` (keyed by SWSA)
+      and `testing_table` (gone) in `ignored_tables` (DECISIONS D13, D14).
+- [x] Registry: long-format tables (`long:` → `CASE WHEN name = … THEN value END`), label / source columns
+      (`key_columns`), yes / no flags as % (`cast: bool_pct`), impossible values dropped (`valid_range`), identical
+      duplicate rows (`duplicate_rows`), stamps not on the 1st (`repeats_on_first_day: false`); identifiers with
+      `( ) / : -`.
+- [x] Rows dated after today never served or counted (`Dataset.not_future_sql()` in every column filter, the table
+      statistics, the newest-date query and the category view; D4); months complete per database module (D5).
+- [x] Units: new suffixes, spec units for parameter-named columns (`SPEC_UNITS`, D11), `repair_unit()` for mojibake
+      (`10_1` units are valid UTF-8, D6); both hydraulic heads in m amsl (D7).
+- [x] Constancy + plausibility checks on every new column (`scripts/plausibility_checks.sql` §8–§15 blocks,
+      `scripts/constancy_check.py --tables`): 208 live / 155 withheld / 29 duplicate columns over 36 categories;
+      DATA_GAPS §21. `8_1` storage fails (51 districts at 100 % FSC every day) → reservoir stays withheld everywhere (D2).
+      No coordinates anywhere → no point layers (D12).
+- [x] Fixture `tests/fixtures/03_sections_8_16.sql.gz` (21 tables, 3 districts, incl. rows to 2026-12-31);
+      `tests/test_new_tables.py`; 954 tests, ruff + mypy clean.
 
 ### 7.2 derived runoff indicators (2026-10-20)
 
