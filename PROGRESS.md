@@ -8,6 +8,15 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Completion from the database — Part 2, module 5: Water quality (§12) (2026-10-21)
+
+- [x] `app/modules/water_quality/`: guideline comparisons (`thresholds.json` `wq_guidelines`), compliance, CCME WQI
+      per district (D20), parameter trends, groups, ranges, class breakdowns, hotspots, ranking, district WQI and
+      × guideline layers; 501 with reasons for stations, water-body types, combined-metal guideline, forecasts.
+- [x] Background work (D21): table statistics one at a time with a 60 s local timeout; category pre-warm limited to
+      `DB_POOL_MAX − 3`.
+- [x] Verification: `tests/test_water_quality.py`; 1 048 tests; `docs/VERIFICATION.md` water-quality 3 / 3.
+
 ### Completion from the database — Part 2, module 4: Groundwater reserve (§11) (2026-10-21)
 
 - [x] `app/modules/groundwater_reserve/`: total recharge (D19), abstraction, reserves, stored exploitation index

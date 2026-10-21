@@ -15,6 +15,7 @@ IMPLEMENTED_MODULES: set[str] = {
     "surface-water",
     "groundwater",
     "groundwater-reserve",
+    "water-quality",
 }
 DATABASE_VIEW_MODULES: set[str] = {
     "dams",

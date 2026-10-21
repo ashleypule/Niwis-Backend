@@ -173,3 +173,24 @@ exploitation index shown is the stored `11.3` value (in %, classified as a ratio
 recomputed. **Evidence.** The stored index tracks abstraction / indirect recharge (r = 0.84) but is not equal to it,
 so recomputing would publish a number the database does not hold. **Alternative.** Direct recharge alone — rejected:
 the spec defines both as recharge.
+
+### D20 Water quality: guidelines from the frontend's configuration, CCME WQI
+
+**Decision.** Stored `12.x` values are compared with the guideline table now in `thresholds.json` (`wq_guidelines`:
+resource quality objectives for domestic use, DWAF 1996 TWQR / SANS 241, value for value the frontend's configuration;
+a test keeps them equal). From that comparison the API derives the compliance rate (share of values within guideline),
+"× guideline" ratios (value / upper limit; minimum-only guidelines such as dissolved oxygen as limit / value) and a
+**CCME Water Quality Index** (CCME 2001: F1 scope, F2 frequency, F3 amplitude) per district over the trailing 12 months,
+classified with the WQI bands in thresholds.json. Combined metal columns are never compared with single-metal limits.
+**Evidence.** The spec asks for WQI bands but defines no WQI; the database stores no index. CCME is the published method
+the frontend's design already assumed ("CCME-style 0–100"). **Alternative.** No WQI (every WQI panel "not yet
+available") — rejected: the index is a documented transformation of stored values against published guidelines, not
+an invented number. Note: with the current data most districts pass every guideline except orthophosphate and
+chlorophyll-a.
+
+### D21 Background database work never takes every connection
+
+Table statistics run one at a time with a 60 s transaction-local statement timeout (they are cached for an hour and
+never requested directly); the category pre-warm shares a limit of `DB_POOL_MAX − 3` connections; the module warm-up
+runs one query at a time. **Evidence.** After the §8–§16 tables were registered, cold starts timed out requests and
+statistics on the 500 000-row tables (10 s limit) because all five connections were busy warming.

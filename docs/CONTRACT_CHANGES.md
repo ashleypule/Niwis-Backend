@@ -545,3 +545,26 @@ months are gaps). Comparisons use 12-month means (last 12 months vs the 12 befor
 - `map`: `ei` (ratio, scale `exploitation`), `recharge` (direct recharge, mm), `gw-level` (11_1 depth), `sgi` (the
   groundwater page's layer, Aug 2024, stale).
 - `entities`: 52 districts; cards with aquifer properties, reserves, recharge, yield, depletion rate and EI status.
+
+### 14.7 `water-quality` (spec §12)
+
+Guidelines, compliance, ratios and the CCME WQI: DECISIONS D20.
+
+- `summary`: `compliance` (% of values within guideline, latest complete month), `exceeding` (districts with any
+  parameter outside its guideline), `wqi` (CCME, 12 months; area-weighted for a scope; `status` on the `wqi` scale),
+  `poor` (WQI < 50), `risk` (WQI < 25); `stations`, `dams`, `groundwater` null with reasons (no stations or water-body
+  types).
+- `timeseries`: `param-trend` (selector **`param`**: ec, ph, turbidity, do, bod, cod, nitrate, phosphate, ecoli; this
+  year and last by month; `refLines` = the guideline), `station-wqi` (WQI and its long-term average), `group`
+  (selector **`group`**: nutrients / metals (combined columns as stored, µg/L) / micro (log axis)); `entityId` selects a
+  district on these and on `table=latest`.
+- `breakdown`: `param-range` (min / average / max across districts and the guideline; `unit: "mixed"`, `units`),
+  `compliance`, `wqi-distribution`, `by-province` (stacked WQI classes), `param-compliance` (% of districts within
+  guideline); `by-type`, `risk-outlook` → 501.
+- `table`: `latest` (parameter, value, unit, guideline, status), `hotspots` (district × parameter outside guideline,
+  worst ratio first; `water` null), `ranking` (selector **`order`** `poorest` / `best`; WQI, class, change vs 12 months
+  ago; `river` null); `counts`, `forecast-indicators` → 501.
+- `map`: `wqi` (scale `wqi`) and `ph`, `do`, `ec`, `turbidity`, `nitrate`, `phosphate`, `ammonia`, `bod`, `cod`,
+  `ecoli` as **district choropleths** of value / guideline (unit "× guideline", scale `ratio`); `lead` (stored only as
+  Lead/Cadmium/Chromium) and `forecast-wqi` → 501.
+- `entities`: 52 districts; card: WQI with class `status`, latest EC, pH, turbidity, DO, nitrate, phosphate, E. coli.

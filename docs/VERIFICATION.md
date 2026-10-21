@@ -606,3 +606,41 @@ SELECT round((cur.ndvi - avg(s.ndvi))::numeric, 3) FROM cur, satellite_remote_se
 WHERE s.district_name = 'namakwa' AND extract(month FROM s.date) = extract(month FROM cur.date)
   AND extract(year FROM s.date) BETWEEN 2001 AND 2025 GROUP BY cur.ndvi
 ```
+
+## water-quality — 2026-10-21
+
+### ✅ Nitrate relative to guideline (6 mg/L), Vhembe (DC34), latest complete month
+
+- API: `GET /api/v1/water-quality/map?layer=nitrate` → **0.74**
+- SQL result: **0.75** (tolerance ± 0.0101)
+
+```sql
+SELECT round(("Nitrate (NO3-N)" / 6)::numeric, 2) FROM "12.2_chemical_water_quality_master"
+WHERE district_name = 'Vhembe' AND make_date(year, month, 1) =
+(SELECT max(make_date(year, month, 1)) FROM "12.2_chemical_water_quality_master"
+ WHERE make_date(year, month, 1) < date_trunc('month', CURRENT_DATE))
+```
+
+### ✅ EC by month, City of Cape Town (CPT): latest complete month (12.1, mS/m)
+
+- API: `GET /api/v1/water-quality/table?metric=latest&entityId=CPT` → **53.4**
+- SQL result: **53.400** (tolerance ± 0.0005)
+
+```sql
+SELECT round("Electrical Conductivity (EC)"::numeric, 3) FROM "12.1_physical_water_quality_master"
+WHERE district_name = 'City of Cape Town' AND make_date(year, month, 1) =
+(SELECT max(make_date(year, month, 1)) FROM "12.1_physical_water_quality_master"
+ WHERE make_date(year, month, 1) < date_trunc('month', CURRENT_DATE))
+```
+
+### ✅ Share of districts with nitrate within its guideline (≤ 6 mg/L), latest complete month (%)
+
+- API: `GET /api/v1/water-quality/breakdown?metric=param-compliance` → **100.0**
+- SQL result: **100** (tolerance ± 0.5)
+
+```sql
+SELECT round((100.0 * avg(("Nitrate (NO3-N)" <= 6)::int))::numeric, 0)
+FROM "12.2_chemical_water_quality_master" WHERE make_date(year, month, 1) =
+(SELECT max(make_date(year, month, 1)) FROM "12.2_chemical_water_quality_master"
+ WHERE make_date(year, month, 1) < date_trunc('month', CURRENT_DATE))
+```

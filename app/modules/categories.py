@@ -639,12 +639,13 @@ def prewarm_scopes(state: AppState) -> list[ScopeSel]:
 async def prewarm(state: AppState) -> int:
     """Load what every category chart needs for its first request (period 12M) in each pre-warm scope — national
     and the scopes the frontend uses (BACKEND_ISSUES #13, #14): the newest date per column of every table, then every
-    chart group of every page, so they answer from cache. At most `db_pool_max − 1` queries run at once, so requests
-    always find a connection. Returns the number of (scope, group) entries warmed; a failure is logged and skipped."""
+    chart group of every page, so they answer from cache. At most `db_pool_max − 3` queries run at once
+    (`db.background`), so requests always find a connection. Returns the number of (scope, group) entries warmed; a
+    failure is logged and skipped."""
     from app.core.filters import Filters, Window
 
     newest = await state.meta.newest_date()
-    sem = asyncio.Semaphore(max(1, state.settings.db_pool_max - 1))
+    sem = state.db.background  # shared with the table statistics: requests always find a free connection
     cats = get_catalogue().categories
     scopes = prewarm_scopes(state)
     national = Ctx(state, Filters(parse_scope(), Window("12M", None, None), False, None), newest)

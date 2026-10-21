@@ -315,5 +315,119 @@
    }
   ],
   "otherwise": "Very Poor"
+ },
+ "wq_guidelines": {
+  "_source": "Frontend WQ_PARAMS (src/mocks/generators/quality.ts): resource quality objectives for domestic use, DWAF 1996 TWQR / SANS 241 where applicable. A value passes when min <= value <= max.",
+  "params": [
+   {
+    "id": "ph",
+    "label": "pH",
+    "unit": "pH units",
+    "min": 6.5,
+    "max": 9.0
+   },
+   {
+    "id": "ec",
+    "label": "Electrical conductivity",
+    "unit": "mS/m",
+    "max": 150
+   },
+   {
+    "id": "turbidity",
+    "label": "Turbidity",
+    "unit": "NTU",
+    "max": 25
+   },
+   {
+    "id": "do",
+    "label": "Dissolved oxygen",
+    "unit": "mg/L",
+    "min": 5
+   },
+   {
+    "id": "bod",
+    "label": "BOD₅",
+    "unit": "mg/L",
+    "max": 10
+   },
+   {
+    "id": "cod",
+    "label": "COD",
+    "unit": "mg/L",
+    "max": 75
+   },
+   {
+    "id": "nitrate",
+    "label": "Nitrate (NO₃⁻-N)",
+    "unit": "mg/L",
+    "max": 6
+   },
+   {
+    "id": "ammonia",
+    "label": "Ammonia (NH₃-N)",
+    "unit": "mg/L",
+    "max": 1
+   },
+   {
+    "id": "phosphate",
+    "label": "Orthophosphate (PO₄-P)",
+    "unit": "mg/L",
+    "max": 0.125
+   },
+   {
+    "id": "ecoli",
+    "label": "E. coli",
+    "unit": "cfu/100 mL",
+    "max": 1000
+   },
+   {
+    "id": "chla",
+    "label": "Chlorophyll-a",
+    "unit": "µg/L",
+    "max": 20
+   },
+   {
+    "id": "tds",
+    "label": "Total dissolved solids",
+    "unit": "mg/L",
+    "max": 1000
+   },
+   {
+    "id": "sulphate",
+    "label": "Sulphate",
+    "unit": "mg/L",
+    "max": 250
+   },
+   {
+    "id": "fluoride",
+    "label": "Fluoride",
+    "unit": "mg/L",
+    "max": 1.5
+   },
+   {
+    "id": "iron",
+    "label": "Iron",
+    "unit": "mg/L",
+    "max": 0.3
+   },
+   {
+    "id": "manganese",
+    "label": "Manganese",
+    "unit": "mg/L",
+    "max": 0.1
+   },
+   {
+    "id": "lead",
+    "label": "Lead",
+    "unit": "µg/L",
+    "max": 10
+   },
+   {
+    "id": "arsenic",
+    "label": "Arsenic",
+    "unit": "µg/L",
+    "max": 10
+   }
+  ]
  }
 }

@@ -63,7 +63,7 @@ class MetaService:
                 return st
             st.exists = True
             d, end, loc = ds.date_sql(), ds.period_end_sql(), ident(ds.location.column)
-            row = await self.db.fetchrow(
+            row = await self.db.fetchrow_slow(  # whole-table statistics: background, cached for an hour
                 f"SELECT count(*) AS n, count(DISTINCT {loc}) AS locs, min({d}) AS first, max({d}) AS last, "
                 f"max({end}) AS covered_to FROM {ds.fq} WHERE {ds.rows_sql()}"  # rows after today never count
             )
@@ -88,7 +88,7 @@ class MetaService:
 
     async def table_stats(self) -> list[TableStats]:
         async def load() -> list[TableStats]:
-            sem = asyncio.Semaphore(max(1, self.settings.db_pool_max - 1))
+            sem = asyncio.Semaphore(1)  # one whole-table scan at a time: background work, cached for an hour
 
             async def guarded(ds: Dataset) -> TableStats:
                 async with sem:

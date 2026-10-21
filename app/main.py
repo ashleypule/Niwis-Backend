@@ -46,6 +46,8 @@ from app.modules.surface_water.router import router as surface_water_router
 from app.modules.surface_water.service import prewarm as prewarm_surface_water
 from app.modules.vegetation.router import router as vegetation_router
 from app.modules.vegetation.service import prewarm as prewarm_vegetation
+from app.modules.water_quality.router import router as water_quality_router
+from app.modules.water_quality.service import prewarm as prewarm_water_quality
 from app.refdata.router import router as reference_router
 from app.registry.catalogue import get_catalogue
 from app.registry.registry import get_registry
@@ -81,6 +83,7 @@ async def _warm(state: AppState) -> None:
         ("surface water", lambda: prewarm_surface_water(state.data)),
         ("groundwater", lambda: prewarm_groundwater(state.data)),
         ("groundwater reserve", lambda: prewarm_groundwater_reserve(state.data)),
+        ("water quality", lambda: prewarm_water_quality(state.data)),
         ("table statistics", state.meta.table_stats),
     ]
     for name, step in steps:
@@ -192,6 +195,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(surface_water_router)
     app.include_router(groundwater_router)
     app.include_router(groundwater_reserve_router)
+    app.include_router(water_quality_router)
     for module in sorted(IMPLEMENTED_MODULES | DATABASE_VIEW_MODULES):
         app.include_router(build_category_router(module))
     return app

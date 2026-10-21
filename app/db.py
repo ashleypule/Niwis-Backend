@@ -8,6 +8,7 @@ request.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 import time
@@ -41,6 +42,9 @@ class Database:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._pool: asyncpg.Pool | None = None
+        # background work (table statistics, category pre-warm) shares this limit; with the module warm-up running
+        # one query at a time beside it, at least two connections stay free for requests
+        self.background = asyncio.Semaphore(max(1, settings.db_pool_max - 3))
 
     @property
     def configured(self) -> bool:
@@ -100,6 +104,14 @@ class Database:
     async def fetchrow(self, query: str, *args: Any) -> asyncpg.Record | None:
         async with self._require_pool().acquire() as conn:
             row: asyncpg.Record | None = await conn.fetchrow(query, *args)
+            return row
+
+    async def fetchrow_slow(self, query: str, *args: Any, timeout_ms: int = 60_000) -> asyncpg.Record | None:
+        """A background statistics query (whole-table counts on 500 000-row tables) with a longer statement timeout,
+        local to its read-only transaction. Never used on a request path; callers run them one at a time."""
+        async with self._require_pool().acquire() as conn, conn.transaction(readonly=True):
+            await conn.execute(f"SET LOCAL statement_timeout = {int(timeout_ms)}")
+            row: asyncpg.Record | None = await conn.fetchrow(query, *args, timeout=timeout_ms / 1000 + 5)
             return row
 
     async def fetchval(self, query: str, *args: Any) -> Any:

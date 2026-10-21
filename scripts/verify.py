@@ -705,6 +705,40 @@ WHERE district_name = 'Vhembe' AND year = 2025""",
             float(rows[0][0]) * (get_spatial().district_areas() or {})["DC34"] / 1000 + float(rows[0][1]) / 1e6
         ),
     ),
+    # ---------------------------------------------------------------- §12 water quality (DECISIONS D20)
+    Check(
+        "water-quality",
+        "Nitrate relative to guideline (6 mg/L), Vhembe (DC34), latest complete month",
+        "/api/v1/water-quality/map?layer=nitrate",
+        lambda b: b["values"]["DC34"],
+        """SELECT round(("Nitrate (NO3-N)" / 6)::numeric, 2) FROM "12.2_chemical_water_quality_master"
+WHERE district_name = 'Vhembe' AND make_date(year, month, 1) =
+(SELECT max(make_date(year, month, 1)) FROM "12.2_chemical_water_quality_master"
+ WHERE make_date(year, month, 1) < date_trunc('month', CURRENT_DATE))""",
+        tol=0.0101,  # two rounded decimals (Python and Postgres round .5 differently)
+    ),
+    Check(
+        "water-quality",
+        "EC by month, City of Cape Town (CPT): latest complete month (12.1, mS/m)",
+        "/api/v1/water-quality/table?metric=latest&entityId=CPT",
+        lambda b: next(r["value"] for r in b["rows"] if r["id"] == "ec"),
+        """SELECT round("Electrical Conductivity (EC)"::numeric, 3) FROM "12.1_physical_water_quality_master"
+WHERE district_name = 'City of Cape Town' AND make_date(year, month, 1) =
+(SELECT max(make_date(year, month, 1)) FROM "12.1_physical_water_quality_master"
+ WHERE make_date(year, month, 1) < date_trunc('month', CURRENT_DATE))""",
+        tol=0.0005,
+    ),
+    Check(
+        "water-quality",
+        "Share of districts with nitrate within its guideline (≤ 6 mg/L), latest complete month (%)",
+        "/api/v1/water-quality/breakdown?metric=param-compliance",
+        lambda b: b["series"][0]["values"][b["categories"].index("Nitrate (NO₃⁻-N)")],
+        """SELECT round((100.0 * avg(("Nitrate (NO3-N)" <= 6)::int))::numeric, 0)
+FROM "12.2_chemical_water_quality_master" WHERE make_date(year, month, 1) =
+(SELECT max(make_date(year, month, 1)) FROM "12.2_chemical_water_quality_master"
+ WHERE make_date(year, month, 1) < date_trunc('month', CURRENT_DATE))""",
+        tol=0.5,
+    ),
 ]
 
 

@@ -137,3 +137,18 @@ def test_sans241_and_wqi_match_ts() -> None:
     assert [wqi_class(v) for v in (95, 70, 50, 25, 10)] == ["Excellent", "Good", "Fair", "Poor", "Very Poor"]
     for b in ("if (wqi >= 90) return 'Excellent';", "if (wqi >= 25) return 'Poor';"):
         assert b in ts
+
+
+def test_wq_guidelines_match_the_frontend_config() -> None:
+    """The water-quality guidelines are the frontend's WQ_PARAMS (DWAF 1996 TWQR / SANS 241), value for value."""
+    from app.core.thresholds import thresholds
+
+    src = (
+        Path(__file__).resolve().parent.parent.parent / "Niwis Frontend" / "src" / "mocks" / "generators" / "quality.ts"
+    )
+    if not src.exists():
+        pytest.skip("frontend repository not next to the backend")
+    ts = src.read_text(encoding="utf-8")
+    for g in thresholds()["wq_guidelines"]["params"]:
+        bounds = "".join(f", {k}: {g[k]:g}" for k in ("min", "max") if k in g)
+        assert re.search(rf"id: '{g['id']}', label: '[^']*', unit: '[^']*'{re.escape(bounds)}(\.0)?,", ts), g["id"]
