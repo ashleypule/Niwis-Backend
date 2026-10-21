@@ -42,7 +42,7 @@ ABSTRACTION = "as_total_abstraction"  # m³/year
 EI = "as_exploitation_index"  # %
 HISTORY_START = dt.date(2000, 1, 1)
 SELECTORS: dict[tuple[str, str], tuple[Any, ...]] = {}
-ENTITY_DATASETS: set[tuple[str, str]] = set()
+ENTITY_DATASETS = {("timeseries", "recharge-abstraction"), ("breakdown", "components")}
 NO_ECO = "The groundwater ecological reserve is not in the database (15.1 holds a surface-water reserve flow)"
 
 
@@ -51,6 +51,13 @@ class GroundwaterReserveService(DistrictModule):
 
     def __init__(self, ctx: Ctx) -> None:
         super().__init__(ctx)
+
+    def use_entity(self, kind: str, key: str) -> None:
+        if (kind, key) in ENTITY_DATASETS and self.ctx.filters.entity_id:
+            self.ctx = self.ctx.for_entity()
+
+    def entity_title(self, title: str) -> str:
+        return f"{title} — {self.ctx.filters.scope.name}" if self.ctx.filters.entity_id else title
 
     # ---------------------------------------------------------------- data
 
@@ -192,6 +199,7 @@ class GroundwaterReserveService(DistrictModule):
     # ---------------------------------------------------------------- timeseries
 
     async def timeseries(self, metric: str) -> dict[str, Any]:
+        self.use_entity("timeseries", metric)
         if metric == "level-trend":
             return await self.ts_level_trend()
         if metric == "recharge-abstraction":
@@ -275,7 +283,7 @@ class GroundwaterReserveService(DistrictModule):
                 self.ctx.explain(f"series.{k}", "A sum needs every district of the scope")
         return self.series_set(
             "recharge-abstraction",
-            "Recharge and abstraction",
+            self.entity_title("Recharge and abstraction"),
             [
                 c.Series(
                     key="recharge",
@@ -306,6 +314,7 @@ class GroundwaterReserveService(DistrictModule):
     # ---------------------------------------------------------------- breakdowns
 
     async def breakdown(self, metric: str) -> dict[str, Any]:
+        self.use_entity("breakdown", metric)
         yr = await self.year()
         prov = self.ctx.provenance(yr.date(), self.src(EI, ABSTRACTION, DYNAMIC), res="annual")
         prov.pop("asOf")
@@ -332,7 +341,7 @@ class GroundwaterReserveService(DistrictModule):
             self.ctx.explain("series.volume", "A sum needs every district of the scope. " + NO_ECO)
             return c.CategorySet(
                 id="components",
-                title=f"Groundwater reserve components – {yr:%Y}",
+                title=self.entity_title(f"Groundwater reserve components – {yr:%Y}"),
                 unit="Mm³/yr",
                 categories=[
                     "Dynamic reserve",

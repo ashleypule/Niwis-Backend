@@ -75,3 +75,11 @@ async def test_unavailable_and_reused(client: httpx.AsyncClient) -> None:
     assert sgi["isStale"] is True
     card = (await client.get(f"{B}/entities/DC6")).json()
     assert card["image"] == "aquifer" and any(f["label"].startswith("Transmissivity") for f in card["fields"])
+
+
+async def test_selected_district_panels(client: httpx.AsyncClient) -> None:
+    a = (await client.get(f"{B}/breakdown", params={"metric": "components", "entityId": "DC6"})).json()
+    b = (await client.get(f"{B}/breakdown", params={"metric": "components", "entityId": "CPT"})).json()
+    assert a["title"].endswith("Namakwa") and a["series"][0]["values"] != b["series"][0]["values"]
+    r = (await client.get(f"{B}/timeseries", params={"metric": "recharge-abstraction", "entityId": "DC6"})).json()
+    assert r["title"].endswith("Namakwa") and r["series"][0]["data"]
