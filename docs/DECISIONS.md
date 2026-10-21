@@ -51,11 +51,13 @@ better (DATA_GAPS §15). **Alternative considered.** Serving Vhembe's storage al
 rejected — its minimum is the same 251 997 542.57 m³ placeholder on 8 386 days, so its series is not a measurement
 either.
 
-### D3 Siyanda rows in `8_1` are not read
+### D3 "Siyanda" is Z F Mgcawu; its duplicate rows in `8_1` are not read
 
-**Decision.** `8_1` lists 53 districts: "Siyanda" (the name of Z F Mgcawu before 2013) next to "Z F Mgcawu". Siyanda
-is not an alias, so its rows are ignored. **Evidence.** Same storage as Z F Mgcawu on all 9 862 days. **Alternative.**
-Aliasing Siyanda to Z F Mgcawu — rejected: it would double every Z F Mgcawu value in sums.
+**Decision.** "Siyanda" (the name of Z F Mgcawu before 2013) is a district alias: `9_1`, `9_2`, `9_3`, `10_1` and `10_2`
+use only that name. `8_1` lists both names (53 "districts"); there the Siyanda rows are excluded (registry
+`exclude_locations`). Likewise "Greater Sekhukhune" (the same five tables) is an alias of Sekhukhune. **Evidence.**
+In `8_1` Siyanda has the same storage as Z F Mgcawu on all 9 862 days. **Alternative.** No alias (first version of
+this decision) — rejected on 2026-10-20: national sums of `9_1` flows were missing Z F Mgcawu.
 
 ### D4 Rows dated after today are never served
 

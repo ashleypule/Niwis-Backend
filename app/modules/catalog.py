@@ -21,6 +21,7 @@ from app.modules.dams import service as dams
 from app.modules.drought import service as drought
 from app.modules.rainfall import service as rainfall
 from app.modules.runoff import service as runoff
+from app.modules.surface_water import service as surface_water
 from app.modules.vegetation import service as vegetation
 from app.registry.catalogue import get_catalogue
 
@@ -31,8 +32,9 @@ SERVICE_MODULES: dict[str, ModuleType] = {
     "vegetation": vegetation,
     "runoff": runoff,
     "dams": dams,
+    "surface-water": surface_water,
 }
-ENTITY_MODULES = {"rainfall", "runoff", "dams"}
+ENTITY_MODULES = {"rainfall", "runoff", "dams", "surface-water"}
 KINDS = {"timeseries": "metric", "forecast": "metric", "breakdown": "metric", "table": "metric", "matrix": "metric"}
 KINDS["map"] = "layer"
 PROBE = "__catalog_probe__"

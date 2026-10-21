@@ -8,6 +8,18 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Completion from the database — Part 2, module 2: Surface water (§9) (2026-10-21)
+
+- [x] `app/modules/surface_water/`: discharge = 9_1 daily mean flow / 86 400 s summed over the scope (D10); stage,
+      velocity, sediment as stored; high / low-flow districts from each district's own 10th / 90th percentiles; SSI-3
+      from the stored discharge; FDC, seasonal regime, flow anomaly, status breakdown, top districts (`order`),
+      statistics; district layers `discharge`, `flow-status`, `flow-anomaly`, `ssi`; runoff layers reused; 501 with
+      reasons for stations, baseflow, eflow, abstraction, gauge quality, alerts, forecasts.
+- [x] "Siyanda" and "Greater Sekhukhune" are district aliases (the only spellings in 9_1 … 10_2); 8_1's duplicate
+      Siyanda rows are excluded (`exclude_locations`; D3 revised) — the national flow sum was missing Z F Mgcawu.
+- [x] Verification: `tests/test_surface_water.py`; 996 tests; `docs/VERIFICATION.md` surface-water 3 / 3 (national
+      discharge Aug 2026 = 422.4 m³/s).
+
 ### Completion from the database — Part 2, module 1: Dams (§8) (2026-10-20)
 
 - [x] `app/modules/district.py`: shared building blocks for the district-keyed §8–§12 modules (monthly frames,

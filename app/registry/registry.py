@@ -141,6 +141,8 @@ class Dataset(_Strict):
     # then reads only those days); false when they are stamped on another day (10_1: the 15th, 31 Dec)
     repeats_on_first_day: bool = True
     duplicate_rows: bool = False  # every period stored more than once (identical rows): loaders read one per period
+    # location spellings whose rows are never read (8_1 holds "Siyanda" next to "Z F Mgcawu", identical copies)
+    exclude_locations: list[str] = []
 
     @property
     def fq(self) -> str:
@@ -196,6 +198,15 @@ class Dataset(_Strict):
             return f"{ident(self.time.column)} <= to_char(CURRENT_DATE, 'YYYY-MM-DD')"
         return f"{self.date_sql()} <= CURRENT_DATE"
 
+    def rows_sql(self) -> str:
+        """SQL condition for the rows the API may read: never after today (`not_future_sql`), never an excluded
+        location spelling (`exclude_locations`). Part of every column filter (`valid_sql`)."""
+        cond = self.not_future_sql()
+        if self.exclude_locations:
+            names = ", ".join("'" + n.replace("'", "''") + "'" for n in self.exclude_locations)
+            cond += f" AND {ident(self.location.column)} NOT IN ({names})"
+        return cond
+
     def raw_sql(self, column: str) -> str:
         """The stored value of a column: the column itself, or for a long-format table the value of that variable's
         rows (NULL on every other row, which every aggregate ignores)."""
@@ -237,7 +248,7 @@ class Dataset(_Strict):
         """SQL condition keeping only the column's valid periods (`valid_from` / `valid_until`) and never a row dated
         after today."""
         col = self.columns.get(column)
-        parts = [self.not_future_sql()]
+        parts = [self.rows_sql()]
         if col is None or (col.valid_from is None and col.valid_until is None):
             return parts[0]
         if col.valid_from:
@@ -286,6 +297,7 @@ class Registry(_Strict):
                 *ds.columns,
                 *(x for x in (ds.time.column, ds.time.year, ds.time.month) if x),
                 *ds.key_columns,
+                *ds.exclude_locations,
                 *((ds.long.name, ds.long.value, *([ds.long.unit] if ds.long.unit else [])) if ds.long else ()),
             ]:
                 try:

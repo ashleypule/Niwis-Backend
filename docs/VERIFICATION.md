@@ -466,6 +466,38 @@ SELECT round((sum("Baseflow_Component_m3s") * 86400 / sum("Daily_Surface_Runoff_
 FROM runoff_variables_master WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)
 ```
 
+## surface-water — 2026-10-21
+
+### ✅ Mean river discharge, Vhembe (DC34): mean daily flow of the latest complete month / 86 400 s
+
+- API: `GET /api/v1/surface-water/summary?municipality=DC34` → **17.7**
+- SQL result: **17.7** (tolerance ± 0.05)
+
+```sql
+SELECT round((avg(daily_mean_flow) / 86400)::numeric, 1) FROM "9_1_hydrological_station_master"
+WHERE district_name = 'Vhembe' AND date BETWEEN '2026-08-01' AND '2026-08-31'
+```
+
+### ✅ Mean river discharge, national: Σ over the 52 districts of the month's mean daily flow / 86 400 s
+
+- API: `GET /api/v1/surface-water/summary` → **422.4**
+- SQL result: **422.4** (tolerance ± 0.15)
+
+```sql
+SELECT round((sum(m) / 86400)::numeric, 1) FROM (SELECT district_name, avg(daily_mean_flow) m
+FROM "9_1_hydrological_station_master" WHERE date BETWEEN '2026-08-01' AND '2026-08-31' GROUP BY 1) x
+```
+
+### ✅ Suspended sediment concentration, City of Cape Town (CPT), Aug 2026 (monthly value as stored)
+
+- API: `GET /api/v1/surface-water/summary?municipality=CPT` → **45.0**
+- SQL result: **45** (tolerance ± 0.5)
+
+```sql
+SELECT round(max(suspended_sediment_concentration)::numeric, 0) FROM "9_1_hydrological_station_master"
+WHERE district_name = 'City of Cape Town' AND year = 2026 AND month = 8
+```
+
 ## vegetation — 2026-10-16
 
 ### ✅ NDVI, Western Cape, latest month — area-weighted from the 6 WC districts (satellite_remote_sensing)

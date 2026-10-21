@@ -716,6 +716,7 @@ datasets:
     location: {column: district_name}
     time: {kind: date, column: "date", resolution: daily}
     key_columns: ["dam_name", "district_id", "river"]
+    exclude_locations: ["Siyanda"]
     known_issues: ["added 2026-10-19; rows up to 2026-12-31 (never served after today)", "Siyanda (the pre-2013 name of Z F Mgcawu) is a second copy of that district with the same storage: its rows are not read", "storage, level, area and flows fail the plausibility check (DATA_GAPS §21.1)"]
     columns:
       "soil_moisture_m3_m3": {var: res_soil_moisture_m3_m3, role: canonical, note: "catchment soil moisture at the district's reservoirs (r = 0.74 with the satellite surface soil moisture)"}

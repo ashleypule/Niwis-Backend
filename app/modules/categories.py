@@ -183,7 +183,7 @@ class CategoryService:
         ]
         filtered = (f"max({p}) FILTER (WHERE {e}) AS c{i}" for i, e in enumerate(exprs))
         parts = [f"max({p}) AS c_all", *filtered]
-        sql = f"SELECT {', '.join(parts)} FROM {ds.fq} WHERE {ds.not_future_sql()}"  # rows after today never count
+        sql = f"SELECT {', '.join(parts)} FROM {ds.fq} WHERE {ds.rows_sql()}"  # rows after today never count
 
         async def load() -> dict[str, dt.date | None]:
             row = await self.state.db.fetchrow(sql)

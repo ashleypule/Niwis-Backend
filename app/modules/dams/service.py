@@ -164,7 +164,7 @@ class DamsService(DistrictModule):
             rows = await self.ctx.state.db.fetch(
                 f"SELECT x.n, x.dam, x.river FROM unnest($1::text[]) AS w(name) CROSS JOIN LATERAL ("
                 f"SELECT {loc} AS n, {ident('dam_name')} AS dam, {ident('river')} AS river FROM {ds.fq} "
-                f"WHERE {loc} = w.name AND {ds.not_future_sql()} ORDER BY {ident(str(ds.time.column))} DESC LIMIT 1) x",
+                f"WHERE {loc} = w.name AND {ds.rows_sql()} ORDER BY {ident(str(ds.time.column))} DESC LIMIT 1) x",
                 districts.db_names(),
             )
             out: dict[str, dict[str, str]] = {}

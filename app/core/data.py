@@ -256,7 +256,7 @@ class DataAccess:
         d = ds.date_sql()
 
         async def load() -> dt.date:
-            v = await self.db.fetchval(f"SELECT max({d}) FROM {ds.fq} WHERE {ds.not_future_sql()}")
+            v = await self.db.fetchval(f"SELECT max({d}) FROM {ds.fq} WHERE {ds.rows_sql()}")
             return v if isinstance(v, dt.date) else dt.date.fromisoformat(str(v))
 
         out: dt.date = await self.cache.get_or_set(f"data:newest:{ds.table}", self.settings.cache_ttl_meta_s, load)

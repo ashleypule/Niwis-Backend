@@ -482,3 +482,26 @@ All additions; nothing existing changed shape. Decisions behind them: `docs/DECI
   river, `municipality` = MDB code). `entities/{code}` (MDB code): district, province, river, storage / volume /
   alert level (null), catchment rainfall (month total, mm) and soil moisture (month mean) for the latest complete month.
 - **`EntityDetail.unavailable`** (new, optional): `[{field: "fields.<label>", reason}]` for card fields returned as null.
+
+### 14.4 `surface-water` (spec §9)
+
+District flows from `9_1` (DECISIONS D10): discharge (m³/s) = stored daily mean flow (m³/day) / 86 400; a scope's
+flow is the sum over its districts.
+
+- `summary`: `discharge` (latest complete month's mean flow, sum over the scope, spark = 12 months), `stage`, `high` /
+  `low` (**districts** above the 90th / below the 10th percentile of their own monthly flows, full years
+  2000–last full year; labels "Districts with High / Low Flow"), `sediment` (mg/L); `stations`, `flood`, `eflow`,
+  `wqi` null with reasons.
+- `timeseries`: `discharge`, `fdc`, `seasonal`, `water-level`, `sediment` (selector **`kind`**: `conc` = concentration
+  mg/L, `load` = daily sediment load t/day, monthly mean), `flow-anomaly`; `entityId` selects a district on discharge,
+  water-level, sediment, fdc, seasonal, flow-anomaly and the statistics table. `baseflow` → 501.
+- `breakdown=status`: districts per class High Flow / Normal / Low Flow; `eflow`, `risk`, `abstraction` → 501.
+- `table`: `top-stations` (districts by mean flow; selector **`order`** `highest` / `lowest`; column "District"),
+  `statistics` (discharge, stage, velocity, sediment concentration, sediment load: current 12 months, mean
+  2000–last full year, anomaly %, Sen's slope per decade; row `unit` / `decimals`); `gauge-quality`, `alerts` → 501.
+- `map`: new district layers `discharge` (m³/s, scale `flow`); `flow-status` (classes, scale `flowStatus`),
+  `flow-anomaly` (%, `anomalyPct`) and `ssi` (SSI-3 from the stored discharge, scale `spi`) are **district
+  choropleths** instead of points; `annual-runoff`, `runoff-anomaly`, `monthly-runoff`, `runoff-coefficient` are the
+  runoff module's layers; `stations`, `catchment-runoff` → 501.
+- `entities`: the 52 districts (`type: "district"`); cards: mean flow, flow status, SSI-3 (with a drought-scale
+  `status`), stage, velocity, sediment, catchment area, tree cover, built-up share.

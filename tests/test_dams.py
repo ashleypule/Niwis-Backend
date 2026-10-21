@@ -34,10 +34,15 @@ def test_days_to_empty() -> None:
     assert days_to_empty(300.0, -2.0) is None
 
 
-def test_siyanda_is_not_a_district_alias() -> None:
-    """D3: 'Siyanda' (old name of Z F Mgcawu) is a duplicate copy in 8_1 and must not be read as Z F Mgcawu."""
-    assert districts.resolve("Siyanda") is None
-    assert districts.resolve("Z F Mgcawu") is not None
+def test_siyanda_is_z_f_mgcawu_but_its_8_1_copy_is_not_read() -> None:
+    """D3: 'Siyanda' is the pre-2013 name of Z F Mgcawu: the only spelling in 9_1 … 10_2, so an alias; 8_1 holds both
+    names as identical copies, so its Siyanda rows are excluded (registry `exclude_locations`)."""
+    from app.registry.registry import load_registry
+
+    assert districts.resolve("Siyanda") == districts.resolve("Z F Mgcawu")
+    ds = load_registry().datasets["8_1_reservoir_operational_master"]
+    assert ds.exclude_locations == ["Siyanda"]
+    assert "NOT IN ('Siyanda')" in ds.valid_sql("rainfall_mm_day")
 
 
 @pytest.mark.db

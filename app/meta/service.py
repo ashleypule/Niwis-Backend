@@ -65,7 +65,7 @@ class MetaService:
             d, end, loc = ds.date_sql(), ds.period_end_sql(), ident(ds.location.column)
             row = await self.db.fetchrow(
                 f"SELECT count(*) AS n, count(DISTINCT {loc}) AS locs, min({d}) AS first, max({d}) AS last, "
-                f"max({end}) AS covered_to FROM {ds.fq} WHERE {ds.not_future_sql()}"  # rows after today never count
+                f"max({end}) AS covered_to FROM {ds.fq} WHERE {ds.rows_sql()}"  # rows after today never count
             )
             assert row is not None
             st.rows, st.locations = int(row["n"]), int(row["locs"])
@@ -164,7 +164,7 @@ class MetaService:
             loc,
             col,
         )
-        cap = ds.not_future_sql()  # rows dated after today are never served, so never "newest"
+        cap = ds.rows_sql()  # rows dated after today are never served, so never "newest"
         if not leading:
             return f"SELECT max({c}) FROM {t} WHERE {cap}"
         return (

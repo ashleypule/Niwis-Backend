@@ -620,6 +620,33 @@ WHERE district_name = 'Namakwa' AND date BETWEEN '2026-08-01' AND '2026-08-31'""
 WHERE district_name = 'City of Cape Town' AND date = '2026-09-15'""",
         tol=0.0005,
     ),
+    # ---------------------------------------------------------------- §9 surface water (DECISIONS D10)
+    Check(
+        "surface-water",
+        "Mean river discharge, Vhembe (DC34): mean daily flow of the latest complete month / 86 400 s",
+        "/api/v1/surface-water/summary?municipality=DC34",
+        kpi("discharge"),
+        """SELECT round((avg(daily_mean_flow) / 86400)::numeric, 1) FROM "9_1_hydrological_station_master"
+WHERE district_name = 'Vhembe' AND date BETWEEN '2026-08-01' AND '2026-08-31'""",
+    ),
+    Check(
+        "surface-water",
+        "Mean river discharge, national: Σ over the 52 districts of the month's mean daily flow / 86 400 s",
+        "/api/v1/surface-water/summary",
+        kpi("discharge"),
+        """SELECT round((sum(m) / 86400)::numeric, 1) FROM (SELECT district_name, avg(daily_mean_flow) m
+FROM "9_1_hydrological_station_master" WHERE date BETWEEN '2026-08-01' AND '2026-08-31' GROUP BY 1) x""",
+        tol=0.15,
+    ),
+    Check(
+        "surface-water",
+        "Suspended sediment concentration, City of Cape Town (CPT), Aug 2026 (monthly value as stored)",
+        "/api/v1/surface-water/summary?municipality=CPT",
+        kpi("sediment"),
+        """SELECT round(max(suspended_sediment_concentration)::numeric, 0) FROM "9_1_hydrological_station_master"
+WHERE district_name = 'City of Cape Town' AND year = 2026 AND month = 8""",
+        tol=0.5,
+    ),
 ]
 
 
