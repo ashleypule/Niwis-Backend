@@ -27,7 +27,7 @@ from app.core import districts
 from app.core.palettes import NORMAL, SERIES, YEAR_COLOURS, drought_bands
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope, trend_line
-from app.modules.common import Ctx, anomaly_split_reasons
+from app.modules.common import Ctx, Selector, anomaly_split_reasons
 from app.modules.district import NO_POINTS, DistrictModule
 from app.modules.rainfall.service import MONTHS
 from app.schemas import contract as c
@@ -41,8 +41,15 @@ ABSTRACTION = "as_total_abstraction"  # 11.3, m³/year
 SGI = "sgi"
 HISTORY_START = dt.date(2000, 1, 1)
 DEPTH_CLASSES = ((None, 5), (5, 10), (10, 20), (20, 30), (30, 50), (50, 100), (100, None))  # gwDepth palette
-SELECTORS: dict[tuple[str, str], tuple[Any, ...]] = {}
-ENTITY_DATASETS: set[tuple[str, str]] = set()
+LOWEST_ORDER = Selector("order", ("deepest", "shallowest"), "deepest")
+SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {("table", "lowest"): (LOWEST_ORDER,)}
+# with `entityId` these describe the selected district, whatever the page scope (Ctx.for_entity)
+ENTITY_DATASETS = {
+    ("timeseries", "level"),
+    ("timeseries", "level-long"),
+    ("timeseries", "sgi"),
+    ("timeseries", "seasonal"),
+}
 DEPTH_NOTE = (
     "Depth to water from NGA telemetry (10_1), one record per district; a month's value is the mean of its samples "
     "(about one every seven weeks), unsampled months are gaps."
@@ -200,7 +207,15 @@ class GroundwaterService(DistrictModule):
 
     # ---------------------------------------------------------------- timeseries
 
+    def use_entity(self, kind: str, key: str) -> None:
+        if (kind, key) in ENTITY_DATASETS and self.ctx.filters.entity_id:
+            self.ctx = self.ctx.for_entity()
+
+    def entity_title(self, title: str) -> str:
+        return f"{title} — {self.ctx.filters.scope.name}" if self.ctx.filters.entity_id else title
+
     async def timeseries(self, metric: str) -> dict[str, Any]:
+        self.use_entity("timeseries", metric)
         handlers = {
             "level": self.ts_level,
             "level-long": self.ts_level_long,
@@ -243,7 +258,7 @@ class GroundwaterService(DistrictModule):
         ]
         return self.series_set(
             "level",
-            "Depth to water",
+            self.entity_title("Depth to water"),
             series,
             [c.Axis(unit="m bgl", label="Depth to water", inverse=True)],
             [DEPTH],
@@ -265,7 +280,7 @@ class GroundwaterService(DistrictModule):
         idx = [pd.Timestamp(int(y), 1, 1) for y in full.index]
         return self.series_set(
             "level-long",
-            "Depth to water — long term",
+            self.entity_title("Depth to water — long term"),
             [
                 self.series(
                     "observed",
@@ -335,7 +350,7 @@ class GroundwaterService(DistrictModule):
         reason = self.registry.datasets["hydrological_drought_master"].columns["sgi_dimensionless"].valid_reason
         return self.series_set(
             "sgi",
-            "Standardised Groundwater Index (SGI)",
+            self.entity_title("Standardised Groundwater Index (SGI)"),
             [self.series("sgi", "SGI", win, nd=2, i=0, source=self.ctx.col_source(SGI).get("source"))],
             [c.Axis(unit="—", label="SGI")],
             [SGI],
@@ -370,7 +385,7 @@ class GroundwaterService(DistrictModule):
             )
         return self.series_set(
             "seasonal",
-            "Depth to water by month",
+            self.entity_title("Depth to water by month"),
             series,
             [c.Axis(unit="m bgl", label="Depth to water", inverse=True)],
             [DEPTH],
@@ -499,7 +514,8 @@ class GroundwaterService(DistrictModule):
 
     async def tbl_lowest(self, limit: int | None) -> dict[str, Any]:
         last = await self.latest_month(DEPTH)
-        vals = self._rows_scope((await self.district_values(DEPTH, last)).dropna()).sort_values(ascending=False)
+        deepest = self.ctx.select(LOWEST_ORDER) == "deepest"
+        vals = self._rows_scope((await self.district_values(DEPTH, last)).dropna()).sort_values(ascending=not deepest)
         ch, _ = await self.twelve_month_change()
         rows = []
         for i, (code, v) in enumerate(vals.items(), 1):
@@ -523,7 +539,7 @@ class GroundwaterService(DistrictModule):
         prov["aggregation"] = "district"
         return c.TableSet(
             id="lowest",
-            title=f"Deepest water levels by district – {last:%b %Y}",
+            title=f"{'Deepest' if deepest else 'Shallowest'} water levels by district – {last:%b %Y}",
             columns=[
                 c.Column(key="rank", label="#", type="rank"),
                 c.Column(key="borehole", label="District", type="text"),

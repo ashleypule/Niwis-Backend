@@ -515,6 +515,7 @@ months are gaps). Comparisons use 12-month means (last 12 months vs the 12 befor
   years), `recharge` (11.2 direct recharge, mm/yr, latest complete year), `abstraction` (11.3 total abstraction,
   Mm³/yr, summed), `rising` (districts whose 12-month mean depth is shallower than the 12 before; label "Districts with
   Rising Levels"); `boreholes`, `sgi` (valid SGI ends Aug 2024), `risk` null with reasons.
+- `entityId` selects a district on `level`, `level-long`, `sgi`, `seasonal`; `table=lowest` selector **`order`** `deepest` / `shallowest`.
 - `timeseries`: `level` (water level, previous year, same-month long-term mean; inverse axis), `level-long` (annual
   means, long-term mean, Sen's slope line), `anomaly`, `sgi` (hydrological_drought_master, served to Aug 2024, stale;
   when the page period has no valid SGI its last 12 valid months are shown), `seasonal` (last 5 years by month),

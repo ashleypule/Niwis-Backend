@@ -113,3 +113,15 @@ async def test_entity_card(client: httpx.AsyncClient) -> None:
     assert any(lb.startswith("Hydraulic head (telemetry)") for lb in labels)
     head = next(f for f in card["fields"] if f["label"].startswith("Hydraulic head (telemetry)"))
     assert head["unit"] == "m amsl"  # stored as "m bgl"; the values are elevations (DECISIONS D7)
+
+
+@pytest.mark.db
+@requires_db
+async def test_entity_panels_follow_the_selected_district(client: httpx.AsyncClient) -> None:
+    for metric in ("level", "level-long", "sgi", "seasonal"):
+        a = (await client.get(f"{B}/timeseries", params={"metric": metric, "entityId": "DC6"})).json()
+        b = (await client.get(f"{B}/timeseries", params={"metric": metric, "entityId": "CPT"})).json()
+        assert a["title"].endswith("Namakwa") and a["series"][0]["data"] != b["series"][0]["data"], metric
+    deep = (await client.get(f"{B}/table", params={"metric": "lowest", "order": "deepest"})).json()
+    shallow = (await client.get(f"{B}/table", params={"metric": "lowest", "order": "shallowest"})).json()
+    assert deep["rows"][0]["level"] >= shallow["rows"][0]["level"]
