@@ -321,6 +321,7 @@ class EntityDetail(Entity):
     # additions
     as_of: str | None = Field(None, alias="asOf")
     source: list[str] | None = None
+    unavailable: list[UnavailableField] | None = None  # fields returned as null, with the reason (`fields.<label>`)
 
 
 # ------------------------------------------------------------------ database category view (addition)

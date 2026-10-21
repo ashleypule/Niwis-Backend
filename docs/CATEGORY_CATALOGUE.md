@@ -569,8 +569,8 @@ Table `8_1_reservoir_operational_master` · id `reservoir-operational` · daily 
 | Rainfall / Evaporation / Runoff (mm/day) | `rainfall-evaporation-runoff-mm-day` | mm/day | daily | mixed | `rainfall_mm_day` ★, `evaporation_mm_day`, `runoff_mm_day` |
 | District Area / Water Area (km²) | `district-area-water-area-km2` | km² | daily | line | `district_area_km2` ★, `water_area_km2` ★ |
 | Mean NDWI | `mean-ndwi` | — | daily | line | `mean_ndwi` ★ |
-| Storage Volume M3 | `storage-volume-m3` | — | daily | line | `storage_volume_m3` ★ |
-| Pct FSC | `pct-fsc` | — | daily | line | `pct_fsc` ★ |
+| Storage Volume (m³) | `storage-volume-m3` | m³ | daily | line | `storage_volume_m3` ★ |
+| Pct FSC (% FSC) | `pct-fsc-pct-fsc` | % FSC | daily | line | `pct_fsc` ★ |
 | Fsl / Water Level (m amsl) | `fsl-water-level-m-amsl` | m amsl | daily | line | `fsl_m_amsl` ★, `water_level_m_amsl` ★ |
 | Inflow / Outflow (m³/s) | `inflow-outflow-m3-s` | m³/s | daily | line | `inflow_m3_s` ★, `outflow_m3_s` ★ |
 | Seepage (m³/day) | `seepage-m3-day` | m³/day | daily | bar | `seepage_m3_day` ★ |
@@ -582,12 +582,12 @@ Table `8_1_reservoir_operational_master` · id `reservoir-operational` · daily 
 | `evaporation_mm_day` | Evaporation (mm/day) | mm/day | daily | line | dams: `rainfall-evaporation-runoff-mm-day` | withheld — four values in the whole table (4.25–6 mm/day), identical in all 52 districts every day |
 | `runoff_mm_day` | Runoff (mm/day) | mm/day | daily | line | dams: `rainfall-evaporation-runoff-mm-day` | withheld — daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years) |
 | `district_area_km2` | District Area (km²) | km² | daily | line | dams: `district-area-water-area-km2` | withheld — 10 000 km² for every district on most days (a placeholder area; real district areas are 1 645–126 836 km²) |
-| `water_area_km2` | Water Area (km²) | km² | daily | line | dams: `district-area-water-area-km2` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies |
+| `water_area_km2` | Water Area (km²) | km² | daily | line | dams: `district-area-water-area-km2` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies |
 | `mean_ndwi` | Mean NDWI | — | daily | line | dams: `mean-ndwi` | withheld — 44 of 52 districts share one identical series |
-| `storage_volume_m3` | Storage Volume M3 | — | daily | line | dams: `storage-volume-m3` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies |
-| `pct_fsc` | Pct FSC | — | daily | line | dams: `pct-fsc` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies |
+| `storage_volume_m3` | Storage Volume (m³) | m³ | daily | line | dams: `storage-volume-m3` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies |
+| `pct_fsc` | Pct FSC (% FSC) | % FSC ¹ | daily | line | dams: `pct-fsc-pct-fsc` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies |
 | `fsl_m_amsl` | Fsl (m amsl) | m amsl | daily | line | dams: `fsl-water-level-m-amsl` | withheld — one value (1 200 m) in every row, identical in all 52 districts |
-| `water_level_m_amsl` | Water Level (m amsl) | m amsl | daily | line | dams: `fsl-water-level-m-amsl` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies |
+| `water_level_m_amsl` | Water Level (m amsl) | m amsl | daily | line | dams: `fsl-water-level-m-amsl` | withheld — 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies |
 | `inflow_m3_s` | Inflow (m³/s) | m³/s | daily | line | dams: `inflow-outflow-m3-s` | withheld — daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe: 0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes |
 | `seepage_m3_day` | Seepage (m³/day) | m³/day | daily | bar | dams: `seepage-m3-day` | withheld — 5.5 m³/day in 94 % of days, identical in 51 districts |
 | `outflow_m3_s` | Outflow (m³/s) | m³/s | daily | line | dams: `inflow-outflow-m3-s` | withheld — daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe: 0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes |
@@ -1249,6 +1249,7 @@ Table `16_1_complete_wrm_matrix_master` · id `complete-wrm-matrix` · annual ·
 | `_wm2` | W/m² |
 | `_kpa` | kPa |
 | `_pct` | % |
+| `_m3` | m³ |
 | `_mm` | mm |
 | `_ms` | m/s |
 | `_m` | m |
@@ -1363,6 +1364,7 @@ Only where the name carries no unit or the wrong one; never to rename a variable
 | `15.3_hydrological_RWQO_variables_master` | `Low_Flow_Value` | m³/s | name has no unit; spec §15.3 gives m³/s |
 | `15.3_hydrological_RWQO_variables_master` | `Dilution_Value` | m³/s | name has no unit; spec §15.3 gives m³/s |
 | `15.1_ecological_variables_master` | `ecological_reserve_q` | m³/s | name has no unit; spec §15.1 gives m³/s |
+| `8_1_reservoir_operational_master` | `pct_fsc` | % FSC | the name is the unit itself (`pct_fsc`); spec §8.1 gives % of full supply capacity |
 | `10_1_borehole_and_aquifer_master` | `seasonal_water_table_fluctuation_m` | m/season | suffix `_m` reads as m; the unit column and spec §10.1 give m/season |
 | `10_1_borehole_and_aquifer_master` | `hydraulic_head_m_amsl` | m amsl | the unit column says 'm bgl', but the values (448–1 638 m) are elevations, as the name says: a water level 1 638 m below ground is impossible in South Africa's aquifers |
 

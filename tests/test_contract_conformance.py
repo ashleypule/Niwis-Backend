@@ -30,7 +30,7 @@ ADDITIONS: dict[str, set[str]] = {
     "MatrixSetSchema": PROVENANCE | {"asOf"},
     "MapLayerSchema": PROVENANCE | {"asOf", "geometry", "legend"},
     "EntityListSchema": PROVENANCE,
-    "EntityDetailSchema": {"asOf", "source"},
+    "EntityDetailSchema": {"asOf", "source", "unavailable"},
 }
 MODELS: dict[str, type[BaseModel]] = {
     "ScopeSchema": c.Scope,

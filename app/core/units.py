@@ -37,6 +37,7 @@ _SUFFIXES: dict[str, str | None] = {
     "_t_day": "t/day",
     "_mg_m3": "mg/m³",
     "_ugl": "µg/L",
+    "_m3": "m³",
     "_m": "m",
     "_percent_per_yr": "%/year",
     "_hours": "h",
@@ -368,6 +369,9 @@ SPEC_UNITS: dict[tuple[str, str], Override] = {
 LABEL_OVERRIDES.update(SPEC_UNITS)
 LABEL_OVERRIDES.update(
     {
+        ("8_1_reservoir_operational_master", "pct_fsc"): Override(
+            "% FSC", "the name is the unit itself (`pct_fsc`); spec §8.1 gives % of full supply capacity"
+        ),
         ("10_1_borehole_and_aquifer_master", "seasonal_water_table_fluctuation_m"): Override(
             "m/season", "suffix `_m` reads as m; the unit column and spec §10.1 give m/season"
         ),

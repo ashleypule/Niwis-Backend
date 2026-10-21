@@ -17,6 +17,7 @@ import httpx
 from app.core.response_checks import Coverage, all_violations, invariant_violations
 from app.modules.climate import service as climate
 from app.modules.common import Selector
+from app.modules.dams import service as dams
 from app.modules.drought import service as drought
 from app.modules.rainfall import service as rainfall
 from app.modules.runoff import service as runoff
@@ -29,8 +30,9 @@ SERVICE_MODULES: dict[str, ModuleType] = {
     "climate": climate,
     "vegetation": vegetation,
     "runoff": runoff,
+    "dams": dams,
 }
-ENTITY_MODULES = {"rainfall", "runoff"}
+ENTITY_MODULES = {"rainfall", "runoff", "dams"}
 KINDS = {"timeseries": "metric", "forecast": "metric", "breakdown": "metric", "table": "metric", "matrix": "metric"}
 KINDS["map"] = "layer"
 PROBE = "__catalog_probe__"

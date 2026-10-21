@@ -30,6 +30,8 @@ from app.modules.categories import build_category_router
 from app.modules.categories import keep_warm as keep_categories_warm
 from app.modules.climate.router import router as climate_router
 from app.modules.climate.service import prewarm as prewarm_climate
+from app.modules.dams.router import router as dams_router
+from app.modules.dams.service import prewarm as prewarm_dams
 from app.modules.drought.router import router as drought_router
 from app.modules.drought.service import prewarm as prewarm_drought
 from app.modules.rainfall.router import router as rainfall_router
@@ -69,6 +71,7 @@ async def _warm(state: AppState) -> None:
         ("climate", lambda: prewarm_climate(state.data)),
         ("vegetation", lambda: prewarm_vegetation(state.data)),
         ("runoff", lambda: prewarm_runoff(state.data)),
+        ("dams", lambda: prewarm_dams(state.data)),
         ("table statistics", state.meta.table_stats),
     ]
     for name, step in steps:
@@ -77,6 +80,14 @@ async def _warm(state: AppState) -> None:
         except Exception:
             log.exception("cache warm-up step failed", extra={"step": name})
     log.info("cache warm-up finished")
+
+
+async def _keep_warm(state: AppState) -> None:
+    """Run the warm-up now and again every 80 % of the long-series TTL: reading an entry after 75 % of its lifetime
+    reloads it in the background (app.core.cache), so the module frames never expire into a cold request."""
+    while True:
+        await _warm(state)
+        await asyncio.sleep(max(300, int(state.settings.cache_ttl_long_series_s * 0.8)))
 
 
 def create_app(settings: Settings | None = None, db: Database | None = None) -> FastAPI:
@@ -105,7 +116,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         log.info("startup complete", extra={"tables": len(registry.datasets), "env": settings.environment})
         tasks = []
         if database.configured:
-            tasks.append(asyncio.create_task(_warm(app.state.niwis)))
+            tasks.append(asyncio.create_task(_keep_warm(app.state.niwis)))
             if settings.prewarm_categories:  # every category chart group, refreshed before the cache expires
                 tasks.append(asyncio.create_task(keep_categories_warm(app.state.niwis)))
         yield
@@ -168,6 +179,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(climate_router)
     app.include_router(vegetation_router)
     app.include_router(runoff_router)
+    app.include_router(dams_router)
     for module in sorted(IMPLEMENTED_MODULES | DATABASE_VIEW_MODULES):
         app.include_router(build_category_router(module))
     return app

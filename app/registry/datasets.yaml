@@ -158,8 +158,8 @@ variables:
   res_district_area_km2: {label: "District Area", unit: "km²"}
   res_water_area_km2: {label: "Water Area", unit: "km²"}
   res_mean_ndwi: {label: "Mean NDWI", unit: "—"}
-  res_storage_volume_m3: {label: "Storage Volume M3", unit: "—"}
-  res_pct_fsc: {label: "Pct FSC", unit: "—"}
+  res_storage_volume_m3: {label: "Storage Volume", unit: "m³"}
+  res_pct_fsc: {label: "Storage", unit: "% FSC"}
   res_fsl_m_amsl: {label: "Fsl", unit: "m amsl"}
   res_water_level_m_amsl: {label: "Water Level", unit: "m amsl"}
   res_inflow_m3_s: {label: "Inflow", unit: "m³/s"}
@@ -196,7 +196,7 @@ variables:
   cc_vegetation_cover_pct: {label: "Vegetation Cover", unit: "%"}
   eo_surface_water_extent_km2: {label: "Surface Water Extent", unit: "km²"}
   eo_ndwi_mean: {label: "NDWI Mean", unit: "—"}
-  eo_turbidity_proxy_ratio: {label: "Turbidity Proxy", unit: "—"}
+  eo_turbidity_proxy_ratio: {label: "Turbidity Proxy Ratio", unit: "—"}
   eo_chlorophyll_a_mg_m3: {label: "Chlorophyll A", unit: "mg/m³"}
   eo_sediment_plume_pct: {label: "Sediment Plume", unit: "%"}
   eo_flood_inundation_extent_km2: {label: "Flood Inundation Extent", unit: "km²"}
@@ -337,7 +337,7 @@ variables:
   sans_total_thms_compliant: {label: "Total THMs Compliant", unit: "%"}
   eco_aquatic_habitat_integrity: {label: "Aquatic Habitat Integrity", unit: "—"}
   eco_aspt: {label: "ASPT", unit: "—"}
-  eco_ecological_reserve_q: {label: "Ecological Reserve Q", unit: "—"}
+  eco_ecological_reserve_q: {label: "Ecological Reserve Q", unit: "m³/s"}
   eco_fibi: {label: "FIBI", unit: "—"}
   eco_riparian_vegetation: {label: "Riparian Vegetation", unit: "—"}
   eco_sass5_score: {label: "SASS5 Score", unit: "—"}
@@ -370,7 +370,7 @@ variables:
   wrm_mean_annual_evapotranspiration_mae_mm_yr: {label: "Mean Annual Evapotranspiration MAE", unit: "mm/year"}
   wrm_climate_variability_index_cv_rainfall: {label: "Climate Variability Index CV Rainfall", unit: "—"}
   wrm_mean_annual_runoff_mar_million_m3_yr: {label: "Mean Annual Runoff MAR", unit: "Mm³/year"}
-  wrm_surface_water_availability_index_ratio: {label: "Surface Water Availability Index", unit: "—"}
+  wrm_surface_water_availability_index_ratio: {label: "Surface Water Availability Index Ratio", unit: "—"}
   wrm_inter_annual_storage_efficiency_pct: {label: "Inter Annual Storage Efficiency", unit: "%"}
   wrm_mean_annual_groundwater_recharge_mm_yr: {label: "Mean Annual Groundwater Recharge", unit: "mm/year"}
   wrm_groundwater_dependency_index_pct: {label: "Groundwater Dependency Index", unit: "%"}
@@ -723,12 +723,12 @@ datasets:
       "evaporation_mm_day": {var: res_evaporation_mm_day, role: withheld, reason: "four values in the whole table (4.25–6 mm/day), identical in all 52 districts every day"}
       "runoff_mm_day": {var: res_runoff_mm_day, role: withheld, reason: "daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years)"}
       "district_area_km2": {var: res_district_area_km2, role: withheld, reason: "10 000 km² for every district on most days (a placeholder area; real district areas are 1 645–126 836 km²)"}
-      "water_area_km2": {var: res_water_area_km2, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
+      "water_area_km2": {var: res_water_area_km2, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies"}
       "mean_ndwi": {var: res_mean_ndwi, role: withheld, reason: "44 of 52 districts share one identical series"}
-      "storage_volume_m3": {var: res_storage_volume_m3, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
-      "pct_fsc": {var: res_pct_fsc, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
+      "storage_volume_m3": {var: res_storage_volume_m3, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies"}
+      "pct_fsc": {var: res_pct_fsc, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies"}
       "fsl_m_amsl": {var: res_fsl_m_amsl, role: withheld, reason: "one value (1 200 m) in every row, identical in all 52 districts"}
-      "water_level_m_amsl": {var: res_water_level_m_amsl, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies"}
+      "water_level_m_amsl": {var: res_water_level_m_amsl, role: withheld, reason: "51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies"}
       "inflow_m3_s": {var: res_inflow_m3_s, role: withheld, reason: "daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe: 0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes"}
       "seepage_m3_day": {var: res_seepage_m3_day, role: withheld, reason: "5.5 m³/day in 94 % of days, identical in 51 districts"}
       "outflow_m3_s": {var: res_outflow_m3_s, role: withheld, reason: "daily values in 2000 only; from 2001 to 2026 one constant value per district (Vhembe 0.0548 mm/day, 6.346 m³/s for 26 years); inflow = runoff depth × the placeholder area of 10 000 km² (Vhembe: 0.0548 mm/day × 10 000 km² = 6.35 m³/s) and outflow ≈ inflow, so storage never changes"}

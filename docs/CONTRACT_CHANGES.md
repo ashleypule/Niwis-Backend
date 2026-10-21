@@ -447,3 +447,38 @@ Additions only; values change slightly.
   (diverging bars, %), the other nine columns withheld with reasons. New variables in the registry:
   `runoff_anomaly_monthly`, `runoff_ratio_trend`, `flood_flow_2yr` … `flood_flow_100yr`, `response_time`.
 - `testing_table` is no longer listed under `unregistered` in the catalogue (registry `ignored_tables`).
+
+## 14. §8–§16 tables and modules (2026-10-20)
+
+All additions; nothing existing changed shape. Decisions behind them: `docs/DECISIONS.md`.
+
+### 14.1 New modules on the database view
+
+`/api/v1/{module}/categories` and `/category/{tableId}/{groupId}` now exist for `dams`, `surface-water`,
+`groundwater`, `groundwater-reserve`, `water-quality`, `green-drop`, `blue-drop`, `rwqo` and `iwrm` (same shapes as
+§11–§12). `/health` lists every module; a module whose page only has the database view reports
+`status: "partial"` with a reason.
+
+### 14.2 Series resolution, rows after today, impossible values
+
+- Category series of monthly / annual columns are stamped at the start of their period (as before) even when the table
+  stores them on the 15th, the 25th or the last day (`10_1`, `12.x`, `10_2`).
+- Rows dated after today are never served, counted in `/meta` or used as `newestDataDate` (8_1, 10_1, 10_2 hold rows to
+  2026-12-31).
+- A variable's `note` says when impossible values are dropped ("Values below 0 are not served: …").
+- Yes / no compliance flags are served as **%** (100 = compliant; a scope value is the share of the area compliant);
+  `unitOverride` says so.
+
+### 14.3 `dams` (spec §8)
+
+- `summary`: the 8 contract KPIs, every `value` null with `unavailableReason` and an `unavailable` entry: `8_1` storage
+  is a placeholder (51 of 52 districts at 100 % FSC every day; DECISIONS D2).
+- Every `timeseries`, `breakdown`, `table` and `map` key of the contract → `501 DATA_UNAVAILABLE` with the specific
+  reason (maps also: no coordinates in the database). `forecast` → 501.
+- New map layers (district choropleths, `geometry: "districts"`, latest complete month, `date` = month start,
+  `periodEnd`): `catchment-rainfall` (month total, mm, scale `rainfallMonthly`; 8_1 rainfall ends 31 Aug 2026 because
+  it is forward-filled after that) and `soil-moisture` (month mean, m³/m³, scale `soilMoisture`).
+- `entities`: one combined reservoir per district from `8_1` (`type: "dam"`, `name` = `dam_name`, `sub` = district ·
+  river, `municipality` = MDB code). `entities/{code}` (MDB code): district, province, river, storage / volume /
+  alert level (null), catchment rainfall (month total, mm) and soil moisture (month mean) for the latest complete month.
+- **`EntityDetail.unavailable`** (new, optional): `[{field: "fields.<label>", reason}]` for card fields returned as null.

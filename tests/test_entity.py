@@ -6,6 +6,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
+from app.modules.catalog import SERVICE_MODULES
 from tests.conftest import requires_db
 from tests.entity_audit import check, entity_endpoints
 
@@ -19,7 +20,7 @@ def test_every_entity_endpoint_is_enumerated() -> None:
         assert ("/api/v1/runoff/timeseries", (("metric", metric),)) in paths
     assert ("/api/v1/runoff/table", (("metric", "statistics"),)) in paths
     assert ("/api/v1/rainfall/timeseries", (("metric", "station"),)) in paths
-    assert sum(1 for p, _ in paths if "/category/" in p) == 5
+    assert sum(1 for p, _ in paths if "/category/" in p) == len(SERVICE_MODULES)
 
 
 async def test_entity_datasets_follow_the_district(client: httpx.AsyncClient) -> None:

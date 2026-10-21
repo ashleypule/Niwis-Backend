@@ -3734,7 +3734,7 @@ categories:
     kind: numeric
     resolution: daily
     status: withheld
-    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies
     duplicate_of: null
     chart: line
     note: null
@@ -3753,31 +3753,31 @@ categories:
     note: null
     unit_override: null
   - column: storage_volume_m3
-    name: Storage Volume M3
-    label: Storage Volume M3
-    unit: null
+    name: Storage Volume
+    label: Storage Volume (m³)
+    unit: m³
     db_type: double precision
     kind: numeric
     resolution: daily
     status: withheld
-    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies
     duplicate_of: null
     chart: line
     note: null
     unit_override: null
   - column: pct_fsc
     name: Pct FSC
-    label: Pct FSC
-    unit: null
+    label: Pct FSC (% FSC)
+    unit: '% FSC'
     db_type: double precision
     kind: numeric
     resolution: daily
     status: withheld
-    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies
     duplicate_of: null
     chart: line
     note: null
-    unit_override: null
+    unit_override: the name is the unit itself (`pct_fsc`); spec §8.1 gives % of full supply capacity
   - column: fsl_m_amsl
     name: Fsl
     label: Fsl (m amsl)
@@ -3799,7 +3799,7 @@ categories:
     kind: numeric
     resolution: daily
     status: withheld
-    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day 2000–2026 (502 962 rows); only Vhembe varies
+    reason: 51 of 52 districts hold the same storage (251 997 542.57 m³ = 100 % FSC, level 1 200 m, 52.5 km² water area) on every day from January 2000 to October 2026; only Vhembe varies
     duplicate_of: null
     chart: line
     note: null
@@ -3894,8 +3894,8 @@ categories:
       chart: line
       band: null
     - id: storage-volume-m3
-      label: Storage Volume M3
-      unit: —
+      label: Storage Volume (m³)
+      unit: m³
       resolution: daily
       columns:
       - storage_volume_m3
@@ -3903,9 +3903,9 @@ categories:
       - storage_volume_m3
       chart: line
       band: null
-    - id: pct-fsc
-      label: Pct FSC
-      unit: —
+    - id: pct-fsc-pct-fsc
+      label: Pct FSC (% FSC)
+      unit: '% FSC'
       resolution: daily
       columns:
       - pct_fsc

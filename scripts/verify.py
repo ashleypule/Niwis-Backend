@@ -89,6 +89,11 @@ def series_at(key: str, x: str) -> Callable[[Any], Any]:
     return lambda b: next(p[1] for s in b["series"] if s["key"] == key for p in s["data"] if p[0] == x)
 
 
+def field_value(label_start: str) -> Callable[[Any], Any]:
+    """Value of the first entity-card field whose label starts with `label_start`."""
+    return lambda b: next(f["value"] for f in b["fields"] if f["label"].startswith(label_start))
+
+
 def series_last(key: str) -> Callable[[Any], Any]:
     """Last non-null value of series `key`."""
     return lambda b: [p[1] for s in b["series"] if s["key"] == key for p in s["data"] if p[1] is not None][-1]
@@ -585,6 +590,35 @@ WHERE make_date("Year"::int, "Month"::int, 1) = {LATEST_COMPLETE_MONTH}""",
 WHERE make_date("Year"::int, "Month"::int, 1) = {LATEST_COMPLETE_MONTH}""",
         tol=0,
         sql_post=_headline_rank(None),
+    ),
+    # ---------------------------------------------------------------- §8 dams (DECISIONS D2)
+    Check(
+        "dams",
+        "Total Storage KPI is null (withheld) while 8_1 still holds one storage value in 50+ districts on the newest day",
+        "/api/v1/dams/summary",
+        kpi("storage"),
+        """SELECT count(DISTINCT district_name) FROM "8_1_reservoir_operational_master"
+WHERE date = (SELECT max(date) FROM "8_1_reservoir_operational_master" WHERE date <= CURRENT_DATE)
+AND storage_volume_m3 = (SELECT mode() WITHIN GROUP (ORDER BY storage_volume_m3) FROM "8_1_reservoir_operational_master")""",
+        expect_null=lambda n: n is not None and int(n) >= 50,
+    ),
+    Check(
+        "dams",
+        "Reservoir card, Namakwa (DC6): catchment rainfall total for Aug 2026 (8_1 rainfall is forward-filled from Sep)",
+        "/api/v1/dams/entities/DC6",
+        field_value("Catchment rainfall"),
+        """SELECT round(sum(rainfall_mm_day)::numeric, 0) FROM "8_1_reservoir_operational_master"
+WHERE district_name = 'Namakwa' AND date BETWEEN '2026-08-01' AND '2026-08-31'""",
+        tol=0.5,
+    ),
+    Check(
+        "dams",
+        "Dams category: reservoir-operational / soil_moisture_m3_m3, City of Cape Town, 15 Sep 2026 (daily)",
+        "/api/v1/dams/category/reservoir-operational/soil-moisture-m3-m3?municipality=CPT",
+        series_at("soil_moisture_m3_m3", "2026-09-15"),
+        """SELECT round(soil_moisture_m3_m3::numeric, 3) FROM "8_1_reservoir_operational_master"
+WHERE district_name = 'City of Cape Town' AND date = '2026-09-15'""",
+        tol=0.0005,
     ),
 ]
 

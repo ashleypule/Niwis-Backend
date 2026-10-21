@@ -8,6 +8,7 @@ Withheld or missing variables raise DataUnavailable — never placeholder number
 
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 from typing import Any
 
@@ -192,26 +193,32 @@ class DataAccess:
         return await self._cached(key, sql, *ds.range_args(start, end), names, thr)
 
     async def daily_percentile(self, var: str, start: dt.date, end: dt.date, q: float) -> pd.Series:
-        """Per-district percentile `q` (0–1) of a daily variable over [start, end], computed in SQL."""
+        """Per-district percentile `q` (0–1) of a daily variable over [start, end], computed in SQL.
+
+        One statement per district, at most `db_pool_max − 1` at a time: a single grouped query sorts the whole daily
+        table (500 000 rows, 21 s on Supabase — past the statement timeout), one district reads ~9 500 rows through
+        the (district, date) index in 1–2 s."""
         ds, col = self.source(var)
         c, loc = ds.column_sql(col), ident(ds.location.column)
         sql = (
-            f"SELECT {loc}, percentile_cont($3) WITHIN GROUP (ORDER BY {c}) FROM {ds.fq} "
-            f"WHERE {ds.range_sql()} AND {ds.valid_sql(col)} GROUP BY 1"
+            f"SELECT percentile_cont($3) WITHIN GROUP (ORDER BY {c}) FROM {ds.fq} "
+            f"WHERE {ds.range_sql()} AND {ds.valid_sql(col)} AND {loc} = ANY($4::text[])"
         )
+        sem = asyncio.Semaphore(max(1, self.settings.db_pool_max - 1))
+
+        async def one(d: districts.District) -> tuple[str, float | None]:
+            names = list({d.db_name, d.db_name.lower(), *d.aliases})
+            async with sem:
+                v = await self.db.fetchval(sql, *ds.range_args(start, end), q, names)
+            return d.code, (float(v) if v is not None else None)
 
         async def load() -> pd.Series:
-            rows = await self.db.fetch(sql, *ds.range_args(start, end), q)
-            out = {}
-            for r in rows:
-                dist = districts.resolve(r[0])
-                if dist is not None and r[1] is not None:
-                    out[dist.code] = float(r[1])
-            return pd.Series(out, dtype=float)
+            found = await asyncio.gather(*(one(d) for d in districts.districts()))
+            return pd.Series({k: v for k, v in found if v is not None}, dtype=float)
 
-        res: pd.Series = await self.cache.get_or_set(
-            f"data:pct:{var}:{start}:{end}:{q}", self.settings.cache_ttl_long_series_s, load
-        )
+        # a whole-record percentile (Q10 thresholds) changes only when a year completes: kept a day
+        ttl = max(self.settings.cache_ttl_long_series_s, 86400)
+        res: pd.Series = await self.cache.get_or_set(f"data:pct:{var}:{start}:{end}:{q}", ttl, load)
         return res
 
     async def daily_monthly_stats(self, var: str, thresholds: tuple[float, ...]) -> pd.DataFrame:

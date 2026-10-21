@@ -145,6 +145,39 @@ SELECT round(avg(a)::numeric, 2) FROM (SELECT a FROM m
   WHERE ym < (SELECT left(max("Date"), 7) FROM "6.1_core_rainfall_variables_master") ORDER BY ym DESC LIMIT 12) s
 ```
 
+## dams — 2026-10-20
+
+### ✅ Total Storage KPI is null (withheld) while 8_1 still holds one storage value in 50+ districts on the newest day
+
+- API: `GET /api/v1/dams/summary` → **None**
+- SQL result: **53** (tolerance ± 0.05)
+
+```sql
+SELECT count(DISTINCT district_name) FROM "8_1_reservoir_operational_master"
+WHERE date = (SELECT max(date) FROM "8_1_reservoir_operational_master" WHERE date <= CURRENT_DATE)
+AND storage_volume_m3 = (SELECT mode() WITHIN GROUP (ORDER BY storage_volume_m3) FROM "8_1_reservoir_operational_master")
+```
+
+### ✅ Reservoir card, Namakwa (DC6): catchment rainfall total for Aug 2026 (8_1 rainfall is forward-filled from Sep)
+
+- API: `GET /api/v1/dams/entities/DC6` → **4.0**
+- SQL result: **4** (tolerance ± 0.5)
+
+```sql
+SELECT round(sum(rainfall_mm_day)::numeric, 0) FROM "8_1_reservoir_operational_master"
+WHERE district_name = 'Namakwa' AND date BETWEEN '2026-08-01' AND '2026-08-31'
+```
+
+### ✅ Dams category: reservoir-operational / soil_moisture_m3_m3, City of Cape Town, 15 Sep 2026 (daily)
+
+- API: `GET /api/v1/dams/category/reservoir-operational/soil-moisture-m3-m3?municipality=CPT` → **0.24**
+- SQL result: **0.240** (tolerance ± 0.0005)
+
+```sql
+SELECT round(soil_moisture_m3_m3::numeric, 3) FROM "8_1_reservoir_operational_master"
+WHERE district_name = 'City of Cape Town' AND date = '2026-09-15'
+```
+
 ## drought — 2026-10-16
 
 ### ✅ SPI-3, KwaZulu-Natal, latest complete month — area-weighted from the 11 KZN districts

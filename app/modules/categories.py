@@ -705,4 +705,5 @@ async def keep_warm(state: AppState) -> None:
             await prewarm(state)
         except Exception:
             log.exception("category pre-warm round failed")
-        await asyncio.sleep(max(300, state.settings.cache_ttl_long_series_s - 600))
+        # after 80 % of the TTL: the reads then trigger background reloads (refresh-ahead) before anything expires
+        await asyncio.sleep(max(300, int(state.settings.cache_ttl_long_series_s * 0.8)))

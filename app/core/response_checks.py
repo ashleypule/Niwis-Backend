@@ -68,6 +68,9 @@ def _target_values(body: Mapping[str, Any], field: str) -> list[Any] | None:
         return [v for s in found for v in _series_values(s)] if found else None
     if head == "values" and not rest:
         return _cell_values(body)
+    if head == "fields":  # entity card fields, by label
+        hits = [f.get("value") for f in body.get("fields", []) if f.get("label") == rest]
+        return hits or None
     if head == "rows":
         rows = body.get("rows", [])
         columns = {c["key"] for c in body.get("columns", [])}

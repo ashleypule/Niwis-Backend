@@ -8,6 +8,21 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Completion from the database — Part 2, module 1: Dams (§8) (2026-10-20)
+
+- [x] `app/modules/district.py`: shared building blocks for the district-keyed §8–§12 modules (monthly frames,
+      latest complete month per database module, scope sums / area-weighted means, district maps, KPIs, entity cards).
+- [x] `app/modules/dams/`: storage is withheld (D2), so the 8 KPIs are null with the reason and every contract
+      timeseries / breakdown / table / map key is 501 with it; entities = the 52 district reservoirs of `8_1` (name,
+      river; one index probe per district); cards with catchment rainfall / soil moisture; new district layers
+      `catchment-rainfall`, `soil-moisture`; spec §8.2 alert levels and days-to-empty implemented and tested.
+- [x] `EntityDetail.unavailable` (`fields.<label>`) and its response check; `docs/CONTRACT_CHANGES.md` §14.
+- [x] Cache refresh-ahead (`app/core/cache.py`): an entry read after 75 % of its TTL reloads in the background; the
+      module warm-up now repeats like the category pre-warm (before, warmed entries expired ~10 min after each round
+      and stayed cold until the next). Whole-record percentiles (runoff events' Q10) per district in parallel and kept
+      24 h: the single grouped query took 21 s (past the 10 s statement timeout).
+- [x] Verification: `tests/test_dams.py`, `tests/test_cache.py`; 982 tests; `docs/VERIFICATION.md` dams 3 / 3.
+
 ### Completion from the database — Part 1: every table registered (2026-10-20)
 
 - [x] 37 tables in `public`; the 22 added since Phase 0 profiled (`scripts/inventory.py --append` → `docs/DB_INVENTORY.md`
