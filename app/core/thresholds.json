@@ -1,45 +1,319 @@
 {
-  "_source": "Converted by hand from reference/thresholds.ts (frontend src/config/thresholds.ts) on 2026-10-14. Keep in sync: tests/test_thresholds.py checks the values against the .ts file.",
-  "drought": {
-    "_spec": "§3.4. Value is rounded to 2 dp first, then compared with <= (as published).",
-    "round_dp": 2,
-    "classes": [
-      {"id": "D4", "label": "Exceptional Drought", "max": -2.0, "probability": "< 2%", "impact": "Water emergency declared"},
-      {"id": "D3", "label": "Extreme Drought", "max": -1.6, "probability": "2–5%", "impact": "Major water restrictions"},
-      {"id": "D2", "label": "Severe Drought", "max": -1.3, "probability": "5–10%", "impact": "Water shortages common"},
-      {"id": "D1", "label": "Moderate Drought", "max": -0.8, "probability": "10–20%", "impact": "Streams/dams low"},
-      {"id": "D0", "label": "Abnormally Dry", "max": -0.5, "probability": "20–30%", "impact": "Pasture/crop stress starting"}
-    ],
-    "none": {"id": "None", "label": "No drought"},
-    "rank": {"None": 0, "D0": 1, "D1": 2, "D2": 3, "D3": 4, "D4": 5}
-  },
-  "spi_wet": {
-    "_spec": "McKee et al. 1993 wet side; >= comparisons",
-    "classes": [
-      {"min": 2.0, "label": "Extremely wet"},
-      {"min": 1.5, "label": "Very wet"},
-      {"min": 1.0, "label": "Moderately wet"}
-    ],
-    "near_normal_above": -0.5
-  },
-  "storage_alerts": {"_spec": "§8.2, % FSC, < comparisons", "L1": 50, "L2": 30, "L3": 15},
-  "storage_bands": [
-    {"max": 25, "id": "very-low"}, {"max": 50, "id": "low"}, {"max": 70, "id": "moderate"},
-    {"max": 90, "id": "high"}, {"max": null, "id": "very-high"}
+ "_source": "Converted by hand from reference/thresholds.ts (frontend src/config/thresholds.ts) on 2026-10-14. Keep in sync: tests/test_thresholds.py checks the values against the .ts file.",
+ "drought": {
+  "_spec": "§3.4. Value is rounded to 2 dp first, then compared with <= (as published).",
+  "round_dp": 2,
+  "classes": [
+   {
+    "id": "D4",
+    "label": "Exceptional Drought",
+    "max": -2.0,
+    "probability": "< 2%",
+    "impact": "Water emergency declared"
+   },
+   {
+    "id": "D3",
+    "label": "Extreme Drought",
+    "max": -1.6,
+    "probability": "2–5%",
+    "impact": "Major water restrictions"
+   },
+   {
+    "id": "D2",
+    "label": "Severe Drought",
+    "max": -1.3,
+    "probability": "5–10%",
+    "impact": "Water shortages common"
+   },
+   {
+    "id": "D1",
+    "label": "Moderate Drought",
+    "max": -0.8,
+    "probability": "10–20%",
+    "impact": "Streams/dams low"
+   },
+   {
+    "id": "D0",
+    "label": "Abnormally Dry",
+    "max": -0.5,
+    "probability": "20–30%",
+    "impact": "Pasture/crop stress starting"
+   }
   ],
-  "vegetation": {
-    "_spec": "VCI / VHI 0–100 % (Kogan 1995; < 40 % = drought stress). >= comparisons",
-    "classes": [
-      {"min": 80, "id": "Excellent"}, {"min": 60, "id": "Good"}, {"min": 40, "id": "Fair"},
-      {"min": 20, "id": "Poor"}, {"min": null, "id": "Very Poor"}
-    ],
-    "stress_below": 40
+  "none": {
+   "id": "None",
+   "label": "No drought"
   },
-  "borehole_status_sgi": {
-    "_spec": "<= comparisons",
-    "classes": [{"max": -1.6, "id": "Critical"}, {"max": -1.0, "id": "Low"}, {"max": -0.5, "id": "Watch"}],
-    "otherwise": "Normal"
+  "rank": {
+   "None": 0,
+   "D0": 1,
+   "D1": 2,
+   "D2": 3,
+   "D3": 4,
+   "D4": 5
+  }
+ },
+ "spi_wet": {
+  "_spec": "McKee et al. 1993 wet side; >= comparisons",
+  "classes": [
+   {
+    "min": 2.0,
+    "label": "Extremely wet"
+   },
+   {
+    "min": 1.5,
+    "label": "Very wet"
+   },
+   {
+    "min": 1.0,
+    "label": "Moderately wet"
+   }
+  ],
+  "near_normal_above": -0.5
+ },
+ "storage_alerts": {
+  "_spec": "§8.2, % FSC, < comparisons",
+  "L1": 50,
+  "L2": 30,
+  "L3": 15
+ },
+ "storage_bands": [
+  {
+   "max": 25,
+   "id": "very-low"
   },
-  "risk_score": {"classes": [{"min": 0.75, "id": "Very High"}, {"min": 0.5, "id": "High"}, {"min": 0.25, "id": "Moderate"}], "otherwise": "Low"},
-  "qa": {"_spec": "§23.1", "max_gap_days": 3, "training_max_missing_pct": 10}
+  {
+   "max": 50,
+   "id": "low"
+  },
+  {
+   "max": 70,
+   "id": "moderate"
+  },
+  {
+   "max": 90,
+   "id": "high"
+  },
+  {
+   "max": null,
+   "id": "very-high"
+  }
+ ],
+ "vegetation": {
+  "_spec": "VCI / VHI 0–100 % (Kogan 1995; < 40 % = drought stress). >= comparisons",
+  "classes": [
+   {
+    "min": 80,
+    "id": "Excellent"
+   },
+   {
+    "min": 60,
+    "id": "Good"
+   },
+   {
+    "min": 40,
+    "id": "Fair"
+   },
+   {
+    "min": 20,
+    "id": "Poor"
+   },
+   {
+    "min": null,
+    "id": "Very Poor"
+   }
+  ],
+  "stress_below": 40
+ },
+ "borehole_status_sgi": {
+  "_spec": "<= comparisons",
+  "classes": [
+   {
+    "max": -1.6,
+    "id": "Critical"
+   },
+   {
+    "max": -1.0,
+    "id": "Low"
+   },
+   {
+    "max": -0.5,
+    "id": "Watch"
+   }
+  ],
+  "otherwise": "Normal"
+ },
+ "risk_score": {
+  "classes": [
+   {
+    "min": 0.75,
+    "id": "Very High"
+   },
+   {
+    "min": 0.5,
+    "id": "High"
+   },
+   {
+    "min": 0.25,
+    "id": "Moderate"
+   }
+  ],
+  "otherwise": "Low"
+ },
+ "qa": {
+  "_spec": "§23.1",
+  "max_gap_days": 3,
+  "training_max_missing_pct": 10
+ },
+ "exploitation": {
+  "_spec": "§11.3 exploitation index = abstraction / recharge (ratio); < comparisons, last class above 1.0",
+  "classes": [
+   {
+    "max": 0.1,
+    "id": "Very Low"
+   },
+   {
+    "max": 0.3,
+    "id": "Low"
+   },
+   {
+    "max": 0.5,
+    "id": "Moderate"
+   },
+   {
+    "max": 0.7,
+    "id": "High"
+   },
+   {
+    "max": 1.0,
+    "id": "Very High",
+    "inclusive": true
+   }
+  ],
+  "otherwise": "Over-exploited"
+ },
+ "sans241": [
+  {
+   "id": "turbidity",
+   "label": "Turbidity",
+   "unit": "NTU",
+   "max": 1,
+   "risk": "Aesthetic"
+  },
+  {
+   "id": "colour",
+   "label": "Colour",
+   "unit": "TCU",
+   "max": 15,
+   "risk": "Aesthetic"
+  },
+  {
+   "id": "temperature",
+   "label": "Temperature",
+   "unit": "°C",
+   "max": 25,
+   "risk": "Aesthetic"
+  },
+  {
+   "id": "ecoli",
+   "label": "E. coli",
+   "unit": "cfu/100 mL",
+   "max": 0,
+   "risk": "Health"
+  },
+  {
+   "id": "totalColiforms",
+   "label": "Total coliforms",
+   "unit": "cfu/100 mL",
+   "max": 0,
+   "risk": "Health"
+  },
+  {
+   "id": "ph",
+   "label": "pH",
+   "unit": "pH units",
+   "min": 6.0,
+   "max": 9.0,
+   "risk": "Aesthetic"
+  },
+  {
+   "id": "ec",
+   "label": "Electrical conductivity",
+   "unit": "mS/m",
+   "max": 170,
+   "risk": "Aesthetic"
+  },
+  {
+   "id": "freeChlorine",
+   "label": "Free chlorine residual",
+   "unit": "mg/L",
+   "min": 0.2,
+   "max": 5.0,
+   "risk": "Treatment"
+  },
+  {
+   "id": "nitrate",
+   "label": "Nitrate (NO₃⁻-N)",
+   "unit": "mg/L",
+   "max": 11,
+   "risk": "Health"
+  },
+  {
+   "id": "fluoride",
+   "label": "Fluoride",
+   "unit": "mg/L",
+   "max": 1.5,
+   "risk": "Health"
+  },
+  {
+   "id": "arsenic",
+   "label": "Arsenic",
+   "unit": "mg/L",
+   "max": 0.01,
+   "risk": "Health"
+  },
+  {
+   "id": "lead",
+   "label": "Lead",
+   "unit": "mg/L",
+   "max": 0.01,
+   "risk": "Health"
+  },
+  {
+   "id": "cyanide",
+   "label": "Cyanide",
+   "unit": "mg/L",
+   "max": 0.07,
+   "risk": "Health"
+  },
+  {
+   "id": "thm",
+   "label": "Total THMs",
+   "unit": "mg/L",
+   "max": 0.2,
+   "risk": "Health"
+  }
+ ],
+ "wqi": {
+  "_spec": "WQI bands: Excellent 90–100, Good 70–90, Fair 50–70, Poor 25–50, Very Poor 0–25 (>= comparisons)",
+  "classes": [
+   {
+    "min": 90,
+    "id": "Excellent"
+   },
+   {
+    "min": 70,
+    "id": "Good"
+   },
+   {
+    "min": 50,
+    "id": "Fair"
+   },
+   {
+    "min": 25,
+    "id": "Poor"
+   }
+  ],
+  "otherwise": "Very Poor"
+ }
 }

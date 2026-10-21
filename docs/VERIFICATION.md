@@ -394,6 +394,38 @@ SELECT round(max("Direct recharge")::numeric, 0) FROM "11.2_recharge_and_dischar
 WHERE district_name = 'City of Cape Town' AND year = 2025
 ```
 
+## groundwater-reserve — 2026-10-21
+
+### ✅ Exploitation index, Namakwa (DC6), 2025 (11.3, %)
+
+- API: `GET /api/v1/groundwater-reserve/summary?municipality=DC6` → **46.7**
+- SQL result: **46.7** (tolerance ± 0.05)
+
+```sql
+SELECT round(max("Exploitation index")::numeric, 1) FROM "11.3_aquifer_sustainability"
+WHERE district_name = 'Namakwa' AND year = 2025
+```
+
+### ✅ Static reserve, national: Σ 11_1 static reserve volume over the 52 districts (Mm³)
+
+- API: `GET /api/v1/groundwater-reserve/summary` → **2683464.0**
+- SQL result: **2683464** (tolerance ± 0.5)
+
+```sql
+SELECT round(sum(v)::numeric, 0) FROM (SELECT district_name, max("Static reserve volume") v
+FROM "11_1_hydrogeological" WHERE year = 2025 GROUP BY 1) x
+```
+
+### ✅ Total recharge, Vhembe (DC34), 2025: direct recharge × district area + indirect recharge (Mm³/yr)
+
+- API: `GET /api/v1/groundwater-reserve/summary?municipality=DC34` → **640.0**
+- SQL result: **640** (tolerance ± 0.5)
+
+```sql
+SELECT max("Direct recharge"), max("Indirect recharge") FROM "11.2_recharge_and_discharge"
+WHERE district_name = 'Vhembe' AND year = 2025
+```
+
 ## rainfall — 2026-10-16
 
 ### ✅ Total rainfall, last 12 months, City of Cape Town (mm)

@@ -98,12 +98,40 @@ def storage_band(pct_fsc: float) -> str:
     raise AssertionError("unreachable")
 
 
+def exploitation_class(ratio: float) -> str:
+    """Exploitation index (abstraction / recharge, a ratio — the database stores it in %) → class (spec §11.3,
+    thresholds.ts `exploitationClass`)."""
+    cfg = thresholds()["exploitation"]
+    for c in cfg["classes"]:
+        if ratio < c["max"] or (c.get("inclusive") and ratio <= c["max"]):
+            return str(c["id"])
+    return str(cfg["otherwise"])
+
+
+def wqi_class(wqi: float) -> str:
+    cfg = thresholds()["wqi"]
+    for c in cfg["classes"]:
+        if wqi >= c["min"]:
+            return str(c["id"])
+    return str(cfg["otherwise"])
+
+
+def sans241_pass(param: str, value: float) -> bool:
+    """Pass / fail of one value against SANS 241:2015 (spec §14.1); unknown determinands pass."""
+    lim = next((x for x in thresholds()["sans241"] if x["id"] == param), None)
+    if lim is None:
+        return True
+    return not (("min" in lim and value < lim["min"]) or ("max" in lim and value > lim["max"]))
+
+
 # Classes of each palette scale, least to most severe (cascade `bar`)
 SEVERITY_ORDER: dict[str, list[str]] = {
     "drought": ["None", "D0", "D1", "D2", "D3", "D4"],
     "vci": ["Excellent", "Good", "Fair", "Poor", "Very Poor"],  # spec §5.3 vegetation health classes
     "storage": ["very-high", "high", "moderate", "low", "very-low"],
     "status": ["Normal", "Watch", "Low", "Critical"],  # borehole SGI status (thresholds.ts boreholeStatus)
+    "exploitation": ["Very Low", "Low", "Moderate", "High", "Very High", "Over-exploited"],
+    "wqi": ["Excellent", "Good", "Fair", "Poor", "Very Poor"],
 }
 
 

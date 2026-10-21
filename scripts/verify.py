@@ -675,6 +675,36 @@ FROM "11.3_aquifer_sustainability" WHERE year = 2025 GROUP BY 1) x""",
 WHERE district_name = 'City of Cape Town' AND year = 2025""",
         tol=0.5,
     ),
+    # ---------------------------------------------------------------- §11 groundwater reserve
+    Check(
+        "groundwater-reserve",
+        "Exploitation index, Namakwa (DC6), 2025 (11.3, %)",
+        "/api/v1/groundwater-reserve/summary?municipality=DC6",
+        kpi("ei"),
+        """SELECT round(max("Exploitation index")::numeric, 1) FROM "11.3_aquifer_sustainability"
+WHERE district_name = 'Namakwa' AND year = 2025""",
+    ),
+    Check(
+        "groundwater-reserve",
+        "Static reserve, national: Σ 11_1 static reserve volume over the 52 districts (Mm³)",
+        "/api/v1/groundwater-reserve/summary",
+        kpi("static"),
+        """SELECT round(sum(v)::numeric, 0) FROM (SELECT district_name, max("Static reserve volume") v
+FROM "11_1_hydrogeological" WHERE year = 2025 GROUP BY 1) x""",
+        tol=0.5,
+    ),
+    Check(
+        "groundwater-reserve",
+        "Total recharge, Vhembe (DC34), 2025: direct recharge × district area + indirect recharge (Mm³/yr)",
+        "/api/v1/groundwater-reserve/summary?municipality=DC34",
+        kpi("recharge"),
+        """SELECT max("Direct recharge"), max("Indirect recharge") FROM "11.2_recharge_and_discharge"
+WHERE district_name = 'Vhembe' AND year = 2025""",
+        tol=0.5,
+        sql_post=lambda rows: round(
+            float(rows[0][0]) * (get_spatial().district_areas() or {})["DC34"] / 1000 + float(rows[0][1]) / 1e6
+        ),
+    ),
 ]
 
 

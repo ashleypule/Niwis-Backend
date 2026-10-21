@@ -528,3 +528,19 @@ months are gaps). Comparisons use 12-month means (last 12 months vs the 12 befor
   `status`, `ec` → 501.
 - `entities`: 52 districts; card: depth, 12-month change, both hydraulic heads (m amsl, D7), recharge fraction,
   pumping rate and abstraction per borehole, direct recharge, vadose-zone soil moisture.
+
+### 14.6 `groundwater-reserve` (spec §11)
+
+- `summary`: `units` ("Districts with Aquifer Records": no aquifer units in the database), `recharge` (Mm³/yr = 11.2
+  direct recharge × area + indirect recharge, DECISIONS D19), `abstraction` (11.3, Mm³/yr), `dynamic` (Mm³/yr) and
+  `static` (Mm³) reserves (11_1, summed), `ei` (stored exploitation index in %, with `status` on the `exploitation`
+  scale from the ratio), `risk` (districts with EI ≥ 0.5).
+- `timeseries`: `level-trend` (11_1 depth to water, long-term mean, Sen's slope line), `recharge-abstraction`
+  (category = year, Mm³/yr); `yield-ei` → 501.
+- `breakdown`: `ei-classes` (districts per class), `components` (dynamic reserve and current abstraction; the
+  ecological reserve and the additional allowable abstraction are null, named "(not in the database)").
+- `table`: `aquifers` (districts: recharge, abstraction, EI as a ratio, static reserve, status class), `lowest` (the
+  groundwater page's table).
+- `map`: `ei` (ratio, scale `exploitation`), `recharge` (direct recharge, mm), `gw-level` (11_1 depth), `sgi` (the
+  groundwater page's layer, Aug 2024, stale).
+- `entities`: 52 districts; cards with aquifer properties, reserves, recharge, yield, depletion rate and EI status.

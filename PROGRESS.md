@@ -8,6 +8,14 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Completion from the database — Part 2, module 4: Groundwater reserve (§11) (2026-10-21)
+
+- [x] `app/modules/groundwater_reserve/`: total recharge (D19), abstraction, reserves, stored exploitation index
+      with spec §11.3 classes (`thresholds.json` → `exploitation`; SANS 241 and WQI bands added too, tested against
+      thresholds.ts), districts at risk, level trend, EI classes, components (ecological reserve not in the database),
+      balance table, district layers `ei`, `recharge`, `gw-level`, `sgi`.
+- [x] Verification: `tests/test_groundwater_reserve.py`; `docs/VERIFICATION.md` groundwater-reserve 3 / 3.
+
 ### Completion from the database — Part 2, module 3: Groundwater (§10) (2026-10-21)
 
 - [x] `app/modules/groundwater/`: telemetry depth (monthly means of samples), anomaly (+ = shallower), 12-month

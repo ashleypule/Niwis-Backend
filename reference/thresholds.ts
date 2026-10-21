@@ -230,18 +230,6 @@ export function vegClass(vci: number): VegClass {
   return 'Very Poor';
 }
 
-/**
- * The backend still names the classes Very Healthy … Very Stressed: the one place they are mapped to the spec's names
- * (applied to every response by the API client, src/lib/vegClasses.ts).
- */
-export const LEGACY_VEG_CLASS: Record<string, VegClass> = {
-  'Very Healthy': 'Excellent',
-  Healthy: 'Good',
-  Moderate: 'Fair',
-  Stressed: 'Poor',
-  'Very Stressed': 'Very Poor',
-};
-
 // ---------------------------------------------------------------- Groundwater
 /** Exploitation index = abstraction / recharge (spec §11.3). */
 export function exploitationClass(

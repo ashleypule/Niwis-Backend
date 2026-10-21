@@ -215,6 +215,7 @@ class DistrictModule:
         decimals: int = 1,
         sublabel: str | None = None,
         reason: str | None = None,
+        status: c.Status | None = None,
         **extra: Any,
     ) -> c.Kpi:
         if value is None:
@@ -228,6 +229,7 @@ class DistrictModule:
             **({"unit": unit} if unit is not None else {}),
             decimals=decimals,
             **self.stamp(month, var),
+            **({"status": status} if status is not None else {}),
             **extra,
         )
 

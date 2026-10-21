@@ -164,3 +164,12 @@ values in all 16 744 district-months; lead, cyanide (`14.1`) and toxicants (`15.
 
 The three rows are identical; loaders read one value per period (`duplicate_rows: true`). Its baseflow discharge is
 withheld (Johannesburg averages 1 739 m³/s).
+
+### D19 Total recharge = direct recharge × district area + indirect recharge
+
+**Decision.** The groundwater-reserve "Total Recharge" (Mm³/year) adds the two recharge components of spec §11.2 as
+stored in `11.2`: direct recharge (mm/year, × the district's boundary area) and indirect recharge (m³/year). The
+exploitation index shown is the stored `11.3` value (in %, classified as a ratio with the spec's classes), not
+recomputed. **Evidence.** The stored index tracks abstraction / indirect recharge (r = 0.84) but is not equal to it,
+so recomputing would publish a number the database does not hold. **Alternative.** Direct recharge alone — rejected:
+the spec defines both as recharge.

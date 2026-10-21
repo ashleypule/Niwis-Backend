@@ -103,3 +103,37 @@ def test_veg_and_borehole_match_ts() -> None:
     bh_ts = [(float(v), c) for v, c in re.findall(r"if \(sgi <= (-?[\d.]+)\) return '(\w+)'", TS)]
     bh_js = [(c["max"], c["id"]) for c in thresholds()["borehole_status_sgi"]["classes"]]
     assert bh_ts == bh_js
+
+
+@pytest.mark.parametrize(
+    ("ratio", "cls"),
+    [
+        (0.05, "Very Low"),
+        (0.1, "Low"),
+        (0.45, "Moderate"),
+        (0.69, "High"),
+        (1.0, "Very High"),
+        (1.01, "Over-exploited"),
+    ],
+)
+def test_exploitation_classes_match_ts(ratio: float, cls: str) -> None:
+    from app.core.thresholds import exploitation_class
+
+    assert exploitation_class(ratio) == cls
+    ts = (Path(__file__).resolve().parent.parent / "reference" / "thresholds.ts").read_text(encoding="utf-8")
+    for line in ("if (ei < 0.1) return 'Very Low';", "if (ei <= 1.0) return 'Very High';"):
+        assert line in ts
+
+
+def test_sans241_and_wqi_match_ts() -> None:
+    from app.core.thresholds import sans241_pass, thresholds, wqi_class
+
+    ts = (Path(__file__).resolve().parent.parent / "reference" / "thresholds.ts").read_text(encoding="utf-8")
+    for lim in thresholds()["sans241"]:
+        assert f"id: '{lim['id']}'" in ts
+        if "max" in lim:  # the .ts writes 5.0 / 9.0 where JSON has 5 / 9
+            assert re.search(rf"id: '{lim['id']}'.*max: {lim['max']:g}(\.0)?,", ts), lim["id"]
+    assert not sans241_pass("nitrate", 11.5) and sans241_pass("nitrate", 11) and not sans241_pass("ph", 5.9)
+    assert [wqi_class(v) for v in (95, 70, 50, 25, 10)] == ["Excellent", "Good", "Fair", "Poor", "Very Poor"]
+    for b in ("if (wqi >= 90) return 'Excellent';", "if (wqi >= 25) return 'Poor';"):
+        assert b in ts
