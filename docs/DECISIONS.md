@@ -245,3 +245,44 @@ idempotent and takes the password as a psql variable. `ENV=production` refuses t
 2026-10-21), so a plain role would see no rows; the script was run twice on the local fixture database: the role reads
 under RLS and `CREATE TEMP TABLE` fails (read-only). **Alternative.** `BYPASSRLS` — simpler, but it would also bypass
 any restrictive policy added later. The backend has not run it on Supabase (read-only rule).
+
+### D26 Open-source release: items DWS should confirm before publishing
+
+**Decision.** Both repositories are prepared for public release (CONTRIBUTING.md, SECURITY.md, gitleaks configuration,
+no secrets in history), with **no LICENSE file**: each README says "Licence: to be confirmed by DWS". The following may
+not be publishable as they stand and are listed for DWS to decide; nothing was removed or rewritten:
+
+| Item | Where | Why it needs a decision |
+| --- | --- | --- |
+| DWS logo / coat of arms | frontend `public/brand/dws-logo.png`; drawn in the sidebar, header and report covers (screenshots are not committed) | Government insignia: use is governed by DWS / GCIS corporate-identity rules, not by the code licence. |
+| Mockup screenshots | frontend `docs/reference/screens/` (61 images) | Design mockups supplied for the build; their author and publication status are not stated. |
+| Confidential data requirements specification | backend `reference/NIWIS-data-requirements-spec.md` — **git-ignored, never committed** (full-history check 2026-10-21) | Marked confidential. Code and docs cite its section numbers (§3–§16) and implement its thresholds (`app/core/thresholds.json`); DWS should confirm that citing and implementing them publicly is acceptable. |
+| Database extracts | backend `tests/fixtures/*.sql.gz`; frontend `tests/fixtures/backend/*.json` | Real values from the NIWIS database (owner: authoritative, shown as Live). Publishing the data is DWS's call, separate from publishing the code. |
+| WMA and catchment boundaries | `reference/geo/wmas.json`, `catchments.json` (both repos) | From the DWS NWRP map service; `SOURCES.md` already says to confirm the licence with DWS GIS. geoBoundaries layers (CC BY) need the attribution the map footer shows. |
+
+**Evidence.** Repository inventory and gitleaks scan, 2026-10-21. **Alternative.** Deleting or rewriting these now —
+rejected: the owner asked for them to be listed, and history is not rewritten without the owner.
+
+### D27 Database hosting region
+
+The Supabase project runs in AWS `eu-west-1` (Ireland). This is recorded as a **hosting choice**, not a POPIA blocker:
+the database holds aggregated environmental and water-resource data per district (no personal information), and
+POPIA's cross-border rules (section 72) concern personal information. If personal data are ever added (e.g. settlement
+or customer records), the hosting region must be reassessed. **Evidence.** Pooler host `aws-1-eu-west-1.pooler.supabase.com`;
+`docs/DB_INVENTORY.md` (no personal-data columns in the 36 registered tables). **Alternative.** Moving to a South African
+region (e.g. `af-south-1`) — a data-team decision, not required for this release.
+
+### D28 Production builds talk only to the API; every contract path answers
+
+**Decision.** The production frontend is built in `api` mode (`npm run build:release`, `.env.release`): no Mock
+Service Worker, so no sample number can reach a production page. For that to work the API answers every path the
+frontend calls: `/api/v1/<module>/<summary|timeseries|forecast|breakdown|table|matrix|map|entities…>` of the 14
+modules without a live service returns **501 `DATA_UNAVAILABLE` with a module-specific reason**
+(`app/modules/unavailable.py`; e.g. "No tariff or water-pricing tables are in the database"; Green Drop, Blue Drop,
+RWQO and IWRM say that only their Database variables are served), and so does `/api/v1/alerts`. The frontend shows
+these as "Not yet available" with the reason. `/api/v1/reference/local-municipalities` (213, with their district) and
+`/api/v1/search` (provinces, WMAs, districts, local municipalities) are now served from the committed reference files,
+so filters and search work without the mock. Paths of live modules, unknown modules and unknown kinds stay 404.
+**Evidence.** Before this, a production build showed red error panels (404) on 14 pages, and its filter bar asked the
+mock for local municipalities. **Alternative.** Keeping hybrid mode in production with sample panels marked Sample —
+rejected: the owner's rule is that production builds never show sample numbers.

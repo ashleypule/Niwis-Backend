@@ -1,6 +1,7 @@
 # Security review
 
-> Phase 7 review of the NIWIS backend (2026-10-14). Scope: the API code in `app/`, configuration, Docker image and
+> Phase 7 review of the NIWIS backend (2026-10-14), updated for the public release (2026-10-21: no login, hardening,
+> read-only role, secret scan). Scope: the API code in `app/`, configuration, Docker image and
 > the way it uses the shared Supabase database. Each control lists how it is enforced and how it is tested.
 
 ## Summary
@@ -8,16 +9,20 @@
 | Area | Status | Notes |
 | --- | --- | --- |
 | Database writes | ✅ prevented | Every pooled session is `READ ONLY`, verified on connect and re-asserted on release; writes rejected (tested) |
-| Database credentials | ⚠ action for data team | API uses the `postgres` login via the pooler; a dedicated read-only role is proposed (`migrations/proposed/001_readonly_api_role.sql`) |
+| Database credentials | ⚠ action for data team | API uses the `postgres` login via the pooler until the data team runs `migrations/proposed/001_readonly_api_role.sql` (generated from the registry: SELECT on 36 tables, read-only, per-table SELECT policies under RLS; tested on the fixture DB). `ENV=production` refuses to start without `DB_READONLY_ROLE_CONFIRMED=true` |
 | SQL injection | ✅ | Values are bind parameters only; identifiers come from the validated registry and are quoted by an allow-list (`app.db.ident`); request values never reach SQL text |
 | Secrets | ✅ | `.env` git- and docker-ignored; `SecretStr`; logs scrub connection strings, JWTs and `password=`; responses scanned in tests |
 | Error leakage | ✅ | Contract error bodies only; unexpected errors → generic 500 with a request id (details in server logs, scrubbed) |
 | Input validation | ✅ | Every filter / key is matched against allow-lists (provinces, WMAs, MDB codes, periods, metric / layer keys); `limit` 1–500; bad input → 400 / 404 |
-| CORS | ✅ | Origins from config (defaults: localhost:5173 / 5174); `GET` / `OPTIONS` only; no credentials |
-| Rate limiting | ✅ basic | 600 requests / minute / IP (configurable; was 120, too low for a dashboard behind one office NAT); `/health` exempt; trusted networks via `RATE_LIMIT_TRUSTED_CIDRS`; `X-Forwarded-For` only with `TRUST_PROXY_HEADERS=true` (right-most entry), so the IP cannot be spoofed; in-process, memory-bounded; use the gateway or Redis when scaled out; `client_key` hook for per-user limits once auth exists |
+| CORS | ✅ | Origins from `CORS_ORIGINS`; when empty `*` (public data, D24); `GET` / `OPTIONS` only; no credentials |
+| HTTP headers | ✅ | CSP `default-src 'none'` (Swagger-only CSP on `/docs`), nosniff, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, HSTS in production; also on the generic 500 |
+| Caching | ✅ | `Cache-Control: public, max-age=<server TTL>` on 200 / 501, `no-store` on health and errors (no per-user data exists) |
+| Request size | ✅ | Bodies > 16 KiB or chunked → 413; query strings > 4 096 → 414; uvicorn without `Server` header |
+| Rate limiting | ✅ basic | 600 requests / minute / IP (configurable; was 120, too low for a dashboard behind one office NAT); `/health` exempt; trusted networks via `RATE_LIMIT_TRUSTED_CIDRS`; `X-Forwarded-For` only with `TRUST_PROXY_HEADERS=true` and, with `TRUSTED_PROXY_CIDRS`, only from those proxies (read from the right, skipping them; uvicorn runs `--no-proxy-headers`), so the IP cannot be spoofed; in-process, memory-bounded; use the gateway or Redis when scaled out; `client_key` hook for per-user limits once auth exists |
 | Resource exhaustion | ✅ | 10 s statement timeout; bounded caches (2 048 entries per TTL); large daily slices aggregated or filtered in SQL; long series downsampled to ≤ 2 000 points |
-| Authentication | ⏳ hook in place | `get_current_user` on every router allows all requests today; roles can be added without changing the contract |
-| Dependencies | ✅ | `pip-audit -r requirements.txt`: no known vulnerabilities (2026-10-14) |
+| Authentication | ✅ none by design | Public system with no login (D23); `get_current_user` stays on every router as a documented no-op |
+| Secret scanning | ✅ | gitleaks v8.21.2 over the full history of both repositories (2026-10-21): no secrets; 446 false positives (database column names, synthetic test credentials) allow-listed in `.gitleaks.toml`; `.env` and the confidential spec never committed |
+| Dependencies | ✅ | `pip-audit -r requirements.txt`: no known vulnerabilities (2026-10-21); run in CI |
 | Container | ✅ | `python:3.12-slim`, non-root user (uid 10001), no secrets baked in (`env_file` at runtime), healthcheck |
 
 ## Details

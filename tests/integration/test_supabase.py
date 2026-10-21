@@ -54,7 +54,8 @@ async def test_health_live(live: httpx.AsyncClient) -> None:
 async def test_row_counts_and_as_of_match_db(live: httpx.AsyncClient) -> None:
     items = {i["table"]: i for i in (await live.get("/api/v1/meta/sources")).json()["items"]}
     for table, ds in REG.datasets.items():
-        ((n, last),) = _sql(f"SELECT count(*), max({ds.date_sql()}) FROM {ds.fq}")
+        # rows dated after today and excluded location spellings are never served (DECISIONS D2, D3)
+        ((n, last),) = _sql(f"SELECT count(*), max({ds.date_sql()}) FROM {ds.fq} WHERE {ds.rows_sql()}")
         assert items[table]["rows"] == n, table
         assert items[table]["asOf"] == last.isoformat(), table
 
@@ -62,5 +63,5 @@ async def test_row_counts_and_as_of_match_db(live: httpx.AsyncClient) -> None:
 async def test_newest_data_date(live: httpx.AsyncClient) -> None:
     body = (await live.get("/api/v1/meta/sources")).json()
     daily = [ds for ds in REG.datasets.values() if ds.time.resolution == "daily"]
-    newest = max(_sql(f"SELECT max({ds.date_sql()}) FROM {ds.fq}")[0][0] for ds in daily)
+    newest = max(_sql(f"SELECT max({ds.date_sql()}) FROM {ds.fq} WHERE {ds.rows_sql()}")[0][0] for ds in daily)
     assert body["newestDataDate"] == newest.isoformat()

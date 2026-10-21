@@ -1,0 +1,78 @@
+# NIWIS production stack: the API and the built frontend behind nginx (see DEPLOYMENT.md).
+#
+#   cd deploy
+#   FRONTEND_DIR=../../Niwis-Frontend docker compose -f docker-compose.prod.yml up -d --build
+#
+# The API reads ../.env (SUPABASE_DB_URL as the read-only role, DB_READONLY_ROLE_CONFIRMED=true, CORS_ORIGINS).
+# Only the web container publishes a port; put TLS in front of it (a load balancer or a TLS-terminating proxy).
+name: niwis
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  api:
+    build: ..
+    image: niwis-backend:prod
+    env_file: ../.env
+    environment:
+      ENV: ${NIWIS_ENV:-production}
+      # nginx (the web container, on the fixed subnet below) sets X-Forwarded-For; only it is believed
+      TRUST_PROXY_HEADERS: "true"
+      TRUSTED_PROXY_CIDRS: 172.30.0.0/24
+    expose:
+      - "8000"
+    networks:
+      niwis:
+        ipv4_address: 172.30.0.10
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4).status == 200 else 1)"
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  web:
+    build: ${FRONTEND_DIR:-../../Niwis-Frontend}
+    image: niwis-frontend:prod
+    ports:
+      - "${NIWIS_HTTP_PORT:-80}:8080"
+    networks:
+      niwis:
+        ipv4_address: 172.30.0.20
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+networks:
+  niwis:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

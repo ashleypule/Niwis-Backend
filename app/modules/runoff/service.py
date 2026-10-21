@@ -1087,3 +1087,15 @@ async def prewarm(data: DataAccess) -> None:
     newest = await data.newest(Q)
     y1 = newest.year if newest >= dt.date(newest.year, 12, 31) else newest.year - 1
     await data.daily_percentile(Q, HISTORY_START, dt.date(y1, 12, 31), 0.9)  # Q10 thresholds for the events table
+
+
+async def prewarm_views(state: Any) -> None:
+    """The two slowest national runoff panels on a cold cache — the seasonal average (every day since 2000, summed
+    over the 52 districts) and the high-flow events table (daily exceedances of each district's Q10) — computed once
+    for the default view (national, 12 months), so their data queries answer from cache."""
+    from app.core.filters import Filters, Window, parse_scope
+
+    newest = await state.meta.newest_date()
+    svc = RunoffService(Ctx(state, Filters(parse_scope(), Window("12M", None, None), False, None), newest))
+    await svc.ts_seasonal()
+    await svc.tbl_events(None)

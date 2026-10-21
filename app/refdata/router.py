@@ -1,15 +1,17 @@
-"""GET /api/v1/reference/{provinces|wmas|catchments|municipalities} — cascading filter options (contract RefList)."""
+"""GET /api/v1/reference/{provinces|wmas|catchments|municipalities|local-municipalities} — cascading filter options
+(contract RefList) — and GET /api/v1/search (places)."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.auth import get_current_user
 from app.core import districts
 from app.core.errors import DataUnavailable, NotFound
-from app.schemas.contract import RefItem, RefList
+from app.refdata.places import local_municipalities, search
+from app.schemas.contract import RefItem, RefList, SearchResult
 from app.state import AppState, get_state
 
 router = APIRouter(prefix="/api/v1/reference", tags=["reference"], dependencies=[Depends(get_current_user)])
@@ -30,6 +32,10 @@ async def reference(kind: str, state: AppState = Depends(get_state)) -> dict[str
             RefItem(id=d.code, name=d.official_name, parent=d.province, province=d.province)
             for d in sorted(districts.districts(), key=lambda d: (d.province, d.official_name))
         ]
+    elif kind == "local-municipalities":
+        # The 213 local municipalities with their district (`parent`); data are served per district (D1), so a local
+        # municipality filter rolls up to its district.
+        items = list(local_municipalities())
     elif kind == "catchments":
         raise DataUnavailable(
             "Catchment filtering is not available: NIWIS data are held per district municipality.",
@@ -38,6 +44,15 @@ async def reference(kind: str, state: AppState = Depends(get_state)) -> dict[str
     else:
         raise NotFound(
             f"Unknown reference list {kind!r}",
-            issues=[{"allowed": ["provinces", "wmas", "catchments", "municipalities"]}],
+            issues=[{"allowed": ["provinces", "wmas", "catchments", "municipalities", "local-municipalities"]}],
         )
     return RefList(type=kind, items=items).dump()
+
+
+search_router = APIRouter(prefix="/api/v1", tags=["reference"], dependencies=[Depends(get_current_user)])
+
+
+@search_router.get("/search", response_model=SearchResult, response_model_exclude_none=True)
+async def search_places(q: str = Query("", max_length=100)) -> dict[str, Any]:
+    """Provinces, WMAs, districts and local municipalities whose name (or code) contains `q` (≥ 2 characters)."""
+    return SearchResult(q=q, hits=search(q)).dump()

@@ -1,12 +1,32 @@
 # Progress
 
-## Status (2026-10-20): completing the system from the database — Part 1 (every table registered) done; Part 2 (dams, surface water, groundwater, groundwater reserve, water quality, Overview) done; Part 3 (public release) in progress. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
+## Status (2026-10-20): completing the system from the database — Part 1 (every table registered) done; Part 2 (dams, surface water, groundwater, groundwater reserve, water quality, Overview) done; Part 3 (public release) done; see the Part 3 entry for what remains. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Completion from the database — Part 3, public release (2026-10-21 / 22)
+
+- [x] No login (D23): `get_current_user` documented as a no-op; frontend user menu and alert actions removed.
+- [x] Hardening (D24): security headers, `Cache-Control: public` from the cache TTLs, CORS `*` without configured
+      origins, 413 / 414 limits, `X-Forwarded-For` only from `TRUSTED_PROXY_CIDRS`, no traces in 500s
+      (`tests/test_hardening.py`).
+- [x] Read-only role (D25): `001_readonly_api_role.sql` generated from the registry (36 tables, SELECT policies under
+      RLS), tested twice on the fixture database; `ENV=production` needs `DB_READONLY_ROLE_CONFIRMED=true`.
+- [x] Open source (D26): gitleaks over the full history of both repositories — no secrets (446 false positives, all
+      column names or synthetic test credentials, allow-listed); `.env` and the confidential spec never committed;
+      CONTRIBUTING.md, SECURITY.md, README "Licence: to be confirmed by DWS"; no LICENSE file. Hosting note (D27).
+- [x] CI: `.github/workflows/ci.yml` (lint, types, role check, tests on a throwaway fixture Postgres, pip-audit, Docker
+      build, gitleaks) — no secrets, no database connection.
+- [x] Production builds answer every contract path (D28): 501 with a module reason for the 14 modules without a
+      service and `/alerts`; `/reference/local-municipalities` and `/search` from reference files.
+- [x] Deployment: `DEPLOYMENT.md`, `deploy/docker-compose.prod.yml` (API + frontend nginx, health checks, log rotation,
+      read-only containers). Checked locally: gzip, cache headers, CSP, `/docs`, 501s, SPA routes; the frontend's
+      `test:release` passed on all 25 routes (no sample data, no CSP violations).
+- [x] Performance: runoff seasonal and events added to the warm-up (`prewarm_views`).
 
 ### Completion from the database — Part 2, Overview and cross-page (2026-10-21)
 

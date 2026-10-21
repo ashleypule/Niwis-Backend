@@ -49,13 +49,16 @@ from app.modules.rainfall.router import router as rainfall_router
 from app.modules.rainfall.service import prewarm as prewarm_rainfall
 from app.modules.runoff.router import router as runoff_router
 from app.modules.runoff.service import prewarm as prewarm_runoff
+from app.modules.runoff.service import prewarm_views as prewarm_runoff_views
 from app.modules.surface_water.router import router as surface_water_router
 from app.modules.surface_water.service import prewarm as prewarm_surface_water
+from app.modules.unavailable import router as unavailable_router
 from app.modules.vegetation.router import router as vegetation_router
 from app.modules.vegetation.service import prewarm as prewarm_vegetation
 from app.modules.water_quality.router import router as water_quality_router
 from app.modules.water_quality.service import prewarm as prewarm_water_quality
 from app.refdata.router import router as reference_router
+from app.refdata.router import search_router
 from app.registry.catalogue import get_catalogue
 from app.registry.registry import get_registry
 from app.state import AppState
@@ -86,6 +89,7 @@ async def _warm(state: AppState) -> None:
         ("climate", lambda: prewarm_climate(state.data)),
         ("vegetation", lambda: prewarm_vegetation(state.data)),
         ("runoff", lambda: prewarm_runoff(state.data)),
+        ("runoff seasonal and events", lambda: prewarm_runoff_views(state)),
         ("dams", lambda: prewarm_dams(state.data)),
         ("surface water", lambda: prewarm_surface_water(state.data)),
         ("groundwater", lambda: prewarm_groundwater(state.data)),
@@ -223,6 +227,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
 
     app.include_router(meta_router)
     app.include_router(reference_router)
+    app.include_router(search_router)
     app.include_router(rainfall_router)
     app.include_router(drought_router)
     app.include_router(climate_router)
@@ -235,6 +240,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(water_quality_router)
     for module in sorted(IMPLEMENTED_MODULES | DATABASE_VIEW_MODULES):
         app.include_router(build_category_router(module))
+    app.include_router(unavailable_router)  # last: 501 with a reason for contract paths no router above serves
     return app
 
 

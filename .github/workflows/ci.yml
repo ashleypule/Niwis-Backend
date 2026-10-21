@@ -1,0 +1,74 @@
+# Lint, types, tests and build on every push and pull request. No secrets and no connection to the NIWIS database:
+# the tests run against a throwaway Postgres loaded from the recorded fixture (tests/fixtures/*.sql.gz).
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      NIWIS_TEST_DB_URL: postgresql://postgres:test@localhost:55432/niwis_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install
+        run: pip install -r requirements-dev.txt pip-audit==2.10.1
+
+      - name: Start the fixture database
+        run: |
+          docker compose --profile test up -d --wait testdb
+          docker compose ps testdb
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Types
+        run: mypy
+
+      - name: Read-only role covers every registered table
+        run: python scripts/gen_readonly_role.py --check
+
+      - name: Tests
+        run: pytest -q
+
+      - name: Dependency audit
+        run: pip-audit -r requirements.txt
+
+  docker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image (not pushed)
+        run: docker build -t niwis-backend:ci .
+
+  secrets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks (full history)
+        run: >
+          docker run --rm -v "$PWD:/repo:ro" zricethezav/gitleaks:v8.21.2
+          git /repo --config /repo/.gitleaks.toml --redact --no-banner

@@ -1,17 +1,20 @@
 # NIWIS backend
 
 API for the **National Integrated Water Information System** (Department of Water and Sanitation, South Africa). It
-serves the frontend contract (`reference/API_CONTRACT.md`) from the NIWIS Supabase database, **read-only**.
+serves the frontend contract (`reference/API_CONTRACT.md`) from the NIWIS Supabase database, **read-only**. The system
+is public and open source: there is no login, and every endpoint is an anonymous GET.
 
 - Python 3.12 · FastAPI · asyncpg · Pydantic v2
 - Interactive docs: `http://localhost:8000/docs` · schema: `docs/openapi.json`
 - Status of modules and data: `PROGRESS.md` · contract additions: `docs/CONTRACT_CHANGES.md`
-- **Live modules:** `rainfall`, `drought`, `climate`, `vegetation`, `runoff` — what each serves and what is unavailable:
-  `docs/FRONTEND_INTEGRATION.md`
+- **Live modules (10):** `rainfall`, `drought`, `climate`, `vegetation`, `runoff`, `dams`, `surface-water`,
+  `groundwater`, `groundwater-reserve`, `water-quality`; database views (category charts) for `green-drop`,
+  `blue-drop`, `rwqo`, `iwrm`. What each serves and what is unavailable: `docs/FRONTEND_INTEGRATION.md`
+- Decisions taken on the data and the release: `docs/DECISIONS.md` · deployment: `DEPLOYMENT.md`
 
 | Document | Contents |
 | --- | --- |
-| `docs/DB_INVENTORY.md` | Profile of the 14 database tables |
+| `docs/DB_INVENTORY.md` | Profile of the 36 registered database tables |
 | `docs/DATA_MAPPING.md` | Every contract key → source table / columns / method, or unavailable |
 | `docs/DATA_GAPS.md` | What the database lacks or gets wrong — for the data team |
 | `docs/CONTRACT_CHANGES.md` | Backwards-compatible additions to the API contract |
@@ -48,14 +51,18 @@ Check it works: `GET /api/v1/health` should report `"status": "ok"` and `"readOn
 | `SUPABASE_DB_URL` | — | Postgres connection string (Supabase → Connect → **Session pooler**). Required for data. |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | — | Only used by the inventory script's REST fallback. |
 | `NIWIS_SUPABASE_TABLES_MODULE_<n>` | — | Tables the data team has registered; a test checks they match `app/registry/datasets.yaml`. |
-| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:5174` | Comma-separated frontend origins. |
+| `CORS_ORIGINS` | *(empty = `*`)* | Comma-separated browser origins allowed to call the API (GET only, no credentials). Empty allows any origin (public data). |
+| `ENV` | `development` | `production` enables HSTS and refuses to start unless `DB_READONLY_ROLE_CONFIRMED=true`. |
+| `DB_READONLY_ROLE_CONFIRMED` | `false` | The operator confirms `SUPABASE_DB_URL` uses the read-only role (`migrations/proposed/001_readonly_api_role.sql`). |
 | `STALE_AFTER_DAYS` | `90` | A value is `isStale` when its `asOf` lags the newest DB date by more than this. |
 | `PREWARM_SCOPES` | `national,province=WC,municipality=DC32,wma=WMA5` | Scopes pre-loaded for every category chart group (`national`, `province=…`, `municipality=…`, `wma=…`). |
 | `PREWARM_CATEGORIES` | `true` | Pre-load every category chart group (national, 12M) at startup and before its cache expires; at most `DB_POOL_MAX − 1` queries at once. |
 | `DROUGHT_CLASS_AREA_PCT` | `20` | Headline drought class = the worst class that, with all worse classes, covers at least this % of the area (spec §3.4 classes per district). |
 | `RATE_LIMIT_PER_MINUTE` | `600` | Per client IP; `0` disables. `/api/v1/health` is exempt. |
 | `RATE_LIMIT_TRUSTED_CIDRS` | *(empty)* | Comma-separated networks that are never limited (e.g. the DWS network). |
-| `TRUST_PROXY_HEADERS` | `false` | Read the client IP from `X-Forwarded-For` (right-most entry). Only behind a reverse proxy that sets it. |
+| `TRUST_PROXY_HEADERS` | `false` | Read the client IP from `X-Forwarded-For`. Only behind a reverse proxy that sets it. |
+| `TRUSTED_PROXY_CIDRS` | *(empty)* | With `TRUST_PROXY_HEADERS`: only these peers' `X-Forwarded-For` is believed (recommended). |
+| `MAX_REQUEST_BODY_BYTES`, `MAX_QUERY_LENGTH` | `16384`, `4096` | Larger bodies → 413, longer query strings → 414. |
 | `RESPONSE_CHECKS` | `log` | Response invariants (`app/core/response_checks.py`): `log`, `raise` (tests / debugging), `off`. |
 | `DB_POOL_MAX`, `DB_STATEMENT_TIMEOUT_MS` | `5`, `10000` | Pool size and per-statement timeout. |
 | `CACHE_TTL_SUMMARY_S`, `CACHE_TTL_MAP_S`, `CACHE_TTL_LONG_SERIES_S`, `CACHE_TTL_META_S` | 900, 900, 3600, 3600 | Cache lifetimes. |
@@ -72,6 +79,8 @@ Check it works: `GET /api/v1/health` should report `"status": "ok"` and `"readOn
 - **No invented data.** Missing or withheld data return `501 DATA_UNAVAILABLE` (whole panel) or `null` plus an
   `unavailable` entry (single field) — see `docs/CONTRACT_CHANGES.md` §3.
 - **Secrets** live only in `.env` (git-ignored) and are never logged or returned.
+- **Public-release hardening** (`app/middleware.py`): per-IP rate limit, security headers, `Cache-Control: public` with
+  the server cache lifetimes, request size limits, no stack traces in responses. See `docs/DECISIONS.md` D24.
 
 ## Tests and checks
 
@@ -145,3 +154,13 @@ All tables are keyed by the **52 district municipalities** (no stations or coord
 values are area-weighted from districts once official district boundaries are supplied (`docs/DATA_GAPS.md` §12).
 Anomalies use the database's 2000–2026 baseline, shorter than the WMO 30-year standard. Details:
 `docs/DATA_MAPPING.md`, `docs/DATA_GAPS.md`.
+
+## Contributing and security
+
+See `CONTRIBUTING.md` (setup, checks, the data rules every change must keep) and `SECURITY.md` (how to report a
+vulnerability privately, and what the API does to stay read-only).
+
+## Licence
+
+Licence: to be confirmed by DWS. Until the Department of Water and Sanitation confirms a licence, no licence is granted
+for this code; the boundary data in `reference/geo` carry their own licences (`reference/geo/SOURCES.md`).

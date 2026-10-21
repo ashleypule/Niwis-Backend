@@ -4,11 +4,13 @@ background while the old one is served, so warmed entries never expire into a co
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 import pytest
 
 from app.core import cache as cache_mod
 from app.core.cache import MemoryCache
+from tests.conftest import requires_db
 
 
 async def test_single_flight() -> None:
@@ -60,3 +62,19 @@ async def test_failed_refresh_keeps_the_old_value(monkeypatch: pytest.MonkeyPatc
     assert await c.get_or_set("k", 100, load) == 1
     await asyncio.gather(*c._tasks)
     assert await c.get_or_set("k", 100, load) == 1  # still cached (TTLCache uses its own clock)
+
+
+@pytest.mark.db
+@requires_db
+async def test_runoff_seasonal_and_events_are_prewarmed(client_factory: Any) -> None:
+    """Part 3 performance: the two slowest cold runoff panels are in the warm-up, so their data come from cache."""
+    from app.modules.runoff.service import prewarm_views
+
+    async for c in client_factory():
+        state = c._transport.app.state.niwis  # type: ignore[attr-defined]
+        await prewarm_views(state)
+        stored = set(state.cache._stored)
+        assert any(k.startswith("data:dscope:runoff_depth_daily:2000-01-01:") for k in stored)  # seasonal: all days
+        assert any(k.startswith("data:exceed:runoff_depth_daily:") for k in stored)  # events: Q10 exceedances
+        assert (await c.get("/api/v1/runoff/timeseries", params={"metric": "seasonal"})).status_code == 200
+        assert (await c.get("/api/v1/runoff/table", params={"metric": "events"})).status_code == 200
