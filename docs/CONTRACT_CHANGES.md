@@ -314,7 +314,7 @@ moisture → vegetation → streamflow → reservoir → groundwater → socio-e
 2001–2025; `cls` / `bar` / `class` / `severity` null with a reason: no agreed classes), `streamflow` (null: no gauged
 discharge), `groundwater` (SGI, `scale: "status"`, `cls` = borehole status Normal / Watch / Low / Critical from
 thresholds.ts, `severity` = % of area at Low or worse). The reservoir row is null with the plausibility reason
-(§15 of DATA_GAPS). The precipitation `cls` / `class` now follow the area rule of the Drought Class KPI (12.4) and its
+(§15 of DATA_GAPS). Streamflow and groundwater: see 14.8. The precipitation `cls` / `class` now follow the area rule of the Drought Class KPI (12.4) and its
 `severity` is the % of area in D1–D4.
 
 ### 12.8 One SSI rule (B8)
@@ -418,7 +418,7 @@ SGI repeats its Aug 2024 value in every district from Sep 2024, so it is served 
 - Category view: `sgi_dimensionless` is `live` with `asOf` 2024-08-01, `isStale: true` and the note "Served May 2002 –
   Aug 2024 only: …"; series stop at Aug 2024 (`periodEnd` 2024-08-31) and the SeriesSet `note` says so. A period
   entirely after Aug 2024 (the default 12M) gives a null series whose `unavailable` reason names the cut-off.
-- `drought/summary` → `sgi` KPI and `drought/table?metric=cascade` → groundwater stage stay **null**, reason
+- `drought/summary` → `sgi` KPI stays **null** (the cascade groundwater stage shows the `10_1` level anomaly, 14.8), reason
   "Latest valid SGI is Aug 2024 (more than 90 days old)" (they come back once a current SGI exists).
 
 ### 13.8 Scoped category requests no longer time out (BACKEND_ISSUES #14)
@@ -568,3 +568,15 @@ Guidelines, compliance, ratios and the CCME WQI: DECISIONS D20.
   `ecoli` as **district choropleths** of value / guideline (unit "× guideline", scale `ratio`); `lead` (stored only as
   Lead/Cadmium/Chromium) and `forecast-wqi` → 501.
 - `entities`: 52 districts; card: WQI with class `status`, latest EC, pH, turbidity, DO, nitrate, phosphate, E. coli.
+
+### 14.8 Drought cascade: streamflow and groundwater stages filled (DECISIONS D22)
+
+- `streamflow` row: `metric: "ssi"`, `scale: "drought"`, `value` "SSI-3 x.xx", `valueNum` = area-weighted SSI-3 of the
+  `9_1` district flows (equal to `surface-water/map?layer=ssi` for one district), `cls` / `class` = SPI drought class,
+  `severity` = % of area at D1 or worse, `asOf` = the latest complete flow month; a `streamflow` component. Null with
+  the calibration reason when the record is too short to fit.
+- `groundwater` row while no current SGI exists: `stage` "Groundwater (level anomaly)", `metric: "gwLevelAnomaly"`,
+  `scale: "status"`, `value` "±x.xx m vs <Month> mean 2000–<year>", `valueNum` = the Groundwater page's Level Anomaly
+  KPI (+ = shallower); `cls` / `bar` / `class` / `severity` null, listed in `unavailable` (`rows.groundwater.cls` …)
+  with the SGI reason; a `groundwater` component. With a current SGI the row returns to 12.7.
+- Stages without a value never carry `asOf` or a component.

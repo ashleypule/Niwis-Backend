@@ -1,12 +1,23 @@
 # Progress
 
-## Status (2026-10-20): completing the system from the database — Part 1 (every table registered) done; Part 2 (dams, surface water, groundwater, groundwater reserve, water quality) in progress. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
+## Status (2026-10-20): completing the system from the database — Part 1 (every table registered) done; Part 2 (dams, surface water, groundwater, groundwater reserve, water quality, Overview) done; Part 3 (public release) in progress. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
 
 ### Blocking / waiting on others
 
 - **Read-only role** (data team): API connects as `postgres` via the session pooler; every session is forced READ ONLY
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
+
+### Completion from the database — Part 2, Overview and cross-page (2026-10-21)
+
+- [x] Drought cascade: streamflow stage = SSI-3 of the `9_1` flows (SPI classes), groundwater stage = `10_1` level
+      anomaly without a class while no current SGI exists (D22, CONTRACT_CHANGES 14.8); reservoir stays withheld (D2).
+      Checked against the live database: DC6 SSI-3 −0.94 (D1) = Surface Water SSI layer; anomaly −0.10 m = Groundwater
+      KPI.
+- [x] Drought storage / SGI reasons cite the `8_1` and `10_1` checks.
+- [x] Frontend Overview: six live KPI cards and the live Key Indicators tabs come from the module summaries / series.
+      `/meta` (36 tables) and `/health` ("10 of 24 modules live") need no backend change.
+- [x] 1 048 tests.
 
 ### Completion from the database — Part 2, module 5: Water quality (§12) (2026-10-21)
 

@@ -50,8 +50,12 @@ from app.core.thresholds import (
     veg_class,
 )
 from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
+from app.modules.groundwater.service import DEPTH as GW_DEPTH
+from app.modules.groundwater.service import GroundwaterService
 from app.modules.rainfall.service import HISTORY_START, MONTHS, WINDOW, RainfallService, _months
 from app.modules.runoff.service import RunoffService
+from app.modules.surface_water.service import FLOW as SW_FLOW
+from app.modules.surface_water.service import SurfaceWaterService
 from app.schemas import contract as c
 
 MODULE = "drought"
@@ -939,15 +943,46 @@ class DroughtService:
             )
         )
         component("agricultural", mv, "vhi")
-        # 4 streamflow: no gauged discharge in the database
-        rows.append(stage(4, "streamflow", "streamflow", "Streamflow", "discharge", "drought", None, None, None))
-        unavailable.append(
-            c.UnavailableField(
-                field="rows.streamflow",
-                reason="No gauged streamflow in the database: the river discharge column holds the same placeholder "
-                "value in every district. The SSI shown on this page is computed from modelled runoff, not streamflow.",
+        # 4 streamflow: SSI-3 of the 9_1 district flows (as the Surface Water page's SSI layer), area-weighted, with
+        # the SPI classes; severity = % of area at D1 or worse (DECISIONS D22)
+        sw = SurfaceWaterService(self.ctx)
+        ssi_d, mf, fy1 = await sw.district_ssi(3)
+        ssi_v = sw.aggregate(ssi_d, False)
+        flow_cls = drought_class_or_none(ssi_v)
+        dry = sum(w[k] for k, v in ssi_d.items() if k in w and drought_class(float(v)) in ("D1", "D2", "D3", "D4"))
+        flow_cov = sum(w[k] for k in ssi_d.index if k in w)
+        rows.append(
+            stage(
+                4,
+                "streamflow",
+                "streamflow",
+                "Streamflow (SSI-3 of district flow)",
+                "ssi",
+                "drought",
+                rnd(ssi_v, 2),
+                f"SSI-3 {ssi_v:.2f}" if ssi_v is not None else None,
+                flow_cls,
+                cls_label=drought_label(flow_cls) if flow_cls else None,
+                severity=dry / flow_cov * 100 if ssi_v is not None and flow_cov else None,
+                as_of=mf.date() if ssi_v is not None else None,
             )
         )
+        if ssi_v is None:
+            gap = calibration_gap(await sw.scope_monthly_flow(), 3, (HISTORY_START.year, fy1), "SSI-3")
+            unavailable.append(
+                c.UnavailableField(
+                    field="rows.streamflow", reason=gap or f"No 3-month flow for this scope ending {mf:%b %Y}"
+                )
+            )
+        else:
+            components.append(
+                c.Component(
+                    key="streamflow",
+                    as_of=iso(mf.date()),
+                    source=sw.src(SW_FLOW),
+                    **self.ctx.stamp(mf.date(), "monthly"),
+                )
+            )
         # 5 reservoir: dam storage (withheld after the plausibility check)
         reason_st = self.withheld("dam_storage")
         st = pd.DataFrame() if reason_st else await self.storage_series()
@@ -992,8 +1027,40 @@ class DroughtService:
             )
         # 6 groundwater: SGI with the spec's borehole status classes; severity = % of area at Low or worse (≤ −1.0)
         if reason_sgi := await self.sgi_unavailable():
-            rows.append(stage(6, "groundwater", "groundwater", "Groundwater (SGI)", "sgi", "status", None, None, None))
-            unavailable.append(c.UnavailableField(field="rows.groundwater", reason=reason_sgi))
+            # no current SGI: the 10_1 depth-to-water anomaly (as the Groundwater page's Level Anomaly KPI), unclassed
+            gw = GroundwaterService(self.ctx)
+            an, mgw, y1 = await gw.anomaly()
+            gwa = gw.aggregate(an, False)
+            rows.append(
+                stage(
+                    6,
+                    "groundwater",
+                    "groundwater",
+                    "Groundwater (level anomaly)",
+                    "gwLevelAnomaly",
+                    "status",
+                    rnd(gwa, 2),
+                    f"{gwa:+.2f} m vs {mgw:%B} mean {HISTORY_START.year}–{y1}" if gwa is not None else None,
+                    None,
+                    as_of=mgw.date() if gwa is not None else None,
+                )
+            )
+            no_gw_classes = (
+                "Borehole status classes need a current SGI, which the database does not have ("
+                + reason_sgi
+                + "): the level anomaly is shown without a class"
+            )
+            if gwa is not None:
+                for key in ("cls", "bar", "class", "severity"):
+                    unavailable.append(c.UnavailableField(field=f"rows.groundwater.{key}", reason=no_gw_classes))
+                components.append(
+                    c.Component(
+                        key="groundwater",
+                        as_of=iso(mgw.date()),
+                        source=gw.src(GW_DEPTH),
+                        **self.ctx.stamp(mgw.date(), "monthly"),
+                    )
+                )
         else:
             mg = await self.latest("sgi")
             sgi_d = (await self.at("sgi", mg)).dropna()

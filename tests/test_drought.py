@@ -94,7 +94,12 @@ async def test_cascade_components(client: httpx.AsyncClient) -> None:
     assert rows["agricultural"]["asOf"] == "2025-12-01" and rows["hydrological"]["asOf"] is None
     assert rows["socio-economic"]["value"] is None and rows["hydrological"]["value"] is None
     stale = {x["key"]: x["isStale"] for x in body["components"]}
-    assert stale == {"meteorological": False, "soil-moisture": True, "agricultural": True}
+    assert stale == {
+        "meteorological": False,
+        "soil-moisture": True,
+        "agricultural": True,
+        "groundwater": False,
+    }
 
 
 async def test_sgi_served_to_aug_2024_only(client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]) -> None:

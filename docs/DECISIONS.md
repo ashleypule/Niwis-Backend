@@ -194,3 +194,19 @@ Table statistics run one at a time with a 60 s transaction-local statement timeo
 never requested directly); the category pre-warm shares a limit of `DB_POOL_MAX − 3` connections; the module warm-up
 runs one query at a time. **Evidence.** After the §8–§16 tables were registered, cold starts timed out requests and
 statistics on the 500 000-row tables (10 s limit) because all five connections were busy warming.
+
+### D22 Drought cascade: streamflow and groundwater stages from the §9 and §10 tables
+
+**Decision.** Stage 4 (streamflow) is the area-weighted **SSI-3 of the `9_1` district flows** (the same per-district
+index as the Surface Water page's SSI layer; gamma fit over the full years from 2000), classed with the SPI drought
+classes; severity = share of the scope's area at D1 or worse. Stage 6 (groundwater) keeps the SGI with borehole status
+classes when a current SGI exists; while it does not (the valid SGI ends Aug 2024 and the `10_1` SGI is withheld), it is
+the **`10_1` depth-to-water anomaly** (latest sampled month vs that calendar month's mean, + = shallower; the
+Groundwater page's Level Anomaly KPI), shown **without a class or severity** and with the reason, as the soil-moisture
+stage. Reservoir stays withheld (`8_1` storage fails the plausibility check, D2). The drought page's SSI-3 KPI stays on
+modelled runoff (B8), so the KPI and the streamflow stage are labelled as different series. **Evidence.** The prompt
+asks for cascade stages to be updated where a new table supplies valid current data; `9_1` flows and `10_1` depths pass
+the constancy and plausibility checks and run to Sep / Oct 2026. **Alternatives.** (a) An SGI computed from `10_1`
+depths — rejected: the gamma-fitted standardised index needs gap-free monthly accumulations, and telemetry is sampled
+about every seven weeks, so most months would be gaps; a normal-score SGI would be a new method the spec does not
+define. (b) Leaving both stages blank — rejected: valid current data exists.

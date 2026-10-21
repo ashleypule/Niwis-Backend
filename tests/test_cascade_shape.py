@@ -83,7 +83,8 @@ async def test_drought_cascade_has_the_specs_seven_stages(
     client: httpx.AsyncClient, fixture_db: Callable[[str], list[Any]]
 ) -> None:
     """B7: precipitation deficit → soil moisture → vegetation → streamflow → reservoir → groundwater → socio-economic
-    (spec §3, §25.1). Soil moisture and groundwater from data; streamflow, reservoir, socio-economic null + reason."""
+    (spec §3, §25.1). Streamflow from the 9_1 flows (SSI-3), groundwater from the 10_1 level anomaly (no current SGI);
+    reservoir and socio-economic null + reason."""
     body = (await client.get("/api/v1/drought/table", params={"metric": "cascade", "municipality": "DC6"})).json()
     rows = body["rows"]
     assert [r["stageId"] for r in rows] == [
@@ -100,16 +101,27 @@ async def test_drought_cascade_has_the_specs_seven_stages(
     assert by["precipitation"]["id"] == "meteorological" and by["vegetation"]["id"] == "agricultural"
     assert by["reservoir"]["id"] == "hydrological"  # original ids kept
     reasons = {u["field"]: u["reason"] for u in body["unavailable"]}
-    # SGI is served only to Aug 2024 (values after repeat Aug 2024): too old for a current stage → null with reason
-    for sid in ("streamflow", "reservoir", "groundwater", "socio-economic"):
+    for sid in ("reservoir", "socio-economic"):
         assert by[sid]["valueNum"] is None and f"rows.{by[sid]['id']}" in reasons, sid
-    assert "placeholder" in reasons["rows.streamflow"]
-    assert (
-        reasons["rows.groundwater"]
-        == "Latest valid SGI is Aug 2024 (more than 90 days old); the newer 10_1 SGI is withheld (not an index of "
-        "any water level in the database)"
+    # streamflow: the Surface Water page's SSI-3 for the district, with the SPI drought classes
+    ssi = (await client.get("/api/v1/surface-water/map", params={"layer": "ssi"})).json()
+    sf = by["streamflow"]
+    if "DC6" in ssi["values"]:
+        assert sf["valueNum"] == round(ssi["values"]["DC6"], 2) and sf["cls"] is not None
+        assert "rows.streamflow" not in reasons
+    else:  # the fixture's 9_1 record is too short to fit the gamma distribution: null, with the SSI-3 reason
+        assert sf["valueNum"] is None and "SSI-3" in reasons["rows.streamflow"]
+    # groundwater: SGI is served only to Aug 2024 (too old for a current stage), so the stage is the Groundwater
+    # page's level anomaly, without a class, and says why
+    gw_sum = (await client.get("/api/v1/groundwater/summary", params={"municipality": "DC6"})).json()
+    gw_kpi = next(k for k in gw_sum["kpis"] if k["id"] == "anomaly")
+    gw = by["groundwater"]
+    assert gw["valueNum"] == gw_kpi["value"] and gw["cls"] is None and gw["scale"] == "status"
+    assert reasons["rows.groundwater.cls"] == (
+        "Borehole status classes need a current SGI, which the database does not have (Latest valid SGI is Aug 2024 "
+        "(more than 90 days old); the newer 10_1 SGI is withheld (not an index of any water level in the database)): "
+        "the level anomaly is shown without a class"
     )
-    assert by["groundwater"]["scale"] == "status"
 
     sm = by["soil-moisture"]
     summary = (await client.get("/api/v1/drought/summary", params={"municipality": "DC6"})).json()
@@ -117,7 +129,9 @@ async def test_drought_cascade_has_the_specs_seven_stages(
     assert sm["valueNum"] == sm_kpi["value"] and sm["value"].endswith(sm_kpi["sublabel"].rsplit(" vs ", 1)[1])
     assert sm["cls"] is None and "rows.soil-moisture.cls" in reasons
     comps = {x["key"] for x in body["components"]}
-    assert comps == {"meteorological", "soil-moisture", "agricultural"}
+    assert comps == {"meteorological", "soil-moisture", "agricultural", "groundwater"} | (
+        {"streamflow"} if sf["valueNum"] is not None else set()
+    )
 
 
 async def test_cascade_precipitation_class_matches_the_headline(client: httpx.AsyncClient) -> None:
