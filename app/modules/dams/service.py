@@ -165,7 +165,7 @@ class DamsService(DistrictModule):
                 f"SELECT x.n, x.dam, x.river FROM unnest($1::text[]) AS w(name) CROSS JOIN LATERAL ("
                 f"SELECT {loc} AS n, {ident('dam_name')} AS dam, {ident('river')} AS river FROM {ds.fq} "
                 f"WHERE {loc} = w.name AND {ds.rows_sql()} ORDER BY {ident(str(ds.time.column))} DESC LIMIT 1) x",
-                districts.db_names(),
+                sorted({n for d in districts.districts() for n in await self.data.names(ds, d.code)}),
             )
             out: dict[str, dict[str, str]] = {}
             for r in rows:

@@ -173,3 +173,15 @@ async def test_identical_duplicate_rows_are_read_once(client: httpx.AsyncClient)
     df = await state.data.monthly("rd_direct_recharge")
     assert not df.empty
     assert not df.duplicated(["district", "date"]).any()
+
+
+@pytest.mark.db
+@requires_db
+async def test_name_filters_use_the_tables_own_spellings(client: httpx.AsyncClient) -> None:
+    """SQL name filters are exact: each table's own spellings are discovered (satellite_remote_sensing writes
+    'cape town', 9_1 writes 'UMgungundlovu' / 'Pixley Ka Seme'), so no district drops out of a scope."""
+    state = client._transport.app.state.niwis  # type: ignore[attr-defined]
+    ds = state.registry.datasets["satellite_remote_sensing"]
+    assert "cape town" in await state.data.names(ds, "CPT")
+    spell = await state.data.spellings(ds)
+    assert set(spell) == {"DC44", "CPT", "DC6"}

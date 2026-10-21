@@ -369,11 +369,9 @@ class CategoryService:
         names: list[str] = []
         facs: list[float] = []
         for code, f in factors.items():
-            dist = districts.by_code(code)
-            if dist is not None:
-                for n in {dist.db_name, dist.db_name.lower(), *dist.aliases}:
-                    names.append(n)
-                    facs.append(float(f))
+            for n in await self.state.data.names(ds, code):
+                names.append(n)
+                facs.append(float(f))
         inner_cols = ", ".join(
             f"{inner}({_value_sql(ds, x.column)}) FILTER (WHERE {ds.valid_sql(x.column)}) AS v{i}"
             for i, x in enumerate(cols)
@@ -436,7 +434,7 @@ class CategoryService:
         period = f"date_trunc('{trunc}', {d})::date" if trunc else d
         dist = districts.by_code(self.ctx.filters.scope.id)
         assert dist is not None
-        names = list({dist.db_name, dist.db_name.lower(), *dist.aliases})
+        names = await self.state.data.names(ds, dist.code)
         sql = (
             f"SELECT DISTINCT ON (p) {period} AS p, {ds.raw_sql(x.column)} AS v FROM {ds.fq} "
             f"WHERE {ds.range_sql()} AND {ds.valid_sql(x.column)} AND {loc} = ANY($3::text[]) "

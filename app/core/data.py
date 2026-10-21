@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
+import logging
 from typing import Any
 
 import pandas as pd
@@ -22,6 +23,7 @@ from app.db import Database, ident
 from app.registry.registry import Dataset, Registry
 
 COLS = ["district", "date", "value"]
+log = logging.getLogger("niwis.data")
 
 
 class DataAccess:
@@ -43,6 +45,50 @@ class DataAccess:
 
     def table_of(self, var: str) -> str:
         return self.source(var)[0].table
+
+    async def spellings(self, ds: Dataset) -> dict[str, tuple[str, ...]]:
+        """MDB code → every spelling of that district found in the table's location column (cached a day).
+
+        SQL filters compare names exactly, but tables differ in case ("UMgungundlovu", "Pixley Ka Seme" in 9_1) and in
+        old names; discovering the table's own spellings keeps every district in scope. Indexed tables are read with
+        an index skip-scan (one probe per district), others with one DISTINCT scan."""
+        loc = ident(ds.location.column)
+
+        async def load() -> dict[str, tuple[str, ...]]:
+            indexed = await self.db.fetchval(
+                "SELECT EXISTS (SELECT 1 FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid "
+                "AND a.attnum = i.indkey[0] WHERE i.indrelid = to_regclass($1) AND a.attname = $2)",
+                ds.fq,
+                ds.location.column,
+            )
+            sql = (
+                f"WITH RECURSIVE k(v) AS ((SELECT {loc} FROM {ds.fq} WHERE {loc} IS NOT NULL ORDER BY {loc} LIMIT 1) "
+                f"UNION ALL SELECT (SELECT {loc} FROM {ds.fq} WHERE {loc} > k.v ORDER BY {loc} LIMIT 1) FROM k "
+                f"WHERE k.v IS NOT NULL) SELECT v FROM k WHERE v IS NOT NULL"
+                if indexed
+                else f"SELECT DISTINCT {loc} FROM {ds.fq} WHERE {loc} IS NOT NULL"
+            )
+            out: dict[str, set[str]] = {}
+            for r in await self.db.fetch(sql):
+                d = districts.resolve(str(r[0]))
+                if d is not None:
+                    out.setdefault(d.code, set()).add(str(r[0]))
+            return {k: tuple(sorted(v)) for k, v in out.items()}
+
+        res: dict[str, tuple[str, ...]] = await self.cache.get_or_set(f"data:spellings:{ds.table}", 86400, load)
+        return res
+
+    async def names(self, ds: Dataset, code: str) -> list[str]:
+        """Every spelling of a district to match in `ds`: the known aliases plus those found in the table."""
+        d = districts.by_code(code)
+        if d is None:
+            return []
+        known = {d.db_name, d.db_name.lower(), *d.aliases}
+        try:
+            known |= set((await self.spellings(ds)).get(d.code, ()))
+        except Exception:  # never fail a request on the discovery query: fall back to the known spellings
+            log.warning("district spelling discovery failed", extra={"table": ds.table})
+        return sorted(known)
 
     @staticmethod
     def _frame(rows: list[Any]) -> pd.DataFrame:
@@ -144,10 +190,7 @@ class DataAccess:
         names: list[str] = []
         facs: list[float] = []
         for code, f in factors.items():
-            dist = districts.by_code(code)
-            if dist is None:
-                continue
-            for n in {dist.db_name, dist.db_name.lower(), *dist.aliases}:
+            for n in await self.names(ds, code):
                 names.append(n)
                 facs.append(float(f))
         sql = (
@@ -179,11 +222,9 @@ class DataAccess:
         names: list[str] = []
         thr: list[float] = []
         for code, t in thresholds.items():
-            dist = districts.by_code(code)
-            if dist is not None:
-                for n in {dist.db_name, dist.db_name.lower(), *dist.aliases}:
-                    names.append(n)
-                    thr.append(float(t))
+            for n in await self.names(ds, code):
+                names.append(n)
+                thr.append(float(t))
         sql = (
             f"SELECT {loc}, {d}, {c} FROM {ds.fq} JOIN unnest($3::text[], $4::float8[]) AS t(name, thr) "
             f"ON t.name = {loc} WHERE {ds.range_sql()} AND {ds.valid_sql(col)} AND {c} > t.thr "
@@ -207,7 +248,7 @@ class DataAccess:
         sem = asyncio.Semaphore(max(1, self.settings.db_pool_max - 1))
 
         async def one(d: districts.District) -> tuple[str, float | None]:
-            names = list({d.db_name, d.db_name.lower(), *d.aliases})
+            names = await self.names(ds, d.code)
             async with sem:
                 v = await self.db.fetchval(sql, *ds.range_args(start, end), q, names)
             return d.code, (float(v) if v is not None else None)
