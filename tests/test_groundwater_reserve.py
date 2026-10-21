@@ -83,3 +83,9 @@ async def test_selected_district_panels(client: httpx.AsyncClient) -> None:
     assert a["title"].endswith("Namakwa") and a["series"][0]["values"] != b["series"][0]["values"]
     r = (await client.get(f"{B}/timeseries", params={"metric": "recharge-abstraction", "entityId": "DC6"})).json()
     assert r["title"].endswith("Namakwa") and r["series"][0]["data"]
+
+
+async def test_no_card_field_sends_a_null_unit(client: httpx.AsyncClient) -> None:
+    for module in ("groundwater-reserve", "groundwater", "surface-water", "dams"):
+        card = (await client.get(f"/api/v1/{module}/entities/DC6")).json()
+        assert all(f.get("unit", "") is not None for f in card["fields"]), module

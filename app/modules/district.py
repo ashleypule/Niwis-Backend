@@ -373,7 +373,7 @@ class DistrictModule:
         """An entity-card field: the district's value for the variable's latest complete month."""
         if not self.has(var):
             unit = self.unit(var) if var in self.registry.variables else None
-            return c.EntityField(label=label, value=None, unit=unit)
+            return c.EntityField(label=label, value=None, **({"unit": unit} if unit and unit != "—" else {}))
         month = await self.latest_month(var, how)
         v = (await self.district_values(var, month, how)).get(code)
         unit = self.unit(var)
@@ -384,7 +384,7 @@ class DistrictModule:
         return c.EntityField(
             label=f"{label} ({suffix})",
             value=rnd(float(v), nd) if v is not None and pd.notna(v) else None,
-            unit=None if unit == "—" else unit,
+            **({} if unit == "—" else {"unit": unit}),  # a unit is a string or absent, never null
             as_of=iso(month.date()),
             is_stale=self.ctx.stale(month.date(), res),
         )
