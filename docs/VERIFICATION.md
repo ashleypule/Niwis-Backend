@@ -360,6 +360,40 @@ SELECT count(DISTINCT round(v::numeric, 3)) FROM (SELECT date, sum(dam_storage_m
 FROM hydrological_drought_master WHERE date >= '2021-12-01' GROUP BY 1) s
 ```
 
+## groundwater — 2026-10-21
+
+### ✅ Mean groundwater level, Vhembe (DC34): mean telemetry depth to water of the latest sampled month
+
+- API: `GET /api/v1/groundwater/summary?municipality=DC34` → **49.0**
+- SQL result: **49.0** (tolerance ± 0.05)
+
+```sql
+WITH m AS (SELECT max(date_trunc('month', date)) AS last FROM "10_1_borehole_and_aquifer_master"
+           WHERE variable_name = 'groundwater_table_depth_m_bgl' AND date < date_trunc('month', CURRENT_DATE))
+SELECT round(avg(value)::numeric, 1) FROM "10_1_borehole_and_aquifer_master", m
+WHERE district_name = 'Vhembe' AND variable_name = 'groundwater_table_depth_m_bgl' AND date_trunc('month', date) = m.last
+```
+
+### ✅ Annual abstraction, national 2025: Σ 11.3 total abstraction over the 52 districts (Mm³/yr)
+
+- API: `GET /api/v1/groundwater/summary` → **1520.0**
+- SQL result: **1520.0** (tolerance ± 0.05)
+
+```sql
+SELECT round((sum(a) / 1e6)::numeric, 1) FROM (SELECT district_name, max("Total abstraction") a
+FROM "11.3_aquifer_sustainability" WHERE year = 2025 GROUP BY 1) x
+```
+
+### ✅ Estimated recharge, City of Cape Town (CPT): 11.2 direct recharge 2025 (mm/yr)
+
+- API: `GET /api/v1/groundwater/summary?municipality=CPT` → **22.0**
+- SQL result: **22** (tolerance ± 0.5)
+
+```sql
+SELECT round(max("Direct recharge")::numeric, 0) FROM "11.2_recharge_and_discharge"
+WHERE district_name = 'City of Cape Town' AND year = 2025
+```
+
 ## rainfall — 2026-10-16
 
 ### ✅ Total rainfall, last 12 months, City of Cape Town (mm)

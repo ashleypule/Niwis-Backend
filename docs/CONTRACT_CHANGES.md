@@ -505,3 +505,25 @@ flow is the sum over its districts.
   runoff module's layers; `stations`, `catchment-runoff` → 501.
 - `entities`: the 52 districts (`type: "district"`); cards: mean flow, flow status, SSI-3 (with a drought-scale
   `status`), stage, velocity, sediment, catchment area, tree cover, built-up share.
+
+### 14.5 `groundwater` (spec §10)
+
+Depth to water from `10_1` NGA telemetry (irregular days, ~every 7 weeks; a month = mean of its samples, unsampled
+months are gaps). Comparisons use 12-month means (last 12 months vs the 12 before).
+
+- `summary`: `level` (m bgl, latest sampled month), `anomaly` (m, + = shallower, vs the same-month mean of the full
+  years), `recharge` (11.2 direct recharge, mm/yr, latest complete year), `abstraction` (11.3 total abstraction,
+  Mm³/yr, summed), `rising` (districts whose 12-month mean depth is shallower than the 12 before; label "Districts with
+  Rising Levels"); `boreholes`, `sgi` (valid SGI ends Aug 2024), `risk` null with reasons.
+- `timeseries`: `level` (water level, previous year, same-month long-term mean; inverse axis), `level-long` (annual
+  means, long-term mean, Sen's slope line), `anomaly`, `sgi` (hydrological_drought_master, served to Aug 2024, stale;
+  when the page period has no valid SGI its last 12 valid months are shown), `seasonal` (last 5 years by month),
+  `recharge-abstraction` (category = year; recharge = direct recharge × district area, abstraction, net; Mm³/yr);
+  `quality` → 501.
+- `breakdown=distribution` (districts per depth class of the `gwDepth` palette); `status`, `by-aquifer`, `sector` → 501.
+- `table`: `lowest` (districts by depth, column "District", 12-month change Rising / Falling), `declining` (12-month
+  change and Sen's slope, + = rising); `aquifers`, `nitrate` → 501.
+- `map`: `gw-level` (m bgl), `level-change` (m, + = higher), `sgi` (Aug 2024, stale) as district choropleths;
+  `status`, `ec` → 501.
+- `entities`: 52 districts; card: depth, 12-month change, both hydraulic heads (m amsl, D7), recharge fraction,
+  pumping rate and abstraction per borehole, direct recharge, vadose-zone soil moisture.

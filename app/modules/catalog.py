@@ -19,6 +19,7 @@ from app.modules.climate import service as climate
 from app.modules.common import Selector
 from app.modules.dams import service as dams
 from app.modules.drought import service as drought
+from app.modules.groundwater import service as groundwater
 from app.modules.rainfall import service as rainfall
 from app.modules.runoff import service as runoff
 from app.modules.surface_water import service as surface_water
@@ -33,8 +34,9 @@ SERVICE_MODULES: dict[str, ModuleType] = {
     "runoff": runoff,
     "dams": dams,
     "surface-water": surface_water,
+    "groundwater": groundwater,
 }
-ENTITY_MODULES = {"rainfall", "runoff", "dams", "surface-water"}
+ENTITY_MODULES = {"rainfall", "runoff", "dams", "surface-water", "groundwater"}
 KINDS = {"timeseries": "metric", "forecast": "metric", "breakdown": "metric", "table": "metric", "matrix": "metric"}
 KINDS["map"] = "layer"
 PROBE = "__catalog_probe__"

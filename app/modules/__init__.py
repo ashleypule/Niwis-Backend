@@ -5,7 +5,16 @@ a module as live only when it is listed and its tables are reachable).
 pages show the database variables, and every other panel the "not yet available" state (health: `partial`).
 """
 
-IMPLEMENTED_MODULES: set[str] = {"rainfall", "drought", "climate", "vegetation", "runoff", "dams", "surface-water"}
+IMPLEMENTED_MODULES: set[str] = {
+    "rainfall",
+    "drought",
+    "climate",
+    "vegetation",
+    "runoff",
+    "dams",
+    "surface-water",
+    "groundwater",
+}
 DATABASE_VIEW_MODULES: set[str] = {
     "dams",
     "surface-water",

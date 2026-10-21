@@ -8,6 +8,14 @@
   (verified: writes rejected). Proposed role: `migrations/proposed/001_readonly_api_role.sql`.
 - **Indexes** (data team): `migrations/proposed/002_indexes.sql` — 10 tables have no index.
 
+### Completion from the database — Part 2, module 3: Groundwater (§10) (2026-10-21)
+
+- [x] `app/modules/groundwater/`: telemetry depth (monthly means of samples), anomaly (+ = shallower), 12-month
+      changes, recharge (11.2) and abstraction (11.3) volumes, SGI to Aug 2024 (stale; KPI null), depth-class
+      distribution, deepest / declining districts, district layers `gw-level`, `level-change`, `sgi`; 501 with reasons
+      for boreholes, aquifers, sectors, EC, nitrate, status classes, forecast.
+- [x] Verification: `tests/test_groundwater.py`; `docs/VERIFICATION.md` groundwater 3 / 3.
+
 ### Completion from the database — Part 2, module 2: Surface water (§9) (2026-10-21)
 
 - [x] `app/modules/surface_water/`: discharge = 9_1 daily mean flow / 86 400 s summed over the scope (D10); stage,

@@ -34,6 +34,8 @@ from app.modules.dams.router import router as dams_router
 from app.modules.dams.service import prewarm as prewarm_dams
 from app.modules.drought.router import router as drought_router
 from app.modules.drought.service import prewarm as prewarm_drought
+from app.modules.groundwater.router import router as groundwater_router
+from app.modules.groundwater.service import prewarm as prewarm_groundwater
 from app.modules.rainfall.router import router as rainfall_router
 from app.modules.rainfall.service import prewarm as prewarm_rainfall
 from app.modules.runoff.router import router as runoff_router
@@ -75,6 +77,7 @@ async def _warm(state: AppState) -> None:
         ("runoff", lambda: prewarm_runoff(state.data)),
         ("dams", lambda: prewarm_dams(state.data)),
         ("surface water", lambda: prewarm_surface_water(state.data)),
+        ("groundwater", lambda: prewarm_groundwater(state.data)),
         ("table statistics", state.meta.table_stats),
     ]
     for name, step in steps:
@@ -184,6 +187,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(runoff_router)
     app.include_router(dams_router)
     app.include_router(surface_water_router)
+    app.include_router(groundwater_router)
     for module in sorted(IMPLEMENTED_MODULES | DATABASE_VIEW_MODULES):
         app.include_router(build_category_router(module))
     return app
