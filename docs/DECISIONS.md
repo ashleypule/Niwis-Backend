@@ -210,3 +210,38 @@ the constancy and plausibility checks and run to Sep / Oct 2026. **Alternatives.
 depths — rejected: the gamma-fitted standardised index needs gap-free monthly accumulations, and telemetry is sampled
 about every seven weeks, so most months would be gaps; a normal-score SGI would be a new method the spec does not
 define. (b) Leaving both stages blank — rejected: valid current data exists.
+
+### D23 Public system, no login
+
+**Decision.** NIWIS is public and open source with no login (owner's decision). The frontend has no user menu, role
+or sign-out (the header keeps the theme toggle); report covers name only the issuing department; alerts are read-only
+(no acknowledge / assign / resolve, nothing stored in the browser). The backend keeps `get_current_user` as a
+documented no-op dependency on every router, so access control could be added in one place without changing routes.
+**Evidence.** Owner's instruction. **Alternative.** Removing the dependency — rejected: it costs nothing and keeps the
+seam.
+
+### D24 Hardening of the public API
+
+**Decision.** Rate limit 600 requests / minute per client IP (health exempt); `X-Forwarded-For` is read only with
+`TRUST_PROXY_HEADERS=true` and, when `TRUSTED_PROXY_CIDRS` is set, only from those proxies (uvicorn runs with
+`--no-proxy-headers`, so this is the only place the client address is decided). `Cache-Control: public,
+max-age=<server cache TTL>` on 200 / 501 GETs (summary and map 15 min, series / tables 1 h, meta / reference /
+category lists 1 h), `no-store` on health and errors. CORS from `CORS_ORIGINS`; when empty, `*` — GET / OPTIONS only,
+no credentials. Bodies over 16 KiB or chunked → 413, query strings over 4 096 characters → 414. Security headers on every
+response (nosniff, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, a `default-src 'none'` CSP, with a CSP for
+`/docs` that allows Swagger UI's jsDelivr assets; HSTS in production). Unhandled errors return `{"error": "Internal server
+error", "requestId"}` only; the trace goes to the log. `/docs` stays public. **Evidence.** Owner's Part 3 list; the
+data are public, so caching them publicly is safe and takes load off the 5-connection pool. **Alternative.** CORS
+restricted to localhost until a domain exists — rejected: a public, read-only, credential-free API gains nothing from it
+and would break third-party use of open data.
+
+### D25 Read-only database role with per-table SELECT policies
+
+**Decision.** `migrations/proposed/001_readonly_api_role.sql` (generated from the registry by
+`scripts/gen_readonly_role.py`, kept in sync by a test) creates `niwis_api_ro` with SELECT on the 36 registered tables,
+`default_transaction_read_only = on`, `NOBYPASSRLS`, and one `FOR SELECT … USING (true)` policy per table. It is
+idempotent and takes the password as a psql variable. `ENV=production` refuses to start unless
+`DB_READONLY_ROLE_CONFIRMED=true`. **Evidence.** All 39 public tables have RLS enabled with no policies (catalogue query,
+2026-10-21), so a plain role would see no rows; the script was run twice on the local fixture database: the role reads
+under RLS and `CREATE TEMP TABLE` fails (read-only). **Alternative.** `BYPASSRLS` — simpler, but it would also bypass
+any restrictive policy added later. The backend has not run it on Supabase (read-only rule).

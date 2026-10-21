@@ -580,3 +580,11 @@ Guidelines, compliance, ratios and the CCME WQI: DECISIONS D20.
   KPI (+ = shallower); `cls` / `bar` / `class` / `severity` null, listed in `unavailable` (`rows.groundwater.cls` …)
   with the SGI reason; a `groundwater` component. With a current SGI the row returns to 12.7.
 - Stages without a value never carry `asOf` or a component.
+
+### 14.9 Public-release HTTP behaviour (DECISIONS D24)
+
+- `Cache-Control: public, max-age=<s>` on 200 and 501 responses (summary / map 900, other module endpoints 3600,
+  meta / reference / categories 3600); `no-store` on `/health` and other errors.
+- New errors: 413 `{"error": "Request body too large", "code": "PAYLOAD_TOO_LARGE"}`, 414 `{"error": "Query string too
+  long", "code": "URI_TOO_LONG"}`. Only GET (and CORS preflight) is allowed.
+- CORS: `Access-Control-Allow-Origin: *` unless `CORS_ORIGINS` names origins; never credentials.

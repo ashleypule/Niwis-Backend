@@ -111,11 +111,15 @@ async def test_404_bodies(client: httpx.AsyncClient, path: str) -> None:
     assert isinstance(r.json()["error"], str)
 
 
-async def test_cors(client: httpx.AsyncClient) -> None:
-    ok = await client.get("/api/v1/health", headers={"Origin": "http://localhost:5173"})
-    assert ok.headers.get("access-control-allow-origin") == "http://localhost:5173"
-    other = await client.get("/api/v1/health", headers={"Origin": "https://evil.example"})
-    assert "access-control-allow-origin" not in other.headers
+async def test_cors(client: httpx.AsyncClient, client_factory: Callable[..., Any]) -> None:
+    # no CORS_ORIGINS: any origin may read the public data (D24)
+    anyone = await client.get("/api/v1/health", headers={"Origin": "https://example.org"})
+    assert anyone.headers.get("access-control-allow-origin") == "*"
+    async for c in client_factory(cors_origins=["http://localhost:5173"]):
+        ok = await c.get("/api/v1/health", headers={"Origin": "http://localhost:5173"})
+        assert ok.headers.get("access-control-allow-origin") == "http://localhost:5173"
+        other = await c.get("/api/v1/health", headers={"Origin": "https://evil.example"})
+        assert "access-control-allow-origin" not in other.headers
 
 
 async def test_request_id_header(client: httpx.AsyncClient) -> None:

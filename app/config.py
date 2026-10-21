@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,15 +26,22 @@ class Settings(BaseSettings):
     db_connect_timeout_s: float = 15.0
 
     # --- HTTP ---------------------------------------------------------------------------------------------------
-    cors_origins: Annotated[list[str], NoDecode] = Field(
-        default_factory=lambda: ["http://localhost:5173", "http://localhost:5174"]
-    )
+    # browser origins allowed to call the API (GET only, no credentials); empty = "*" (the data are public, and the
+    # frontend's domain is not fixed yet). Set it to the frontend's domain(s) once known.
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
     rate_limit_per_minute: int = 600  # per client IP (one dashboard visit makes ~45 requests); 0 disables
     # networks never rate-limited, comma-separated CIDRs (e.g. the DWS network); default none
     rate_limit_trusted_cidrs: Annotated[list[str], NoDecode] = Field(default_factory=list)
     # read the client IP from X-Forwarded-For; only behind a reverse proxy that sets it (else it can be spoofed)
     trust_proxy_headers: bool = False
-    environment: str = "development"
+    # with TRUST_PROXY_HEADERS: the reverse proxies (CIDRs) whose X-Forwarded-For is believed; empty = any peer
+    trusted_proxy_cidrs: Annotated[list[str], NoDecode] = Field(default_factory=list)
+    max_request_body_bytes: int = 16_384  # every endpoint is a GET; larger (or chunked) bodies get 413
+    max_query_length: int = 4_096  # longer query strings get 414
+    environment: str = Field("development", validation_alias=AliasChoices("ENV", "ENVIRONMENT", "environment"))
+    # ENV=production refuses to start unless this is true: the operator confirms that SUPABASE_DB_URL connects as
+    # the read-only role of migrations/proposed/001_readonly_api_role.sql (not as postgres / service role)
+    db_readonly_role_confirmed: bool = False
     # app.core.response_checks on every module response: "log" (warn), "raise" (fail the request; tests), "off"
     response_checks: Literal["off", "log", "raise"] = "log"
     log_level: str = "INFO"
@@ -55,19 +62,35 @@ class Settings(BaseSettings):
     cache_ttl_long_series_s: int = 60 * 60
     cache_ttl_meta_s: int = 60 * 60
 
-    @field_validator("cors_origins", "rate_limit_trusted_cidrs", "prewarm_scopes", mode="before")
+    @field_validator("cors_origins", "rate_limit_trusted_cidrs", "trusted_proxy_cidrs", "prewarm_scopes", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
         if isinstance(v, str):
             return [o.strip() for o in v.split(",") if o.strip()]
         return v
 
-    @field_validator("rate_limit_trusted_cidrs")
+    @field_validator("rate_limit_trusted_cidrs", "trusted_proxy_cidrs")
     @classmethod
     def _valid_cidrs(cls, v: list[str]) -> list[str]:
         for cidr in v:
             ipaddress.ip_network(cidr, strict=False)  # ValueError → refuse to start on a malformed network
         return v
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment.strip().lower() in ("production", "prod")
+
+    @property
+    def cors_allow_origins(self) -> list[str]:
+        return self.cors_origins or ["*"]
+
+    def check_production(self) -> None:
+        """Refuse to start in production without the operator's confirmation of the read-only database role."""
+        if self.is_production and not self.db_readonly_role_confirmed:
+            raise RuntimeError(
+                "ENV=production requires DB_READONLY_ROLE_CONFIRMED=true: connect SUPABASE_DB_URL as the read-only "
+                "role (migrations/proposed/001_readonly_api_role.sql, DEPLOYMENT.md) and then set it"
+            )
 
     @property
     def registered_tables(self) -> dict[str, list[str]]:

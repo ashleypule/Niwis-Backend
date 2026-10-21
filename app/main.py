@@ -24,7 +24,14 @@ from app.db import Database
 from app.logging_config import configure_logging
 from app.meta.router import router as meta_router
 from app.meta.service import MetaService
-from app.middleware import RateLimitMiddleware, RequestLogMiddleware
+from app.middleware import (
+    CacheControlMiddleware,
+    RateLimitMiddleware,
+    RequestLimitMiddleware,
+    RequestLogMiddleware,
+    SecurityHeadersMiddleware,
+    security_headers,
+)
 from app.modules import DATABASE_VIEW_MODULES, IMPLEMENTED_MODULES
 from app.modules.categories import build_category_router
 from app.modules.categories import keep_warm as keep_categories_warm
@@ -102,8 +109,27 @@ async def _keep_warm(state: AppState) -> None:
         await asyncio.sleep(max(300, int(state.settings.cache_ttl_long_series_s * 0.8)))
 
 
+def cache_ttl(settings: Settings) -> Callable[[str], int | None]:
+    """The browser / proxy cache lifetime of a path: the server cache TTL of what it serves (None = not cached)."""
+
+    def ttl(path: str) -> int | None:
+        if not path.startswith("/api/v1/") or path == "/api/v1/health":
+            return None
+        last = path.rstrip("/").rsplit("/", 1)[-1]
+        if path.startswith(("/api/v1/meta/", "/api/v1/reference/")) or last == "categories":
+            return settings.cache_ttl_meta_s
+        if last == "summary":
+            return settings.cache_ttl_summary_s
+        if last == "map":
+            return settings.cache_ttl_map_s
+        return settings.cache_ttl_long_series_s
+
+    return ttl
+
+
 def create_app(settings: Settings | None = None, db: Database | None = None) -> FastAPI:
     settings = settings or get_settings()
+    settings.check_production()  # ENV=production without DB_READONLY_ROLE_CONFIRMED=true: refuse to start
     configure_logging(settings.log_level)
 
     @asynccontextmanager
@@ -146,16 +172,23 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         redoc_url=None,
     )
 
+    # outermost last: CORS → security headers → request log → size limits → rate limit → cache headers → routes
+    app.add_middleware(CacheControlMiddleware, ttl_for=cache_ttl(settings))
     app.add_middleware(
         RateLimitMiddleware,
         per_minute=settings.rate_limit_per_minute,
         trusted=settings.rate_limit_trusted_cidrs,
         trust_proxy_headers=settings.trust_proxy_headers,
+        proxies=settings.trusted_proxy_cidrs,
+    )
+    app.add_middleware(
+        RequestLimitMiddleware, max_body=settings.max_request_body_bytes, max_query=settings.max_query_length
     )
     app.add_middleware(RequestLogMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware, hsts=settings.is_production)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=settings.cors_allow_origins,
         allow_methods=["GET", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-Request-Id"],
         expose_headers=["X-Request-Id"],
@@ -182,7 +215,11 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     async def _unexpected(request: Request, exc: Exception) -> JSONResponse:
         rid = getattr(request.state, "request_id", None)
         log.exception("unhandled error", extra={"request_id": rid, "path": request.url.path})
-        return JSONResponse({"error": "Internal server error", "requestId": rid}, status_code=500)
+        # never the exception or a trace; this response bypasses the middleware stack, so it sets its own headers
+        headers = {**security_headers(request.url.path, settings.is_production), "Cache-Control": "no-store"}
+        if rid:
+            headers["X-Request-Id"] = rid
+        return JSONResponse({"error": "Internal server error", "requestId": rid}, status_code=500, headers=headers)
 
     app.include_router(meta_router)
     app.include_router(reference_router)
