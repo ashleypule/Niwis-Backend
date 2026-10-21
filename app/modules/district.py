@@ -225,7 +225,7 @@ class DistrictModule:
             label=label,
             sublabel=sublabel,
             value=rnd(value, decimals),
-            unit=unit,
+            **({"unit": unit} if unit is not None else {}),
             decimals=decimals,
             **self.stamp(month, var),
             **extra,
@@ -233,7 +233,8 @@ class DistrictModule:
 
     def kpi_unavailable(self, kid: str, metric: str, label: str, unit: str | None, reason: str) -> c.Kpi:
         self.ctx.explain(f"kpis.{kid}", reason)
-        return c.Kpi(id=kid, metric=metric, label=label, value=None, unit=unit, unavailable_reason=reason)
+        units = {"unit": unit} if unit is not None else {}  # the contract's unit is a string or absent, never null
+        return c.Kpi(id=kid, metric=metric, label=label, value=None, unavailable_reason=reason, **units)
 
     def kpi_set(self, kpis: list[c.Kpi]) -> dict[str, Any]:
         dates = [dt.date.fromisoformat(k.as_of) for k in kpis if k.as_of and k.value is not None]

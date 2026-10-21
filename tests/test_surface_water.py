@@ -117,3 +117,10 @@ async def test_monthly_family_and_daily_discharge_before_2026_are_withheld(clien
     assert "Served from Jan 2026" in st["river_discharge_q"]["note"]
     eo = next(x for x in cat["tables"] if x["table"] == "9_3_sansa_earth_observation_master")
     assert eo["counts"]["live"] == 0
+
+
+async def test_no_kpi_sends_a_null_unit(client: httpx.AsyncClient) -> None:
+    """The contract's KPI unit is a string or absent (the frontend's zod schema rejects null)."""
+    for module in ("surface-water", "dams"):
+        body = (await client.get(f"/api/v1/{module}/summary")).json()
+        assert all(k.get("unit", "") is not None for k in body["kpis"]), module
