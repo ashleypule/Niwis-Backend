@@ -104,7 +104,11 @@ async def test_drought_cascade_has_the_specs_seven_stages(
     for sid in ("streamflow", "reservoir", "groundwater", "socio-economic"):
         assert by[sid]["valueNum"] is None and f"rows.{by[sid]['id']}" in reasons, sid
     assert "placeholder" in reasons["rows.streamflow"]
-    assert reasons["rows.groundwater"] == "Latest valid SGI is Aug 2024 (more than 90 days old)"
+    assert (
+        reasons["rows.groundwater"]
+        == "Latest valid SGI is Aug 2024 (more than 90 days old); the newer 10_1 SGI is withheld (not an index of "
+        "any water level in the database)"
+    )
     assert by["groundwater"]["scale"] == "status"
 
     sm = by["soil-moisture"]

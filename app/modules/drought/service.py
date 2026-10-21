@@ -86,13 +86,22 @@ class DroughtService:
         return self.rain.src(*(v for v in variables if self.withheld(v) is None))
 
     def withheld(self, var: str) -> str | None:
-        """Why `var` is not served (its registry reason), or None when it has a canonical source."""
+        """Why `var` is not served (its registry reason), or None when it has a canonical source. Reservoir storage
+        also names the newer 8_1 reservoir table, which fails the same check (DECISIONS D2)."""
         reg = self.ctx.state.registry
         if reg.canonical_source(var) is not None:
             return None
         reasons = reg.withheld_reasons(var)
         label = reg.variables[var].label
-        return f"{label} is withheld: " + (reasons[0].split(": ", 1)[-1] if reasons else "not in the database")
+        out = f"{label} is withheld: " + (reasons[0].split(": ", 1)[-1] if reasons else "not in the database")
+        if (
+            var in ("dam_storage", "dam_level_pct", "dam_inflow", "dam_outflow")
+            and "res_storage_volume_m3" in reg.variables
+        ):
+            alt = reg.withheld_reasons("res_storage_volume_m3")
+            if alt:
+                out += ". The reservoir table 8_1 fails too: " + alt[0].split(": ", 1)[-1]
+        return out
 
     def _prov(
         self, as_of: dt.date | None, *variables: str, baseline: bool = False, res: Resolution = "daily"
@@ -191,7 +200,12 @@ class DroughtService:
         last = await self.latest("sgi")
         if self.ctx.stale(last, "monthly"):
             days = self.ctx.state.settings.stale_after_days
-            return f"Latest valid SGI is {last:%b %Y} (more than {days} days old)"
+            extra = (
+                "; the newer 10_1 SGI is withheld (not an index of any water level in the database)"
+                if self.ctx.state.registry.withheld_reasons("bh_sgi_dimensionless")
+                else ""
+            )
+            return f"Latest valid SGI is {last:%b %Y} (more than {days} days old){extra}"
         return None
 
     def page_window_ending(self, last: dt.date) -> tuple[pd.Timestamp, pd.Timestamp]:

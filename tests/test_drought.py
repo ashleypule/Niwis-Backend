@@ -51,7 +51,11 @@ async def test_dam_storage_withheld_after_plausibility_check(client: httpx.Async
     storage = kpis(body)["storage"]
     assert storage["value"] is None and "plausibility" in storage["unavailableReason"]
     assert "hydrological_drought_master" not in body["source"]  # storage withheld, SGI too old for a KPI
-    assert kpis(body)["sgi"]["unavailableReason"] == "Latest valid SGI is Aug 2024 (more than 90 days old)"
+    assert (
+        kpis(body)["sgi"]["unavailableReason"]
+        == "Latest valid SGI is Aug 2024 (more than 90 days old); the newer 10_1 SGI is withheld (not an index of "
+        "any water level in the database)"
+    )
     r = await client.get(f"{B}/timeseries", params={"metric": "dam-flows", "municipality": "DC44"})
     assert r.status_code == 501 and "plausibility" in r.json()["error"]
 
