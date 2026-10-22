@@ -4,7 +4,7 @@
 > value from the API and recomputes it with independent SQL. Area weights for province values come from
 > `reference/geo/districts.json` (the only non-SQL input).
 
-## audit — 2026-10-16
+## audit — 2026-10-22
 
 ### ✅ B3 Area in severe drought or worse (D2–D4, SPI-3 ≤ −1.3), national, 2019 — mean of the monthly area shares
 
@@ -46,7 +46,7 @@ SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainf
 WHERE make_date("Year"::int, "Month"::int, 1) = (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date
 ```
 
-## categories — 2026-10-16
+## categories — 2026-10-22
 
 ### ✅ Rainfall category: core-rainfall-variables / Seasonal_Total_JFM_mm, Alfred Nzo (DC44), 2025 — the stored column
 
@@ -97,7 +97,7 @@ SELECT round("Soil_Moisture_Prior_m3m3"::numeric, 3) FROM runoff_variables_maste
 WHERE "District_Name" = 'Alfred Nzo' AND "Date" = '2026-07-15'
 ```
 
-## climate — 2026-10-16
+## climate — 2026-10-22
 
 ### ✅ Hot days (Tmax > 35 °C), Vhembe (DC34), last full year — map layer hot-days vs count of daily Tmax > 35 °C
 
@@ -145,7 +145,7 @@ SELECT round(avg(a)::numeric, 2) FROM (SELECT a FROM m
   WHERE ym < (SELECT left(max("Date"), 7) FROM "6.1_core_rainfall_variables_master") ORDER BY ym DESC LIMIT 12) s
 ```
 
-## dams — 2026-10-20
+## dams — 2026-10-22
 
 ### ✅ Total Storage KPI is null (withheld) while 8_1 still holds one storage value in 50+ districts on the newest day
 
@@ -178,7 +178,7 @@ SELECT round(soil_moisture_m3_m3::numeric, 3) FROM "8_1_reservoir_operational_ma
 WHERE district_name = 'City of Cape Town' AND date = '2026-09-15'
 ```
 
-## drought — 2026-10-16
+## drought — 2026-10-22
 
 ### ✅ SPI-3, KwaZulu-Natal, latest complete month — area-weighted from the 11 KZN districts
 
@@ -225,7 +225,7 @@ WITH cur AS (SELECT date, surface_soil_moisture AS v FROM satellite_remote_sensi
 SELECT round(((v - n) / n * 100)::numeric, 1) FROM cur, clim
 ```
 
-## fixes — 2026-10-16
+## fixes — 2026-10-22
 
 ### ✅ #6 Seasonal change, Namakwa (DC6), 2001–2020 DJF mean temperature (°C) — mean of monthly mean Tavg
 
@@ -360,7 +360,7 @@ SELECT count(DISTINCT round(v::numeric, 3)) FROM (SELECT date, sum(dam_storage_m
 FROM hydrological_drought_master WHERE date >= '2021-12-01' GROUP BY 1) s
 ```
 
-## groundwater — 2026-10-21
+## groundwater — 2026-10-22
 
 ### ✅ Mean groundwater level, Vhembe (DC34): mean telemetry depth to water of the latest sampled month
 
@@ -394,7 +394,7 @@ SELECT round(max("Direct recharge")::numeric, 0) FROM "11.2_recharge_and_dischar
 WHERE district_name = 'City of Cape Town' AND year = 2025
 ```
 
-## groundwater-reserve — 2026-10-21
+## groundwater-reserve — 2026-10-22
 
 ### ✅ Exploitation index, Namakwa (DC6), 2025 (11.3, %)
 
@@ -426,7 +426,7 @@ SELECT max("Direct recharge"), max("Indirect recharge") FROM "11.2_recharge_and_
 WHERE district_name = 'Vhembe' AND year = 2025
 ```
 
-## rainfall — 2026-10-16
+## rainfall — 2026-10-22
 
 ### ✅ Total rainfall, last 12 months, City of Cape Town (mm)
 
@@ -488,7 +488,7 @@ SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainf
 WHERE make_date("Year"::int, "Month"::int, 1) = date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month'
 ```
 
-## runoff — 2026-10-16
+## runoff — 2026-10-22
 
 ### ✅ Runoff depth, last 12 months, City of Cape Town (mm) — model volume / 6 500 km²
 
@@ -532,7 +532,7 @@ SELECT round((sum("Baseflow_Component_m3s") * 86400 / sum("Daily_Surface_Runoff_
 FROM runoff_variables_master WHERE "District_Name" = 'City of Cape Town' AND "Date" BETWEEN (SELECT max("Date") FROM runoff_variables_master) - interval '1 year' + interval '1 day' AND (SELECT max("Date") FROM runoff_variables_master)
 ```
 
-## surface-water — 2026-10-21
+## surface-water — 2026-10-22
 
 ### ✅ Mean river discharge, Vhembe (DC34): mean daily flow of the latest complete month / 86 400 s
 
@@ -564,7 +564,7 @@ SELECT round(max(suspended_sediment_concentration)::numeric, 0) FROM "9_1_hydrol
 WHERE district_name = 'City of Cape Town' AND year = 2026 AND month = 8
 ```
 
-## vegetation — 2026-10-16
+## vegetation — 2026-10-22
 
 ### ✅ NDVI, Western Cape, latest month — area-weighted from the 6 WC districts (satellite_remote_sensing)
 
@@ -607,7 +607,7 @@ WHERE s.district_name = 'namakwa' AND extract(month FROM s.date) = extract(month
   AND extract(year FROM s.date) BETWEEN 2001 AND 2025 GROUP BY cur.ndvi
 ```
 
-## water-quality — 2026-10-21
+## water-quality — 2026-10-22
 
 ### ✅ Nitrate relative to guideline (6 mg/L), Vhembe (DC34), latest complete month
 
