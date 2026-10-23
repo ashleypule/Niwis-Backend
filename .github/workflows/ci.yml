@@ -5,6 +5,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -61,7 +62,7 @@ jobs:
       - name: Build the image (not pushed)
         run: docker build -t niwis-backend:ci .
 
-  secrets:
+  secret-scan:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
