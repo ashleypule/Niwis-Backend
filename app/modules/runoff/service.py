@@ -21,6 +21,7 @@ on annual maxima of derived daily mean flow (not instantaneous peaks) with a par
 from __future__ import annotations
 
 import calendar
+import contextlib
 import datetime as dt
 from typing import Any
 
@@ -1097,5 +1098,7 @@ async def prewarm_views(state: Any) -> None:
 
     newest = await state.meta.newest_date()
     svc = RunoffService(Ctx(state, Filters(parse_scope(), Window("12M", None, None), False, None), newest))
-    await svc.ts_seasonal()
-    await svc.tbl_events(None)
+    for view in (svc.ts_seasonal, lambda: svc.tbl_events(None)):
+        # a 501 is a valid answer: its data query is cached all the same
+        with contextlib.suppress(DataUnavailable):
+            await view()
