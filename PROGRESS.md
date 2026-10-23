@@ -29,9 +29,10 @@
 - [x] Performance: runoff seasonal and events added to the warm-up (`prewarm_views`).
 - [x] Verification on Supabase (2026-10-22): `scripts/verify.py` 57 / 57 PASS (`docs/VERIFICATION.md`); `pytest -m
       integration` 6 / 6 (two tests updated to the never-after-today rule). Lighthouse: frontend `docs/LIGHTHOUSE.md`.
-- [ ] Not re-run after the last backend commit: the full fixture-database suite (Docker Desktop / WSL hung on the test
-      machine); CI runs it on every push. The production stack check (`test:release`) last passed before the final
-      Overview-strip fix.
+- [x] 2026-10-23: full fixture-database suite 1 066 passed (runoff warm-up views made independent); production stack
+      `test:release` 25 / 25 on the final Overview fix and again after the frontend performance work (mobile Lighthouse
+      89 / 87 / 87, see the frontend `docs/LIGHTHOUSE.md`). `docker-compose.yml`: `.env` optional, so CI can start
+      `testdb` without one.
 
 ### Completion from the database — Part 2, Overview and cross-page (2026-10-21)
 

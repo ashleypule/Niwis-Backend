@@ -4,7 +4,9 @@ services:
   api:
     build: .
     image: niwis-backend:dev
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false # CI starts only `testdb` and has no .env
     environment:
       ENVIRONMENT: docker
     ports:
