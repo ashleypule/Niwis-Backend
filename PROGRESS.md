@@ -36,7 +36,11 @@ pages' forecast tabs. Decisions D29–D39 (`docs/DECISIONS.md`); results on the 
       forecast tabs show "Statistical forecast · model · skill · data to" and the disclaimer; `ai` is a live module.
 - [x] Docs: CONTRACT_CHANGES §15, FRONTEND_INTEGRATION §10, README / DEPLOYMENT / `.env.example` (FORECAST_*),
       `scripts/forecast_validation.py` → `docs/FORECAST_VALIDATION.md`.
-- [ ] Fixtures re-recorded with the Studio flow; frontend hybrid tests; final report (see the end of this file).
+- [x] Verification (2026-10-29): page round on Supabase 130 / 140 forecasts in 42 min (the 10 groundwater-depth runs
+      refused for 38 % unsampled months); `docs/FORECAST_VALIDATION.md` (every model × 13 variables × 2 horizons);
+      frontend `fixtures:record` 2 081 (incl. the Studio POST + finished runs), `contract:check` 497 ok · 0 schema
+      failures · 0 errors · 9 structural differences (the known kinds), Playwright hybrid + backend-down 68 passed,
+      `npm run verify` clean; pip-audit clean (filelock / setuptools pinned up). Both repositories pushed.
 
 ### Blocking / waiting on others
 
