@@ -420,3 +420,33 @@ and the worker processes already isolate the training.
 `17_1_water_quantity_assessment_transfers_master` and `17_2_national_water_balance_master` appeared in the database by
 2026-10-23. The catalogue lists them as unregistered (its rule for any new table) until they are profiled and
 plausibility-checked (D1); registering them is outside the forecasting work. `tests/test_new_tables.py` names them.
+
+### D40 What the validation on the real data shows, and what the pages say about it
+
+**Findings** (`docs/FORECAST_VALIDATION.md`, generated 2026-10-29 from the national series, every model, four
+rolling origins, nothing tuned):
+
+- **At 3 months ahead the forecasts have real skill.** Against the same-month climatology: SPI-6 0.84 (LightGBM),
+  VCI 0.85 (last value), NDVI 0.68 (ETS), SPI-3 0.51 and SPEI-3 0.43 (LightGBM), monthly rainfall 0.43 (LightGBM),
+  river discharge 0.35 and area in drought 0.28 (seasonal naive), runoff anomaly 0.20; temperature anomaly and hot
+  days 0.00 (nothing beats their climatology).
+- **At 24 months ahead almost nothing beats the long-term average.** Auto picks the climatology itself for SPI-3,
+  SPI-6, area in drought, rainfall, runoff and discharge (skill 0.00 by definition); SARIMA edges it for SPEI-3 (0.02),
+  temperature anomaly (0.00) and hot days (0.02); only vegetation keeps skill from persistence (NDVI 0.32 seasonal
+  naive, VCI 0.28 ETS). The experimental deep models never win Auto's comparison and would not have (LSTM best 0.14,
+  Transformer 0.32 on NDVI, below the baselines that won).
+- **Groundwater depth cannot be forecast nationally**: 38 % of the months since 2000 have no telemetry sample (D35
+  allows 20 %); the groundwater forecast tab says so.
+- Band coverage of the ML models' residual intervals is below the 80 % expected at 3 months (58–75 %), i.e. their bands
+  are somewhat narrow; the statistical models' own intervals cover 74–95 %. The result's warnings say so when it happens.
+- A Compare-all run of one variable takes 25–155 s on one worker thread (SARIMA's order search and the two deep models
+  are most of it); the page forecasts (Auto, no deep models) take 13–45 s each.
+
+**Decision.** The page forecasts stay **Auto at 24 months** (the indicator tables need 3 / 6 / 12 / 24 months from one
+run), and the pages say what that means: the `forecast` block and the note under every forecast chart carry the
+model, its skill and "This model does not beat the long-term average for this variable" whenever the skill is ≤ 0 — on
+2026-10-29 that is the case for SPI-3, SPI-6, area in drought, rainfall, runoff and discharge at 24 months. Users who
+want the 3-month skill run the variable in the Studio with a 3-month horizon (one click from the tab's Studio link).
+**Alternative considered.** A second round at 3 months for every variable and scope — rejected for now: it doubles the
+background work (≈ 140 runs per data change) for a product the Studio already gives; revisit if the forecast tabs
+become a daily tool.
