@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from fastapi import Request
 
@@ -24,6 +25,8 @@ class AppState:
     meta: MetaService
     spatial: Spatial
     data: DataAccess
+    forecast_jobs: Any = None  # app.forecasting.jobs.ForecastJobs (None: forecasting disabled)
+    page_forecasts: Any = None  # app.forecasting.pages.PageForecasts
 
 
 def get_state(request: Request) -> AppState:

@@ -530,6 +530,16 @@
             ],
             "title": "Components"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "isStale": {
             "anyOf": [
               {
@@ -789,6 +799,16 @@
             ],
             "title": "Components"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -1005,6 +1025,27 @@
           "type"
         ],
         "title": "Column",
+        "type": "object"
+      },
+      "ColumnIn": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "maxLength": 120,
+            "title": "Column",
+            "type": "string"
+          },
+          "table": {
+            "maxLength": 120,
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "column"
+        ],
+        "title": "ColumnIn",
         "type": "object"
       },
       "Component": {
@@ -1448,6 +1489,16 @@
             ],
             "title": "Components"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "isStale": {
             "anyOf": [
               {
@@ -1581,6 +1632,133 @@
           "error"
         ],
         "title": "ErrorBody",
+        "type": "object"
+      },
+      "ForecastInfo": {
+        "additionalProperties": false,
+        "description": "What a forecast response was made with (addition, docs/CONTRACT_CHANGES.md §15): always a statistical forecast\nfrom the database's own history, never an official outlook.",
+        "properties": {
+          "beatsClimatology": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Beatsclimatology"
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage"
+          },
+          "dataAsOf": {
+            "title": "Dataasof",
+            "type": "string"
+          },
+          "disclaimer": {
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "forecastStart": {
+            "title": "Forecaststart",
+            "type": "string"
+          },
+          "generatedAt": {
+            "title": "Generatedat",
+            "type": "string"
+          },
+          "horizon": {
+            "title": "Horizon",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "mase": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mase"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "modelLabel": {
+            "title": "Modellabel",
+            "type": "string"
+          },
+          "skill": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skill"
+          },
+          "skillNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skillnote"
+          },
+          "studio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Studio"
+          },
+          "why": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Why"
+          }
+        },
+        "required": [
+          "label",
+          "model",
+          "modelLabel",
+          "dataAsOf",
+          "forecastStart",
+          "horizon",
+          "generatedAt",
+          "disclaimer"
+        ],
+        "title": "ForecastInfo",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1866,6 +2044,16 @@
             ],
             "title": "Components"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "isStale": {
             "anyOf": [
               {
@@ -2098,6 +2286,16 @@
           "date": {
             "title": "Date",
             "type": "string"
+          },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "geometry": {
             "anyOf": [
@@ -2412,6 +2610,16 @@
             ],
             "title": "Components"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -2639,6 +2847,65 @@
         "title": "RefList",
         "type": "object"
       },
+      "RunIn": {
+        "additionalProperties": false,
+        "description": "A forecast request (`POST /api/v1/forecast/runs`).",
+        "properties": {
+          "column": {
+            "description": "A live numeric column of that table",
+            "maxLength": 120,
+            "title": "Column",
+            "type": "string"
+          },
+          "horizon": {
+            "default": 12,
+            "description": "Months (1–24) or, for daily runs, days (1–30)",
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Horizon",
+            "type": "integer"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/ColumnIn"
+            },
+            "maxItems": 3,
+            "title": "Inputs",
+            "type": "array"
+          },
+          "model": {
+            "default": "auto",
+            "description": "auto, compare, or a model id from /forecast/models",
+            "maxLength": 32,
+            "title": "Model",
+            "type": "string"
+          },
+          "resolution": {
+            "default": "monthly",
+            "enum": [
+              "monthly",
+              "daily"
+            ],
+            "title": "Resolution",
+            "type": "string"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/ScopeIn"
+          },
+          "table": {
+            "description": "Catalogue table, e.g. 6.2_rainfall_derived_drought_indices_master",
+            "maxLength": 120,
+            "title": "Table",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "column"
+        ],
+        "title": "RunIn",
+        "type": "object"
+      },
       "Scope": {
         "additionalProperties": false,
         "properties": {
@@ -2669,6 +2936,37 @@
           "name"
         ],
         "title": "Scope",
+        "type": "object"
+      },
+      "ScopeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Province code, district MDB code or WMA id",
+            "title": "Id"
+          },
+          "level": {
+            "default": "national",
+            "enum": [
+              "national",
+              "province",
+              "district",
+              "wma"
+            ],
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "title": "ScopeIn",
         "type": "object"
       },
       "SearchHit": {
@@ -3095,6 +3393,16 @@
             ],
             "title": "Components"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -3330,6 +3638,16 @@
             ],
             "title": "Components"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ForecastInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -3526,6 +3844,414 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/ai/forecast": {
+      "get": {
+        "operationId": "ai_forecast_api_v1_ai_forecast_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Forecast",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/table": {
+      "get": {
+        "operationId": "ai_table_api_v1_ai_table_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Table",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/blue-drop/categories": {
       "get": {
         "operationId": "categories_api_v1_blue_drop_categories_get",
@@ -10806,6 +11532,482 @@
         ]
       }
     },
+    "/api/v1/forecast/models": {
+      "get": {
+        "operationId": "models_api_v1_forecast_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Models Api V1 Forecast Models Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Forecasting models, grouped, with their requirements",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/v1/forecast/pages": {
+      "get": {
+        "operationId": "page_status_api_v1_forecast_pages_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The precomputed page forecasts: which exist, their model and skill",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/v1/forecast/runs": {
+      "post": {
+        "operationId": "start_run_api_v1_forecast_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown table, column, model or scope; horizon out of range"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown or expired run"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The series cannot support this forecast (too short, constant, gaps)"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Too many new runs from this address (Retry-After)"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The run queue is full (Retry-After)"
+          }
+        },
+        "summary": "Start a forecast run (trains in the background)",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/v1/forecast/runs/{run_id}": {
+      "get": {
+        "operationId": "get_run_api_v1_forecast_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "maxLength": 32,
+              "pattern": "^[0-9a-f]+$",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown table, column, model or scope; horizon out of range"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown or expired run"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The series cannot support this forecast (too short, constant, gaps)"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Too many new runs from this address (Retry-After)"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The run queue is full (Retry-After)"
+          }
+        },
+        "summary": "A run's status and progress, then its result",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/v1/forecast/targets": {
+      "get": {
+        "operationId": "targets_api_v1_forecast_targets_get",
+        "parameters": [
+          {
+            "description": "Module page, e.g. rainfall; all modules when absent",
+            "in": "query",
+            "name": "module",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Module page, e.g. rainfall; all modules when absent",
+              "title": "Module"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Targets Api V1 Forecast Targets Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown table, column, model or scope; horizon out of range"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unknown or expired run"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The series cannot support this forecast (too short, constant, gaps)"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Too many new runs from this address (Retry-After)"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "The run queue is full (Retry-After)"
+          }
+        },
+        "summary": "Catalogue columns that can be forecast",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
     "/api/v1/green-drop/categories": {
       "get": {
         "operationId": "categories_api_v1_green_drop_categories_get",
@@ -17027,6 +18229,210 @@
         "summary": "Every variable with its canonical source, duplicates or withheld reason",
         "tags": [
           "meta"
+        ]
+      }
+    },
+    "/api/v1/overview/forecast": {
+      "get": {
+        "operationId": "overview_forecast_api_v1_overview_forecast_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "metric",
+            "required": true,
+            "schema": {
+              "title": "Metric",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+            "in": "query",
+            "name": "province",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Province code: EC FS GP KZN LP MP NC NW WC",
+              "title": "Province"
+            }
+          },
+          {
+            "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+            "in": "query",
+            "name": "wma",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "WMA1 … WMA9 (district-overlap aggregate, approximate)",
+              "title": "Wma"
+            }
+          },
+          {
+            "description": "Not available: returns 501 DATA_UNAVAILABLE",
+            "in": "query",
+            "name": "catchment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Not available: returns 501 DATA_UNAVAILABLE",
+              "title": "Catchment"
+            }
+          },
+          {
+            "description": "District / metro MDB code, e.g. DC44, CPT",
+            "in": "query",
+            "name": "municipality",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District / metro MDB code, e.g. DC44, CPT",
+              "title": "Municipality"
+            }
+          },
+          {
+            "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "latest 1M 3M 6M 12M 24M 5Y 10Y historical (default 12M)",
+              "title": "Period"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD (overrides period)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD (overrides period)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "YYYY-MM-DD",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD",
+              "title": "To"
+            }
+          },
+          {
+            "description": "1 = include comparison series",
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "1 = include comparison series",
+              "title": "Compare"
+            }
+          },
+          {
+            "description": "District MDB code for entity datasets",
+            "in": "query",
+            "name": "entityId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "District MDB code for entity datasets",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Overview Forecast",
+        "tags": [
+          "ai"
         ]
       }
     },

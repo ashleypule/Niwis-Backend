@@ -39,6 +39,7 @@ CATALOGUE_PATH = Path(__file__).with_name("catalogue.yaml")
 Status = Literal["live", "withheld", "duplicate"]
 Kind = Literal["numeric", "categorical"]
 Chart = Literal["bar", "diverging-bar", "line"]
+Aggregate = Literal["sum", "mean"]
 GroupChart = Literal["bar", "diverging-bar", "line", "band", "mixed"]
 # recommended chart type (BACKEND_ISSUES #8): bars for totals and counts, diverging bars for anomalies, lines for states
 # and indices, a band for min / max pairs
@@ -94,6 +95,8 @@ class CatColumn(_Strict):
     chart: Chart = "line"  # recommended chart type for this column
     note: str | None = None  # registry note (method, caveat)
     unit_override: str | None = None  # why the unit differs from the column-name suffix
+    # how daily values become a monthly value (forecasting, DECISIONS D30): amounts are summed, states averaged
+    aggregate: Aggregate | None = None
 
 
 class CatGroup(_Strict):
@@ -250,6 +253,31 @@ def axis_unit(cols: list[CatColumn], family: str | None) -> str:
 
 # ---------------------------------------------------------------- builder
 
+# amounts: a month's value is the sum of its days (rainfall, evaporation, runoff, irrigation, day counts, daily volumes)
+SUM_UNITS = {"mm", "mm/day", "mm/month", "days", "days/month", "m³", "m³/day", "m³/month", "Mm³/month", "t/day"}
+SUM_UNITS |= {"kWh/day"}
+# …unless the name says the value is a state of the period, not an amount (an anomaly, a mean, an extreme, a rate)
+NOT_AMOUNT_WORDS = {"anomaly", "mean", "average", "avg", "normal", "max", "maximum", "min", "minimum", "peak"}
+NOT_AMOUNT_WORDS |= {"ratio", "intensity", "index", "percent", "pct", "flag", "deviation", "rx1day", "rx5day"}
+# the unit of a month's total of daily values
+MONTHLY_UNITS = {"mm/day": "mm/month", "mm": "mm/month", "days": "days/month", "m³/day": "m³/month"}
+MONTHLY_UNITS |= {"t/day": "t/month", "kWh/day": "kWh/month", "m³": "m³/month"}
+
+
+def aggregate_of(column: str, unit: str | None) -> Aggregate:
+    """`sum` for amounts (never average daily rainfall into a monthly value), `mean` for states and indices
+    (temperature, SPI / SPEI, NDVI, % FSC, levels, flows in m³/s)."""
+    if unit in SUM_UNITS and not set(_tokens(column)) & NOT_AMOUNT_WORDS:
+        return "sum"
+    return "mean"
+
+
+def monthly_unit(unit: str | None, aggregate: Aggregate, resolution: Resolution) -> str | None:
+    """Unit of the monthly series built from a column: a daily amount summed over the month becomes per month."""
+    if resolution == "daily" and aggregate == "sum" and unit is not None:
+        return MONTHLY_UNITS.get(unit, unit)
+    return unit
+
 
 def chart_of(column: str, unit: str | None, resolution: Resolution) -> Chart:
     """Recommended chart type for a column, from its name, unit and resolution."""
@@ -351,6 +379,7 @@ def _columns(reg: Registry, ds: Dataset, schema: list[SchemaColumn]) -> tuple[li
                 chart=chart_of(sc.column, unit, _resolution(ds, sc.column)) if not categorical else "line",
                 note=_note(reg_col),
                 unit_override=why,
+                aggregate=None if categorical else aggregate_of(sc.column, unit),
             )
         )
     return keys, out

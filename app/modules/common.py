@@ -255,7 +255,11 @@ def unknown(kind: str, key: str | None, allowed: list[str]) -> NotFound:
 
 
 def forecast_unavailable(module: str, metric: str) -> DataUnavailable:
+    """A forecast product that does not follow directly from a page forecast (district maps, outlooks per grid cell,
+    impacts on data the database does not hold). Page forecasts: app.forecasting.pages."""
     return DataUnavailable(
-        "Forecasts are not available yet: no forecast models or forecast tables exist in the database.",
+        "Not available: page forecasts are statistical forecasts of key variables for South Africa and the nine "
+        "provinces; this product needs district forecasts or data the database does not hold. Single areas can be "
+        "forecast in the Forecasting Studio (AI & Predictive Analytics page).",
         missing=[f"forecast:{module}:{metric}"],
     )

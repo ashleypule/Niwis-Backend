@@ -47,6 +47,27 @@ class Component(ContractModel):
 Aggregation = Literal["district", "district-area-weighted", "district-overlap"]
 
 
+class ForecastInfo(ContractModel):
+    """What a forecast response was made with (addition, docs/CONTRACT_CHANGES.md §15): always a statistical forecast
+    from the database's own history, never an official outlook."""
+
+    label: str  # "Statistical forecast"
+    model: str  # model id (GET /api/v1/forecast/models)
+    model_label: str = Field(alias="modelLabel")
+    why: str | None = None  # why Auto chose it
+    skill: float | None = None  # backtest skill against climatology (> 0 beats the same-month mean)
+    mase: float | None = None
+    coverage: float | None = None  # % of backtest actuals inside the 10–90 % band
+    beats_climatology: bool | None = Field(None, alias="beatsClimatology")
+    skill_note: str | None = Field(None, alias="skillNote")
+    data_as_of: str = Field(alias="dataAsOf")  # last observed period (the Historical | Forecast divider)
+    forecast_start: str = Field(alias="forecastStart")
+    horizon: int  # periods forecast
+    generated_at: str = Field(alias="generatedAt")
+    disclaimer: str
+    studio: str | None = None  # Forecasting Studio link that reopens this forecast
+
+
 class Provenance(ContractModel):
     """Optional provenance fields carried by every top-level response (additions)."""
 
@@ -58,6 +79,7 @@ class Provenance(ContractModel):
     baseline_note: str | None = Field(None, alias="baselineNote")
     aggregation: Aggregation | None = None
     unavailable: list[UnavailableField] | None = None
+    forecast: ForecastInfo | None = None
 
 
 # ------------------------------------------------------------------ scope / KPIs

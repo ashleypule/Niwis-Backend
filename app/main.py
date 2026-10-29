@@ -21,6 +21,10 @@ from app.core.data import DataAccess
 from app.core.errors import APIError
 from app.core.spatial import get_spatial
 from app.db import Database
+from app.forecasting.contract import router as forecast_contract_router
+from app.forecasting.jobs import ForecastJobs
+from app.forecasting.pages import PageForecasts
+from app.forecasting.router import router as forecast_router
 from app.logging_config import configure_logging
 from app.meta.router import router as meta_router
 from app.meta.service import MetaService
@@ -119,6 +123,8 @@ def cache_ttl(settings: Settings) -> Callable[[str], int | None]:
     def ttl(path: str) -> int | None:
         if not path.startswith("/api/v1/") or path == "/api/v1/health":
             return None
+        if path.startswith("/api/v1/forecast/"):  # runs change by the second; models / targets with the catalogue
+            return settings.cache_ttl_meta_s if path.rstrip("/").endswith(("/models", "/targets")) else None
         last = path.rstrip("/").rsplit("/", 1)[-1]
         if path.startswith(("/api/v1/meta/", "/api/v1/reference/")) or last == "categories":
             return settings.cache_ttl_meta_s
@@ -155,16 +161,24 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             spatial=get_spatial(),
             data=DataAccess(database, registry, cache, settings),
         )
+        state: AppState = app.state.niwis
+        if settings.forecast_enabled:
+            state.forecast_jobs = ForecastJobs(settings)
+            state.page_forecasts = PageForecasts(state, state.forecast_jobs)
         log.info("startup complete", extra={"tables": len(registry.datasets), "env": settings.environment})
         tasks = []
         if database.configured:
-            tasks.append(asyncio.create_task(_keep_warm(app.state.niwis)))
+            tasks.append(asyncio.create_task(_keep_warm(state)))
             if settings.prewarm_categories:  # every category chart group, refreshed before the cache expires
-                tasks.append(asyncio.create_task(keep_categories_warm(app.state.niwis)))
+                tasks.append(asyncio.create_task(keep_categories_warm(state)))
+            if settings.forecast_enabled and settings.forecast_pages:  # page forecasts, recomputed on new data
+                tasks.append(asyncio.create_task(state.page_forecasts.keep_fresh()))
         yield
         for task in tasks:
             if not task.done():
                 task.cancel()
+        if state.forecast_jobs is not None:
+            await state.forecast_jobs.close()
         await database.close()
 
     app = FastAPI(
@@ -193,7 +207,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_allow_origins,
-        allow_methods=["GET", "OPTIONS"],
+        allow_methods=["GET", "POST", "OPTIONS"],  # POST: /api/v1/forecast/runs only
         allow_headers=["Authorization", "Content-Type", "X-Request-Id"],
         expose_headers=["X-Request-Id"],
         allow_credentials=False,
@@ -201,7 +215,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
 
     @app.exception_handler(APIError)
     async def _api_error(_: Request, exc: APIError) -> JSONResponse:
-        return JSONResponse(exc.body(), status_code=exc.status_code)
+        return JSONResponse(exc.body(), status_code=exc.status_code, headers=exc.headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -238,6 +252,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(groundwater_router)
     app.include_router(groundwater_reserve_router)
     app.include_router(water_quality_router)
+    app.include_router(forecast_router)
+    app.include_router(forecast_contract_router)  # ai / overview forecast keys that follow from the page forecasts
     for module in sorted(IMPLEMENTED_MODULES | DATABASE_VIEW_MODULES):
         app.include_router(build_category_router(module))
     app.include_router(unavailable_router)  # last: 501 with a reason for contract paths no router above serves

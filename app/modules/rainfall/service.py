@@ -37,6 +37,7 @@ from app.core.palettes import NEGATIVE, NORMAL, POSITIVE, SERIES, YEAR_COLOURS, 
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import drought_class_or_none
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status, forecast_unavailable, unknown
 from app.registry.catalogue import get_catalogue
 from app.schemas import contract as c
@@ -69,6 +70,9 @@ def _d(ts: Any) -> dt.date:
 
 def _months(start: dt.date, end: dt.date) -> list[pd.Timestamp]:
     return list(pd.date_range(start.replace(day=1), end.replace(day=1), freq="MS"))
+
+
+FORECAST_SPI_SCALE = Selector("scale", ("1", "3"), "3")  # forecast SPI (page forecasts: SPI-1 and SPI-3)
 
 
 class RainfallService:
@@ -567,9 +571,13 @@ class RainfallService:
     # ---------------------------------------------------------------- forecast
 
     async def forecast(self, metric: str) -> dict[str, Any]:
+        """Precomputed statistical forecasts (app.forecasting.pages): monthly rainfall and SPI-1 / SPI-3 (`scale`)."""
         if metric not in ("rainfall", "spi"):
             raise unknown("metric", metric, ["rainfall", "spi"])
-        raise forecast_unavailable(MODULE, metric)
+        if metric == "rainfall":
+            return fc.series_set(self.ctx, "rainfall", set_id="rainfall-forecast", title="Monthly rainfall forecast")
+        k = self.ctx.select(FORECAST_SPI_SCALE)
+        return fc.series_set(self.ctx, f"spi-{k}", set_id="spi-forecast", title=f"SPI-{k} forecast")
 
     # ---------------------------------------------------------------- breakdown
 

@@ -59,7 +59,9 @@ REASONS: dict[str, str] = {
     "services": "No water-services access or backlog tables (households, standpipes, RDP levels) are in the database.",
     "tariffs": "No tariff or water-pricing tables are in the database.",
     "settlements": "No settlement register or population tables are in the database.",
-    "ai": "No forecast or model-output tables are in the database: forecasts are not served.",
+    "ai": "No model-output tables are in the database. NIWIS makes its own statistical forecasts: the forecast keys "
+    "drought, streamflow and groundwater and the models table are served from them, and any variable can be forecast "
+    "in the Forecasting Studio (/api/v1/forecast/*); this panel has no forecast product.",
     "alerts": "No alert service: alerts are not stored in the database and no alert rules run on the live data yet.",
     "data-integration": "Feed-level integration metrics are not recorded in the database; table coverage, row counts "
     "and freshness are served by /api/v1/meta/sources, /meta/coverage and /meta/variables.",

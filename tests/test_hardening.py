@@ -87,9 +87,14 @@ async def test_cors_allows_any_origin_for_get_without_credentials() -> None:
         assert r.headers["access-control-allow-origin"] == "*"
         assert "access-control-allow-credentials" not in r.headers
         pre = await c.options(
-            PROVINCES, headers={"Origin": "https://example.org", "Access-Control-Request-Method": "POST"}
+            PROVINCES, headers={"Origin": "https://example.org", "Access-Control-Request-Method": "DELETE"}
         )
-        assert pre.status_code == 400  # only GET is allowed
+        assert pre.status_code == 400  # GET, and POST for forecast runs, only
+        pre = await c.options(
+            "/api/v1/forecast/runs",
+            headers={"Origin": "https://example.org", "Access-Control-Request-Method": "POST"},
+        )
+        assert pre.status_code == 200
     async for c in client_with(cors_origins=["https://niwis.example"]):
         r = await c.get(PROVINCES, headers={"Origin": "https://example.org"})
         assert "access-control-allow-origin" not in r.headers

@@ -62,6 +62,17 @@ class Settings(BaseSettings):
     cache_ttl_long_series_s: int = 60 * 60
     cache_ttl_meta_s: int = 60 * 60
 
+    # --- forecasting (app/forecasting; DECISIONS D29–D40) ---------------------------------------------------------
+    forecast_enabled: bool = True
+    forecast_workers: int = 2  # worker processes training at once (0 = in-process, tests only: no hard timeout)
+    forecast_timeout_s: int = 120  # a run still training after this is stopped
+    forecast_runs_per_hour: int = 10  # new runs per client IP (cached results are free); 0 disables
+    forecast_queue_limit: int = 20  # Studio runs queued or running at once; more → 503 with Retry-After
+    forecast_retention_h: int = 24  # finished runs are discarded after this
+    forecast_pages: bool = True  # precompute the module pages' forecasts (Auto, 24 months) at startup / new data
+    forecast_page_provinces: bool = True  # … for the nine provinces too (else South Africa only)
+    forecast_page_check_s: int = 30 * 60  # how often to check whether the newest data date changed
+
     @field_validator("cors_origins", "rate_limit_trusted_cidrs", "trusted_proxy_cidrs", "prewarm_scopes", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:

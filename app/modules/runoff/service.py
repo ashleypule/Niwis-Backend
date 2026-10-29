@@ -37,6 +37,7 @@ from app.core.indices import calibration_gap, standardized_index
 from app.core.palettes import NORMAL, OBSERVED, SERIES, YEAR_COLOURS, drought_bands
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope, trend_gap
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
 from app.modules.drivers import driver_series
 from app.modules.rainfall.service import HISTORY_START, MONTHS, RainfallService, _months
@@ -696,9 +697,24 @@ class RunoffService:
     # ---------------------------------------------------------------- forecast / breakdown
 
     async def forecast(self, metric: str) -> dict[str, Any]:
-        allowed = ["runoff", "flow", "flood-probability"]
+        """Precomputed statistical forecasts (app.forecasting.pages): monthly runoff depth and the 7.2 runoff anomaly.
+        Flows here are modelled depth × district area per district (not precomputed); the gauged-flow forecast is on
+        the Surface Water page."""
+        allowed = ["runoff", "runoff-anomaly", "flow", "flood-probability"]
         if metric not in allowed:
             raise unknown("metric", metric, allowed)
+        if metric == "runoff":
+            return fc.series_set(self.ctx, "runoff", set_id="runoff-forecast", title="Monthly runoff forecast")
+        if metric == "runoff-anomaly":
+            return fc.series_set(
+                self.ctx, "runoff-anomaly", set_id="runoff-anomaly-forecast", title="Runoff anomaly forecast"
+            )
+        if metric == "flow":
+            raise DataUnavailable(
+                "Flows on this page are modelled per district (runoff depth × district area) and are not forecast; "
+                "the river-discharge forecast (9_1 daily mean flow) is on the Surface Water page.",
+                missing=["forecast:runoff:flow"],
+            )
         raise forecast_unavailable(MODULE, metric)
 
     async def breakdown(self, metric: str) -> dict[str, Any]:

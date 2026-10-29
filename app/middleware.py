@@ -103,9 +103,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         path = request.url.path
+        ip = self.client_ip(request)
+        request.state.client_ip = ip  # the forecast run limits count per client too (app.forecasting.jobs)
         if self.per_minute <= 0 or not path.startswith("/api/") or path in EXEMPT_PATHS:
             return await call_next(request)
-        ip = self.client_ip(request)
         if self.is_trusted(ip):
             return await call_next(request)
         key = self.client_key(request, ip)

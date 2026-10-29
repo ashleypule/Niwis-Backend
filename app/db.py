@@ -114,6 +114,15 @@ class Database:
             row: asyncpg.Record | None = await conn.fetchrow(query, *args, timeout=timeout_ms / 1000 + 5)
             return row
 
+    async def fetch_slow(self, query: str, *args: Any, timeout_ms: int = 60_000) -> list[asyncpg.Record]:
+        """`fetch` with a longer statement timeout local to its read-only transaction: whole-record reads of a daily
+        table for forecasting (every district-month since 2000). Callers hold `background`, so requests always find
+        a connection."""
+        async with self._require_pool().acquire() as conn, conn.transaction(readonly=True):
+            await conn.execute(f"SET LOCAL statement_timeout = {int(timeout_ms)}")
+            rows: list[asyncpg.Record] = await conn.fetch(query, *args, timeout=timeout_ms / 1000 + 5)
+            return rows
+
     async def fetchval(self, query: str, *args: Any) -> Any:
         async with self._require_pool().acquire() as conn:
             return await conn.fetchval(query, *args)

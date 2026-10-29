@@ -49,6 +49,7 @@ from app.core.thresholds import (
     thresholds,
     veg_class,
 )
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
 from app.modules.groundwater.service import DEPTH as GW_DEPTH
 from app.modules.groundwater.service import GroundwaterService
@@ -64,6 +65,7 @@ IN_DROUGHT = {"D1", "D2", "D3", "D4"}
 CLIM_YEARS = (2001, 2025)  # satellite climatology (full years available)
 SPI_SCALE = Selector("scale", ("1", "3", "6", "12", "24"), "3")  # SPI accumulation period, months
 AREA_SCALE = Selector("scale", ("1", "3", "6", "12", "24"), "6")  # SPI used to classify the area in drought
+FORECAST_SPI_SCALE = Selector("scale", ("3", "6"), "3")  # forecast SPI (page forecasts: SPI-3 and SPI-6)
 AFFECTED_LEVEL = Selector("level", ("province", "catchment"), "province")
 SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
     ("timeseries", "spi"): (SPI_SCALE,),
@@ -743,21 +745,30 @@ class DroughtService:
     # ---------------------------------------------------------------- forecast
 
     async def forecast(self, metric: str) -> dict[str, Any]:
-        allowed = ["spi", "area", "settlements", "population"]
+        """Precomputed statistical forecasts (app.forecasting.pages): SPI-3 / SPI-6 (`scale`), SPEI-3 and the area in
+        D1–D4; settlement and population counts are not in the database."""
+        allowed = ["spi", "spei", "area", "settlements", "population"]
         if metric not in allowed:
             raise unknown("metric", metric, allowed)
-        raise forecast_unavailable(MODULE, metric)
+        if metric == "spi":
+            k = self.ctx.select(FORECAST_SPI_SCALE)
+            return fc.series_set(self.ctx, f"spi-{k}", set_id="spi-forecast", title=f"SPI-{k} forecast")
+        if metric == "spei":
+            return fc.series_set(self.ctx, "spei-3", set_id="spei-forecast", title="SPEI-3 forecast")
+        if metric == "area":
+            return fc.series_set(self.ctx, "drought-area", set_id="area-forecast", title="Area in drought (D1–D4)")
+        raise unavailable(
+            "Settlement and population counts are not in the database, so drought impacts on them cannot be forecast",
+            f"forecast:{metric}",
+        )
 
     # ---------------------------------------------------------------- breakdown
 
     async def breakdown(self, metric: str) -> dict[str, Any]:
-        if metric in ("restrictions", "class-probability"):
-            raise unavailable(
-                "Water restrictions are not in the database"
-                if metric == "restrictions"
-                else "Class probabilities need a forecast model",
-                metric,
-            )
+        if metric == "restrictions":
+            raise unavailable("Water restrictions are not in the database", metric)
+        if metric == "class-probability":
+            return fc.class_probability(self.ctx, "spi-3")
         m = await self.latest("spi_6")
         classes = await self.spi6_classes(m)
         if metric == "severity":
@@ -809,8 +820,17 @@ class DroughtService:
     # ---------------------------------------------------------------- tables
 
     async def table(self, metric: str, limit: int | None) -> dict[str, Any]:
-        if metric in ("early-warning", "forecast-indicators", "recovery", "forecast-kpis"):
-            raise forecast_unavailable(MODULE, metric)
+        if metric in ("forecast-indicators", "forecast-kpis"):
+            return fc.indicators_table(
+                self.ctx,
+                ["spi-3", "spi-6", "spei-3", "drought-area"],
+                table_id=metric,
+                title="Key drought forecast indicators",
+            )
+        if metric == "early-warning":
+            raise unavailable("Early-warning signals need alert rules, which are not defined yet", metric)
+        if metric == "recovery":
+            raise unavailable("Recovery outlooks need district forecasts, which are not computed", metric)
         handlers = {
             "cascade": self.tbl_cascade,
             "affected": self.tbl_affected,
@@ -1282,7 +1302,7 @@ class DroughtService:
 
     async def matrix(self, metric: str) -> dict[str, Any]:
         if metric == "province-risk":
-            raise unavailable("Province risk probabilities need a forecast model", "forecast:province-risk")
+            return fc.province_risk(self.ctx, "spi-3")
         if metric != "veg-heatmap":
             raise unknown("metric", metric, ["veg-heatmap", "province-risk"])
         areas = self.ctx.state.spatial.district_areas()

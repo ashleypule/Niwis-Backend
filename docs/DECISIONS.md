@@ -286,3 +286,137 @@ so filters and search work without the mock. Paths of live modules, unknown modu
 **Evidence.** Before this, a production build showed red error panels (404) on 14 pages, and its filter bar asked the
 mock for local municipalities. **Alternative.** Keeping hybrid mode in production with sample panels marked Sample —
 rejected: the owner's rule is that production builds never show sample numbers.
+
+## Forecasting (from 2026-10-23)
+
+> Owner's instruction: NIWIS makes its own statistical predictions from the database — any live numeric column, any
+> area, a chosen model or Auto, validated on held-back recent data, refitted, forecast with an uncertainty range and
+> compared with simple baselines — and the same machinery fills the pages' forecast tabs. The database stays read-only;
+> forecasts are never written to it. Code: `app/forecasting/`; results on real data: `docs/FORECAST_VALIDATION.md`.
+
+### D29 What can be forecast
+
+**Decision.** A Studio target is any catalogue column that is **live**, **numeric** and **daily or monthly**
+(`GET /api/v1/forecast/targets`). Withheld and duplicate columns are refused (400 with the reason); annual columns are
+not offered (≤ 27 values, below the 36-month minimum). Pages may also forecast four **derived** variables defined in
+`app/forecasting/pages.py` by an SQL expression over a registered column, the way the pages derive them: runoff depth
+(the registry's volume → mm transform), hot days (district days with Tmax > 35 °C, summed per month), % of the area in
+D1–D4 (district SPI-6 ≤ −0.8 after rounding, area-weighted) and river discharge in m³/s (9_1 m³/day ÷ 86 400).
+**Alternative.** Forecasting annual columns with a shorter minimum — rejected: a 26-point backtest cannot tell models
+apart.
+
+### D30 Monthly aggregation follows the variable type (`aggregate: sum | mean` in the catalogue)
+
+**Decision.** `app/registry/catalogue.py` → `aggregate_of`: **sum** for amounts — units mm, mm/day, days, m³, m³/day,
+t/day, kWh/day (rainfall, evaporation, runoff, irrigation, day counts, daily volumes) unless the name says the value is
+a state of the period (anomaly, mean, max, min, peak, ratio, intensity, index, %, flag); **mean** for everything else
+(temperatures, SPI / SPEI, NDVI, % FSC, levels, flows in m³/s). Written to `catalogue.yaml` for every numeric column
+(56 sums). A month's **sum** needs every day of the month but one (the database's own monthly totals miss 31 December);
+a month's **mean** needs one value (telemetry is sampled about every seven weeks). **Evidence.** National and Western
+Cape monthly sums of `6.1` daily rainfall equal the stored `Monthly_Total_Precipitation_mm` in every month 2000–2026
+(Supabase, 2026-10-23); `tests/test_forecast_api.py` checks the sum against SQL on the fixture. **Alternative.**
+Requiring every day — rejected: every December would be a gap.
+
+### D31 The series is the dashboard's series
+
+**Decision.** District values are combined exactly as the dashboard does: an area-weighted mean with ≥ 95 % of the
+area reporting, or, for volumes and flows, a sum that needs every district (WMA: the district's share of area). Only
+rows the dashboard serves are read (never after today, inside `valid_from` / `valid_until`, impossible values dropped,
+excluded spellings skipped), and incomplete months are never used (D5). Whole-record reads of daily tables run with a
+60 s transaction-local timeout and hold the background connection limit (D21). **Alternative.** Forecasting each
+district and adding the forecasts — rejected: 52 runs per national forecast, and the scope rules would differ from the
+charts.
+
+### D32 Models offered
+
+**Decision.** Baselines (naive, seasonal naive, same-month climatology, 12-month moving average) always run.
+Statistical: ETS (additive error, yearly seasonality, with / without a damped trend by AIC), SARIMA (seasonal
+differencing when the STL seasonal strength is ≥ 0.64, KPSS for d, then 4 × 1–2 (p, q)(P, Q) candidates by AIC,
+refitted on every training window), SARIMAX (inputs as regressors), Prophet (monthly, yearly seasonality). ML: Random
+Forest and **LightGBM** (chosen over XGBoost: one small wheel, no GPU build questions; the spec's "RF / XGBoost" family)
+on lags 1, 2, 3, 6, 12, 3- and 12-month rolling means and the calendar month, applied recursively. Deep (experimental):
+LSTM (12-month lookback, 64 → 32, dropout 0.2) and a 2-layer Transformer encoder, PyTorch CPU, early stopping on the
+last 15 % of training windows in time order, fixed seeds. Multivariate: VAR on series standardised per calendar month,
+lag by AIC ≤ 6. **Auto** runs every non-experimental model the series allows and keeps the lowest backtest MASE (ties:
+the simpler model); **Compare all** adds the experimental ones. Deep models run only without input variables
+("single-target runs"). Daily targets (1–30 days): baselines, ETS and ARIMA on the anomaly from the training window's
+day-of-year mean, over its last three years. GARCH is not offered (volatility, not levels). **Alternatives.** Deep
+models in Auto — rejected: with ~300 monthly points they rarely win and cost most of a run; Compare all includes them.
+A full stepwise auto-ARIMA — rejected: about 30 s per model per run; the reduced grid is refitted on every window.
+
+### D33 Validation
+
+**Decision.** Rolling-origin backtest with 4 origins (3 when the history is short), `min(h, 12)` months apart, the last
+one ending on the last observation; each origin's model sees only data before it; gaps are filled inside each training
+window from that window only (same-month mean + interpolated anomaly); inputs are forecast at each origin too. Metrics:
+MAE, RMSE, MASE (each origin's MAE ÷ the in-sample MAE of the seasonal naive forecast on its window, averaged), skill
+against climatology = 1 − SSE / SSE of the climatology baseline on the same points (> 0 beats the long-term average),
+sMAPE when the series reaches zero or changes sign (SPI, anomalies, dry months), MAPE otherwise, and the coverage of
+the 10–90 % band. For a model without its own interval, an origin's coverage uses the band built from the **other**
+origins' errors. **Evidence.** `tests/test_forecast_engine.py::test_backtest_never_sees_data_after_its_origin` changes
+every value after the first origin (target and input) and the first origin's predictions stay identical.
+**Alternative.** A single hold-out year — rejected: one origin cannot rank models reliably.
+
+### D34 Uncertainty and bounds
+
+**Decision.** 10th–90th percentile band (as elsewhere on the dashboard): the model's own where it has one (ETS, SARIMA,
+SARIMAX, Prophet, VAR); otherwise the 10th / 90th percentiles of the backtest errors at that lead time, pooled over lead
+times h ± 2 and made non-narrowing with the horizon. Forecasts and bands are clipped to physical limits: ≥ 0 for
+quantities whose history never goes below 0 (not for anomalies, indices, °C or elevations), ≤ 100 for % shares.
+SPI / SPEI runs report the D0–D4 class of the median and the probability of each class from a normal distribution
+centred on the median with the band as ±1.2816 σ, using the spec §3.4 thresholds as published (rounded to 2 dp, ≤ the
+class maximum). **Alternative.** Conformal intervals — deferred: four origins give too few errors per lead time.
+
+### D35 Limits and data checks, answered at once as 422
+
+**Decision.** Monthly horizon 1–24 months, daily 1–30 days; at least 36 months (deep models 60; daily 730 days); a
+series that is constant, or has more than 20 % of its months missing, is refused (a warning above 10 %, spec §22.2);
+at most 3 inputs; inputs must reach the target's last month, else the forecast would start in the past. These checks
+run synchronously on `POST` (no model is fitted), so the client gets **422 `UNPROCESSABLE`** with the reason instead of
+a queued run that fails. Future input values are the inputs' own forecasts from the better of ETS and SARIMA on the
+window's last 12 months, never the last value held constant; the result says so.
+
+### D36 Background runs on a public API
+
+**Decision.** Each run trains in its own spawned process, at most `FORECAST_WORKERS` (2) at once; a run past
+`FORECAST_TIMEOUT_S` (120 s) is killed (a process per run is what makes a hard timeout possible). Workers pin BLAS /
+OpenMP / torch to one thread. Results are cached by a hash of the normalised request **and the data it was trained on**
+(target and input values, hence their `asOf`): the same request on the same data never trains twice; a timeout or a
+worker crash is not cached. `FORECAST_RUNS_PER_HOUR` (10) new runs per client IP (cache hits free; the IP is the one the
+rate limiter decided, D24), `FORECAST_QUEUE_LIMIT` (20) queued or running → 503 with `Retry-After`, runs discarded after
+`FORECAST_RETENTION_H` (24 h). Page forecasts use at most `FORECAST_WORKERS − 1` slots, so a Studio run never waits
+behind a round of page forecasts. CORS now allows POST (only the forecast runs take a body); run status is `no-store`.
+**Alternative.** A persistent process pool — rejected: a stuck fit could not be stopped without killing the pool.
+
+### D37 Page forecasts
+
+**Decision.** At startup and whenever the newest date in the database changes (checked every 30 min), Auto 24-month
+forecasts are computed for South Africa and the nine provinces (national first) of: SPI-3, SPI-6, SPEI-3, area in
+D1–D4 (drought); monthly rainfall, SPI-1 (rainfall); temperature anomaly, hot days (climate); NDVI, VCI (vegetation);
+runoff depth, runoff anomaly (runoff); river discharge (surface water); depth to groundwater (groundwater). They feed
+the contract endpoints that answered 501: drought `forecast?metric=spi` (`scale` 3 / 6, `horizon`), `spei`, `area`,
+`table forecast-indicators` / `forecast-kpis`, `breakdown class-probability` (1–6 months), `matrix province-risk`
+(P(D2+) at 3 / 6 / 12 / 24 months); rainfall `rainfall`, `spi` (`scale` 1 / 3); climate `temp-anomaly`, `hot-days`
+(new keys); vegetation `ndvi`, `vci`, `table forecast-indicators`; runoff `runoff`, `runoff-anomaly`; surface water
+`flow`, `runoff`; groundwater `level`; AI `drought`, `streamflow`, `groundwater`, `table models`; Overview `ai`. Every
+response carries `forecast` (model, why, skill, MASE, coverage, data date, disclaimer, Studio link); a model without
+skill says "This model does not beat the long-term average for this variable". Other scopes answer 501 pointing to the
+Studio. **Still 501, with the reason:** district outlook maps (no district forecasts are precomputed), settlements and
+population (not in the database), recovery probabilities, flood probability, reservoir storage (withheld, D2), demand,
+water-quality index (computed, not stored), climate scenarios; the runoff page's `flow` (modelled per district) points
+to the Surface Water forecast. Groundwater depth is served only if its gaps allow (D35; see FORECAST_VALIDATION).
+**Alternative.** Computing districts too (52 × 14 runs per data change) — rejected for the worker budget; any district
+can be run in the Studio.
+
+### D38 Dependencies
+
+**Decision.** statsmodels, scikit-learn, LightGBM, Prophet and PyTorch (CPU wheel from the PyTorch index) are runtime
+dependencies; the API process never imports torch (only worker processes running a deep model do). The Docker image
+grows by roughly 1 GB. **Alternative.** A separate forecasting service — rejected for now: one deployable is simpler,
+and the worker processes already isolate the training.
+
+### D39 Two new database tables are listed, not registered
+
+`17_1_water_quantity_assessment_transfers_master` and `17_2_national_water_balance_master` appeared in the database by
+2026-10-23. The catalogue lists them as unregistered (its rule for any new table) until they are profiled and
+plausibility-checked (D1); registering them is outside the forecasting work. `tests/test_new_tables.py` names them.

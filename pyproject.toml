@@ -18,6 +18,12 @@ dependencies = [
   "shapely>=2.0",
   "python-dateutil>=2.9",
   "python-dotenv>=1.0",
+  # forecasting (app/forecasting); torch from https://download.pytorch.org/whl/cpu (requirements.txt)
+  "statsmodels>=0.14",
+  "scikit-learn>=1.5",
+  "lightgbm>=4.3",
+  "prophet>=1.1.5",
+  "torch>=2.4",
 ]
 
 [dependency-groups]
@@ -61,7 +67,7 @@ packages = ["app"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["pymannkendall.*", "shapely.*", "scipy.*", "pandas.*"]
+module = ["pymannkendall.*", "shapely.*", "scipy.*", "pandas.*", "statsmodels.*", "sklearn.*", "lightgbm.*", "prophet.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

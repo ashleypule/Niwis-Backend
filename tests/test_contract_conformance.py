@@ -20,6 +20,7 @@ from app.schemas import contract as c
 CONTRACT = (Path(__file__).resolve().parent.parent / "reference" / "API_CONTRACT.md").read_text(encoding="utf-8")
 
 PROVENANCE = {"source", "isStale", "periodEnd", "components", "baseline", "baselineNote", "aggregation", "unavailable"}
+PROVENANCE |= {"forecast"}  # forecast responses: model, skill, data date, disclaimer (CONTRACT_CHANGES §15)
 ADDITIONS: dict[str, set[str]] = {
     "KpiSchema": {"asOf", "source", "isStale", "periodEnd", "unavailableReason"},
     "KpiSetSchema": PROVENANCE,

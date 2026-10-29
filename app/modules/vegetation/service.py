@@ -26,6 +26,7 @@ from app.core.palettes import NDVI_TREND, NEGATIVE, OBSERVED, POSITIVE, SERIES, 
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import thresholds, veg_class
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, forecast_unavailable, unknown
 from app.modules.drivers import driver_series
 from app.modules.rainfall.service import RainfallService, _months
@@ -392,8 +393,12 @@ class VegetationService:
     # ---------------------------------------------------------------- forecast
 
     async def forecast(self, metric: str) -> dict[str, Any]:
-        if metric not in ("ndvi", "recovery-probability"):
-            raise unknown("metric", metric, ["ndvi", "recovery-probability"])
+        """Precomputed statistical forecasts (app.forecasting.pages): NDVI and VCI; recovery probabilities need
+        district forecasts."""
+        if metric not in ("ndvi", "vci", "recovery-probability"):
+            raise unknown("metric", metric, ["ndvi", "vci", "recovery-probability"])
+        if metric in ("ndvi", "vci"):
+            return fc.series_set(self.ctx, metric, set_id=f"{metric}-forecast", title=f"{metric.upper()} forecast")
         raise forecast_unavailable(MODULE, metric)
 
     # ---------------------------------------------------------------- breakdown
@@ -565,7 +570,8 @@ class VegetationService:
 
     async def table(self, metric: str, limit: int | None) -> dict[str, Any]:
         if metric == "forecast-indicators":
-            raise forecast_unavailable(MODULE, metric)
+            title = "Vegetation forecast indicators"
+            return fc.indicators_table(self.ctx, ["ndvi", "vci"], table_id=metric, title=title)
         if metric not in ("provinces", "hotspots"):
             raise unknown("metric", metric, ["provinces", "hotspots", "forecast-indicators"])
         m = await self.last()

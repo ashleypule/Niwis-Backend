@@ -16,6 +16,7 @@ from typing import Any
 class APIError(Exception):
     status_code = 500
     code: str | None = None
+    headers: dict[str, str] | None = None  # extra response headers (e.g. Retry-After)
 
     def __init__(self, error: str, *, issues: list[Any] | None = None, **extra: Any) -> None:
         super().__init__(error)
@@ -56,3 +57,27 @@ class DataUnavailable(APIError):
 class ServiceUnavailable(APIError):
     status_code = 503
     code = "SERVICE_UNAVAILABLE"
+
+
+class Unprocessable(APIError):
+    """The request is valid but the data cannot support it (a forecast of a series that is too short or constant)."""
+
+    status_code = 422
+    code = "UNPROCESSABLE"
+
+
+class TooManyRequests(APIError):
+    status_code = 429
+    code = "RATE_LIMITED"
+
+    def __init__(self, error: str, retry_after_s: int, **extra: Any) -> None:
+        super().__init__(error, **extra)
+        self.headers = {"Retry-After": str(max(1, int(retry_after_s)))}
+
+
+class Busy(ServiceUnavailable):
+    code = "BUSY"
+
+    def __init__(self, error: str, retry_after_s: int, **extra: Any) -> None:
+        super().__init__(error, **extra)
+        self.headers = {"Retry-After": str(max(1, int(retry_after_s)))}

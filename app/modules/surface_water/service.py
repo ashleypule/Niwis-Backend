@@ -31,6 +31,7 @@ from app.core.palettes import NORMAL, OBSERVED, SERIES, YEAR_COLOURS
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import drought_class_or_none
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status
 from app.modules.district import NO_POINTS, DistrictModule
 from app.modules.rainfall.service import MONTHS
@@ -445,9 +446,14 @@ class SurfaceWaterService(DistrictModule):
         )
 
     async def forecast(self, metric: str) -> dict[str, Any]:
-        if metric in ("runoff", "flow", "flood-probability"):
+        """Precomputed statistical forecasts (app.forecasting.pages): river discharge (9_1) and runoff depth."""
+        if metric == "flow":
+            return fc.series_set(self.ctx, "flow", set_id="flow-forecast", title="River discharge forecast")
+        if metric == "runoff":
+            return fc.series_set(self.ctx, "runoff", set_id="runoff-forecast", title="Monthly runoff forecast")
+        if metric == "flood-probability":
             raise self.forecast_none(metric)
-        raise self.no_key("forecast", metric, [], {})
+        raise self.no_key("forecast", metric, ["flow", "runoff"], {})
 
     # ---------------------------------------------------------------- breakdowns
 

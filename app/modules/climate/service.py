@@ -27,6 +27,7 @@ from app.core.palettes import DROUGHT, NEGATIVE, OBSERVED, POSITIVE, SERIES
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope, trend_gap, trend_line
 from app.core.thresholds import drought_class, drought_label
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, unknown
 from app.modules.rainfall.service import HISTORY_START, RainfallService, _months
 from app.schemas import contract as c
@@ -830,8 +831,15 @@ class ClimateService:
     # ---------------------------------------------------------------- forecast
 
     async def forecast(self, metric: str) -> dict[str, Any]:
-        # The contract defines no climate forecast keys (the forecast page uses projections, which are unavailable).
-        raise unknown("metric", metric, [])
+        """Precomputed statistical forecasts (additions; the contract's climate forecast page uses projections, which
+        stay unavailable): monthly temperature anomaly and hot days (Tmax > 35 °C)."""
+        if metric == "temp-anomaly":
+            return fc.series_set(
+                self.ctx, "temp-anomaly", set_id="temp-anomaly-forecast", title="Temperature anomaly forecast"
+            )
+        if metric == "hot-days":
+            return fc.series_set(self.ctx, "hot-days", set_id="hot-days-forecast", title="Hot days forecast")
+        raise unknown("metric", metric, ["temp-anomaly", "hot-days"])
 
     # ---------------------------------------------------------------- breakdown
 

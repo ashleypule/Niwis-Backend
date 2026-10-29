@@ -27,6 +27,7 @@ from app.core import districts
 from app.core.palettes import NORMAL, SERIES, YEAR_COLOURS, drought_bands
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope, trend_line
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons
 from app.modules.district import NO_POINTS, DistrictModule
 from app.modules.rainfall.service import MONTHS
@@ -454,9 +455,11 @@ class GroundwaterService(DistrictModule):
         return body
 
     async def forecast(self, metric: str) -> dict[str, Any]:
+        """Precomputed statistical forecast of the depth to groundwater (app.forecasting.pages), when the telemetry
+        has few enough gaps; otherwise 501 with the reason."""
         if metric == "level":
-            raise self.forecast_none(metric)
-        raise self.no_key("forecast", metric, [], {})
+            return fc.series_set(self.ctx, "gw-depth", set_id="level-forecast", title="Depth to groundwater forecast")
+        raise self.no_key("forecast", metric, ["level"], {})
 
     # ---------------------------------------------------------------- breakdowns
 
