@@ -249,7 +249,23 @@ class PageForecasts:
         if newest is not None and newest == self.newest and self.entries:
             return 0
         self.newest, self.round_started = newest, time.time()
-        jobs: list[tuple[tuple[str, str], Any]] = []
+
+        async def finish(key: tuple[str, str], rec: Any) -> None:
+            await self.jobs.wait(rec)
+            if rec.status == "done" and rec.result is not None:
+                self.entries[key] = Entry(
+                    "done",
+                    {**rec.context, **rec.result},
+                    run_id=rec.id,
+                    studio=studio_link(rec.request),
+                    generated=rec.finished or time.time(),
+                )
+            elif key not in self.entries or self.entries[key].status != "done":
+                self.entries[key] = Entry("failed", error=(rec.error or {}).get("detail", "The forecast failed"))
+
+        # each run is awaited as soon as it is submitted, so an entry turns "done" the moment its run finishes (the
+        # preparation of the remaining variables and scopes goes on meanwhile)
+        tasks: list[asyncio.Task[None]] = []
         for scope in self.scopes():
             for v in VARS.values():
                 if self.only is not None and v.id not in self.only:
@@ -271,26 +287,13 @@ class PageForecasts:
                 prev = self.entries.get(key)
                 if prev is None or prev.status != "done":
                     self.entries[key] = Entry("running", run_id=rec.id, studio=studio_link(request))
-                jobs.append((key, rec))
+                tasks.append(asyncio.create_task(finish(key, rec)))
 
-        async def finish(key: tuple[str, str], rec: Any) -> None:
-            await self.jobs.wait(rec)
-            if rec.status == "done" and rec.result is not None:
-                self.entries[key] = Entry(
-                    "done",
-                    {**rec.context, **rec.result},
-                    run_id=rec.id,
-                    studio=studio_link(rec.request),
-                    generated=rec.finished or time.time(),
-                )
-            elif key not in self.entries or self.entries[key].status != "done":
-                self.entries[key] = Entry("failed", error=(rec.error or {}).get("detail", "The forecast failed"))
-
-        await asyncio.gather(*(finish(k, r) for k, r in jobs))
+        await asyncio.gather(*tasks)
         log.info(
-            "page forecasts computed", extra={"runs": len(jobs), "seconds": round(time.time() - self.round_started)}
+            "page forecasts computed", extra={"runs": len(tasks), "seconds": round(time.time() - self.round_started)}
         )
-        return len(jobs)
+        return len(tasks)
 
     async def keep_fresh(self) -> None:
         while True:

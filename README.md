@@ -67,6 +67,12 @@ Check it works: `GET /api/v1/health` should report `"status": "ok"` and `"readOn
 | `DB_POOL_MAX`, `DB_STATEMENT_TIMEOUT_MS` | `5`, `10000` | Pool size and per-statement timeout. |
 | `CACHE_TTL_SUMMARY_S`, `CACHE_TTL_MAP_S`, `CACHE_TTL_LONG_SERIES_S`, `CACHE_TTL_META_S` | 900, 900, 3600, 3600 | Cache lifetimes. |
 | `LOG_LEVEL` | `INFO` | JSON logs to stdout; secrets are scrubbed. |
+| `FORECAST_ENABLED` | `true` | The Forecasting Studio API (`/api/v1/forecast/*`) and the page forecasts (`app/forecasting`, DECISIONS D29–D39). |
+| `FORECAST_WORKERS` | `2` | Worker processes training at once (one thread each); `0` runs in-process (tests only). |
+| `FORECAST_TIMEOUT_S` | `120` | A run still training after this is stopped. |
+| `FORECAST_RUNS_PER_HOUR`, `FORECAST_QUEUE_LIMIT` | `10`, `20` | New runs per client IP (cached results are free); runs queued or running at once (more → 503 with `Retry-After`). |
+| `FORECAST_RETENTION_H` | `24` | Finished runs are discarded after this. |
+| `FORECAST_PAGES`, `FORECAST_PAGE_PROVINCES`, `FORECAST_PAGE_CHECK_S` | `true`, `true`, `1800` | Precompute the pages' forecasts (Auto, 24 months) for South Africa (and the provinces) at startup and when the newest data date changes, checked every 30 min. |
 
 ## Safety rules built in
 
@@ -95,6 +101,7 @@ python scripts/verify.py                      # API values vs independent SQL on
 python scripts/audit_responses.py             # every endpoint × selector × scope vs app/core/response_checks
 python scripts/bench.py                       # summary latency on Supabase → docs/PERFORMANCE.md
 python scripts/inventory.py                   # re-profile the database → docs/DB_INVENTORY.md
+python scripts/forecast_validation.py         # every model on every page forecast variable → docs/FORECAST_VALIDATION.md
 python -m pip_audit -r requirements.txt       # dependency vulnerability check
 ```
 
@@ -116,6 +123,7 @@ app/
   refdata/                /reference/{provinces|wmas|municipalities|catchments}
   modules/                one package per contract module (rainfall, drought, climate, vegetation, runoff)
   modules/router_factory.py  builds the contract endpoints for a module from its service class
+  forecasting/            forecasting engine: models, backtest, Studio API, worker processes, page forecasts
   schemas/contract.py     Pydantic mirrors of the contract's zod schemas
 scripts/                  inventory, data checks, fixture builder, boundary builder, verify, bench, OpenAPI export
 migrations/proposed/      SQL for the data team to review — never run by this project

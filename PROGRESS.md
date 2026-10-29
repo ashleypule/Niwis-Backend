@@ -1,6 +1,42 @@
 # Progress
 
-## Status (2026-10-20): completing the system from the database — Part 1 (every table registered) done; Part 2 (dams, surface water, groundwater, groundwater reserve, water quality, Overview) done; Part 3 (public release) done; see the Part 3 entry for what remains. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
+## Status (2026-10-29): forecasting added — the Forecasting Studio (`/api/v1/forecast/*`, any live column, any area, Auto or a chosen model, chronological backtest) and the pages' forecast tabs fed by precomputed Auto forecasts (D29–D39); before that, completing the system from the database — Parts 1–3 done. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
+
+### Forecasting Studio and page forecasts (2026-10-23 → 29)
+
+Owner's instruction: NIWIS makes its own predictions from the database — any live numeric catalogue column, any area,
+a model or Auto, a chronological backtest, a refit and a forecast with a 10–90 % band — and the same engine fills the
+pages' forecast tabs. Decisions D29–D39 (`docs/DECISIONS.md`); results on the real data `docs/FORECAST_VALIDATION.md`.
+
+- [x] `app/forecasting/`: one `fit` / `predict` interface; baselines (naive, seasonal naive, climatology, 12-month
+      mean), ETS, SARIMA (order by AIC), SARIMAX, Prophet, Random Forest, LightGBM, LSTM and Transformer
+      (experimental, PyTorch CPU), VAR; Auto = lowest backtest MASE among non-experimental models, Compare all adds the
+      experimental ones. GARCH not offered.
+- [x] Series = the dashboard's series (`series.py`): catalogue `aggregate: sum | mean` (D30: amounts summed to months,
+      states averaged; 56 summed columns), area weighting / sums as the charts, `valid_from` / `until`, no future rows,
+      complete months only. Daily tables read whole-record with a 60 s local timeout under the background limit.
+- [x] Validation (`validation.py`): rolling-origin backtest (4 origins), gap filling inside each window, MAE / RMSE /
+      MASE / skill vs climatology / sMAPE or MAPE / band coverage; residual intervals widening with the horizon; SPI /
+      SPEI class probabilities; physical bounds. Leakage test: data after an origin never change its prediction.
+- [x] API: `GET /forecast/models`, `GET /forecast/targets`, `POST /forecast/runs` → 202, `GET /forecast/runs/{id}`,
+      `GET /forecast/pages`; worker processes (2, one thread each) with a 120 s kill, results cached by request + data,
+      10 runs / h per IP, queue limit 20, 24 h retention, 422 for series the data cannot support (D35, D36).
+- [x] Page forecasts (`pages.py`, D37): Auto 24-month runs for South Africa and the provinces of 14 key variables,
+      recomputed when the newest date changes; served by the contract forecast keys that returned 501 (drought SPI /
+      SPEI / area / indicators / class probabilities / province risk, rainfall, climate anomaly + hot days, NDVI / VCI,
+      runoff, discharge, groundwater depth, AI page, Overview), each with `forecast` (model, skill, data date,
+      disclaimer, Studio link). District maps, settlements, recovery, storage, demand, WQ, scenarios stay 501.
+- [x] Tests: `tests/test_forecast_engine.py` (38: every model, known answers, constant / short / gaps → refused,
+      leakage, bounds, daily, classes), `tests/test_forecast_api.py` (11: lifecycle, cache hit, 422, limits, worker
+      timeout, retention, monthly rainfall = SQL sum of daily, page forecasts behind the contract endpoints). Full suite
+      1 115 passed; ruff + mypy clean. Docker image rebuilt (2.19 GB, torch CPU) and smoke-tested read-only with a
+      Compare-all run (65 s, 11 models).
+- [x] Frontend: `/ai` is the Forecasting Studio (variable → area → model → horizon → inputs → Run, progress, results
+      chart with backtests and band, metrics, sortable comparison, class table, warnings, CSV / PNG, shareable URL);
+      forecast tabs show "Statistical forecast · model · skill · data to" and the disclaimer; `ai` is a live module.
+- [x] Docs: CONTRACT_CHANGES §15, FRONTEND_INTEGRATION §10, README / DEPLOYMENT / `.env.example` (FORECAST_*),
+      `scripts/forecast_validation.py` → `docs/FORECAST_VALIDATION.md`.
+- [ ] Fixtures re-recorded with the Studio flow; frontend hybrid tests; final report (see the end of this file).
 
 ### Blocking / waiting on others
 

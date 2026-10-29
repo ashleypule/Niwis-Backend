@@ -588,3 +588,78 @@ Guidelines, compliance, ratios and the CCME WQI: DECISIONS D20.
 - New errors: 413 `{"error": "Request body too large", "code": "PAYLOAD_TOO_LARGE"}`, 414 `{"error": "Query string too
   long", "code": "URI_TOO_LONG"}`. Only GET (and CORS preflight) is allowed.
 - CORS: `Access-Control-Allow-Origin: *` unless `CORS_ORIGINS` names origins; never credentials.
+
+## 15. Forecasting Studio and page forecasts (2026-10-23 / 29) — new endpoints, additions, forecast keys now 200
+
+NIWIS makes its own statistical forecasts from the database (DECISIONS D29–D39; results on real data in
+`docs/FORECAST_VALIDATION.md`). Nothing is written to the database.
+
+### 15.1 Forecasting Studio API (`/api/v1/forecast/*`, new)
+
+| Request | Returns |
+| --- | --- |
+| `GET /forecast/models` | `{choices: [auto, compare], groups, models: [{id, label, group, groupLabel, description, minHistoryMonths, minHistoryDays, supportsInputs, requiresInputs, resolutions, experimental, nativeInterval}], limits: {monthlyHorizon, dailyHorizon, minHistoryMonths, minHistoryMonthsDeep, minHistoryDays, maxInputs, runsPerHour, timeoutSeconds, retentionHours}, disclaimer}` |
+| `GET /forecast/targets?module=` | the live numeric daily / monthly catalogue columns, per table: `{table, column, label, name, unit, monthlyUnit, resolution, resolutions, aggregate (sum \| mean), classified, firstDate, lastDate, historyMonths, enoughHistory, note?}` |
+| `POST /forecast/runs` body `{table, column, scope: {level: national \| province \| district \| wma, id?}, model, horizon, inputs: [{table, column}], resolution: monthly \| daily}` | **202** `{runId, status, cached, statusUrl}` + `Location`. Errors: 400 (unknown table / column / model / scope, horizon out of range, withheld or duplicate column), **422 `UNPROCESSABLE`** (`{error, code, issues}`: fewer than 36 months, constant series, more than 20 % missing, an input ending before the target), **429 `RATE_LIMITED`** with `Retry-After` (10 new runs per hour per address; cached results are free), **503 `BUSY`** with `Retry-After` (queue full). The API's only POST; CORS allows it. |
+| `GET /forecast/runs/{runId}` | `{runId, status: queued \| running \| done \| failed, progress 0–1, message, queuePosition?, request, createdAt, startedAt?, finishedAt?, expiresAt?, result?, error?: {code, detail}}`, `Cache-Control: no-store`. 404 after `retentionHours` (24 h). |
+| `GET /forecast/pages` | status of the precomputed page forecasts (variable, scope, status, model, skill, data date). |
+
+`result` (when `done`): `label` "Statistical forecast", `disclaimer`, `target {table, column, label, unit, resolution,
+aggregate, classified, note}`, `scope {level, id, name}`, `inputs[]`, `sources[]`, `dataAsOf`, `model {id, label,
+group, experimental, params, why, interval: model \| backtest residuals}`, `history [[date, value]]`, `historyStart`,
+`forecastStart`, `asOf` (last observed period = the divider), `backtest [{origin, data: [[date, actual, predicted,
+lower, upper]]}]`, `backtestOrigins`, `forecast [[date, median, p10, p90]]`, `metrics {mae, rmse, mase, skill,
+smape \| mape, coverage, n}`, `metricNotes`, `comparison [{model, label, group, baseline, experimental, winner, mae,
+rmse, mase, skill, smape \| mape, coverage, seconds, error?}]` (every model that ran, baselines always), `warnings[]`
+(plain language), `classes [{date, class, probabilities {None, D0 … D4}, pDrought}]` for SPI / SPEI targets,
+`runtimeSeconds`.
+
+Scopes: `district` takes a district / metro MDB code (`DC44`, `CPT`), `province` a province code, `wma` `WMA1 … WMA9`.
+The same request on the same data returns the same `runId` (`cached: true`); new data give a new run.
+
+### 15.2 `forecast` provenance block (addition to every response type)
+
+Responses made from a forecast carry `forecast: {label: "Statistical forecast", model, modelLabel, why?, skill, mase,
+coverage, beatsClimatology, skillNote?, dataAsOf, forecastStart, horizon, generatedAt, disclaimer, studio?}`.
+`disclaimer` is always "Statistical forecast from historical data; not an official SAWS / DWS outlook." `skillNote` is
+"This model does not beat the long-term average for this variable." when `beatsClimatology` is false. `studio` is the
+Forecasting Studio URL that reruns the forecast (absent for derived page variables). Tables and matrices that combine
+several forecasts carry the oldest data date and the weakest skill, `model: "auto"`.
+
+### 15.3 Contract forecast keys now served (were 501) — from the precomputed page forecasts (D37)
+
+Auto 24-month forecasts for South Africa and the nine provinces, recomputed when the newest database date changes;
+other scopes (district, WMA) answer 501 pointing to the Studio. Forecast `SeriesSet`s: `band` (10–90 %, joined to the
+last observation), `obs` (last 36 months), `median` (dashed), `asOf` = the last observed month (the divider),
+`horizon` query parameter 3 / 6 / 12 / 24 (default 12), `note` with model, skill and data date.
+
+| Module | Key | Series | Notes |
+| --- | --- | --- | --- |
+| drought | `forecast?metric=spi` | SPI-3 (`scale=3`, default) or SPI-6 (`scale=6`) | `scale` selector, 400 for other values |
+| drought | `forecast?metric=spei` (new key) | SPEI-3 | |
+| drought | `forecast?metric=area` | % of the area in D1–D4 (district SPI-6) | 0–100 % |
+| drought | `table?metric=forecast-indicators`, `forecast-kpis` | rows `spi-3`, `spi-6`, `spei-3`, `drought-area`: `indicator, unit, current, h3, h6, h12, h24, model, skill` | a row without a forecast is null + `unavailable` |
+| drought | `breakdown?metric=class-probability` | categories 1–6 months, series `None, D0 … D4` (%) stacked | from the SPI-3 forecast |
+| drought | `matrix?metric=province-risk` | provinces × 3 / 6 / 12 / 24 months, P(D2+) 0–1, `scale: index01` | from each province's SPI-3 forecast |
+| rainfall | `forecast?metric=rainfall` | monthly rainfall (mm) | ≥ 0 |
+| rainfall | `forecast?metric=spi` | SPI-3 (`scale=3`, default) or SPI-1 (`scale=1`) | was documented as SPI-6 |
+| climate | `forecast?metric=temp-anomaly`, `hot-days` (new keys) | monthly temperature anomaly (°C); hot days (Tmax > 35 °C) per month | |
+| vegetation | `forecast?metric=ndvi`, `vci` (new key) | NDVI; VCI (%) | `table?metric=forecast-indicators`: rows `ndvi`, `vci` |
+| runoff | `forecast?metric=runoff`, `runoff-anomaly` (new key) | runoff depth (mm/month); 7.2 runoff anomaly (%) | `flow` → 501 (modelled per district; the gauged forecast is on surface water) |
+| surface-water | `forecast?metric=flow`, `runoff` | river discharge (m³/s, 9_1); runoff depth | `flow` no longer needs `entityId` |
+| groundwater | `forecast?metric=level` | depth to groundwater (m bgl) | 501 while the telemetry has too many unsampled months (38 % nationally) |
+| ai | `forecast?metric=drought`, `streamflow`, `groundwater` | SPI-3; river discharge; depth to groundwater | `reservoir`, `demand`, `quality`, `scenario` → 501 with reasons |
+| ai | `table?metric=models` | the page forecasts' models and backtest scores (`variable, pages, model, mae, rmse, mase, skill, coverage, dataAsOf, status`) | |
+| overview | `forecast?metric=ai` | SPI-3 | |
+
+Still 501, with the reason: district outlook maps (`outlook-*`, `forecast-6`, `forecast-1/2/3`, `forecast-ndvi`,
+`forecast-anomaly`, `forecast-12`, `forecast-wqi`), settlements / population, recovery, flood probability, reservoir
+storage (D2), demand, water-quality forecasts, climate scenarios, `early-warning` (no alert rules), `importance`,
+`scenario`.
+
+### 15.4 HTTP
+
+- CORS `allow_methods` is now `GET, POST, OPTIONS` (POST only for `/forecast/runs`).
+- `/forecast/models` and `/forecast/targets` are cached like meta (`max-age=3600`); `/forecast/runs/*` and
+  `/forecast/pages` are `no-store`; a 501 "being computed" is `no-store` too.
+- New error codes: 422 `UNPROCESSABLE`, 429 `RATE_LIMITED` (also on runs), 503 `BUSY`.

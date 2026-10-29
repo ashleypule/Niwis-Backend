@@ -67,7 +67,7 @@ def one(vid: str, v: Any, t: Any, sd: Any, horizon: int, model: str) -> dict[str
     try:
         r = run(sd.values, {}, spec)
     except Exception as exc:
-        return {"variable": vid, "error": str(exc), "seconds": round(time.monotonic() - t0, 1)}
+        return {"variable": vid, "horizon": horizon, "error": str(exc), "seconds": round(time.monotonic() - t0, 1)}
     rows = [c for c in r["comparison"] if c.get("mase") is not None]
     auto = min(
         (c for c in rows if not c["experimental"]),
@@ -191,8 +191,8 @@ def main() -> int:
                 f"   auto={r.get('auto')} skill={r.get('autoSkill')} {r['seconds']} s {r.get('error', '')}", flush=True
             )
     generated = dt.date.today().isoformat()
-    DOC.write_text(render(results, generated), encoding="utf-8", newline="\n")
     RAW.write_text(json.dumps({"generated": generated, "results": results}, indent=1), encoding="utf-8", newline="\n")
+    DOC.write_text(render(results, generated), encoding="utf-8", newline="\n")
     print(f"wrote {DOC.relative_to(ROOT)}")
     return 0
 

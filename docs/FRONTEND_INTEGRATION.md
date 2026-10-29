@@ -231,3 +231,42 @@ All additions unless marked; details in `docs/CONTRACT_CHANGES.md` §11–§12.
 - [ ] Optional: zod schemas extended with the provenance fields; "as of" / stale badges
 - [ ] Database category charts: one card per table, one chart per group, column toggles, withheld / duplicate
       columns listed with their reason (section 8)
+
+## 10. Forecasting Studio and forecast tabs (2026-10-29)
+
+NIWIS makes its own statistical forecasts (DECISIONS D29–D39; what works on the real data:
+`docs/FORECAST_VALIDATION.md`). Details of every field: `docs/CONTRACT_CHANGES.md` §15.
+
+### The Studio (`/ai`, module id `ai`)
+
+1. `GET /api/v1/forecast/targets` lists what can be forecast (live numeric daily / monthly columns, with label, unit,
+   `aggregate` sum / mean, resolutions, history); `GET /api/v1/forecast/models` lists the models (grouped, with
+   descriptions, minimum history, `experimental`) and the limits.
+2. `POST /api/v1/forecast/runs` with `{table, column, scope, model, horizon, inputs, resolution}` → `202 {runId}`.
+   Answer **400** / **422** / **429** / **503** at once with the server's own message (`error`); show it as is — it says
+   what to change (shorter horizon, another column, wait).
+3. Poll `GET /api/v1/forecast/runs/{runId}` every second: `status`, `progress`, `message`, `queuePosition`; then
+   `result` (see §15.1). A finished run never changes. 404 after 24 h: re-run.
+4. The frontend encodes the request in the URL (`?table=…&column=…&level=…&area=…&model=…&horizon=…&inputs=…&run=1`);
+   a link with `run=1` re-runs on open, and the server answers from its cache when nothing changed (`cached: true`).
+5. The chart is the dashboard's forecast chart: `band` (10–90 %), `obs`, one dashed series per backtest origin, the
+   median; `asOf` draws the Historical | Forecast divider. Metrics, the sortable comparison table (winner highlighted,
+   baselines always present), SPI class probabilities, warnings and a CSV download come from `result`.
+6. The Studio needs the backend (module `ai` in `VITE_LIVE_MODULES`); with sample data it says so.
+
+### Forecast tabs
+
+The forecast endpoints in §15.3 answer 200 for South Africa and the provinces; every response carries `forecast`
+(model, skill, data date, disclaimer, Studio link). Panels show, under the chart / table, "Statistical forecast ·
+<model> · skill vs climatology <x> · data to <Mon YYYY>" and, when `beatsClimatology` is false, "This model does not
+beat the long-term average for this variable." The info tooltip always starts with the disclaimer. Other scopes (a
+district, a WMA) and products without a forecast variable stay 501 → "Not yet available" with the reason.
+
+### Fixtures and tests
+
+- `npm run fixtures:record` also records the Studio flow: the POST (keyed by its body, `forecast/runs?body={…}`)
+  and the finished run, for the Studio's default choices and one shared link (`scripts/record-fixtures.ts`,
+  `STUDIO_RUNS`). In fixtures mode MSW answers a POST from that key (`src/mocks/fixtures.ts`).
+- Record after the backend's page-forecast round has finished (`GET /api/v1/forecast/pages`: every item `done`), else
+  the forecast tabs record "being computed" 501s.
+- Playwright hybrid: `tests/e2e/hybrid/studio.spec.ts` (default run, shared link, forecast-tab note).

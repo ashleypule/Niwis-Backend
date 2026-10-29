@@ -43,6 +43,9 @@ The API reads `.env` in the repository root (never committed; start from `.env.e
 | `DB_POOL_MAX`, `DB_STATEMENT_TIMEOUT_MS` | `5`, `10000` | Keep the pool small: the Supabase pooler is shared. |
 | `CACHE_TTL_*_S` | defaults | Also the `Cache-Control: max-age` the API sends. |
 | `PREWARM_CATEGORIES`, `PREWARM_SCOPES` | defaults | Keep warm: cold category charts can approach the statement timeout. |
+| `FORECAST_WORKERS`, `FORECAST_TIMEOUT_S` | `2`, `120` | Forecast worker processes (one CPU thread each; give the container at least that many cores) and the hard limit per run. The image is about 2.2 GB (PyTorch CPU); workers write nothing but matplotlib's cache under `/tmp` (a tmpfs in the compose file). |
+| `FORECAST_RUNS_PER_HOUR`, `FORECAST_QUEUE_LIMIT`, `FORECAST_RETENTION_H` | `10`, `20`, `24` | Public limits on Studio runs; see README. |
+| `FORECAST_PAGES`, `FORECAST_PAGE_PROVINCES` | `true`, `true` | The pages' forecasts (14 variables × South Africa + 9 provinces ≈ 140 runs of ~30 s each on one worker slot) are computed after startup and when new data arrive; until then the forecast tabs say so (501, `no-store`). |
 | `LOG_LEVEL` | `INFO` | JSON logs on stdout; secrets are scrubbed. |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | leave **unset** | Only the inventory script's REST fallback uses them; the service-role key must never be on the server. |
 

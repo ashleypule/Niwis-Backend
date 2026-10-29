@@ -412,7 +412,7 @@ can be run in the Studio.
 
 **Decision.** statsmodels, scikit-learn, LightGBM, Prophet and PyTorch (CPU wheel from the PyTorch index) are runtime
 dependencies; the API process never imports torch (only worker processes running a deep model do). The Docker image
-grows by roughly 1 GB. **Alternative.** A separate forecasting service — rejected for now: one deployable is simpler,
+grows from 634 MB to 2.19 GB (measured 2026-10-29; torch and its CPU libraries are most of it). **Alternative.** A separate forecasting service — rejected for now: one deployable is simpler,
 and the worker processes already isolate the training.
 
 ### D39 Two new database tables are listed, not registered
