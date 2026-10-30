@@ -30,6 +30,7 @@ from app.core.errors import DataUnavailable, NotFound
 from app.core.palettes import SERIES
 from app.core.provenance import Resolution, iso, latest_complete_period_end
 from app.core.stats import rnd
+from app.core.units import EXTENSIVE_UNITS
 from app.modules.common import Ctx, forecast_unavailable, unknown
 from app.registry.registry import Dataset
 from app.schemas import contract as c
@@ -140,7 +141,8 @@ class DistrictModule:
         return df[df["date"] == month].set_index("district")["value"]
 
     def extensive(self, var: str) -> bool:
-        return self.unit(var) in {"m³/s", "m³/day", "m³/year", "Mm³", "Mm³/year", "km²", "L/s", "m³/month"}
+        """Summed over the scope's districts (volumes, flows, loads, energy per day, areas: app.core.units)."""
+        return self.unit(var) in EXTENSIVE_UNITS
 
     def scope_weights(self, extensive: bool) -> dict[str, float]:
         if extensive:

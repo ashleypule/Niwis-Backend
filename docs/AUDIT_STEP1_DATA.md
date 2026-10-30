@@ -269,3 +269,132 @@
 | Water quality | Entity card DC44 | WQI 91; EC 49.73, pH 8.3, turbidity 2.95, DO 9.5, nitrate 5.5, orthophosphate 0.21, E. coli 50.95 | equal | ✅ | | — |
 | Water quality | Forecast tab: WQI / parameters / E. coli, indicators, band outlook | histories = the dashboard series (WQI 91.2, nitrate 2.958, orthophosphate 0.108, turbidity 6.86, E. coli 99.5 → 100 at 0 dp) | | ✅ | see "Forecast tabs" | — |
 | Water quality | Districts CPT / DC34 / DC44 | compliance 86 / 93 / 93 % (CPT fails orthophosphate and chlorophyll-a; the others orthophosphate); WQI 91 ×3 | equal | ✅ | | — |
+
+## Database-variables sections: Green Drop, Blue Drop, RWQO, IWRM
+
+One code path serves every database category chart (`app/modules/categories.py`): one value per district-period
+(monthly / annual columns read once per period), then an area-weighted mean of the districts covering ≥ 95 % of the
+scope's area, or a sum over every district for extensive units. Every chart group of the four pages was requested
+(`vars=all`, national) and the last point of every live series recomputed (`scripts/audit_step1/cats.sql`).
+
+| Page | Panel | Value shown (national, default period) | Recomputed in SQL | Match? | Method | Fix |
+| --- | --- | --- | --- | --- | --- | --- |
+| Green Drop | 13.1 effluent quality (11 live series, Sep 2026) | temperature 20.04 °C, turbidity 0.34, EC 0.15, TSS 0.11, ammonia 1.72, TIN 1.24, TP 2.66, heavy metals 1.40, E. coli 0.36, faecal coliforms 0.13, helminth eggs 0.17 | all equal (one row per district-month; pH / DO / BOD₅ / COD withheld per D17) | ✅ | area-weighted | — |
+| Green Drop | 13.2 WWTW operational — design capacity / infiltration / influent / sludge (m³/day) | 11 830 388 / 1 129 477 / 9 412 310 / 141 185 (sums) | equal | ✅ | extensive units, summed | — |
+| Green Drop | 13.2 hydraulic loading rate / retention time | 79.6 % / 15.08 h | equal | ✅ | area-weighted | — |
+| Green Drop | 13.2 power consumption (kWh/day) | **81 227 (area-weighted mean of the districts)** | Σ districts **4 235 540 kWh/day**; the mean of the district totals is not a national consumption | ❌ | kWh/day is an extensive quantity | `EXTENSIVE_UNITS` is now one rule in `app/core/units.py` (volumes, flows, loads, kWh/day, areas) shared by the pages, the category charts and the page forecasts; the chart now sums |
+| Green Drop | 13.3 SAWS meteorological variables | null series with reasons (all four columns withheld) | | ✅ | | — |
+| Blue Drop | 14.1 SANS 241 — colour / total coliforms / nitrate / fluoride / arsenic / THMs (Sep 2026) | 4.21 TCU / 0.15 / 0.81 / 0.80 / 0.00 / 0.00 | equal (arsenic 0.003, THMs 0.000 at 3 dp) | ✅ | the 23 withheld columns (copies of 13.1, constants, stored flags) stay null with reasons | — |
+| RWQO | 15.1 ecological — habitat integrity / ASPT / FIBI / riparian / SASS5 | 51.8 / 5.338 / 48.477 / 38.507 / 93.538 | equal (SASS5 without its negative value, `valid_range`) | ✅ | area-weighted | — |
+| RWQO | 15.1 ecological reserve Q (m³/s) | 369.06 | equal (sum) | ✅ | | — |
+| RWQO | 15.2 chemical — DO / TDS / TN / TP (Sep 2026) | 6.10 / 0.93 / 0.25 / 0.40 mg/L | equal | ✅ | | — |
+| RWQO | 15.3 hydrological — low flow / dilution (m³/s), assimilation | 63.44 / 145.69 (sums), 68.517 | equal | ✅ | | — |
+| IWRM | 16_1 MAP / MAE / recharge (mm/year), CV, availability index, storage efficiency / GW dependency / losses (%), municipal and agricultural demand (2025) | 592.39 / 785.05 / 77.01; 0.226; 55.114; 67.8 / 51.3 / 30.7; 207.2 L/cap/day; 4 377.58 m³/ha | equal | ✅ | area-weighted | — |
+| IWRM | 16_1 mean annual runoff / inter-basin transfers / national water balance / return flow (Mm³/year) | **2 480.11 / 446.42 / 2 911.53 / 372.02 (area-weighted means)** | Σ districts **86 908.0 / 15 643.4 / 101 771.5 / 13 036.2 Mm³/year** | ❌ | "Mm³/year" was missing from the category view's extensive-units set (the pages' own set had it): a national MAR is the sum of the district MARs, not their mean | same fix; verify.py check "16_1 MAR 2025 national = Σ districts"; test `test_one_extensive_units_rule` |
+| IWRM | 16_1 industrial demand / ecological reserve requirement (m³/year) | 3.04 × 10¹⁰ / 2.17 × 10¹⁰ (sums) | equal | ✅ | | — |
+| All four | asOf / periodEnd | monthly tables Sep 2026 (the latest complete month; the Oct 2026 row dated 25 Oct is never served), 16_1 2025 | | ✅ | | — |
+
+The same rule change makes the Surface Water page's **daily sediment load** (t/day) a sum over the scope (Aug 2026:
+3 214.9 t/day instead of the area-weighted 65.1; statistics row 26 459 / 11 440 instead of 644 / 300) and the
+Groundwater-reserve page's category chart of the 11_1 dynamic reserve (Mm³/year) a sum, as its KPI already was. The
+chart notes say which aggregation is used.
+
+## Overview
+
+The Overview's live panels are other modules' endpoints (checked above): drought `spi` / `area` forecasts, the
+`drought-area` chart over 24 months (Sep 2024: D0 9.5 %, D1 37.4 %, D2 24.2 % — equal to SQL), the `municipal-class` /
+`rain-anomaly` / `vci` maps, the dams / runoff / groundwater / water-quality summaries, the `flow-status`, `gw-level`
+and `wqi` maps, the rainfall monthly chart, the surface-water discharge chart (fixed above), the groundwater level
+chart and the national WQI series. `dams/table?metric=top10` and `ai/forecast?metric=reservoir` answer 501 with the D2
+reason. No Overview-only computation exists.
+
+## Forecast tabs
+
+For every page forecast served nationally the history (`obs`) was compared with the dashboard series it claims to be,
+`asOf` with the series' last complete period, and the `forecast` block with `docs/forecast_validation.json` (the
+24-month Auto row of the same variable):
+
+| Variable | History = dashboard series | `asOf` | Model / MASE / skill served | Validation document (24 months) | Match? |
+| --- | --- | --- | --- | --- | --- |
+| SPI-3, SPI-6, SPEI-3, area in D1–D4 | ✅ (−0.83, 0.44, −0.05, 8.5 %) | 2026-08-01 | climatology 0.77 / 0.00; (SPI-6 computed on demand); SARIMA 0.75 / 0.02; climatology 0.84 / 0.00 | same | ✅ |
+| Monthly rainfall, SPI-1 | ✅ (17.2 mm) | 2026-08-01 | climatology 0.88 / 0.00 | same | ✅ |
+| Temperature anomaly, hot days | ✅ (1.10 °C; hot days recomputed per month) | 2026-08-01 | SARIMA 0.68 / 0.00; SARIMA 1.09 / 0.02 | same | ✅ |
+| NDVI, VCI | ✅ (0.433, 87.4) | 2025-12-01 | seasonal naive 1.01 / 0.32; ETS 1.07 / 0.28 | same | ✅ |
+| Runoff depth, modelled flow | ✅ (3.23 mm, 1 475.8 m³/s) | 2026-08-01 | climatology 0.91 / 0.00; LightGBM 0.89 / 0.03 | same | ✅ |
+| Runoff anomaly | ❌ **42.8 % vs the chart's 11.6 %** (mean of district percentages) — fixed, see Runoff | 2026-08-01 | Random Forest 0.73 / 0.01 | Random Forest 0.74 / 0.00 (the validation ran on the old definition; both will be recomputed on the new series) | fixed |
+| River discharge (9_1) | ✅ (422.4) | 2026-08-01 | climatology 1.18 / 0.00 | same | ✅ |
+| Depth to groundwater | ✅ (30.99; 121 interpolated months, said in the note) | 2026-09-01 | Random Forest 0.13 / 0.95 | 12-month moving average 0.13 / 0.96 | ⚠️ a MASE tie (0.13 both): Auto keeps the lower unrounded MASE; the page round ran on data to 13 Sep 2026, the document on 29 Oct's; same skill to 0.01 |
+| WQI, nitrate / orthophosphate / turbidity, E. coli | ✅ (91.2; 2.958 / 0.108 / 6.86; 99.5) | 2026-09-01 | climatology 0.54 / 0.00; SARIMA / moving average; SARIMA 0.66 / 0.09 | same | ✅ |
+
+Derived products (class probabilities, early warning, recovery, province risk, flood probability, WQI band outlook)
+were checked for internal consistency with their forecast's median and band (e.g. recovery at 3 months 91.2 % =
+100 − P(D1–D4) 8.9 %).
+
+## Summary
+
+| | Count |
+| --- | --- |
+| Panel rows checked (national default period; each page also has a three-district row and a forecast-tab row) | 224 over 11 pages, 4 database-variables sections and the forecast tabs |
+| Matched to the displayed precision | 212 rows (✅) + 3 rows that match with a note (⚠️: stored-baseline anomaly, a rounding tie, a MASE tie) |
+| Mismatched and fixed | 9 rows, 8 fixes (table below) |
+| Withheld anew | 0 (no served value lacked a source; the already-withheld panels were confirmed withheld with their reasons) |
+| Derivable in step 3 | 5 (below) |
+
+### Fixes
+
+| # | Page | Panel | Cause | Fix |
+| --- | --- | --- | --- | --- |
+| 1 | Climate (and every SPI / SPEI class) | Drought classes at rounding ties | `drought_class` rounded the binary float (JavaScript `Math.round` semantics): a stored −1.295 became −1.29 → D1 where the published 2-dp value −1.30 is D2 (127 SPI and 38 SPEI values sit on such ties; 2020 drought-frequency count 52 → 53, "change vs 2020" −35.9 → −36.5 %) | decimal rounding half away from zero in `app/core/thresholds.py`; `rnd` in `app/core/stats.py` rounds the same way so a displayed value never contradicts its class. **Frontend follow-up:** `droughtClassFromSpi` (`src/config/thresholds.ts`) uses `Math.round(spi * 100) / 100` and needs the same decimal rounding |
+| 2 | Climate | KPI Reference ET₀ (annual) | the source table has no 31 December: "2025" was a 364-day sum | sublabel says so |
+| 3 | Runoff | KPI Runoff Coefficient (and BFI) | national value was the area-weighted mean of district ratios (0.186) while the label and the statistics table meant Σ runoff / Σ rainfall (0.198) | ratio of the scope's area-weighted totals |
+| 4 | Runoff | Discharge chart, monthly means | the window's first and last months were partial (7–30 Sep 2025 → 2 823.6 against a whole-month 2 342.5; 1–6 Sep 2026 → 9 983) | complete months only |
+| 5 | Surface water | River discharge chart, monthly means | same (25–30 Sep 2025 → 991.9 against 477.3) | complete months only |
+| 6 | Runoff forecast tab | Runoff anomaly history | the page-forecast target averaged the districts' stored anomaly percentages (Aug 2026 42.8 %) where the page chart shows the anomaly of the area-weighted depth (11.6 %) | the target is a loader over the Runoff page's own series |
+| 7 | IWRM / Green Drop / Surface water / Groundwater-reserve views | Extensive units averaged | the category view's extensive-units set lacked Mm³/year, t/day and kWh/day (16_1 MAR shown as 2 480 instead of 86 908 Mm³/year; 13.2 power 81 227 instead of 4 235 540 kWh/day; 9_1 sediment load 65 instead of 3 215 t/day) | one shared `EXTENSIVE_UNITS` rule (`app/core/units.py`) for pages, category charts and page forecasts |
+| 8 | Drought / Climate / every map | Displayed value vs class at ties | `rnd` showed −1.29 next to a D2 pill after fix 1 | same decimal rounding in `rnd` (part of fix 1) |
+
+Each fix has a regression test in `tests/test_audit_step1.py` (plus the updated tie cases in `tests/test_thresholds.py`)
+and, where a national number changed, a check in `scripts/verify.py` (`audit-step1`, written to `docs/VERIFICATION.md`).
+
+### Derivable in step 3
+
+Panels that are empty or withheld today but could be derived from live data (not implemented here):
+
+| Page | Panel | Proposed formula and inputs |
+| --- | --- | --- |
+| Vegetation | Breakdown `land-cover` (501 "no land-cover data per district") | `9_2_catchment_characteristics_master` holds land-cover shares per district (tree cover, shrubland / fynbos, grassland, cropland, wetland, built-up, bare soil / mining, water bodies, %): area-weighted shares per scope for the latest year; `kind=ndvi` would pair each class share with the district NDVI (a scope-level pairing, since NDVI is not stored per class) |
+| Runoff | KPI Peak Flow (Qmax) (withheld: the table's peaks are scaled to 6 500 km²) | maximum of the derived daily mean flow (depth × real district area ÷ 86 400) over the window, labelled "derived, daily mean, not instantaneous" — the same series the flood-frequency chart already uses |
+| Runoff | KPIs Stations with Normal / Low Flow (no stations) | share of the scope's districts whose latest complete month's derived flow lies within / below its own 10th–90th percentile of 2000–2025 monthly flows (the Surface Water page's status rule applied to the modelled flow) — labelled districts, not stations |
+| Surface water | KPI River WQ Status (null: "water quality is on the Water Quality page") | the scope's CCME WQI and band from the Water Quality page (`WaterQualityService.wqi_frame`), already computed for the same districts |
+| Groundwater / Drought cascade | SGI (null since Aug 2024) and the groundwater stage class | a standardised index of the `10_1` depth telemetry (monthly means, gaps interpolated as the forecast already does, gamma or empirical-normal per calendar month over 2000–2025) — needs a method decision (D22 rejected a normal-score SGI as a new method; the spec defines SGI only by name) |
+
+### Not verified, and why
+
+- The **frontend's rendering** of the values (rounding, class pills, legends) is outside this backend step; the one
+  frontend consequence found (tie rounding in `droughtClassFromSpi`) is listed above.
+- **WMA scopes** were not spot-checked panel by panel (the audit checked national and three districts per page); the
+  WMA path uses the same district values with overlap weights (`wma.sql` holds the weights for a future check), and
+  the runoff by-WMA breakdown was checked for all nine WMAs.
+- **District forecast maps and on-demand district forecasts** (`outlook-1/2/3`, `forecast-6`, `forecast-ndvi`,
+  `forecast-wqi`) answered 501 "being computed" during the audit (the district round had not finished after the
+  container restart); their inputs (the national and district series) are the dashboard series checked above.
+- **Stored forecast skill** could not be recomputed independently (it is the engine's rolling-origin backtest);
+  the served blocks were compared with the validation document instead.
+
+### Observations (no change made)
+
+- "12 months" for daily-derived totals (rainfall, runoff depth, R20, max daily, the runoff anomaly and coefficient,
+  the extremes and by-WMA tables) is the 365 days ending on the newest daily record (07 Sep 2025 – 06 Sep 2026),
+  stated in each panel's sublabel / title; monthly indices use complete months (Aug 2026). The audit brief's "last 12
+  complete months" would end these windows on 31 Aug 2026; a product decision.
+- Temperature anomaly: the stored `4_1` anomaly baseline is the 2000–2026 same-month mean including the partial 2026
+  (DATA_GAPS §14), labelled as such; against 2000–2025 the national 12-month anomaly would be 0.214 instead of 0.211 °C.
+- Two "depth to water" series exist: `10_1` telemetry (Groundwater page) and `11_1` monthly (Groundwater-reserve
+  page); for Buffalo City they read 37.4 and 15.1 m in Sep 2026. Each panel names its table.
+- `8_1` reservoir rainfall is forward-filled from 1 Sep 2026 and is served to 31 Aug only (its soil moisture runs on).
+- Charts of series that end before the page period (satellite Dec 2025: soil moisture, vegetation, NDVI anomaly;
+  groundwater telemetry months) show only the months inside the default 12-month window (4 or 8 points); the SGI chart
+  already shows its own last 12 months. Presentation only.
+- The water-quality "Parameter range" panel's "Average" is a plain mean over the 52 districts (a range of districts, not
+  a scope value); labelled as across districts.
+- `rnd` and the SQL `round(numeric)` now agree at ties; the earlier SPI-24 map value 1.05 for a stored 1.055 reads 1.06.

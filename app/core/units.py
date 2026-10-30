@@ -583,3 +583,14 @@ def index_family(name: str) -> str | None:
     if first in SPECTRAL_INDICES:
         return "spectral"
     return None
+
+
+# Units of extensive quantities: a scope's value is the SUM over its districts (a WMA takes each district's share),
+# never an area-weighted mean — volumes, flows, loads, energy per day and areas. Everything else (depths, rates per
+# unit, concentrations, indices, %) is a state and is area-weighted. One rule for the pages (app.modules.district),
+# the database category charts (app.modules.categories) and the page forecasts (app.forecasting.series); audit step 1
+# found "Mm³/year" (16_1 mean annual runoff), "t/day" (9_1 sediment load) and "kWh/day" (13.2 power) averaged in one
+# place and summed in another.
+EXTENSIVE_UNITS: frozenset[str] = frozenset(
+    {"Mm³", "Mm³/month", "Mm³/year", "m³/s", "m³/day", "m³/month", "m³/year", "L/s", "km²", "t/day", "kWh/day"}
+)

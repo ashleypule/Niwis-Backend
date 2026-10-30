@@ -788,6 +788,26 @@ FROM runoff_variables_master WHERE "Date" BETWEEN '2025-09-01' AND '2025-09-30'"
 WHERE date BETWEEN '2025-09-01' AND '2025-09-30' GROUP BY 1) d""",
         tol=0.05,
     ),
+    Check(
+        "audit-step1",
+        "IWRM database view: 16_1 mean annual runoff 2025, national — the SUM of the district values (Mm³/year is an "
+        "extensive unit); the category view averaged them (2 480 Mm³/year)",
+        "/api/v1/iwrm/category/complete-wrm-matrix/mean-annual-runoff-mar-inter-basin-transfer-volumes-national-water-balance-return-flow-recycled-water-mm3-year?vars=Mean_Annual_Runoff_MAR_million_m3_yr",
+        series_at("Mean_Annual_Runoff_MAR_million_m3_yr", "2025-01-01"),
+        """SELECT sum(v) FROM (SELECT district_name, max("Mean_Annual_Runoff_MAR_million_m3_yr") v
+FROM "16_1_complete_wrm_matrix_master" WHERE year = 2025 GROUP BY 1) x""",
+        tol=0.6,
+    ),
+    Check(
+        "audit-step1",
+        "Surface water: daily sediment load, national, Aug 2026 — Σ over the districts of the month's mean daily load "
+        "(t/day is extensive; it was area-weighted: 65.1 t/day)",
+        "/api/v1/surface-water/timeseries?metric=sediment&kind=load",
+        series_at("sediment", "2026-08-01"),
+        """SELECT sum(v) FROM (SELECT district_name, avg(daily_sediment_load_t_day) v
+FROM "9_1_hydrological_station_master" WHERE date BETWEEN '2026-08-01' AND '2026-08-31' GROUP BY 1) x""",
+        tol=0.6,
+    ),
     # ---------------------------------------------------------------- §12 water quality (DECISIONS D20)
     Check(
         "water-quality",

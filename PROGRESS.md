@@ -2,6 +2,23 @@
 
 ## Status (2026-10-30): 21 of the 24 contract modules live and listed so by `/health` (D47: the AI, alerts, data-integration and governance pages count, with their remaining panels filled from existing data; `overview` partial; `settlements` and `roadmap` have no table); before that 20 served (water quantity, IWRM, green / blue drop, RWQO, alerts, data integration and governance added, D42–D45) and every forecast tab live (D41); forecasting added — the Forecasting Studio (`/api/v1/forecast/*`, any live column, any area, Auto or a chosen model, chronological backtest) and the pages' forecast tabs fed by precomputed Auto forecasts (D29–D39); before that, completing the system from the database — Parts 1–3 done. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
 
+### System audit, step 1 — data correctness of every live page (2026-10-30)
+
+Decision D48; `docs/AUDIT_STEP1_DATA.md` (224 panel rows); SQL in `scripts/audit_step1/`; checks in `scripts/verify.py`
+(`audit-step1`, 7 / 7 on Supabase → `docs/VERIFICATION.md`); tests `tests/test_audit_step1.py` (22).
+
+- [x] Every panel of Overview, Drought, Rainfall, Climate, Vegetation, Runoff, Dams, Surface water, Groundwater,
+      Groundwater reserve, Water quality and the database-variables sections of Green Drop, Blue Drop, RWQO and IWRM
+      recomputed with independent SQL (gamma-fit SSI, Log-Pearson III and the CCME WQI refitted separately), national
+      plus three districts; every forecast tab's history compared with its dashboard series and its model / MASE /
+      skill with `docs/FORECAST_VALIDATION.md`.
+- [x] Fixed: drought classes at rounding ties (−1.295 is D2, not D1) and `rnd` to match; runoff coefficient / BFI as
+      ratios of totals; discharge charts' monthly means on complete months (runoff, surface water); the runoff-anomaly
+      page forecast built on the page's own series; one `EXTENSIVE_UNITS` rule (16_1 MAR, 13.2 power and 9_1 sediment
+      load are sums); the ET₀ KPI says 364 days.
+- [x] Listed for step 3: land cover from 9_2, derived peak flow and flow-status shares (runoff), WQI on the surface-water
+      page, an SGI from the 10_1 telemetry. Frontend follow-up: `droughtClassFromSpi` needs the same decimal rounding.
+
 ### Every dashboard in the health count; the derived pages completed from existing data (2026-10-30)
 
 Decision D47; contract `docs/CONTRACT_CHANGES.md` §19.

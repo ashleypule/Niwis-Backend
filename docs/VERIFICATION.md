@@ -46,6 +46,81 @@ SELECT "District_Name", "SPI_6_Medium_Term_Hydrological_Impacts" FROM "6.2_rainf
 WHERE make_date("Year"::int, "Month"::int, 1) = (date_trunc('month', (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master")) - interval '1 month')::date
 ```
 
+## audit-step1 — 2026-10-30
+
+### ✅ District-months in D2 or worse (SPI-3 ≤ −1.3 after rounding to 2 dp) in 2020 — the stored −1.295 (Amajuba, Aug 2020) is published as −1.30 and counts; Python / JavaScript float rounding gave −1.29
+
+- API: `GET /api/v1/climate/timeseries?metric=drought-frequency` → **53.0**
+- SQL result: **53** (tolerance ± 0.05)
+
+```sql
+SELECT count(*) FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE "Year" = 2020 AND round("SPI_3_Short_Term_Agricultural_Drought"::numeric, 2) <= -1.3
+```
+
+### ✅ Climate provinces table: hot days 2025, Northern Cape — area-weighted 4_1 Heatwave_Frequency_Days
+
+- API: `GET /api/v1/climate/table?metric=provinces` → **33.1**
+- SQL result: **33.1** (tolerance ± 0.05)
+
+```sql
+SELECT "District_Name", max("Heatwave_Frequency_Days") FROM "4_1_temperature_change_master"
+WHERE "Date" LIKE '2025-%' GROUP BY 1
+```
+
+### ✅ Runoff coefficient, national, 12 months — Σ runoff / Σ rainfall of the area-weighted district totals (not the mean of the district ratios, which gave 0.186)
+
+- API: `GET /api/v1/runoff/summary` → **0.198**
+- SQL result: **0.198** (tolerance ± 0.0006)
+
+```sql
+SELECT q."District_Name", q.q, p.p FROM
+(SELECT "District_Name", sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 q FROM runoff_variables_master
+ WHERE "Date" BETWEEN '2025-09-07' AND '2026-09-06' GROUP BY 1) q
+JOIN (SELECT "District_Name", sum("Daily_Rainfall_Total_mm") p FROM "6.1_core_rainfall_variables_master"
+ WHERE "Date" BETWEEN '2025-09-07' AND '2026-09-06' GROUP BY 1) p USING ("District_Name")
+```
+
+### ✅ Runoff discharge chart, national: the first monthly mean is the whole of September 2025 (the window starts on 7 Sep; the 7–30 Sep mean was 2 823.6)
+
+- API: `GET /api/v1/runoff/timeseries?metric=discharge` → **2342.51**
+- SQL result: **2342.51** (tolerance ± 0.05)
+
+```sql
+SELECT "Date", "District_Name", "Daily_Surface_Runoff_Volume_m3_day" / 6.5e9 * 1000
+FROM runoff_variables_master WHERE "Date" BETWEEN '2025-09-01' AND '2025-09-30'
+```
+
+### ✅ Surface-water discharge chart, national: the first monthly mean is the whole of September 2025 (the window starts on 25 Sep; the 25–30 Sep mean was 991.9)
+
+- API: `GET /api/v1/surface-water/timeseries?metric=discharge` → **477.29**
+- SQL result: **477.290474880401** (tolerance ± 0.05)
+
+```sql
+SELECT avg(q) FROM (SELECT date, sum(daily_mean_flow) / 86400 q FROM "9_1_hydrological_station_master"
+WHERE date BETWEEN '2025-09-01' AND '2025-09-30' GROUP BY 1) d
+```
+
+### ✅ IWRM database view: 16_1 mean annual runoff 2025, national — the SUM of the district values (Mm³/year is an extensive unit); the category view averaged them (2 480 Mm³/year)
+
+- API: `GET /api/v1/iwrm/category/complete-wrm-matrix/mean-annual-runoff-mar-inter-basin-transfer-volumes-national-water-balance-return-flow-recycled-water-mm3-year?vars=Mean_Annual_Runoff_MAR_million_m3_yr` → **86908.04**
+- SQL result: **86908.0389755256** (tolerance ± 0.6)
+
+```sql
+SELECT sum(v) FROM (SELECT district_name, max("Mean_Annual_Runoff_MAR_million_m3_yr") v
+FROM "16_1_complete_wrm_matrix_master" WHERE year = 2025 GROUP BY 1) x
+```
+
+### ✅ Surface water: daily sediment load, national, Aug 2026 — Σ over the districts of the month's mean daily load (t/day is extensive; it was area-weighted: 65.1 t/day)
+
+- API: `GET /api/v1/surface-water/timeseries?metric=sediment&kind=load` → **3214.911**
+- SQL result: **3214.91096451613** (tolerance ± 0.6)
+
+```sql
+SELECT sum(v) FROM (SELECT district_name, avg(daily_sediment_load_t_day) v
+FROM "9_1_hydrological_station_master" WHERE date BETWEEN '2026-08-01' AND '2026-08-31' GROUP BY 1) x
+```
+
 ## categories — 2026-10-22
 
 ### ✅ Rainfall category: core-rainfall-variables / Seasonal_Total_JFM_mm, Alfred Nzo (DC44), 2025 — the stored column

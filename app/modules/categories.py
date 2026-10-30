@@ -30,6 +30,7 @@ from app.core.filters import ScopeSel, parse_scope
 from app.core.palettes import SERIES
 from app.core.provenance import Resolution, iso, latest_complete_period_end, period_end
 from app.core.stats import rnd
+from app.core.units import EXTENSIVE_UNITS
 from app.db import ident
 from app.modules.common import Ctx, cached, get_ctx
 from app.registry.catalogue import Catalogue, CatColumn, Category, CatGroup, get_catalogue
@@ -39,7 +40,6 @@ from app.state import AppState
 
 log = logging.getLogger("niwis.categories")
 HISTORY_START = dt.date(2000, 1, 1)
-EXTENSIVE_UNITS = {"Mm³", "Mm³/month", "m³/s", "m³/day", "m³/year", "km²"}  # summed over districts, not averaged
 DECIMALS = {"°C": 2, "%": 1, "% FSC": 1, "index": 2, "—": 3, "m³/m³": 3, "°C·days": 1, "km²": 1}
 OPTS: dict[str, Any] = {"response_model_exclude_unset": True, "response_model_by_alias": True}
 ERRORS: dict[int | str, dict[str, Any]] = {

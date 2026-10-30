@@ -619,6 +619,55 @@ database records them. Model skill as NSE: the engine scores against climatology
 re-labelling skill as NSE would be false. Run history across restarts: runs are not stored (the database is
 read-only).
 
+## System audit (from 2026-10-30)
+
+### D48 Step 1 of the hand-over audit: what the independent recomputation changed (2026-10-30)
+
+**Question.** Before the hand-over to DWS every number on every live page was recomputed with independent SQL on the
+database (`docs/AUDIT_STEP1_DATA.md`, one row per panel, three districts spot-checked per page). Most panels matched;
+eight did not. The decisions taken while fixing them:
+
+1. **Classes are decided on the published 2-dp value.** Spec §3.4 rounds an SPI to 2 decimals and then compares. The
+   database stores 3 decimals as double precision, and `drought_class` rounded the binary float (as JavaScript's
+   `Math.round` would): a stored −1.295 became −1.29 (D1) where the published −1.30 is D2. Classes now round the
+   value's decimal representation half away from zero, and `rnd` (every displayed number) rounds the same way, so a
+   displayed −1.30 never sits next to a D1 pill. 127 stored SPI and 38 SPEI values sit on such ties; the newest one
+   served is City of Cape Town's SPI-6 of March 2026 (−1.595 → D3). **Alternative.** Keeping float rounding to match
+   the frontend — rejected: the frontend's `droughtClassFromSpi` has the same artefact and is to be changed the same
+   way (listed for the frontend).
+2. **A scope's ratio is the ratio of its totals.** The Runoff Coefficient and Baseflow Index KPIs averaged the 52
+   district ratios by area (0.186) while their labels and the statistics table meant Σ runoff / Σ rainfall (0.198).
+   Scope KPIs that are ratios of amounts are now computed from the area-weighted totals; for one district nothing
+   changes. **Alternative.** Relabelling the KPI "mean of district coefficients" — rejected: the national coefficient
+   people expect is the ratio of totals, which is also what the statistics table and the map's district values use.
+3. **Monthly means are means of whole months.** The Runoff and Surface Water discharge charts drew a "monthly mean"
+   for the window's first and last months from the few days inside the window (7–30 Sep 2025: 2 823.6 m³/s against a
+   whole-month 2 342.5; 1–6 Sep 2026: 9 983) next to full-month normals. The daily line keeps the window; the monthly
+   step and its normal now cover complete months only.
+4. **A forecast tab's history is the dashboard's series.** The runoff-anomaly page forecast was built on the
+   area-weighted mean of the districts' stored `Runoff_Anomaly_percent` (Aug 2026: 42.8 %), a mean of percentages,
+   while the page chart shows the anomaly of the area-weighted depth against the area-weighted 7.2 normal (11.6 %).
+   The page variable is now a loader over `RunoffService.anomaly_series()`, the one implementation behind the chart;
+   the next page-forecast round recomputes it. **Alternative.** Changing the chart to the mean of percentages —
+   rejected (DATA_MAPPING §0.2: anomalies are recomputed from aggregated quantities, never averaged percentages).
+5. **One rule for extensive units.** The database category view summed Mm³, Mm³/month, m³/s, m³/day, m³/year and
+   km² over a scope's districts and averaged everything else; the pages had a slightly different set. Mm³/year
+   (16_1 mean annual runoff, inter-basin transfers, water balance, return flow; 11_1 dynamic reserve), t/day (9_1
+   sediment load) and kWh/day (13.2 power consumption) are extensive too, and their national values were area-weighted
+   means (16_1 MAR 2 480 Mm³/year for a national sum of 86 908). `app/core/units.py` `EXTENSIVE_UNITS` is now the
+   single rule used by the pages (`DistrictModule.extensive`), the category charts and the page forecasts; monetary
+   and per-unit quantities (R/year, L/year per household, m³/h per borehole, kWh/Ml) stay area-weighted because a unit
+   alone cannot tell a total from a rate. The Surface Water page's sediment-load chart and statistics row are sums
+   now, labelled.
+6. **Labels say what a period really covers.** The ET₀ "annual" KPI sums 364 days (the source table has no
+   31 December) and now says so. The 365-day "12 months" windows ending on the newest daily record (rainfall, runoff)
+   were kept: every such panel states its dates, and ending them on the last complete month instead is a product
+   decision for the owner (listed under observations).
+
+**Not changed, listed for step 3** (`docs/AUDIT_STEP1_DATA.md`, "Derivable in step 3"): land-cover shares from 9_2,
+a derived peak flow and district flow-status shares on the Runoff page, the WQI on the Surface Water page, and an SGI
+from the 10_1 telemetry (needs a method decision).
+
 ### Pending review (2026-10-30)
 
 None: every table in the database is registered or ignored with a reason (the six §18 / §19 tables were registered

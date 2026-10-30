@@ -29,8 +29,9 @@ from app.core import districts
 from app.core.aggregate import MIN_COVERAGE, sum_fractions
 from app.core.errors import BadRequest, NotFound
 from app.core.filters import Filters, ScopeSel, Window
+from app.core.units import EXTENSIVE_UNITS
 from app.forecasting.base import Freq
-from app.modules.categories import EXTENSIVE_UNITS, CategoryService, _value_sql
+from app.modules.categories import CategoryService, _value_sql
 from app.modules.common import Ctx
 from app.registry.catalogue import Aggregate, CatColumn, Category, get_catalogue, monthly_unit
 from app.registry.registry import NATIONAL_CODE

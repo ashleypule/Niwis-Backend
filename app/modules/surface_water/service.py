@@ -405,6 +405,13 @@ class SurfaceWaterService(DistrictModule):
         if s.empty:
             self.ctx.explain(f"series.{sid}", f"No {title.lower()} for this scope in the selected period")
         single = len(self.ctx.weights()) == 1
+        how = (
+            "district value"
+            if single
+            else "sum over the scope's districts"
+            if self.extensive(var)
+            else "area-weighted district mean"
+        )
         return self.series_set(
             sid,
             self.entity_title(title),
@@ -412,7 +419,7 @@ class SurfaceWaterService(DistrictModule):
             [c.Axis(unit=unit, label=label)],
             [var],
             end,
-            note=f"Monthly values as stored in 9_1 ({'district value' if single else 'area-weighted district mean'}).",
+            note=f"Monthly values as stored in 9_1 ({how}).",
         )
 
     async def ts_sediment(self) -> dict[str, Any]:

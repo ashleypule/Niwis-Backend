@@ -142,6 +142,7 @@ async def test_runoff_anomaly_page_forecast_history_is_the_runoff_pages_series(
     percentages (Aug 2026 national: 42.8 % vs the chart's 11.6 % before the fix)."""
     from app.forecasting.pages import VARS
     from app.forecasting.series import district_scope
+
     state = client._transport.app.state.niwis  # type: ignore[attr-defined]
     target = VARS["runoff-anomaly"].make(state.registry)
     assert target.loader is not None and target.expr_id == "page-anomaly"
@@ -156,3 +157,41 @@ async def test_runoff_anomaly_page_forecast_history_is_the_runoff_pages_series(
     assert chart, "the fixture serves a runoff anomaly for Cape Town"
     for x, v in chart.items():
         assert round(float(series[x]), 1) == v
+
+
+# ---------------------------------------------------------------- one extensive-units rule (audit step 1)
+
+
+def test_one_extensive_units_rule() -> None:
+    """Volumes, flows, loads, energy per day and areas are summed over a scope's districts everywhere (the pages,
+    the database category charts, the page forecasts); the category view used to average Mm³/year (16_1 mean annual
+    runoff), t/day (9_1 sediment load) and kWh/day (13.2 power consumption)."""
+    from app.core.units import EXTENSIVE_UNITS
+    from app.forecasting import series
+    from app.modules import categories, district
+
+    for u in (
+        "Mm³",
+        "Mm³/month",
+        "Mm³/year",
+        "m³/s",
+        "m³/day",
+        "m³/month",
+        "m³/year",
+        "L/s",
+        "km²",
+        "t/day",
+        "kWh/day",
+    ):
+        assert u in EXTENSIVE_UNITS
+    for u in ("mm", "mm/year", "m bgl", "°C", "%", "mg/L", "m³/m³", "m³/h", "kWh/Ml", "R/year", "L/year"):
+        assert u not in EXTENSIVE_UNITS  # states, rates per unit and monetary / per-household quantities
+    assert categories.EXTENSIVE_UNITS is EXTENSIVE_UNITS and series.EXTENSIVE_UNITS is EXTENSIVE_UNITS
+    assert district.EXTENSIVE_UNITS is EXTENSIVE_UNITS
+
+
+async def test_surface_water_sediment_load_is_summed_over_the_scope(client: httpx.AsyncClient) -> None:
+    body = (await client.get("/api/v1/surface-water/timeseries", params={"metric": "sediment", "kind": "load"})).json()
+    assert "sum over the scope" in body["note"]
+    conc = (await client.get("/api/v1/surface-water/timeseries", params={"metric": "sediment"})).json()
+    assert "area-weighted" in conc["note"]  # a concentration stays a mean
