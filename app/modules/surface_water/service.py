@@ -284,10 +284,11 @@ class SurfaceWaterService(DistrictModule):
         start, end = await self.day_window()
         y1 = await self.last_full_year()
         flow = await self.daily_flow(start, end)
-        monthly = flow.groupby(flow.index.to_period("M")).mean()
-        monthly.index = monthly.index.to_timestamp()
-        monthly = monthly[monthly.index <= await self.latest_month(FLOW)]
-        allm = await self.scope_monthly_flow()
+        allm = await self.scope_monthly_flow()  # complete months only (monthly_frame caps at the latest complete month)
+        # the window's first month is partial (it starts on the day after the newest record a year earlier): its
+        # mean over a few days is not a monthly mean (audit step 1), so the step series takes the complete months
+        # from the first month of the window to the latest complete month
+        monthly = allm[(allm.index >= pd.Timestamp(start.replace(day=1))) & (allm.index <= pd.Timestamp(end))]
         lt = allm[(allm.index.year >= HISTORY_START.year) & (allm.index.year <= y1)]
         lt_m = lt.groupby(lt.index.month).mean()
         down = len(flow) > self.ctx.state.settings.max_series_points
@@ -322,7 +323,7 @@ class SurfaceWaterService(DistrictModule):
             [c.Axis(unit="m³/s", label="Discharge")],
             [FLOW],
             pd.Timestamp(end),
-            note=FLOW_NOTE,
+            note=FLOW_NOTE + " Monthly means: complete months only.",
             baseline=f"{HISTORY_START.year}–{y1} same-month mean",
         )
 
