@@ -120,3 +120,26 @@
 | Climate | Maps rain-trend / hot-days / cdd / et0 | rain-trend 2016–2025 vs 2000–2015: BUF −10.7, CPT −11.6, DC34 3.4, DC44 4.1; hot days DC45 21, DC5 20; CDD CPT 40, DC34 32, DC44 22; ET₀ mean CPT 1 245, DC34 1 548, DC44 1 350 | equal | ✅ | | — |
 | Climate | Forecast tab: temperature anomaly / hot days | histories = the Temperature chart's anomaly (Aug 2026 1.10) and the area-weighted district-month count of Tmax > 35 °C (Jan 2026 4.9, Dec 2025 2.7); `asOf` 2026-08-01; SARIMA | hot-day months recomputed: 4.91 / 2.73 / 0.89 / 1.22 | ✅ | see "Forecast tabs" | — |
 | Climate | Districts CPT / DC34 / DC44 | anomaly 0.41 / −0.48 / 0.48; trend 0.11 / 0.22 / 0.28; rain change −22.7 / +51.3 / +19.9; ET₀ 1 257 / 1 506 / 1 317 (delta +12 / −42 / −32); runoff −22.6 / +64.8 / +23.8; hot days 0 / 5 / 0; mean temp 16.7 / 21.7 / 15.1 | all equal | ✅ | | — |
+
+## Vegetation
+
+| Page | Panel | Value shown (national, default period) | Recomputed in SQL | Match? | Method | Fix |
+| --- | --- | --- | --- | --- | --- | --- |
+| Vegetation | KPIs NDVI / VCI / VHI / TCI / LST / Soil moisture | 0.433 / 87.4 % / 93.3 % / 99.2 % / 31.3 °C / 0.122 m³/m³, Dec 2025 (stale) | equal (52 districts) | ✅ | `satellite_remote_sensing` Dec 2025, area-weighted; classes Excellent (≥ 80) | — |
+| Vegetation | KPI Area Under Stress | 0.0 % (VHI < 40 %) | 0.0 | ✅ | Σ area with VHI < 40 ÷ total | — |
+| Vegetation | KPI Vegetation Anomaly | +19.2 % (NDVI vs Dec 2001–2025 mean) | 19.2 | ✅ | national NDVI vs the Dec mean of the national series 2001–2025 | — |
+| Vegetation | Chart Indices (every `set`) | NDVI 0.433, VCI 87.4, VHI 93.3, TCI 99.2, NDWI −0.481, LST 31.3, SM 0.122 (Dec 2025); EVI / SAVI / MSAVI2 / VPI / ASI / SVI / NDII null with the reason | equal | ✅ | withheld indices exist only in the failed `5.1` table | — |
+| Vegetation | Chart Index vs normal (NDVI / VCI / VHI / TCI / NDWI / LST / SM) | NDVI Dec 2025 0.433, band 0.327–0.400 (mean ± 1 s.d. of the national Dec series 2001–2025), previous year 0.352; VCI band 29.1–71.1, previous 44.9 | equal | ✅ | | — |
+| Vegetation | Chart NDVI anomaly | Sep–Dec 2025: +16.7, +15.6, +19.2, +19.2 % | equal | ✅ | national series vs its same-month 2001–2025 mean | — |
+| Vegetation | Chart Drivers (rain / temp / pet / sm) | Aug 2026: rainfall 17.2 mm (= Monthly chart), Tmax 22.0 °C, ET₀ 3.26 mm/day; soil moisture Dec 2025 0.122 | equal | ✅ | monthly means of daily values; ET₀ as mm/day because December lacks the 31st | — |
+| Vegetation | Breakdown Classification (VHI classes) | Excellent 85.2, Good 13.7, Fair 1.2, Poor 0, Very Poor 0 % | equal | ✅ | Σ area per class | — |
+| Vegetation | Breakdown By province | EC Excellent 50.3 / Good 48.6 / Fair 1.2; LP 84.1 / 15.9; WC 40.6 / 49.9 / 9.5; others 100 % Excellent | equal | ✅ | | — |
+| Vegetation | Breakdown Seasonal mean NDVI | 2025: DJF 0.407, MAM 0.473, JJA 0.343, SON 0.354; DJF 2019 0.343 | equal | ✅ | DJF of year Y = Dec Y−1 + Jan, Feb Y of the national series | — |
+| Vegetation | Breakdown Drivers (change vs normal, last 6 months) | rainfall +65.2 % (Mar–Aug 2026), mean temperature +0.12 °C, ET₀ −2.4 %, GDD −1.0 °C·days, LST −5.94 °C (Jul–Dec 2025) | equal | ✅ | each driver's own last 6 complete months vs the same months' 2001–2025 mean; temperatures in °C, amounts in % | — |
+| Vegetation | Table Provinces | FS NDVI 0.520, VCI 100, +33.1 %; NW 0.551 / 100 / +44.5; EC 0.472 / 75.6 / +8.3; WC 0.269 / 60.4 / +1.2 | equal | ✅ | province series vs its Dec 2001–2025 mean | — |
+| Vegetation | Table Hotspots | Overberg VCI 20.7 (Poor), NDVI change −0.019; CPT 42.4 / −0.009; NMA 42.6 / −0.032; Mopani 48.0 / +0.003 | equal | ✅ | lowest VCI; change = NDVI − the district's Dec 2001–2025 mean | — |
+| Vegetation | Maps ndvi / vci / vhi / tci / ndwi / lst / sm | CPT 0.373 / 42.4 / 71.2 / 100 / −0.438 / 31.5 / 0.067; DC34 0.540 / 75.0 / 84.6 / 94.2 / −0.490 / 30.9 / 0.124; DC44 0.650 / 99.2 / 99.6 / 100 / −0.571 / 26.5 / 0.184 | equal | ✅ | stored values | — |
+| Vegetation | Map NDVI anomaly | CPT −0.009, DC34 0.054, DC44 0.078, DC6 0.006 | equal | ✅ | NDVI − the district's Dec 2001–2025 mean | — |
+| Vegetation | Map NDVI trend | CPT −0.0121, DC34 0.0195, DC44 0.0186 per decade; legend breaks ±0.013 / ±0.019 | equal (Sen's slope of annual mean NDVI 2001–2025 in SQL) | ✅ | | — |
+| Vegetation | Forecast tab: NDVI / VCI, indicators, recovery probability | histories = the dashboard series (Dec 2025 0.433 / 87.4); `asOf` 2025-12-01; seasonal naive (NDVI) / ETS (VCI) | | ✅ | see "Forecast tabs" | — |
+| Vegetation | Districts CPT / DC34 / DC44 | NDVI 0.373 / 0.540 / 0.650; VCI 42.4 / 75.0 / 99.2; VHI 71.2 / 84.6 / 99.6; TCI 100 / 94.2 / 100; LST 31.5 / 30.9 / 26.5; SM 0.067 / 0.124 / 0.184; anomaly −2.3 / +11.2 / +13.7 % | all equal | ✅ | | — |

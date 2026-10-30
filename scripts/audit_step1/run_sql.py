@@ -1,8 +1,14 @@
-"""Read-only SQL runner for the audit: python q.py "<sql>"  or  python q.py -f file.sql  (statements split by ';;')."""
+"""Read-only SQL runner for the step-1 audit (docs/AUDIT_STEP1_DATA.md).
+
+Usage: python scripts/audit_step1/run_sql.py -f scripts/audit_step1/<page>.sql   (statements split by ';;').
+{W}, {WC}, {WMA} in a statement are replaced by the district-name / code / province / area tables (w.sql, wc.sql,
+wma.sql, generated from app/core/districts and reference/geo/districts.json). The session is READ ONLY.
+"""
 import sys, time
 import psycopg
 from dotenv import dotenv_values
-url = dotenv_values(r"C:\Users\Baloyi PA\Desktop\Niwis Backend\.env")["SUPABASE_DB_URL"]
+from pathlib import Path
+url = dotenv_values(Path(__file__).resolve().parents[2] / ".env")["SUPABASE_DB_URL"]
 args = sys.argv[1:]
 if args and args[0] == "-f":
     sql_text = open(args[1], encoding="utf-8").read()

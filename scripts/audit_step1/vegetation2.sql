@@ -1,0 +1,15 @@
+-- A. KPIs Dec 2025: TCI, LST (area-weighted), NDVI anomaly vs Dec 2001-2025 (national series), districts, bands
+WITH {W}, s AS (SELECT w.code, w.area, date, ndvi, tci, lst, vci, vhi, ndwi, surface_soil_moisture sm FROM satellite_remote_sensing t JOIN w ON w.name=t.district_name),
+n AS (SELECT date, sum(area*ndvi)/sum(area) ndvi, sum(area*tci)/sum(area) tci, sum(area*lst)/sum(area) lst, sum(area*vci)/sum(area) vci, sum(area*vhi)/sum(area) vhi, sum(area*ndwi)/sum(area) ndwi, sum(area*sm)/sum(area) sm, count(*) n FROM s GROUP BY 1),
+dn AS (SELECT code, extract(month from date) mo, avg(ndvi) nn FROM s WHERE extract(year from date) BETWEEN 2001 AND 2025 GROUP BY 1,2)
+SELECT (SELECT round(tci::numeric,1)||'/'||round(lst::numeric,1)||'/'||round(ndwi::numeric,3) FROM n WHERE date='2025-12-01') tci_lst_ndwi_dec25,
+ round((((SELECT ndvi FROM n WHERE date='2025-12-01') / (SELECT avg(ndvi) FROM n WHERE extract(month from date)=12 AND extract(year from date) BETWEEN 2001 AND 2025)) * 100 - 100)::numeric,1) ndvi_anom_dec25,
+ (SELECT string_agg(to_char(n.date,'YYYY-MM')||':'||round((n.ndvi/(SELECT avg(n2.ndvi) FROM n n2 WHERE extract(month from n2.date)=extract(month from n.date) AND extract(year from n2.date) BETWEEN 2001 AND 2025)*100-100)::numeric,1), ' ' ORDER BY n.date) FROM n WHERE n.date BETWEEN '2025-09-01' AND '2025-12-01') anom_series,
+ (SELECT string_agg(s.code||':'||round(s.tci::numeric,1)||'/'||round(s.lst::numeric,1)||'/'||round(((s.ndvi-dn.nn)/dn.nn*100)::numeric,1)||'/'||round((s.ndvi-dn.nn)::numeric,3)||'/'||round(s.ndwi::numeric,3), ' ' ORDER BY s.code) FROM s JOIN dn ON dn.code=s.code AND dn.mo=12 WHERE s.date='2025-12-01' AND s.code IN ('CPT','DC34','DC44','DC6','DC3')) d_tci_lst_anompct_anomabs_ndwi,
+ (SELECT round((avg(ndvi)-stddev_samp(ndvi))::numeric,3)||'-'||round((avg(ndvi)+stddev_samp(ndvi))::numeric,3) FROM n WHERE extract(month from date)=12 AND extract(year from date) BETWEEN 2001 AND 2025) dec_band_ndvi,
+ (SELECT round((avg(vci)-stddev_samp(vci))::numeric,1)||'-'||round((avg(vci)+stddev_samp(vci))::numeric,1) FROM n WHERE extract(month from date)=12 AND extract(year from date) BETWEEN 2001 AND 2025) dec_band_vci,
+ (SELECT round(ndvi::numeric,3) FROM n WHERE date='2024-12-01') ndvi_dec24, (SELECT round(vci::numeric,1) FROM n WHERE date='2024-12-01') vci_dec24;;
+-- G. GDD driver (5.2 monthly): Mar-Aug 2026 sum vs the 2001-2025 mean of the same months, area-weighted
+WITH {W}, g AS (SELECT w.code, w.area, "Year" y, "Month" mo, max("Growing_Degree_Days_GDD_C") v FROM "5.2_meteorological_drivers_saws_master" t JOIN w ON w.name=t."District_Name" WHERE "Month" BETWEEN 3 AND 8 AND "Year" BETWEEN 2001 AND 2026 GROUP BY 1,2,3,4),
+n AS (SELECT y, mo, sum(area*v)/sum(area) v, count(*) nd FROM g GROUP BY 1,2)
+SELECT round(((SELECT sum(v) FROM n WHERE y=2026) - (SELECT sum(v)/25 FROM n WHERE y BETWEEN 2001 AND 2025))::numeric,1) gdd_change, (SELECT min(nd) FROM n) min_districts, (SELECT max(make_date("Year"::int,"Month"::int,1)) FROM "5.2_meteorological_drivers_saws_master") newest_52;;
