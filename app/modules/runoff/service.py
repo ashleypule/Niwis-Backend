@@ -235,27 +235,32 @@ class RunoffService:
         bf = await self.data.daily_window_stats("baseflow_component", start, end)
         dws = await self.data.daily_window_stats(Q, start, end)
         model_area = self.ctx.state.registry.datasets["runoff_variables_master"].model_area_km2 or 6500.0
-        bfi = (bf["sum"] * 86400) / (dws["sum"] * model_area * 1000)  # both scaled by the same model area: ratio holds
+        # ratios of the scope's totals (area-weighted sums), as the labels say — not means of the district ratios,
+        # which differ for a scope (audit step 1: the national coefficient read 0.186 while Σ runoff / Σ rainfall and
+        # the statistics table gave 0.198). For one district the two are the same number.
+        bf_tot, q_tot = weighted_scalar(bf["sum"] * 86400, w), weighted_scalar(dws["sum"] * model_area * 1000, w)
+        bfi = bf_tot / q_tot if bf_tot is not None and q_tot else None  # both scaled by the model area: ratio holds
         kpis.append(
             c.Kpi(
                 id="bfi",
                 metric="baseflowIndex",
                 label="Baseflow Index",
-                sublabel="baseflow / total flow, 12 months",
-                value=rnd(weighted_scalar(bfi, w), 2),
+                sublabel="Σ baseflow / Σ total flow, 12 months",
+                value=rnd(bfi, 2),
                 decimals=2,
                 **self.kpi_extra(end, "baseflow_component", Q),
             )
         )
         rain = await self.data.daily_window_stats("rain_daily", start, end)
-        coef = dws["sum"] / rain["sum"]
+        depth_tot, rain_tot = weighted_scalar(dws["sum"], w), weighted_scalar(rain["sum"], w)
+        coef = depth_tot / rain_tot if depth_tot is not None and rain_tot else None
         kpis.append(
             c.Kpi(
                 id="coefficient",
                 metric="runoffCoefficient",
                 label="Runoff Coefficient",
                 sublabel="Σ runoff / Σ rainfall, 12 months",
-                value=rnd(weighted_scalar(coef, w), 3),
+                value=rnd(coef, 3),
                 decimals=2,
                 **self.kpi_extra(end, Q, "rain_daily"),
             )
@@ -339,8 +344,13 @@ class RunoffService:
     async def ts_discharge(self) -> c.SeriesSet:
         start, end = await self.rain.window()
         y1 = await self.last_full_year()
-        flow = await self.daily_flow(start, end)
-        monthly = flow.groupby(flow.index.to_period("M")).mean()
+        # the daily line covers the window; the monthly means cover the complete months only (the window's first
+        # and last months are partial — a 6-day "monthly mean" next to a full-month normal misled; audit step 1)
+        flow_all = await self.daily_flow(start.replace(day=1), end)
+        flow = flow_all[flow_all.index >= pd.Timestamp(start)]
+        monthly = flow_all.groupby(flow_all.index.to_period("M")).mean()
+        days = flow_all.groupby(flow_all.index.to_period("M")).size()
+        monthly = monthly[[p for p in monthly.index if days[p] == p.days_in_month]]
         lt = await self.daily_flow(HISTORY_START, dt.date(y1, 12, 31))
         lt_m = lt.groupby(lt.index.month).mean()
         downsample = len(flow) > self.ctx.state.settings.max_series_points
@@ -380,11 +390,14 @@ class RunoffService:
             ],
             as_of=iso(end),
             note="Derived flow = modelled runoff depth × real district area / 86 400 s, summed over the scope (not "
-            "gauged). Series over 2 000 points are downsampled to monthly means.",
+            "gauged). Series over 2 000 points are downsampled to monthly means. Monthly means: complete months only.",
             **self._prov(end, Q, baseline=f"{HISTORY_START.year}–{y1} same-month mean"),
         )
 
-    async def ts_anomaly(self) -> c.SeriesSet:
+    async def anomaly_series(self) -> pd.Series:
+        """Monthly runoff anomaly (%) of the scope, complete months only: the area-weighted monthly depth vs the
+        area-weighted 7.2 same-month normal — never a mean of district percentages. One district: the table's own
+        `Runoff_Anomaly_percent`. Shared by the page chart and the page forecast (app.forecasting.pages)."""
         s = await self.scope_monthly_depth()
         nm = await self.normals()
         normal = weighted(nm.rename(columns={"normal": "value"}), self.ctx.weights(), by="month").set_index("month")[
@@ -394,12 +407,17 @@ class RunoffService:
             {
                 t: (v - normal.get(t.month)) / normal.get(t.month) * 100 if normal.get(t.month) else np.nan
                 for t, v in s.items()
-            }
+            },
+            dtype=float,
         )
         if len(w := self.ctx.weights()) == 1:  # one district: the table's own value, not a recomputation
             st = await self.data.monthly(ANOM)
             st = st[st["district"].isin(w) & st["date"].isin(s.index)].set_index("date")["value"]
-            an = st.reindex(s.index)
+            an = st.reindex(s.index).astype(float)
+        return an
+
+    async def ts_anomaly(self) -> c.SeriesSet:
+        an = await self.anomaly_series()
         ma = an.rolling(12, min_periods=12).mean()
         ms = await self._window_months()
         last = ms[-1].date()

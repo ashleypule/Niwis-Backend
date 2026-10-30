@@ -162,6 +162,33 @@ async def _modelled_flow(state: AppState, scope: ScopeSel) -> tuple[pd.Series, s
     return _combine(per, factors, True), how
 
 
+async def _runoff_anomaly(state: AppState, scope: ScopeSel) -> tuple[pd.Series, str]:
+    """The Runoff page's anomaly series: the scope's area-weighted monthly runoff depth vs the area-weighted 7.2
+    same-month normal (one district: the stored `Runoff_Anomaly_percent`). Averaging the districts' stored
+    percentages instead gave a different history from the page chart (Aug 2026: 42.8 % vs 11.6 %; audit step 1)."""
+    from app.modules.runoff.service import RunoffService
+
+    ctx = context(state, scope, await state.meta.newest_date())
+    an = (await RunoffService(ctx).anomaly_series()).dropna()
+    how = (
+        "anomaly of the scope's area-weighted monthly runoff depth vs the 7.2 same-month normal (one district: the "
+        "stored Runoff_Anomaly_percent), as on the Runoff page"
+    )
+    return an, how
+
+
+def _runoff_anomaly_target(reg: Registry) -> Target:
+    base = target_from_catalogue("7.2_derived_runoff_indicators_master", "Runoff_Anomaly_percent")
+    return replace(
+        base,
+        label="Runoff anomaly",
+        expr_id="page-anomaly",
+        loader=_runoff_anomaly,
+        sources=("runoff_variables_master", "7.2_derived_runoff_indicators_master"),
+        note="Area-weighted runoff depth vs the 7.2 same-month normal, as the Runoff page's anomaly chart",
+    )
+
+
 def _modelled_flow_target(reg: Registry) -> Target:
     return replace(
         _runoff_depth(reg),
@@ -276,7 +303,7 @@ VARS: dict[str, PageVar] = {
             "runoff-anomaly",
             "Runoff anomaly",
             "Runoff anomaly (%)",
-            _col("7.2_derived_runoff_indicators_master", "Runoff_Anomaly_percent", label="Runoff anomaly"),
+            _runoff_anomaly_target,
             1,
             pages=("runoff",),
         ),

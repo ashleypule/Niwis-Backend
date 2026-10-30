@@ -160,6 +160,33 @@ def _headline_rank(province: str | None) -> Callable[[list[tuple[Any, ...]]], An
     return f
 
 
+def _weighted_ratio(rows: list[tuple[Any, ...]]) -> float:
+    """(district_name, numerator, denominator) rows → Σ area·num / Σ area·den with the boundary areas."""
+    from app.core import districts
+
+    areas = get_spatial().district_areas() or {}
+    num = den = 0.0
+    for name, a, b in rows:
+        d = districts.resolve(name)
+        if d and a is not None and b is not None:
+            num += areas[d.code] * float(a)
+            den += areas[d.code] * float(b)
+    return num / den
+
+
+def _national_flow_mean(rows: list[tuple[Any, ...]]) -> float:
+    """(day, district_name, depth mm) rows → mean over the days of Σ districts depth × area × 1000 / 86 400 (m³/s)."""
+    from app.core import districts
+
+    areas = get_spatial().district_areas() or {}
+    per_day: dict[Any, float] = {}
+    for day, name, depth in rows:
+        d = districts.resolve(name)
+        if d and depth is not None:
+            per_day[day] = per_day.get(day, 0.0) + float(depth) * areas[d.code] * 1000 / 86400
+    return sum(per_day.values()) / len(per_day)
+
+
 def _flow_m3s(code: str) -> Callable[[list[tuple[Any, ...]]], Any]:
     """Mean daily model volume (m³/day, 6 500 km² basis) → depth (mm/day) × real area → m³/s."""
 
@@ -725,6 +752,41 @@ WHERE "Year" = 2020 AND round("SPI_3_Short_Term_Agricultural_Drought"::numeric, 
 WHERE "Date" LIKE '2025-%' GROUP BY 1""",
         tol=0.05,
         sql_post=lambda rows: round(_province_weighted(rows, "NC"), 1),
+    ),
+    Check(
+        "audit-step1",
+        "Runoff coefficient, national, 12 months — Σ runoff / Σ rainfall of the area-weighted district totals (not the "
+        "mean of the district ratios, which gave 0.186)",
+        "/api/v1/runoff/summary",
+        kpi("coefficient"),
+        """SELECT q."District_Name", q.q, p.p FROM
+(SELECT "District_Name", sum("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 q FROM runoff_variables_master
+ WHERE "Date" BETWEEN '2025-09-07' AND '2026-09-06' GROUP BY 1) q
+JOIN (SELECT "District_Name", sum("Daily_Rainfall_Total_mm") p FROM "6.1_core_rainfall_variables_master"
+ WHERE "Date" BETWEEN '2025-09-07' AND '2026-09-06' GROUP BY 1) p USING ("District_Name")""",
+        tol=0.0006,
+        sql_post=lambda rows: round(_weighted_ratio(rows), 3),
+    ),
+    Check(
+        "audit-step1",
+        "Runoff discharge chart, national: the first monthly mean is the whole of September 2025 (the window starts "
+        "on 7 Sep; the 7–30 Sep mean was 2 823.6)",
+        "/api/v1/runoff/timeseries?metric=discharge",
+        series_at("monthly", "2025-09-01"),
+        """SELECT "Date", "District_Name", "Daily_Surface_Runoff_Volume_m3_day" / 6.5e9 * 1000
+FROM runoff_variables_master WHERE "Date" BETWEEN '2025-09-01' AND '2025-09-30'""",
+        tol=0.05,
+        sql_post=lambda rows: round(_national_flow_mean(rows), 2),
+    ),
+    Check(
+        "audit-step1",
+        "Surface-water discharge chart, national: the first monthly mean is the whole of September 2025 (the window "
+        "starts on 25 Sep; the 25–30 Sep mean was 991.9)",
+        "/api/v1/surface-water/timeseries?metric=discharge",
+        series_at("monthly", "2025-09-01"),
+        """SELECT avg(q) FROM (SELECT date, sum(daily_mean_flow) / 86400 q FROM "9_1_hydrological_station_master"
+WHERE date BETWEEN '2025-09-01' AND '2025-09-30' GROUP BY 1) d""",
+        tol=0.05,
     ),
     # ---------------------------------------------------------------- §12 water quality (DECISIONS D20)
     Check(
