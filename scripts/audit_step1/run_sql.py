@@ -12,7 +12,8 @@ import os
 SD = os.path.dirname(os.path.abspath(__file__))
 W = open(os.path.join(SD, "w.sql"), encoding="utf-8").read()
 WMA = open(os.path.join(SD, "wma.sql"), encoding="utf-8").read()
-stmts = [s.strip().replace("{W}", W).replace("{WMA}", WMA) for s in sql_text.split(";;") if s.strip()]
+WC = open(os.path.join(SD, "wc.sql"), encoding="utf-8").read()
+stmts = [s.strip().replace("{W}", W).replace("{WMA}", WMA).replace("{WC}", WC) for s in sql_text.split(";;") if s.strip()]
 with psycopg.connect(url, autocommit=True) as conn:
     conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")
     conn.execute("SET statement_timeout = '300s'")

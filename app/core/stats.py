@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 import numpy as np
@@ -49,8 +50,16 @@ def trend_line(values: list[float | None]) -> list[float | None]:
 
 
 def rnd(v: float | None, nd: int = 3) -> float | None:
-    """Round for payloads; NaN / None → None (contract: missing values are null, never 0)."""
+    """Round for payloads; NaN / None → None (contract: missing values are null, never 0).
+
+    Rounds the value's decimal digits (its shortest representation), halves away from zero — the same rule as the
+    drought classifier (app.core.thresholds) and as SQL's `round(x::numeric, n)`, so a stored −1.295 is shown as
+    −1.30 and classed D2, never shown as −1.29 next to a D2 pill. Python's `round` works on the binary value
+    (−1.29499999…) and would give −1.29.
+    """
     if v is None:
         return None
     f = float(v)
-    return None if math.isnan(f) or math.isinf(f) else round(f, nd)
+    if math.isnan(f) or math.isinf(f):
+        return None
+    return float(Decimal(repr(f)).quantize(Decimal(1).scaleb(-nd), rounding=ROUND_HALF_UP))

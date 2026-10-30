@@ -27,7 +27,7 @@ TS = (Path(__file__).resolve().parent.parent / "reference" / "thresholds.ts").re
         (float("nan"), "None"),
         (0.0, "None"),
         (-0.49, "None"),
-        (-0.495, "None"),  # JS Math.round(-49.5) = -49 → -0.49
+        (-0.495, "D0"),  # the published 2-dp value is −0.50 (decimal rounding, not the binary float −0.49499…)
         (-0.5, "D0"),
         (-0.79, "D0"),
         (-0.8, "D1"),
@@ -35,7 +35,9 @@ TS = (Path(__file__).resolve().parent.parent / "reference" / "thresholds.ts").re
         (-1.3, "D2"),
         (-1.59, "D2"),
         (-1.6, "D3"),
-        (-1.995, "D3"),  # rounds to -1.99 like the frontend
+        (-1.995, "D4"),  # −2.00 as published (audit step 1: 127 such ties in the SPI columns)
+        (-1.295, "D2"),
+        (-1.2949, "D1"),
         (-1.99, "D3"),
         (-2.0, "D4"),
         (-3.0, "D4"),

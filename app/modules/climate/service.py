@@ -231,7 +231,8 @@ class ClimateService:
                 id="et0",
                 metric="et0",
                 label="Reference ET₀ (annual)",
-                sublabel=f"{y1}",
+                # the source table has no 31 December (DATA_MAPPING §0.3): the annual sum covers 364 days
+                sublabel=f"{y1} (364 days: 31 Dec is not in the table)",
                 value=rnd(et0.get(y1), 0),
                 unit="mm",
                 decimals=0,

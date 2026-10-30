@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import math
+from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -19,9 +20,15 @@ def thresholds() -> dict[str, Any]:
 
 
 def _round_half_away(x: float, dp: int) -> float:
-    """JavaScript Math.round(x * 100) / 100 semantics (rounds .5 towards +∞), to match the frontend exactly."""
-    f = 10**dp
-    return float(math.floor(x * f + 0.5) / f)
+    """Round the value *as published* (its decimal digits) to `dp` places, halves away from zero.
+
+    The database stores SPI / SPEI with 3 decimals as double precision. −1.295 is held as −1.29499999999999993…,
+    so `math.floor(x * 100 + 0.5)` (JavaScript's `Math.round`) and Python's `round` both give −1.29 and the D1 class,
+    while the published 2-dp value is −1.30 (D2). Rounding the shortest decimal representation instead gives the
+    published value (audit step 1, 2026-10-30: 127 such ties in the SPI columns, 38 in SPEI).
+    """
+    q = Decimal(1).scaleb(-dp)
+    return float(Decimal(repr(float(x))).quantize(q, rounding=ROUND_HALF_UP))
 
 
 def drought_class(spi: float | None) -> str:

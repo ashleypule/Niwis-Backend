@@ -705,6 +705,27 @@ WHERE district_name = 'Vhembe' AND year = 2025""",
             float(rows[0][0]) * (get_spatial().district_areas() or {})["DC34"] / 1000 + float(rows[0][1]) / 1e6
         ),
     ),
+    # ---------------------------------------------------------------- audit step 1 (docs/AUDIT_STEP1_DATA.md)
+    Check(
+        "audit-step1",
+        "District-months in D2 or worse (SPI-3 ≤ −1.3 after rounding to 2 dp) in 2020 — the stored −1.295 (Amajuba, "
+        "Aug 2020) is published as −1.30 and counts; Python / JavaScript float rounding gave −1.29",
+        "/api/v1/climate/timeseries?metric=drought-frequency",
+        series_at("months", "2020-01-01"),
+        """SELECT count(*) FROM "6.2_rainfall_derived_drought_indices_master"
+WHERE "Year" = 2020 AND round("SPI_3_Short_Term_Agricultural_Drought"::numeric, 2) <= -1.3""",
+        tol=0.05,
+    ),
+    Check(
+        "audit-step1",
+        "Climate provinces table: hot days 2025, Northern Cape — area-weighted 4_1 Heatwave_Frequency_Days",
+        "/api/v1/climate/table?metric=provinces",
+        row("NC", "hot"),
+        """SELECT "District_Name", max("Heatwave_Frequency_Days") FROM "4_1_temperature_change_master"
+WHERE "Date" LIKE '2025-%' GROUP BY 1""",
+        tol=0.05,
+        sql_post=lambda rows: round(_province_weighted(rows, "NC"), 1),
+    ),
     # ---------------------------------------------------------------- §12 water quality (DECISIONS D20)
     Check(
         "water-quality",
