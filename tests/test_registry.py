@@ -18,10 +18,10 @@ def reg() -> Registry:
 
 
 def test_loads_all_tables(reg: Registry) -> None:
-    assert len(reg.datasets) == 36  # 15 tables of §3–§7, 21 of §8–§16 (2026-10-20); 16_2 is keyed by SWSA (ignored)
+    assert len(reg.datasets) == 44  # 15 of §3–§7, 21 of §8–§16 (2026-10-20), 2 of §17 and 6 of §18–§19 (2026-10-29)
     first = ["climate", "drought", "rainfall", "runoff", "vegetation"]
     later = ["dams", "surface-water", "groundwater", "groundwater-reserve", "water-quality"]
-    view_only = ["green-drop", "blue-drop", "rwqo", "iwrm"]
+    view_only = ["green-drop", "blue-drop", "rwqo", "iwrm", "water-quantity", "services", "tariffs"]
     assert reg.modules == sorted([*first, *later, *view_only])
 
 

@@ -204,6 +204,12 @@ def models_listing(settings: Any) -> dict[str, Any]:
                 "label": "Compare all",
                 "description": "Runs every model the series allows, experimental ones included, and keeps the best.",
             },
+            {
+                "id": "auto-fast",
+                "label": "Auto (quick models)",
+                "description": "Auto over the models that fit in seconds (baselines, ETS, LightGBM): what the district "
+                "and on-demand page forecasts use.",
+            },
         ],
         "groups": [{"id": k, "label": v} for k, v in GROUP_LABELS.items()],
         "models": catalogue(),

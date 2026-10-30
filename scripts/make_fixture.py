@@ -53,6 +53,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tables", help="comma-separated registered tables (default: all)")
     ap.add_argument("--out", help="file name in tests/fixtures (default: 01_fixture.sql.gz)")
+    ap.add_argument("--all-districts", action="store_true", help="every district (tables that lack the three)")
     args = ap.parse_args()
     out_path = OUT.with_name(args.out) if args.out else OUT
     only = {x.strip() for x in args.tables.split(",")} if args.tables else None
@@ -77,13 +78,19 @@ def main() -> None:
             names = [f'"{n}"' for n, _, _ in cols]
             ddl = ",\n  ".join(f'"{n}" {t}{"" if nullable else " NOT NULL"}' for n, t, nullable in cols)
             out.append(f'\nCREATE TABLE "{ds.table}" (\n  {ddl}\n);\n')
-            loc = f'"{ds.location.column}"'
-            where = f"lower({loc}) = ANY(%s)"
-            params: list[object] = [[n.lower() for n in DISTRICTS + ALIASES]]
+            params: list[object] = []
+            if ds.location.column is None or args.all_districts:  # a national table, or every district
+                where = "TRUE"
+            else:
+                where = f'lower("{ds.location.column}") = ANY(%s)'
+                params.append([n.lower() for n in DISTRICTS + ALIASES])
             if ds.time.resolution == "daily":
                 where += f" AND {ds.date_sql()} >= %s::date"
                 params.append(DAILY_FROM)
-            rows = c.execute(f"SELECT {', '.join(names)} FROM {ds.fq} WHERE {where} ORDER BY 1, 2", params).fetchall()
+            sql = f"SELECT {', '.join(names)} FROM {ds.fq} WHERE {where} ORDER BY 1, 2"
+            if params:  # column names may hold '%' (18.x / 19.x), which psycopg reads as a placeholder
+                sql = sql.replace("%", "%%")
+            rows = c.execute(sql, params).fetchall() if params else c.execute(sql).fetchall()
             out.append(f'COPY "{ds.table}" ({", ".join(names)}) FROM stdin;\n')
             out.extend("\t".join(lit(v) for v in r) + "\n" for r in rows)
             out.append("\\.\n")

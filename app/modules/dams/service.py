@@ -156,7 +156,7 @@ class DamsService(DistrictModule):
         """MDB code → {name, river} from 8_1 (one combined reservoir per district; "Siyanda", the old name of
         Z F Mgcawu, is not a district alias and is skipped — DECISIONS D3)."""
         ds = self.registry.datasets[TABLE]
-        loc = ident(ds.location.column)
+        loc = ds.location_sql()
 
         async def load() -> dict[str, dict[str, str]]:
             # one probe per district spelling on the (district_name, date) index: a few ms, where a scan of the

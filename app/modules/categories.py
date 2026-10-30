@@ -33,7 +33,7 @@ from app.core.stats import rnd
 from app.db import ident
 from app.modules.common import Ctx, cached, get_ctx
 from app.registry.catalogue import Catalogue, CatColumn, Category, CatGroup, get_catalogue
-from app.registry.registry import Dataset
+from app.registry.registry import NATIONAL_CODE, Dataset
 from app.schemas import contract as c
 from app.state import AppState
 
@@ -354,7 +354,7 @@ class CategoryService:
         """Scope value per period (index: period start) of every served numeric column of a group, from ONE scan of
         the table (a daily table is ~500 000 rows and unindexed; one scan per column made daily groups slow,
         BACKEND_ISSUES #13). Cached per group, scope and window; requests pick their `vars` from it."""
-        loc, d = ident(ds.location.column), ds.date_sql()
+        loc, d = ds.location_sql(), ds.date_sql()
         if g.resolution == "daily" and downsample:
             period, inner = f"date_trunc('month', {d})::date", "avg"
         elif g.resolution == "daily":
@@ -365,7 +365,7 @@ class CategoryService:
         if not cols:
             return {}
         extensive = (cols[0].unit or "") in EXTENSIVE_UNITS  # one unit per group (axis rule)
-        factors, total = self.factors(extensive)
+        factors, total = ({NATIONAL_CODE: 1.0}, 1.0) if ds.national else self.factors(extensive)
         names: list[str] = []
         facs: list[float] = []
         for code, f in factors.items():
@@ -429,7 +429,7 @@ class CategoryService:
 
     async def district_categories(self, ds: Dataset, x: CatColumn, start: dt.date, end: dt.date) -> pd.Series:
         """A categorical column for one district: its value per period (the latest row of the period)."""
-        loc, d = ident(ds.location.column), ds.date_sql()
+        loc, d = ds.location_sql(), ds.date_sql()
         trunc = {"daily": None, "monthly": "month", "annual": "year"}[x.resolution]
         period = f"date_trunc('{trunc}', {d})::date" if trunc else d
         dist = districts.by_code(self.ctx.filters.scope.id)

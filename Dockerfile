@@ -12,6 +12,8 @@ WORKDIR /srv
 
 COPY requirements.txt .
 # requirements.txt names the CPU-only PyTorch index (forecasting; no CUDA libraries)
+# LightGBM (the Studio's gradient-boosting model, the AI page's feature importance) needs OpenMP at run time
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
 RUN pip install -r requirements.txt
 
 COPY app ./app

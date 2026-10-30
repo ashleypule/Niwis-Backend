@@ -18,11 +18,14 @@ async def test_modules_without_tables_answer_501_with_a_reason(client: httpx.Asy
     for module in sorted(set(CONTRACT_MODULES) - IMPLEMENTED_MODULES):
         for kind in ("summary", "map", "timeseries", "table", "breakdown", "entities"):
             r = await client.get(f"/api/v1/{module}/{kind}", params={"metric": "x", "layer": "x"})
+            if module == "ai" and kind == "summary":  # the AI page's KPIs are served (DECISIONS D47)
+                assert r.status_code == 200 and r.json()["module"] == "ai"
+                continue
             assert r.status_code == 501, (module, kind)
             body = r.json()
             assert body["code"] == "DATA_UNAVAILABLE" and body["detail"] == REASONS[module].replace("{module}", module)
-    r = await client.get("/api/v1/alerts", params={"limit": 50})
-    assert r.status_code == 501 and "alert" in r.json()["detail"]
+    r = await client.get("/api/v1/alerts", params={"limit": 50})  # derived alerts (DECISIONS D44)
+    assert r.status_code == 200 and r.json()["total"] == len(r.json()["items"])
 
 
 async def test_every_module_has_a_reason_and_database_views_keep_their_categories(client: httpx.AsyncClient) -> None:

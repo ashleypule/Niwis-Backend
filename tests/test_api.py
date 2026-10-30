@@ -12,7 +12,8 @@ from app.registry.registry import load_registry
 from tests.conftest import requires_db
 
 pytestmark = [pytest.mark.db, requires_db]
-from app.modules import IMPLEMENTED_MODULES  # noqa: E402
+from app.modules import DERIVED_MODULES, IMPLEMENTED_MODULES, PARTIAL_MODULES  # noqa: E402
+from app.modules.unavailable import CONTRACT_MODULES  # noqa: E402
 
 REG = load_registry()
 
@@ -24,12 +25,23 @@ async def test_health(client: httpx.AsyncClient) -> None:
     assert body["status"] == "ok"
     assert body["database"]["reachable"] is True
     assert body["database"]["readOnlySession"] is True
-    assert {m["module"] for m in body["modules"]} == set(REG.modules)
+    # every contract dashboard is listed (D47): table-backed modules, the derived ones (live, with the tables they
+    # read), the Overview (partial) and the dashboards with no table at all (unavailable, with the reason)
+    assert [m["module"] for m in body["modules"]] == list(CONTRACT_MODULES)
+    by = {m["module"]: m for m in body["modules"]}
     for m in body["modules"]:
         assert m["status"] in ("live", "partial", "unavailable")
-        if m["status"] != "live":
+        if m["status"] != "live" or m["module"] in DERIVED_MODULES:
             assert m["reason"]
-        assert m["status"] == ("live" if m["module"] in IMPLEMENTED_MODULES else "partial"), m
+        if m["module"] in DERIVED_MODULES:
+            assert m["status"] == "live" and m["module"] not in REG.modules
+        elif m["module"] in REG.modules:
+            assert m["status"] == ("live" if m["module"] in IMPLEMENTED_MODULES else "partial"), m
+        else:
+            assert m["status"] == ("partial" if m["module"] in PARTIAL_MODULES else "unavailable"), m
+    assert "13.1_wastewater_effluent_quality_master" in by["alerts"]["tables"] and by["governance"]["tables"] == []
+    assert by["settlements"]["status"] == "unavailable" and by["overview"]["status"] == "partial"
+    assert sum(1 for m in body["modules"] if m["status"] == "live") == len(IMPLEMENTED_MODULES | set(DERIVED_MODULES))
 
 
 async def test_sessions_reject_writes(client: httpx.AsyncClient) -> None:
@@ -47,8 +59,9 @@ async def test_meta_sources_match_sql(client: httpx.AsyncClient, fixture_db: Cal
     assert set(items) == set(REG.datasets)
     for table, item in items.items():
         ds = REG.datasets[table]
-        # rows dated after today are never served, so they are not counted either (8_1 runs to 2026-12-31)
-        ((n, last),) = fixture_db(f"SELECT count(*), max({ds.date_sql()}) FROM {ds.fq} WHERE {ds.not_future_sql()}")
+        # rows dated after today are never served, so they are not counted either (8_1 runs to 2026-12-31); nor are
+        # rows a table's row filter / excluded locations keep out (18_1 Total rows only, "National" in 18_2 / 19_x)
+        ((n, last),) = fixture_db(f"SELECT count(*), max({ds.date_sql()}) FROM {ds.fq} WHERE {ds.rows_sql()}")
         assert item["rows"] == n, table
         assert item["asOf"] == last.isoformat(), table
         assert item["error"] is None

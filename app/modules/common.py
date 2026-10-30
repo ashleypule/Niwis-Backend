@@ -258,8 +258,8 @@ def forecast_unavailable(module: str, metric: str) -> DataUnavailable:
     """A forecast product that does not follow directly from a page forecast (district maps, outlooks per grid cell,
     impacts on data the database does not hold). Page forecasts: app.forecasting.pages."""
     return DataUnavailable(
-        "Not available: page forecasts are statistical forecasts of key variables for South Africa and the nine "
-        "provinces; this product needs district forecasts or data the database does not hold. Single areas can be "
-        "forecast in the Forecasting Studio (AI & Predictive Analytics page).",
+        "Not available: page forecasts are statistical forecasts of the database's own variables; this product needs "
+        "data the database does not hold. Any stored variable can be forecast in the Forecasting Studio (AI & "
+        "Predictive Analytics page).",
         missing=[f"forecast:{module}:{metric}"],
     )

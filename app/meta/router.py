@@ -10,7 +10,8 @@ from fastapi import APIRouter, Depends
 from app import __version__
 from app.auth import User, get_current_user
 from app.core.provenance import iso
-from app.modules import DATABASE_VIEW_MODULES, IMPLEMENTED_MODULES
+from app.modules import DATABASE_VIEW_MODULES, DERIVED_MODULES, IMPLEMENTED_MODULES, PARTIAL_MODULES
+from app.modules.unavailable import CONTRACT_MODULES, REASONS
 from app.state import AppState, get_state
 
 router = APIRouter(prefix="/api/v1", tags=["meta"], dependencies=[Depends(get_current_user)])
@@ -27,19 +28,36 @@ async def health(state: AppState = Depends(get_state), _: User = Depends(get_cur
         tables_ok = {ds.table: bool(by_fq.get(ds.fq)) for ds in state.registry.datasets.values()}
 
     modules = []
-    for module in state.registry.modules:
-        tables = [ds.table for ds in state.registry.datasets_for_module(module)]
-        missing = [t for t in tables if not tables_ok.get(t)]
+    registry_modules = set(state.registry.modules)
+    for module in CONTRACT_MODULES:  # every dashboard of the contract, served or not (DECISIONS D47)
+        reason: str | None
+        if module in DERIVED_MODULES:  # served from other modules' tables / the API's own metadata
+            reads = DERIVED_MODULES[module]
+            tables = sorted({ds.table for m in reads for ds in state.registry.datasets_for_module(m)})
+            status = "live"
+            reason = (
+                f"no tables of its own: derived from {', '.join(reads)}"
+                if reads
+                else "no tables of its own: served from the registry and the tables' statistics"
+            )
+        elif module in registry_modules:
+            tables = [ds.table for ds in state.registry.datasets_for_module(module)]
+            missing = [t for t in tables if not tables_ok.get(t)]
+            if missing:
+                status, reason = "unavailable", f"tables missing: {', '.join(missing)}"
+            elif module in DATABASE_VIEW_MODULES and module not in IMPLEMENTED_MODULES:
+                status, reason = "partial", "only the database variables of its tables are served (/categories)"
+            elif module not in IMPLEMENTED_MODULES:
+                status, reason = "unavailable", "API endpoints not implemented yet"
+            else:
+                status, reason = "live", None
+        elif module in PARTIAL_MODULES:
+            tables, status, reason = [], "partial", PARTIAL_MODULES[module]
+        else:  # no table in the database for this dashboard
+            tables, status = [], "unavailable"
+            reason = REASONS.get(module, f"No table for the {module} dashboard in the database")
         if not reachable:
             status, reason = "unavailable", "database unreachable"
-        elif missing:
-            status, reason = "unavailable", f"tables missing: {', '.join(missing)}"
-        elif module in DATABASE_VIEW_MODULES and module not in IMPLEMENTED_MODULES:
-            status, reason = "partial", "only the database variables of its tables are served (/categories)"
-        elif module not in IMPLEMENTED_MODULES:
-            status, reason = "unavailable", "API endpoints not implemented yet"
-        else:
-            status, reason = "live", None
         modules.append({"module": module, "status": status, "reason": reason, "tables": tables})
 
     overall = "ok" if reachable and read_only else ("degraded" if reachable else "down")

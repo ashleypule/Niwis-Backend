@@ -19,6 +19,7 @@ from __future__ import annotations
 import calendar
 import datetime as dt
 import re
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -28,13 +29,14 @@ from app.core import districts
 from app.core.aggregate import MIN_COVERAGE, sum_fractions
 from app.core.errors import BadRequest, NotFound
 from app.core.filters import Filters, ScopeSel, Window
-from app.db import ident
 from app.forecasting.base import Freq
 from app.modules.categories import EXTENSIVE_UNITS, CategoryService, _value_sql
 from app.modules.common import Ctx
 from app.registry.catalogue import Aggregate, CatColumn, Category, get_catalogue, monthly_unit
+from app.registry.registry import NATIONAL_CODE
 from app.state import AppState
 
+Loader = Callable[["AppState", ScopeSel], Awaitable[tuple[pd.Series, str]]]
 FORECASTABLE: tuple[str, ...] = ("daily", "monthly")  # annual columns hold ≤ 27 values: too short to forecast
 NONNEG_UNITS_EXCLUDED = {None, "°C", "m amsl", "m", "%/year", "—", "index"}
 CLASS_WORDS = ("spi", "spei")
@@ -57,6 +59,12 @@ class Target:
     note: str | None = None
     sources: tuple[str, ...] = field(default=())
     native_unit: str | None = None  # unit of the stored daily value (daily forecasts)
+    # derived page variables computed in Python (the CCME water-quality index, modelled flow): the scope's monthly
+    # series and a note on how it was made; `expr_id` must name it (cache / run key). Never offered by the Studio.
+    loader: Loader | None = field(default=None, compare=False)
+    # telemetry sampled less than monthly (groundwater depth, every ~6 weeks): single gaps of at most this many
+    # months are interpolated linearly before the gap check (a level changes slowly); longer gaps stay missing
+    interpolate: int = 0
 
     @property
     def source(self) -> list[str]:
@@ -75,7 +83,7 @@ class Target:
             return None, None
         unit = self.unit
         low = 0.0 if history_min >= 0 and unit not in NONNEG_UNITS_EXCLUDED else None
-        high = 100.0 if unit in ("%", "% FSC") else None
+        high = 100.0 if unit in ("%", "% FSC", "WQI") else None
         return low, high
 
 
@@ -162,12 +170,15 @@ async def build_series(state: AppState, target: Target, scope: ScopeSel, freq: F
     return res
 
 
-async def _load(state: AppState, target: Target, scope: ScopeSel, freq: Freq, newest: dt.date | None) -> SeriesData:
+async def district_frame(
+    state: AppState, target: Target, scope: ScopeSel, freq: Freq, newest: dt.date | None
+) -> tuple[pd.DataFrame, dict[str, float]]:
+    """Per-district values of `target` (columns: district codes, index: periods) for the scope's districts, and each
+    district's factor in the scope (area weight, or its share of a sum). Incomplete months of a daily total are
+    dropped; the latest complete month is capped by the caller."""
     ds = state.registry.datasets[target.table]
     ctx = context(state, scope, newest)
-    svc = CategoryService(ctx, module_of(target.table))
-    await svc.refs()
-    loc, d = ident(ds.location.column), ds.date_sql()
+    loc, d = ds.location_sql(), ds.date_sql()
     value = target.expr or _value_sql(ds, target.column)
     valid = ds.valid_sql(target.column) if target.column in ds.columns else ds.rows_sql()
     if freq == "daily":
@@ -177,7 +188,15 @@ async def _load(state: AppState, target: Target, scope: ScopeSel, freq: Freq, ne
     else:
         period, inner = f"date_trunc('month', {d})::date", ("sum" if target.aggregate == "sum" else "avg")
     extensive = target.extensive
-    factors = sum_fractions(scope, state.spatial) if extensive else ctx.weights()
+    if ds.national:
+        if scope.level != "national":
+            raise BadRequest(
+                f"{target.label} is a national series ({target.table} has no district breakdown): choose South Africa",
+                issues=[{"param": "scope", "reason": "national table"}],
+            )
+        factors = {NATIONAL_CODE: 1.0}
+    else:
+        factors = sum_fractions(scope, state.spatial) if extensive else ctx.weights()
     by_name: dict[str, str] = {}
     for code in factors:
         for n in await state.data.names(ds, code):
@@ -197,19 +216,63 @@ async def _load(state: AppState, target: Target, scope: ScopeSel, freq: Freq, ne
         days = frame["p"].map(lambda t: calendar.monthrange(t.year, t.month)[1])
         frame = frame[frame["n"] >= days - 1]  # a month's total needs every day but one (31 Dec is often missing)
     per = frame.groupby(["p", "district"])["v"].mean().unstack("district") if not frame.empty else pd.DataFrame()
-    values = _combine(per, factors, extensive) * target.scale
-    # incomplete periods are never used: the latest complete month of the table's database module (D5)
+    return per, factors
+
+
+async def complete_cap(state: AppState, target: Target, scope: ScopeSel, freq: Freq, newest: dt.date | None) -> Any:
+    """The latest complete period of the target's table (D5): later, incomplete periods are never used."""
+    ds = state.registry.datasets[target.table]
+    svc = CategoryService(context(state, scope, newest), module_of(target.table))
+    await svc.refs()
     dates = await svc.column_dates(next(c for c in get_catalogue().categories if c.table == target.table))
-    table_newest = dates.get("")
-    cap = svc.complete_cap("daily" if freq == "daily" else "monthly", ds, table_newest)
+    return svc.complete_cap("daily" if freq == "daily" else "monthly", ds, dates.get(""))
+
+
+def interpolate_short_gaps(values: pd.Series, limit: int) -> pd.Series:
+    """Linear interpolation of interior gaps of at most `limit` consecutive periods; longer gaps stay missing."""
+    if limit <= 0 or not values.isna().any():
+        return values
+    filled = values.interpolate(method="linear", limit_area="inside")
+    gap_id = values.notna().cumsum()
+    run = values.isna().groupby(gap_id).transform("sum")  # length of the gap each missing period belongs to
+    return values.where(values.notna() | (run > limit), filled)
+
+
+async def _load(state: AppState, target: Target, scope: ScopeSel, freq: Freq, newest: dt.date | None) -> SeriesData:
+    extensive = target.extensive
+    if target.loader is not None:
+        values, how = await target.loader(state, scope)
+        values = values.astype(float) * target.scale
+    else:
+        per, factors = await district_frame(state, target, scope, freq, newest)
+        values = _combine(per, factors, extensive) * target.scale
+        how = (
+            "district value"
+            if scope.level == "municipality"
+            else "sum over the scope's districts"
+            if extensive
+            else f"area-weighted mean of district values (≥ {MIN_COVERAGE:.0%} of the area)"
+        )
+    values = values.dropna()
+    if values.empty:
+        return SeriesData(pd.Series(dtype=float), None, None, target.unit_for(freq), "")
+    # incomplete periods are never used: the latest complete month of the table's database module (D5)
+    cap = await complete_cap(state, target, scope, freq, newest)
     if cap is not None:
         values = values[values.index <= pd.Timestamp(cap)]
-    values = values.dropna()
     if values.empty:
         return SeriesData(pd.Series(dtype=float), None, None, target.unit_for(freq), "")
     idx = pd.date_range(values.index.min(), values.index.max(), freq="MS" if freq == "monthly" else "D")
     values = values.reindex(idx)
-    how = (
+    if target.interpolate and freq == "monthly":
+        gaps = int(values.isna().sum())
+        values = interpolate_short_gaps(values, target.interpolate)
+        if gaps:
+            how += (
+                f"; {gaps - int(values.isna().sum())} of {gaps} unsampled months interpolated linearly (gaps of at "
+                f"most {target.interpolate} months)"
+            )
+    temporal = (
         "district value"
         if scope.level == "municipality"
         else "sum over the scope's districts"

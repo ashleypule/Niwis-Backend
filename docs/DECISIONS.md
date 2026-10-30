@@ -435,8 +435,8 @@ rolling origins, nothing tuned):
   temperature anomaly (0.00) and hot days (0.02); only vegetation keeps skill from persistence (NDVI 0.32 seasonal
   naive, VCI 0.28 ETS). The experimental deep models never win Auto's comparison and would not have (LSTM best 0.14,
   Transformer 0.32 on NDVI, below the baselines that won).
-- **Groundwater depth cannot be forecast nationally**: 38 % of the months since 2000 have no telemetry sample (D35
-  allows 20 %); the groundwater forecast tab says so.
+- **Groundwater depth cannot be forecast nationally** (as of D40): 38 % of the months since 2000 have no telemetry
+  sample (D35 allows 20 %). Superseded by D41.3: the gaps are a six-weekly sampling cadence and are interpolated.
 - Band coverage of the ML models' residual intervals is below the 80 % expected at 3 months (58–75 %), i.e. their bands
   are somewhat narrow; the statistical models' own intervals cover 74–95 %. The result's warnings say so when it happens.
 - A Compare-all run of one variable takes 25–155 s on one worker thread (SARIMA's order search and the two deep models
@@ -450,3 +450,176 @@ want the 3-month skill run the variable in the Studio with a 3-month horizon (on
 **Alternative considered.** A second round at 3 months for every variable and scope — rejected for now: it doubles the
 background work (≈ 140 runs per data change) for a product the Studio already gives; revisit if the forecast tabs
 become a daily tool.
+
+### D41 Every dashboard's forecast tab served: any area, derived series, forecast products (2026-10-29)
+
+> Owner's instruction: the Predictions & Forecasting tab of every dashboard must be fully functional, with the
+> Forecasting Studio as the shared advanced tool underneath, not instead of it.
+
+**D41.1 Districts with the quick models, everything else on demand.** The round of D37 (Auto, 24 months, South
+Africa + 9 provinces) is followed by a district round of the six outlook variables (SPI-3, SPI-6, rainfall, NDVI, VCI,
+WQI) with a new choice, `auto-fast`: Auto over the baselines, ETS and LightGBM only. Per `docs/FORECAST_VALIDATION.md`
+these fit in 0–5 s where SARIMA's order search, Prophet, Random Forest and the deep models take 5–45 s, and on the
+national series the quick set contains the winner, or one within 0.05 MASE of it, for every variable but SPEI-3,
+temperature anomaly and hot days (SARIMA). 52 × 6 = 312 quick runs ≈ 15–25 min on one background slot after the
+national round. Any other (variable, area) pair — a district's SPEI-3, a WMA's runoff — is computed with `auto-fast`
+the first time its tab is opened: the first answer is 501 `no-store` "being computed (about a minute); reload
+shortly", the next is 200; the entry lives until the data change. On-demand runs use the Studio's slots (never behind
+the background round), are not rate-limited (no client address), and a full queue defers them to the next request.
+**Alternatives.** Every variable for every district in the round (52 × 20 Auto runs ≈ 8 h per data change) —
+rejected; districts only in the Studio (D37) — rejected by the owner's instruction: a user who selects a district
+expects the tab to work.
+
+**D41.2 Derived page variables computed in Python.** A `Target` may carry a `loader` (the scope's monthly series
+from the module's own method) instead of a SQL column: the CCME WQI (the Water Quality page's `wqi_frame`, area-
+weighted) and the Runoff page's modelled flow (monthly mean depth × district area, summed). They are page variables
+only — the Studio forecasts stored columns — so their `forecast.studio` link is null. Nitrate, orthophosphate,
+turbidity and E. coli are ordinary 12.x monthly columns (complete from 2000 nationally and per district).
+
+**D41.3 Groundwater depth: short gaps interpolated.** The 10_1 telemetry holds 7–8 of 12 months in every year since
+2000, for every province alike (checked 2026-10-29): a sampling cadence of about six weeks, not outages. A level
+changes slowly, so single gaps of at most 2 months are interpolated linearly before the 20 % rule (D35); longer gaps
+stay missing and the series note says how many months were interpolated. The gap rule itself is unchanged for the
+Studio. Validated 2026-10-29 (`docs/FORECAST_VALIDATION.md`): the national series (321 months, 121 interpolated)
+forecasts with a 12-month moving average, MASE 0.13, skill 0.96 against climatology (the depth trends steadily, which
+the same-month mean cannot follow); this supersedes D40's "cannot be forecast nationally". **Alternative.** Raising
+the 20 % limit — rejected: it would admit series with real outages.
+
+**D41.4 Probabilities from the band.** Every probability product uses the engine's own convention (D34 class
+probabilities): a normal distribution centred on the median with the 10–90 % band as ±1.28 σ. Flood probability =
+P(monthly flow > Q10), Q10 = the 90th percentile of the variable's monthly history (the flow exceeded 10 % of the
+time); early-warning confidence = the probability of the forecast class 3 months ahead (for the area in drought, of
+the forecast direction); recovery = 100 − P(D1–D4); WQI band outlook = the probability of each band 1–12 months ahead;
+vegetation recovery = P(VCI ≥ 40 %, Kogan's stress threshold) in 12 months. The notes say so.
+
+**D41.5 Outlook maps.** The district median at the lead time: SPI-3 at 1 / 2 / 3 months (`outlook-1/2/3`), SPI-6 at
+6 months (`forecast-6`, the drought-class map's variable), NDVI at 12 months and its departure from the district's
+same-month mean of its own record (`forecast-anomaly`; the page's observed anomaly map uses 2001–2025 for the same
+reason), WQI at 12 months, rainfall at 1–3 months as the anomaly in % of the district's same-month mean (the
+contract's `anomalyPct` scale, 0 = normal, rather than "% of normal" with 100 = normal). A district without a forecast
+is null; the title carries the target month.
+
+**D41.6 Climate `forecast-summary` / `risk-outlook`: trend extrapolation, labelled.** The database holds no climate
+scenarios (D37 kept these 501). The tables now extrapolate the observed Sen's-slope trend of the annual record
+(2000–last full year) to 2030 / 2050 / 2070 from the record's mean as baseline, and grade the 2050 change in the
+adverse direction against the record's interannual standard deviation (< 0.5 Low, < 1 Moderate, < 2 High, else Very
+High; an insignificant trend, p ≥ 0.05, is Low). `baseline` / `baselineNote` say "not a climate-model projection";
+there is no `forecast` block (no engine run). Indicators with fewer than 8 full years are null with the reason.
+**Alternative.** Leaving the two tables 501 — rejected: the tab would stay empty for a product a trend can honestly
+inform, as long as it is named for what it is.
+
+**D41.7 What stays 501.** Settlement / population impacts (no register), reservoir storage and every dams forecast
+(withheld, D2), water demand, climate scenarios, feature importance: no data to forecast from.
+
+**D41.8 Response checks.** A forecast response may carry values to the end of its horizon
+(`forecast.forecastStart` + `horizon`); the coverage invariant allows that instead of being bypassed by naming.
+
+### D42 §17 water-quantity tables registered: 17_1 served to 2024, most of 17_2 withheld (2026-10-29)
+
+**Evidence (profiled 2026-10-29).** `17_1_water_quantity_assessment_transfers_master`: 16 districts of the Vaal /
+Orange / Thukela transfer systems, one row per district-month 2000-01 – 2026-10; transfer rates (m³/day) vary by
+district and month, but every transfer, loss, energy and deficit column is **zero in all 16 districts from January
+2025**; donor-basin storage is 10.0–15.3 % FSC in every row. `17_2_national_water_balance_master`: one national row
+per month (no district column). Against the national totals its columns are implausible in their stated unit
+(Mm³/month): precipitation ≈ 3 200 (≈ 38 000/yr where MAP ≈ 600 000 Mm³/yr), runoff ≈ 265 (≈ 3 200/yr where MAR ≈
+49 000), recharge up to 99 000 in a month (national ≈ 30 000/yr), municipal demand ≈ 3 900 and agricultural ≈ 10 000 per
+month (≈ the country's *annual* use), reserve ≈ 32/month; net inter-basin transfers (83.33) and industrial demand (153)
+are constants; the balance is computed from those columns. Evapotranspiration (≈ 370 000 Mm³/yr) and surface storage
+(25 600–32 200 Mm³, the national dam capacity) are consistent with the national figures.
+
+**Decision.** Both tables are registered (database module 17, contract module `water-quantity`, also serving
+`iwrm`). 17_1's transfer columns are served with `valid_until: 2024-12-31` (the zero fill is not measured); donor
+storage is served with its note. 17_2's evapotranspiration and surface storage are served; the other ten columns are
+withheld with the comparison in their reason (D1 rule 4). A **national table** is a new registry case
+(`location: {column: null}`), read as the location `ZA`; the API serves it for South Africa only. **Alternative.**
+Rescaling 17_2 to plausible units — rejected (D5: placeholders are withheld, never repaired).
+
+### D43 Compliance modules derive district scores from published limits (2026-10-29)
+
+**Decision.** `green-drop`, `blue-drop` and `rwqo` serve a **district compliance score** = share of the module's
+served parameters within their limit in a month: 13.1 effluent values against the General Authorisation general
+limits (the frontend's `EFFLUENT_LIMITS`, now in thresholds.json), 14.1 drinking-water determinands against SANS
+241:2015, 15.2 / 15.3 values against the objectives the tables themselves state in their `*_Limit` columns (one
+text per column in every row). Only served columns are judged: 13.1 pH / DO / BOD₅ / COD and the 14.1 and 15.2
+copies of effluent values stay withheld (D17), as do the stored compliance flags and scores built on them. Scores are
+banded with the frontend's Green Drop / Blue Drop bands and the Present Ecological State is classed A–F from the
+habitat-integrity score with the Kleynhans (1996) bands; every note says the scores are not the official DWS
+assessments. Districts stand in for plants, systems and sites (none exist in the database). **Alternative.** Serving
+the stored `*_Compliant` flags — rejected: they judge copied and impossible values (D17).
+
+### D44 Alerts are derived on request, not stored (2026-10-29)
+
+**Decision.** No alert register exists, so `GET /api/v1/alerts` computes alerts from the latest complete period of
+the live data and the thresholds in thresholds.json: SPI-6 drought classes, VCI stress, the CCME WQI bands, the
+exploitation index, and the effluent / SANS 241 compliance scores (D43). Severities follow the class order (D3 / D4
+critical; D2, VCI < 20 %, WQI < 25, over-exploited, score below the critical band high; the next band moderate).
+Every alert is `open` and `unread` (nothing is acknowledged or resolved anywhere), dated by its period, identified by
+module, rule, district and month, and cached until the newest data date changes. **Alternative.** Keeping `/alerts`
+501 until an alert service exists — rejected by the owner: a derived "what is beyond a threshold now" is what the
+page can honestly show; an operational log is not.
+
+### D45 Data-integration and governance pages from the API's own metadata (2026-10-29)
+
+**Decision.** The two pages serve what the API already knows about its database (`/meta/sources`, the registry and
+the catalogue): tables, rows, newest dates, staleness, completeness, served / withheld / duplicate columns with their
+reasons, resolutions and spec sections, plus a four-dimension quality score (completeness, validity, timeliness,
+coverage). Providers, feeds as organisations, ingestion volumes over time, access requests, usage, standards
+assessments and retention classes are not recorded and stay 501 or null with the reason. The pages are the same for
+every scope. **Alternative.** Keeping the pages 404 — rejected: most of their panels are facts the API holds.
+
+### D46 §18 / §19 tables registered: local-municipality rows aggregated to districts (2026-10-29)
+
+**Evidence (profiled 2026-10-29).** `18_1` (access and coverage): 145 `Region` values (local municipalities,
+metros, districts and one HTML fragment), financial years "April 1994" – "April 2026", a `Category` of Total /
+Urban / Rural (the split exists for April 2026 only); the three service-level household counts are one value per
+municipality in every year (a census snapshot) and their percentages reach 1 506 %; "distance to the nearest water
+point" holds three values. `18_2`, `19_1` – `19_3`: 124 municipalities and metros (plus "National") × 23 years
+(2004–2026, `Standardized_Year`); percentages stored as text with thousands separators next to computed numeric
+twins; ratios of a zero base stored as ±infinity; negative volumes and losses; one constant column each in 18_2
+(outage duration) and 19_2 (free allocation); 19_2's "electricity cost" equal to 18_2's pump energy. `18_3`: per
+district-year, a "PDSI" of −708 … +913. `19_1`'s raw tariff and capital charge are one national value per year.
+
+**Decision.** All six are registered. A table keyed by local municipality is a new registry case
+(`location.level: local_municipality`): each `Region` is mapped to its district with the 213-municipality file
+(from the frontend's centroid mapping, plus the tables' own spellings) and the rows are combined per district by
+the column's `agg` (sum for households, volumes and annual costs; mean for rates, tariffs and prices). 18_1 reads
+the Total rows (`row_filter`); the Urban / Rural rows feed one breakdown. Withheld (D1): the three service-level
+percentages, the distance column, the outage duration, the free allocation, the PDSI. Served inside valid ranges:
+the negative and infinite 18_2 / 19_2 / 19_3 values. The static service-level counts are served as a snapshot with
+a note. Scores and shares are recomputed from the sums, never averaged from percentages. The pages' entities are the
+municipalities themselves (their own latest rows), which is what the contract asks for (213 × municipality).
+**Alternatives.** Registering 18_x / 19_x as district tables by renaming — impossible (several municipalities per
+district); serving municipality values as districts — rejected (sums would be wrong). The annual series are too
+short for the forecasting engine, so the pages' forecast keys stay 501.
+
+### D47 The derived dashboards count as live; their remaining gaps are filled from existing data (2026-10-30)
+
+**Question.** `/health` listed only the table-backed modules, so the header read "17 of 24 modules live" while the
+AI, alerts, data-integration and governance pages — served from other modules' tables and the API's own metadata —
+were live too. Those pages also still answered 501 for panels that could be filled from what the database holds.
+
+**Decision.** `/health` lists every dashboard of the contract: the derived modules as live with the tables they read
+and a reason saying what they are derived from, the Overview as partial (its panels belong to other modules), and
+settlements and roadmap as unavailable with their reasons. 21 of 24 are live. The gaps closed without new data:
+
+- `ai`: summary KPIs from the scope's page forecasts (models, mean skill vs climatology — labelled as such, not
+  NSE), the SPI-3 forecast (6-month drought probability), the derived alerts (early warnings) and the run log (runs
+  in 30 days, counted since the API started); feature importance from a LightGBM fit on the national SPI-3 series
+  (gain share of the eight lag features). Reservoir outlook stays null (D2); demand and scenario forecasts stay 501.
+- `alerts`: four more rules with the pages' own thresholds (services NRW, RWQO compliance, IWRM losses, tariff
+  increases).
+- `data-integration` / `governance`: records per month by source group counted from the rows' own dates (the
+  database has no load log, and the chart says so); a district coverage map from the tables' district spellings;
+  providers as named in the tables' names (SANSA, SAWS — the only provider record the database holds; the other 38
+  tables are listed as "not named"); the specification's retention policy as a table that says it is a policy, not
+  an observation.
+
+**Not filled, and why.** Access requests, usage, standards compliance and provider locations: nothing in the
+database records them. Model skill as NSE: the engine scores against climatology (skill, MASE, coverage), and
+re-labelling skill as NSE would be false. Run history across restarts: runs are not stored (the database is
+read-only).
+
+### Pending review (2026-10-30)
+
+None: every table in the database is registered or ignored with a reason (the six §18 / §19 tables were registered
+the same day they appeared, D46).

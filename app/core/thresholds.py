@@ -142,3 +142,60 @@ def severity_bar(scale: str, class_id: str | None) -> float | None:
     if class_id is None or class_id not in order:
         return None
     return round(order.index(class_id) / (len(order) - 1) * 100, 1)
+
+
+# ---------------------------------------------------------------- compliance modules (green drop, blue drop, RWQO)
+
+
+def _within(lim: dict[str, Any], value: float) -> bool:
+    return not (("min" in lim and value < lim["min"]) or ("max" in lim and value > lim["max"]))
+
+
+def limit_of(table: str, param: str) -> dict[str, Any]:
+    """One entry of `effluent_limits` / `rwqo_objectives` (`params`) by id."""
+    return next(x for x in thresholds()[table]["params"] if x["id"] == param)
+
+
+def effluent_pass(param: str, value: float) -> bool:
+    """Pass / fail of one wastewater effluent value against the General Authorisation limits (`effluent_limits`)."""
+    return _within(limit_of("effluent_limits", param), value)
+
+
+def rwqo_pass(param: str, value: float) -> bool:
+    """Pass / fail of one value against the resource water quality objective stated in the 15.x tables."""
+    return _within(limit_of("rwqo_objectives", param), value)
+
+
+def _band(table: str, score: float) -> str:
+    cfg = thresholds()[table]
+    for c in cfg["classes"]:
+        if score >= c["min"]:
+            return str(c["id"])
+    return str(cfg["otherwise"])
+
+
+def green_drop_band(score: float) -> str:
+    """0–100 % compliance score → Excellent / Good / Moderate / Poor / Critical (frontend greenDropBand)."""
+    return _band("green_drop", score)
+
+
+def blue_drop_band(score: float) -> str:
+    """0–100 % compliance score → Excellent / Good / Moderate / Poor / Critical (frontend blueDropBand)."""
+    return _band("blue_drop", score)
+
+
+def pes_class(integrity: float) -> str:
+    """Present Ecological State A–F from a 0–100 habitat-integrity score (thresholds.json `pes`)."""
+    cfg = thresholds()["pes"]
+    for c in cfg["classes"]:
+        if integrity >= c["min"]:
+            return str(c["id"])
+    return str(cfg["otherwise"]["id"])
+
+
+def pes_label(class_id: str) -> str:
+    cfg = thresholds()["pes"]
+    for c in cfg["classes"]:
+        if c["id"] == class_id:
+            return f"{class_id} {c['label']}"
+    return f"{class_id} {cfg['otherwise']['label']}"

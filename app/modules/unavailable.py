@@ -47,26 +47,10 @@ _VIEW = "Only the database variables of this module are served (Database variabl
 REASONS: dict[str, str] = {
     "overview": "This Overview panel has no table in the database; Overview panels whose data exist come from their "
     "module (rainfall, drought, dams, runoff, groundwater, water quality).",
-    "green-drop": _VIEW + "Green Drop assessment scores, risk ratings and plant registers are not in the database "
-    "(the 13.x tables hold effluent quality, works operations and weather).",
-    "blue-drop": _VIEW + "Blue Drop assessment scores, risk ratings and supply-system registers are not in the "
-    "database (the 14.x tables hold drinking-water quality and operations).",
-    "rwqo": _VIEW + "Resource water quality objectives per site and compliance against them are not in the database "
-    "(the 15.x tables hold district values without RWQO targets).",
-    "iwrm": _VIEW + "Water-use licences, allocations and catchment-management records are not in the database "
-    "(the 16.x tables hold district resource indicators).",
-    "water-quantity": "No water-balance, demand or supply tables are in the database.",
-    "services": "No water-services access or backlog tables (households, standpipes, RDP levels) are in the database.",
-    "tariffs": "No tariff or water-pricing tables are in the database.",
     "settlements": "No settlement register or population tables are in the database.",
     "ai": "No model-output tables are in the database. NIWIS makes its own statistical forecasts: the forecast keys "
-    "drought, streamflow and groundwater and the models table are served from them, and any variable can be forecast "
-    "in the Forecasting Studio (/api/v1/forecast/*); this panel has no forecast product.",
-    "alerts": "No alert service: alerts are not stored in the database and no alert rules run on the live data yet.",
-    "data-integration": "Feed-level integration metrics are not recorded in the database; table coverage, row counts "
-    "and freshness are served by /api/v1/meta/sources, /meta/coverage and /meta/variables.",
-    "governance": "Data-governance scores, policies and stewardship records are not in the database; table coverage "
-    "and freshness are served by /api/v1/meta/*.",
+    "drought, streamflow, groundwater and quality and the models and early-warning tables are served from them, and "
+    "any variable can be forecast in the Forecasting Studio (/api/v1/forecast/*); this panel has no forecast product.",
     "roadmap": "The programme plan and its progress are not in the database.",
 }
 
@@ -77,11 +61,6 @@ def reason(module: str, kind: str) -> str:
     if module in REASONS:
         return REASONS[module].replace("{module}", module)
     return f"The {module} module serves no {kind} datasets: the database has no table for them."
-
-
-@router.get("/alerts", include_in_schema=False)
-async def alerts() -> None:
-    raise DataUnavailable(REASONS["alerts"], missing=["alerts"])
 
 
 def _unavailable(module: str, kind: str) -> None:

@@ -71,6 +71,8 @@ class Settings(BaseSettings):
     forecast_retention_h: int = 24  # finished runs are discarded after this
     forecast_pages: bool = True  # precompute the module pages' forecasts (Auto, 24 months) at startup / new data
     forecast_page_provinces: bool = True  # … for the nine provinces too (else South Africa only)
+    forecast_page_districts: bool = True  # … and, with the quick models, the outlook variables for every district (D41)
+    forecast_page_on_demand: bool = True  # any other (variable, area) pair is computed the first time its tab is opened
     forecast_page_check_s: int = 30 * 60  # how often to check whether the newest data date changed
 
     @field_validator("cors_origins", "rate_limit_trusted_cidrs", "trusted_proxy_cidrs", "prewarm_scopes", mode="before")

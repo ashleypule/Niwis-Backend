@@ -27,6 +27,7 @@ from app.core.palettes import NORMAL, SERIES, YEAR_COLOURS
 from app.core.provenance import iso
 from app.core.stats import rnd
 from app.core.thresholds import thresholds, wqi_class
+from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector
 from app.modules.district import NO_POINTS, DistrictModule
 from app.modules.rainfall.service import MONTHS
@@ -384,9 +385,21 @@ class WaterQualityService(DistrictModule):
         )
 
     async def forecast(self, metric: str) -> dict[str, Any]:
-        if metric in ("wqi", "params", "ecoli-catchment"):
-            raise self.forecast_none(metric)
-        raise self.no_key("forecast", metric, [], {})
+        """Precomputed statistical forecasts (app.forecasting.pages): the CCME WQI, nitrate / orthophosphate /
+        turbidity and E. coli."""
+        if metric == "wqi":
+            return fc.series_set(self.ctx, "wqi", set_id="wqi-forecast", title="Water Quality Index forecast")
+        if metric == "params":
+            return fc.paired_series(
+                self.ctx,
+                ["nitrate", "phosphate", "turbidity"],
+                set_id="params-forecast",
+                title="Key parameter forecasts",
+                axes=[c.Axis(unit="mg/L", label="Concentration"), c.Axis(unit="NTU", label="Turbidity")],
+            )
+        if metric == "ecoli-catchment":
+            return fc.series_set(self.ctx, "ecoli", set_id="ecoli-forecast", title="E. coli forecast")
+        raise self.no_key("forecast", metric, ["wqi", "params", "ecoli-catchment"], {})
 
     # ---------------------------------------------------------------- breakdowns
 
@@ -484,11 +497,15 @@ class WaterQualityService(DistrictModule):
                 as_of=iso(last.date()),
                 **self.prov(last, [PARAM_VARS[p] for p in pids], "district"),
             ).dump()
+        if metric == "risk-outlook":  # WQI band probabilities 1-12 months ahead (app.forecasting.pages)
+            return fc.class_outlook(
+                self.ctx, "wqi", set_id="risk-outlook", title="Water-quality outlook: probability of each WQI band"
+            )
         raise self.no_key(
             "breakdown",
             metric,
-            ["param-range", "compliance", "wqi-distribution", "by-province", "param-compliance"],
-            {"by-type": NO_TYPES, "risk-outlook": "Water-quality outlooks need a forecast model"},
+            ["param-range", "compliance", "wqi-distribution", "by-province", "param-compliance", "risk-outlook"],
+            {"by-type": NO_TYPES},
         )
 
     # ---------------------------------------------------------------- tables
@@ -501,11 +518,15 @@ class WaterQualityService(DistrictModule):
             return await self.tbl_hotspots(limit)
         if metric == "ranking":
             return await self.tbl_ranking(limit)
+        if metric == "forecast-indicators":
+            return fc.indicators_table(
+                self.ctx,
+                ["wqi", "nitrate", "phosphate", "turbidity", "ecoli"],
+                table_id=metric,
+                title="Water-quality forecast indicators",
+            )
         raise self.no_key(
-            "table",
-            metric,
-            ["latest", "hotspots", "ranking"],
-            {"counts": NO_TYPES, "forecast-indicators": "Water-quality outlooks need a forecast model"},
+            "table", metric, ["latest", "hotspots", "ranking", "forecast-indicators"], {"counts": NO_TYPES}
         )
 
     async def tbl_latest(self) -> dict[str, Any]:
@@ -645,14 +666,24 @@ class WaterQualityService(DistrictModule):
             return self._map(
                 layer, f"{g['label']} relative to guideline – {last:%b %Y}", r, last, "ratio", "× guideline", 2, var
             )
+        if layer == "forecast-wqi":  # district WQI forecasts (app.forecasting.pages)
+            return fc.outlook_map(
+                self.ctx,
+                "wqi",
+                12,
+                layer=layer,
+                title="WQI forecast (12 months, median)",
+                scale="wqi",
+                unit="—",
+                decimals=0,
+            )
         raise self.no_key(
             "map",
             layer,
-            ["wqi", *MAP_PARAMS],
+            ["wqi", *MAP_PARAMS, "forecast-wqi"],
             {
                 "lead": "The database stores lead only combined with cadmium and chromium ('Lead/Cadmium/Chromium'): "
                 "a single-metal guideline does not apply",
-                "forecast-wqi": "Water-quality forecasts need a forecast model",
             },
         )
 

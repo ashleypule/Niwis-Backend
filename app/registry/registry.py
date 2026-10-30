@@ -24,7 +24,8 @@ REGISTRY_PATH = Path(__file__).with_name("datasets.yaml")
 
 Role = Literal["canonical", "duplicate", "withheld", "unused"]
 Repeats = Literal["monthly", "annual", "record"]
-TimeKind = Literal["date", "text_date", "year_month", "year"]
+TimeKind = Literal["date", "text_date", "year_month", "year", "month_name_year"]  # "April 1994" → 1994-04-01
+LocationLevel = Literal["district", "local_municipality"]
 Resolution = Literal["daily", "dekadal", "monthly", "annual"]
 ModuleId = Literal[
     "rainfall",
@@ -41,7 +42,11 @@ ModuleId = Literal[
     "blue-drop",
     "rwqo",
     "iwrm",
+    "water-quantity",
+    "services",
+    "tariffs",
 ]
+NATIONAL_CODE = "ZA"  # location code under which a national table's rows are served
 
 
 class _Strict(BaseModel):
@@ -58,6 +63,7 @@ class Column(_Strict):
     var: str
     role: Role
     repeats: Repeats | None = None
+    agg: Literal["sum", "mean"] | None = None  # local-municipality tables: how rows combine into their district
     reason: str | None = None
     note: str | None = None
     # "double": numbers stored as text; "bool_pct": a yes / no flag served as % (100 = yes; a scope value is the share
@@ -92,7 +98,13 @@ class Column(_Strict):
 
 
 class Location(_Strict):
-    column: str
+    """The column holding the district name; `null` for a national table (one row per period, no district
+    breakdown: 17_2), whose rows are read as the single location "ZA". `level: local_municipality` (18.x / 19.x
+    `Region`): rows are local municipalities, mapped to their district (app.core.municipalities) and aggregated per
+    district by each column's `agg` (sum for counts and volumes, mean for rates and prices)."""
+
+    column: str | None = None
+    level: LocationLevel = "district"
 
 
 class LongFormat(_Strict):
@@ -114,7 +126,13 @@ class Time(_Strict):
 
     @model_validator(mode="after")
     def _columns_for_kind(self) -> Time:
-        need = {"date": ["column"], "text_date": ["column"], "year_month": ["year", "month"], "year": ["column"]}
+        need = {
+            "date": ["column"],
+            "text_date": ["column"],
+            "year_month": ["year", "month"],
+            "year": ["column"],
+            "month_name_year": ["column"],
+        }
         missing = [f for f in need[self.kind] if getattr(self, f) is None]
         if missing:
             raise ValueError(f"time kind {self.kind!r} needs {missing}")
@@ -143,11 +161,29 @@ class Dataset(_Strict):
     duplicate_rows: bool = False  # every period stored more than once (identical rows): loaders read one per period
     # location spellings whose rows are never read (8_1 holds "Siyanda" next to "Z F Mgcawu", identical copies)
     exclude_locations: list[str] = []
+    # an extra SQL condition on every read (18_1: only the "Total" category rows; the Urban / Rural rows are read by
+    # the module that wants them)
+    row_filter: str | None = None
 
     @property
     def fq(self) -> str:
         """Schema-qualified, quoted table name."""
         return qualified(self.schema_, self.table)
+
+    @property
+    def national(self) -> bool:
+        """A table without a district column: every row is a national value."""
+        return self.location.column is None
+
+    @property
+    def sub_district(self) -> bool:
+        """Rows are local municipalities, aggregated to districts when read."""
+        return self.location.level == "local_municipality"
+
+    def location_sql(self) -> str:
+        """SQL expression giving the row's location name: the district column, or the constant "ZA" for a national
+        table (so every reader's `location = ANY(names)` filter and grouping work unchanged)."""
+        return ident(self.location.column) if self.location.column else f"'{NATIONAL_CODE}'"
 
     def date_sql(self) -> str:
         """SQL expression giving the row's date (first day of the period for monthly/annual tables)."""
@@ -161,6 +197,9 @@ class Dataset(_Strict):
         if t.kind == "year_month":
             assert t.year and t.month
             return f"make_date({ident(t.year)}::int, {ident(t.month)}::int, 1)"
+        if t.kind == "month_name_year":
+            assert t.column
+            return f"to_date({ident(t.column)}, 'FMMonth YYYY')"  # "April 1994" (NULL text → NULL: never read)
         assert t.column
         return f"make_date({ident(t.column)}::int, 1, 1)"
 
@@ -202,9 +241,11 @@ class Dataset(_Strict):
         """SQL condition for the rows the API may read: never after today (`not_future_sql`), never an excluded
         location spelling (`exclude_locations`). Part of every column filter (`valid_sql`)."""
         cond = self.not_future_sql()
-        if self.exclude_locations:
+        if self.exclude_locations and self.location.column:
             names = ", ".join("'" + n.replace("'", "''") + "'" for n in self.exclude_locations)
             cond += f" AND {ident(self.location.column)} NOT IN ({names})"
+        if self.row_filter:
+            cond += f" AND ({self.row_filter})"
         return cond
 
     def raw_sql(self, column: str) -> str:
@@ -293,7 +334,7 @@ class Registry(_Strict):
             for ident_name in [
                 ds.table,
                 ds.schema_,
-                ds.location.column,
+                *([ds.location.column] if ds.location.column else []),
                 *ds.columns,
                 *(x for x in (ds.time.column, ds.time.year, ds.time.month) if x),
                 *ds.key_columns,

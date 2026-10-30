@@ -9,7 +9,7 @@ dates (`components`).
 Methods (docs/DATA_MAPPING.md §2): area-weighted district means (≥ 95 % area coverage); drought class from the
 aggregated SPI-6 via thresholds.json; area in drought = Σ district area per SPI-6 class; dam storage % = Σ volume /
 Σ full-supply capacity, where each district's capacity is its (constant) volume / %FSC × 100; flows m³/s → Mm³/month.
-Withheld (D5): SSI, river discharge, borehole level. Not in the DB: settlements, population, restrictions, forecasts.
+Withheld (D5): SSI, river discharge, borehole level. Not in the DB: settlements, population, restrictions.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ from app.core.thresholds import (
     veg_class,
 )
 from app.forecasting import pages as fc
-from app.modules.common import Ctx, Selector, drought_status, forecast_unavailable, unknown
+from app.modules.common import Ctx, Selector, drought_status, unknown
 from app.modules.groundwater.service import DEPTH as GW_DEPTH
 from app.modules.groundwater.service import GroundwaterService
 from app.modules.rainfall.service import HISTORY_START, MONTHS, WINDOW, RainfallService, _months
@@ -446,12 +446,13 @@ class DroughtService:
         not_in_db = {
             "storage-vs-spi": ("Storage by dam size needs per-dam data", "per-dam storage"),
             "population-at-risk": ("No population / settlement data in the database", "population at risk"),
-            "recovery-province": ("Recovery probabilities need a forecast model", "forecast:recovery"),
         }
+        if metric == "recovery-province":  # from the provinces' SPI-3 forecasts (app.forecasting.pages)
+            return fc.recovery_province_series(self.ctx)
         if metric in not_in_db:
             raise unavailable(*not_in_db[metric])
         if metric not in handlers:
-            raise unknown("metric", metric, [*handlers, *not_in_db])
+            raise unknown("metric", metric, [*handlers, *not_in_db, "recovery-province"])
         return (await handlers[metric]()).dump()
 
     async def ts_spi(self) -> c.SeriesSet:
@@ -827,10 +828,10 @@ class DroughtService:
                 table_id=metric,
                 title="Key drought forecast indicators",
             )
-        if metric == "early-warning":
-            raise unavailable("Early-warning signals need alert rules, which are not defined yet", metric)
-        if metric == "recovery":
-            raise unavailable("Recovery outlooks need district forecasts, which are not computed", metric)
+        if metric == "early-warning":  # current class, class 3 months ahead and its probability (page forecasts)
+            return fc.early_warning_table(self.ctx)
+        if metric == "recovery":  # expected class and probability of no drought 3 / 6 / 12 / 24 months ahead
+            return fc.recovery_table(self.ctx)
         handlers = {
             "cascade": self.tbl_cascade,
             "affected": self.tbl_affected,
@@ -1346,8 +1347,22 @@ class DroughtService:
         }
         if layer in not_available:
             raise unavailable(*not_available[layer])
-        if layer in ("outlook-1", "outlook-2", "outlook-3", "forecast-6"):
-            raise forecast_unavailable(MODULE, layer)
+        if layer in ("outlook-1", "outlook-2", "outlook-3"):  # district SPI-3 forecasts (app.forecasting.pages)
+            lead = int(layer[-1])
+            return fc.outlook_map(
+                self.ctx, "spi-3", lead, layer=layer, title="SPI-3 outlook", scale="spi", unit="—", decimals=2
+            )
+        if layer == "forecast-6":  # the drought-class map's variable (SPI-6), 6 months ahead
+            return fc.outlook_map(
+                self.ctx,
+                "spi-6",
+                6,
+                layer=layer,
+                title="Forecast drought class (SPI-6)",
+                scale="spi",
+                unit="—",
+                decimals=2,
+            )
         w = self.ctx.weights()
         index_layers = {
             "spi1": "spi_1",

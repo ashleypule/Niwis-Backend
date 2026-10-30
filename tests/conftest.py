@@ -43,6 +43,7 @@ def make_settings(**overrides: Any) -> Settings:
         "response_checks": "raise",  # every response in the test suite must pass app.core.response_checks
         "prewarm_categories": False,  # tested explicitly (tests/test_categories.py); keeps the pool free for tests
         "forecast_pages": False,  # page forecasts are tested explicitly (tests/test_forecast_api.py)
+        "forecast_page_on_demand": False,  # … as are on-demand page forecasts (no runs behind the module tests)
     }
     base.update(overrides)
     return Settings(_env_file=None, **base)  # type: ignore[call-arg]

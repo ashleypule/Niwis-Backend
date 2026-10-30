@@ -83,6 +83,13 @@ def test_checks_catch_a_value_after_the_last_record() -> None:
     assert coverage_violations(body, cov) == [
         "series 's' value dated 2026-01-01 is outside the source coverage 2000-01-01 – 2025-12-01"
     ]
+    # a forecast response may carry values to the end of its horizon (two months from Jan 2026: to 28 Feb 2026)
+    fc = {**body, "forecast": {"forecastStart": "2026-01-01", "horizon": 2}}
+    assert coverage_violations(fc, cov) == []
+    fc["series"][0]["data"].append(["2026-03-01", 3.0])
+    assert coverage_violations(fc, cov) == [
+        "series 's' value dated 2026-03-01 is outside the source coverage 2000-01-01 – 2026-02-28"
+    ]
 
 
 @pytest.mark.parametrize(

@@ -94,6 +94,7 @@ class ForecastJobs:
         self.slots = asyncio.Semaphore(max(1, self.workers))
         self.bg_slots = asyncio.Semaphore(max(1, self.workers - 1))
         self.runs: dict[str, RunRecord] = {}
+        self.started: deque[float] = deque()  # start times of Studio / on-demand runs in the last 30 days
         self.by_key: dict[str, str] = {}
         self.per_ip: dict[str, deque[float]] = {}
         worker.limit_threads()  # inherited by every spawned worker before it imports numpy
@@ -167,9 +168,14 @@ class ForecastJobs:
                     f"The forecast queue is full ({self.settings.forecast_queue_limit} runs); try again in a minute.",
                     retry_after_s=60,
                 )
-            self.check_ip(ip or "unknown")
+            if ip is not None:  # page forecasts made on demand carry no address and are not rate-limited
+                self.check_ip(ip)
         rec = RunRecord(id=uuid.uuid4().hex[:16], key=key, request=request, context=context, background=background)
         self.runs[rec.id] = rec
+        if not background:  # the AI page's "runs in 30 days" KPI (runs are not stored: counted since the API started)
+            self.started.append(time.time())
+            while self.started and time.time() - self.started[0] > 30 * 86400:
+                self.started.popleft()
         self.by_key[key] = rec.id
         rec.task = asyncio.get_running_loop().create_task(self._run(rec, payload))
         return rec, False

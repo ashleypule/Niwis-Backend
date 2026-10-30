@@ -14,7 +14,7 @@ DECISIONS D12). Its daily flow family passes the checks and its monthly family d
 - the modelled-runoff layers are the runoff module's (same source as the runoff page).
 
 Not in the database (501 with the reason): gauging stations and point layers, baseflow separation, ecological-flow
-requirements, abstraction licences, gauge quality, alerts, forecasts.
+requirements, abstraction licences, gauge quality, alerts (forecasts: app.forecasting.pages).
 """
 
 from __future__ import annotations
@@ -451,9 +451,15 @@ class SurfaceWaterService(DistrictModule):
             return fc.series_set(self.ctx, "flow", set_id="flow-forecast", title="River discharge forecast")
         if metric == "runoff":
             return fc.series_set(self.ctx, "runoff", set_id="runoff-forecast", title="Monthly runoff forecast")
-        if metric == "flood-probability":
-            raise self.forecast_none(metric)
-        raise self.no_key("forecast", metric, ["flow", "runoff"], {})
+        if metric == "flood-probability":  # P(monthly discharge > Q10) from the discharge forecast
+            return fc.exceedance_series(
+                self.ctx,
+                "flow",
+                set_id="flood-probability",
+                title="Flood probability (river discharge above Q10)",
+                name="Flood probability (flow > Q10)",
+            )
+        raise self.no_key("forecast", metric, ["flow", "runoff", "flood-probability"], {})
 
     # ---------------------------------------------------------------- breakdowns
 

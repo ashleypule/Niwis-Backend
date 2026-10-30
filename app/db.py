@@ -24,7 +24,9 @@ log = logging.getLogger("niwis.db")
 # Registry names include digits, dots, spaces (4_6, 10_2 tables) and, in the §9–§16 tables, parentheses, slashes,
 # hyphens and colons ("Electrical Conductivity (EC)", "Lead/Cadmium/Chromium", "Ammonia (NH3-N)", "system:index").
 # Never a double quote, so quoting cannot be broken out of.
-_IDENT_OK = re.compile(r"^[A-Za-z0-9_. ()/:\-]{1,63}$")
+# characters a registry identifier may hold (quoted with double quotes in SQL): the 18.x / 19.x column names carry
+# '#', '%', '<', ',', '³' and an en dash; a double quote, a semicolon or a control character is never allowed
+_IDENT_OK = re.compile(r"^[A-Za-z0-9_. ()/:\-#%<,³–]{1,63}$")
 
 
 def ident(name: str) -> str:

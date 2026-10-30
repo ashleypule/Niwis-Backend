@@ -38,7 +38,7 @@ from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import drought_class_or_none
 from app.forecasting import pages as fc
-from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status, forecast_unavailable, unknown
+from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status, unknown
 from app.registry.catalogue import get_catalogue
 from app.schemas import contract as c
 
@@ -866,8 +866,20 @@ class RainfallService:
     # ---------------------------------------------------------------- maps
 
     async def map(self, layer: str) -> dict[str, Any]:
-        if layer in ("forecast-1", "forecast-2", "forecast-3"):
-            raise forecast_unavailable(MODULE, layer)
+        if layer in ("forecast-1", "forecast-2", "forecast-3"):  # district rainfall forecasts (app.forecasting.pages)
+            lead = int(layer[-1])
+            plural = "s" if lead > 1 else ""
+            return fc.outlook_map(
+                self.ctx,
+                "rainfall",
+                lead,
+                layer=layer,
+                title=f"Rainfall outlook +{lead} month{plural} (anomaly, % of the same-month mean)",
+                scale="anomalyPct",
+                unit="%",
+                decimals=1,
+                kind="pct-normal",
+            )
         w = self.ctx.weights()
         start, end = await self.window()
         newest = await self.newest_daily()

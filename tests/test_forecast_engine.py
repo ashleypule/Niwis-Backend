@@ -47,6 +47,7 @@ def test_candidates_auto_excludes_experimental_and_input_models_without_inputs()
     assert {"sarimax", "var"} <= set(candidates("auto", "monthly", 300, True))
     assert not {"lstm", "transformer"} & set(candidates("compare", "monthly", 300, True))  # single-target only
     assert set(candidates("auto", "daily", 2000, False)) == {*BASELINES, "ets", "sarima"}
+    assert set(candidates("auto-fast", "monthly", 300, False)) == {*BASELINES, "ets", "lightgbm"}
     assert allowed(MODELS["lstm"], "monthly", 50, False)  # needs 60 months
     assert allowed(MODELS["prophet"], "daily", 5000, False)  # monthly only
 
@@ -258,3 +259,30 @@ def test_classified_runs_report_classes() -> None:
     spi = (seasonal(150, trend=0.0) - 10) / 4
     r = run(spi, {}, RunSpec("monthly", 6, "ets", classify=True))
     assert len(r["classes"]) == 6 and {"date", "class", "probabilities", "pDrought"} <= set(r["classes"][0])
+
+
+# ---------------------------------------------------------------- page products: probabilities from a band
+
+
+def test_probabilities_from_the_forecast_band() -> None:
+    from app.forecasting.pages import band_probabilities, p_above, wqi_bands
+
+    # symmetric band around the median: even odds of exceeding it; (almost) certain for a far-away threshold
+    assert abs(p_above(10.0, 10.0, 8.0, 12.0) - 0.5) < 1e-9
+    assert p_above(0.0, 10.0, 8.0, 12.0) > 0.999 and p_above(20.0, 10.0, 8.0, 12.0) < 0.001
+    # the band's edges are the 10th / 90th percentiles
+    assert abs(p_above(12.0, 10.0, 8.0, 12.0) - 0.10) < 1e-6
+    probs = band_probabilities(75.0, 60.0, 90.0, wqi_bands())
+    assert set(probs) == {"Excellent", "Good", "Fair", "Poor", "Very Poor"}
+    assert abs(sum(probs.values()) - 100) < 1e-6 and probs["Good"] > 50 and probs["Very Poor"] < 1
+
+
+def test_short_gaps_are_interpolated_longer_ones_stay() -> None:
+    from app.forecasting.series import interpolate_short_gaps
+
+    idx = pd.date_range("2024-01-01", periods=10, freq="MS")
+    y = pd.Series([1.0, np.nan, 3.0, np.nan, np.nan, 6.0, np.nan, np.nan, np.nan, 10.0], index=idx)
+    out = interpolate_short_gaps(y, 2)
+    assert out.iloc[1] == 2.0 and out.iloc[3] == 4.0 and out.iloc[4] == 5.0  # gaps of 1 and 2 months filled
+    assert out.iloc[6:9].isna().all()  # a 3-month gap stays missing
+    assert interpolate_short_gaps(y, 0).equals(y)

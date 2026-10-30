@@ -27,7 +27,7 @@ from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import thresholds, veg_class
 from app.forecasting import pages as fc
-from app.modules.common import Ctx, Selector, anomaly_split_reasons, forecast_unavailable, unknown
+from app.modules.common import Ctx, Selector, anomaly_split_reasons, unknown
 from app.modules.drivers import driver_series
 from app.modules.rainfall.service import RainfallService, _months
 from app.schemas import contract as c
@@ -399,7 +399,7 @@ class VegetationService:
             raise unknown("metric", metric, ["ndvi", "vci", "recovery-probability"])
         if metric in ("ndvi", "vci"):
             return fc.series_set(self.ctx, metric, set_id=f"{metric}-forecast", title=f"{metric.upper()} forecast")
-        raise forecast_unavailable(MODULE, metric)
+        return fc.recovery_probability(self.ctx)  # P(VCI >= 40 %) in 12 months per province / district
 
     # ---------------------------------------------------------------- breakdown
 
@@ -683,8 +683,29 @@ class VegetationService:
     async def map(self, layer: str) -> dict[str, Any]:
         if layer in ONLY_IN_5_1:
             raise withheld(layer)
-        if layer in ("forecast-ndvi", "forecast-anomaly"):
-            raise forecast_unavailable(MODULE, layer)
+        if layer == "forecast-ndvi":  # district NDVI forecasts (app.forecasting.pages)
+            return fc.outlook_map(
+                self.ctx,
+                "ndvi",
+                12,
+                layer=layer,
+                title="NDVI forecast (12 months, median)",
+                scale="ndvi",
+                unit="—",
+                decimals=3,
+            )
+        if layer == "forecast-anomaly":
+            return fc.outlook_map(
+                self.ctx,
+                "ndvi",
+                12,
+                layer=layer,
+                title="NDVI anomaly forecast (12 months, vs the district's same-month mean)",
+                scale="ndviAnomaly",
+                unit="—",
+                decimals=3,
+                kind="anomaly",
+            )
         w = self.ctx.weights()
         m = await self.last()
         simple = {

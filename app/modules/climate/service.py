@@ -71,6 +71,24 @@ TREND_VARS: dict[str, tuple[str, str, str, int, str, str]] = {
 }
 
 
+# forecast tab: indicators extrapolated to these years from the observed Sen's-slope trend (not climate scenarios)
+PROJECTION_YEARS = (2030, 2050, 2070)
+# id, label, unit, decimals, adverse direction (+1 more is worse, −1 less is worse), risk name
+PROJECTED: tuple[tuple[str, str, str, int, int, str], ...] = (
+    ("temperature", "Mean annual temperature", "°C", 1, 1, "Heat stress"),
+    ("hot_days", "Hot days (Tmax > 35 °C)", "days/year", 0, 1, "Extreme heat days"),
+    ("rainfall", "Annual rainfall", "mm", 0, -1, "Rainfall deficit"),
+    ("et", "Annual reference evapotranspiration (ET₀)", "mm", 0, 1, "Evaporative demand"),
+    ("streamflow", "Annual runoff (modelled)", "mm", 0, -1, "Runoff decline"),
+)
+PROJECTION_NOTE = (
+    "Linear extrapolation of the observed Sen's-slope trend over {y0}–{y1} (full years in the database), from the "
+    "{y0}–{y1} mean as baseline: a statistical outlook, not a climate-model projection (no RCP / SSP scenarios are in "
+    "the database). The spec's 1991–2020 normal is not available (the record starts in 2000, DECISIONS D3). The "
+    "further the year, the less the extrapolation means."
+)
+
+
 def unavailable(what: str, missing: str) -> DataUnavailable:
     return DataUnavailable(what, missing=[missing])
 
@@ -943,16 +961,149 @@ class ClimateService:
     # ---------------------------------------------------------------- tables
 
     async def table(self, metric: str, limit: int | None) -> dict[str, Any]:
-        if metric in ("forecast-summary", "risk-outlook"):
-            raise unavailable("No climate projections in the database", metric)
         handlers = {
             "statistics": self.tbl_statistics,
             "provinces": self.tbl_provinces,
             "signal-chain": self.tbl_signal_chain,
+            "forecast-summary": self.tbl_forecast_summary,
+            "risk-outlook": self.tbl_risk_outlook,
         }
         if metric not in handlers:
-            raise unknown("metric", metric, [*handlers, "forecast-summary", "risk-outlook"])
+            raise unknown("metric", metric, list(handlers))
         return (await handlers[metric](limit)).dump()
+
+    # ---------------------------------------------------------------- trend extrapolation (forecast tab)
+
+    async def projections(self) -> tuple[list[dict[str, Any]], int, int]:
+        """Each PROJECTED indicator's annual series {y0}–{y1}, its Sen's-slope trend, baseline mean, interannual
+        s.d. and the trend line extended to PROJECTION_YEARS (None without a trend estimate: < 8 years)."""
+        y0, y1 = HISTORY_START.year, await self.last_full_year()
+        yrs = range(y0, y1 + 1)
+        out: list[dict[str, Any]] = []
+        for pid, label, unit, nd, adverse, risk in PROJECTED:
+            s = (
+                await self.annual_var("hot_days", y0, y1)
+                if pid == "hot_days"
+                else await self.trend_var_series(pid, y0, y1)
+            )
+            vals = [s.get(y) for y in yrs]
+            tr = sens_slope(vals)
+            have = [float(v) for v in vals if v is not None and not pd.isna(v)]
+            out.append(
+                {
+                    "id": pid,
+                    "label": label,
+                    "unit": unit,
+                    "nd": nd,
+                    "adverse": adverse,
+                    "risk": risk,
+                    "trend": tr,
+                    "gap": trend_gap(vals, label.lower()),
+                    "baseline": float(np.mean(have)) if have else None,
+                    "sd": float(np.std(have, ddof=1)) if len(have) > 2 else None,
+                    "projected": {y: (tr.intercept + tr.slope * (y - y0)) if tr else None for y in PROJECTION_YEARS},
+                }
+            )
+        return out, y0, y1
+
+    async def tbl_forecast_summary(self, limit: int | None) -> c.TableSet:
+        """Indicators in 2030 / 2050 / 2070 by linear extrapolation of the observed Sen's-slope trend — a statistical
+        outlook from the database's own record, not a climate-model projection (no RCP / SSP scenarios are stored)."""
+        rows, y0, y1 = await self.projections()
+        table_rows: list[dict[str, Any]] = []
+        for r in rows:
+            tr = r["trend"]
+            if tr is None:
+                self.ctx.explain(f"rows.{r['id']}", r["gap"] or f"{r['label']}: fewer than 8 full years")
+            table_rows.append(
+                {
+                    "id": r["id"],
+                    "indicator": r["label"],
+                    "unit": r["unit"],
+                    "baseline": rnd(r["baseline"], r["nd"]),
+                    **{f"y{y}": rnd(v, r["nd"]) for y, v in r["projected"].items()},
+                    "trendPerDecade": rnd(tr.slope * 10, r["nd"] + 1) if tr else None,
+                    "pValue": rnd(tr.p, 3) if tr else None,
+                    "significant": bool(tr.p < 0.05) if tr else None,
+                }
+            )
+        return c.TableSet(
+            id="forecast-summary",
+            title=f"Climate indicators {PROJECTION_YEARS[0]}–{PROJECTION_YEARS[-1]}: trend extrapolation",
+            columns=[
+                c.Column(key="indicator", label="Indicator", type="text"),
+                c.Column(key="unit", label="Unit", type="text"),
+                c.Column(key="baseline", label=f"Baseline ({y0}–{y1} mean)", type="number", decimals=1),
+                *[c.Column(key=f"y{y}", label=str(y), type="number", decimals=1) for y in PROJECTION_YEARS],
+                c.Column(key="trendPerDecade", label="Trend per decade", type="number", decimals=2),
+                c.Column(key="pValue", label="Mann-Kendall p", type="number", decimals=3),
+            ],
+            rows=table_rows,
+            row_key="id",
+            as_of=iso(dt.date(y1, 12, 31)),
+            baseline=f"{y0}–{y1} mean",
+            baseline_note=PROJECTION_NOTE.format(y0=y0, y1=y1),
+            **self._prov(
+                dt.date(y1, 12, 31), "tavg", "rain_annual", "et0_daily", "runoff_depth_daily", "hot_days", res="annual"
+            ),
+        )
+
+    async def tbl_risk_outlook(self, limit: int | None) -> c.TableSet:
+        """Risk level in 2050 from the extrapolated change relative to the interannual spread: the change by 2050 in
+        the adverse direction (warming, drying, more ET₀, less runoff, more hot days) ÷ the record's standard
+        deviation: < 0.5 Low, < 1 Moderate, < 2 High, else Very High; no significant trend (p ≥ 0.05) → Low."""
+        rows, y0, y1 = await self.projections()
+        table_rows: list[dict[str, Any]] = []
+        for r in rows:
+            tr, sd, base = r["trend"], r["sd"], r["baseline"]
+            change = (r["projected"][2050] - base) if tr and base is not None else None
+            z = (r["adverse"] * change / sd) if change is not None and sd else None
+            if tr is None or z is None:
+                level, basis = None, r["gap"] or "No trend estimate"
+                self.ctx.explain(f"rows.{r['id']}", basis)
+            elif tr.p >= 0.05:
+                level, basis = "Low", f"No significant trend (p = {tr.p:.2f})"
+            elif z < 0.5:
+                level, basis = "Low", "Change by 2050 below half the interannual spread, or in the favourable direction"
+            elif z < 1:
+                level, basis = "Moderate", "Change by 2050 between 0.5 and 1 standard deviations of the record"
+            elif z < 2:
+                level, basis = "High", "Change by 2050 between 1 and 2 standard deviations of the record"
+            else:
+                level, basis = "Very High", "Change by 2050 above 2 standard deviations of the record"
+            table_rows.append(
+                {
+                    "id": r["id"],
+                    "risk": r["risk"],
+                    "indicator": r["label"],
+                    "level": level,
+                    "change2050": rnd(change, r["nd"]),
+                    "unit": r["unit"],
+                    "zScore": rnd(z, 2),
+                    "basis": basis,
+                }
+            )
+        return c.TableSet(
+            id="risk-outlook",
+            title="Climate risk outlook 2050: trend extrapolation",
+            columns=[
+                c.Column(key="risk", label="Risk", type="text"),
+                c.Column(key="level", label="Risk level (2050)", type="class", scale="risk"),
+                c.Column(key="change2050", label="Change by 2050", type="number", decimals=1),
+                c.Column(key="unit", label="Unit", type="text"),
+                c.Column(key="basis", label="Basis", type="text"),
+            ],
+            rows=table_rows,
+            row_key="id",
+            as_of=iso(dt.date(y1, 12, 31)),
+            baseline=f"{y0}–{y1} mean",
+            baseline_note=PROJECTION_NOTE.format(y0=y0, y1=y1)
+            + " Risk level = change by 2050 in the adverse direction ÷ the record's interannual standard deviation "
+            "(< 0.5 Low, < 1 Moderate, < 2 High, else Very High); an insignificant trend is Low.",
+            **self._prov(
+                dt.date(y1, 12, 31), "tavg", "rain_annual", "et0_daily", "runoff_depth_daily", "hot_days", res="annual"
+            ),
+        )
 
     async def tbl_statistics(self, limit: int | None) -> c.TableSet:
         y0, y1 = HISTORY_START.year, await self.last_full_year()

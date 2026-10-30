@@ -1,7 +1,7 @@
 -- PROPOSED — run by the NIWIS data team (a database owner), never by the API. Generated from the dataset registry by
 -- scripts/gen_readonly_role.py: regenerate it whenever a table is registered.
 --
--- Creates `niwis_api_ro`, a login that can only SELECT the 36 tables the API reads. The API then connects with it
+-- Creates `niwis_api_ro`, a login that can only SELECT the 44 tables the API reads. The API then connects with it
 -- instead of `postgres` (the API also forces every session READ ONLY; this role makes that true at the database
 -- level, and limits the damage if the API's credentials leak).
 --
@@ -85,6 +85,30 @@ CREATE POLICY niwis_api_ro_read ON "public"."15.3_hydrological_RWQO_variables_ma
 GRANT SELECT ON "public"."16_1_complete_wrm_matrix_master" TO niwis_api_ro;
 DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."16_1_complete_wrm_matrix_master";
 CREATE POLICY niwis_api_ro_read ON "public"."16_1_complete_wrm_matrix_master" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."17_1_water_quantity_assessment_transfers_master" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."17_1_water_quantity_assessment_transfers_master";
+CREATE POLICY niwis_api_ro_read ON "public"."17_1_water_quantity_assessment_transfers_master" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."17_2_national_water_balance_master" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."17_2_national_water_balance_master";
+CREATE POLICY niwis_api_ro_read ON "public"."17_2_national_water_balance_master" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."18_1_water_access_and_coverage_master" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."18_1_water_access_and_coverage_master";
+CREATE POLICY niwis_api_ro_read ON "public"."18_1_water_access_and_coverage_master" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."18_2_infrastructure_operational_master" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."18_2_infrastructure_operational_master";
+CREATE POLICY niwis_api_ro_read ON "public"."18_2_infrastructure_operational_master" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."18_3_sansa_eo_support_for_services_masters" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."18_3_sansa_eo_support_for_services_masters";
+CREATE POLICY niwis_api_ro_read ON "public"."18_3_sansa_eo_support_for_services_masters" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."19_1_raw_water_tariff_master" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."19_1_raw_water_tariff_master";
+CREATE POLICY niwis_api_ro_read ON "public"."19_1_raw_water_tariff_master" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."19_2_municipal_water_tariff_master" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."19_2_municipal_water_tariff_master";
+CREATE POLICY niwis_api_ro_read ON "public"."19_2_municipal_water_tariff_master" FOR SELECT TO niwis_api_ro USING (true);
+GRANT SELECT ON "public"."19_3_water_quality_cost_master" TO niwis_api_ro;
+DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."19_3_water_quality_cost_master";
+CREATE POLICY niwis_api_ro_read ON "public"."19_3_water_quality_cost_master" FOR SELECT TO niwis_api_ro USING (true);
 GRANT SELECT ON "public"."4_1_temperature_change_master" TO niwis_api_ro;
 DROP POLICY IF EXISTS niwis_api_ro_read ON "public"."4_1_temperature_change_master";
 CREATE POLICY niwis_api_ro_read ON "public"."4_1_temperature_change_master" FOR SELECT TO niwis_api_ro USING (true);

@@ -191,6 +191,11 @@ def main() -> int:
                 f"   auto={r.get('auto')} skill={r.get('autoSkill')} {r['seconds']} s {r.get('error', '')}", flush=True
             )
     generated = dt.date.today().isoformat()
+    if args.only and RAW.exists():  # a partial run replaces its variables' rows and keeps the others
+        kept = [
+            r for r in json.loads(RAW.read_text(encoding="utf-8"))["results"] if r["variable"] not in set(args.only)
+        ]
+        results = sorted(kept + results, key=lambda r: (-r["horizon"], list(VARS).index(r["variable"])))
     RAW.write_text(json.dumps({"generated": generated, "results": results}, indent=1), encoding="utf-8", newline="\n")
     DOC.write_text(render(results, generated), encoding="utf-8", newline="\n")
     print(f"wrote {DOC.relative_to(ROOT)}")

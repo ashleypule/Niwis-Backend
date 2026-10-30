@@ -114,8 +114,6 @@ async def test_maps(client: httpx.AsyncClient, layer: str) -> None:
         ("timeseries", {"metric": "irrigation"}),
         ("breakdown", {"metric": "risk-index"}),
         ("breakdown", {"metric": "projection-bars"}),
-        ("table", {"metric": "forecast-summary"}),
-        ("table", {"metric": "risk-outlook"}),
         ("map", {"layer": "vulnerability"}),
         ("map", {"layer": "proj-availability"}),
     ],
@@ -187,3 +185,22 @@ async def test_drought_frequency_is_area_in_spec_classes(
     assert s["d4"]["2025-01-01"] == pytest.approx(d4 / 12 * 100, abs=0.05)
     assert s["months"]["2025-01-01"] == d2 + d3 + d4  # one district: district-months = months
     assert "−1.5" not in body["title"] + body["note"]
+
+
+async def test_projection_tables_extrapolate_the_observed_trend(client: httpx.AsyncClient) -> None:
+    """forecast-summary / risk-outlook: Sen's-slope extrapolation of the annual record (not climate scenarios); an
+    indicator with fewer than 8 full years (daily tables start in 2024) is null with the reason."""
+    r = await client.get(f"{B}/table", params={"metric": "forecast-summary"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    c.TableSet.model_validate(body)
+    assert [x["id"] for x in body["rows"]] == ["temperature", "hot_days", "rainfall", "et", "streamflow"]
+    assert [x["key"] for x in body["columns"]][2:6] == ["baseline", "y2030", "y2050", "y2070"]
+    assert "not a climate-model projection" in body["baselineNote"]
+    nulls = {x["id"] for x in body["rows"] if x["y2050"] is None}
+    assert {"temperature", "streamflow"} <= nulls  # 2024–2025 only in the fixture
+    assert {u["field"] for u in body["unavailable"]} >= {f"rows.{i}" for i in nulls}
+    ro = await client.get(f"{B}/table", params={"metric": "risk-outlook"})
+    assert ro.status_code == 200, ro.text
+    levels = {x["level"] for x in ro.json()["rows"]}
+    assert levels <= {None, "Low", "Moderate", "High", "Very High"}

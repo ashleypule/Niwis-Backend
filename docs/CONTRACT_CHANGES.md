@@ -663,3 +663,261 @@ storage (D2), demand, water-quality forecasts, climate scenarios, `early-warning
 - `/forecast/models` and `/forecast/targets` are cached like meta (`max-age=3600`); `/forecast/runs/*` and
   `/forecast/pages` are `no-store`; a 501 "being computed" is `no-store` too.
 - New error codes: 422 `UNPROCESSABLE`, 429 `RATE_LIMITED` (also on runs), 503 `BUSY`.
+
+## 16. Every dashboard's forecast tab served (2026-10-29) — any area, derived series, forecast products
+
+The forecast tabs of every module page now answer from the database's own statistical forecasts (DECISIONS D41).
+Nothing is written to the database; every response made from a forecast carries the `forecast` block of §15.2.
+
+### 16.1 Any area
+
+- **Districts.** After the national / province round, the outlook variables (SPI-3, SPI-6, monthly rainfall, NDVI,
+  VCI, WQI) are forecast for every district with the quick models (`auto-fast`: Auto over the baselines, ETS and
+  LightGBM) — they feed the district outlook maps below.
+- **On demand.** Any other (variable, area) pair — a district's SPEI-3, a WMA's runoff — is computed with the quick
+  models the first time its tab is opened. The first request answers **501** `DATA_UNAVAILABLE` with
+  `Cache-Control: no-store` and the detail "… is being computed (about a minute); reload shortly."; the next request
+  after the run (seconds to a minute) answers 200. A series the data cannot support keeps its reason (e.g. "At least
+  36 months of history are needed …"). These entries are dropped when the newest data date changes and recomputed
+  when the tab is opened again. On-demand runs are not rate-limited and use the Studio's worker slots, so they never
+  wait behind a background round; when the Studio queue is full the tab keeps saying "being computed" and the next
+  request tries again.
+- `GET /api/v1/forecast/models` lists a third choice, `auto-fast`; `GET /api/v1/forecast/pages` lists the district
+  and on-demand entries too (`scope`: `municipality=DC44`, `wma=WMA9`).
+
+### 16.2 New page variables (`GET /api/v1/forecast/pages` `variable`)
+
+| Variable | Series | Pages |
+| --- | --- | --- |
+| `wqi` | CCME Water Quality Index: the Water Quality page's own index (12 months of guideline parameters per district), area-weighted over the scope; 0–100 | water-quality, ai |
+| `nitrate`, `phosphate`, `turbidity`, `ecoli` | 12.2 Nitrate (NO₃⁻-N), Orthophosphate (PO₄-P), 12.1 Turbidity, 12.3 E. coli, monthly | water-quality |
+| `runoff-flow` | the Runoff page's modelled flow: monthly mean runoff depth × district area → m³/s, summed over the scope | runoff |
+| `gw-depth` | depth to groundwater: the telemetry samples 7–8 of 12 months; single gaps of ≤ 2 months are interpolated linearly before the 20 % gap rule, longer gaps stay missing (the series note says how many) | groundwater, ai |
+
+Derived variables (`wqi`, `runoff-flow`, runoff depth, hot days, area in drought, discharge in m³/s) have no Studio
+link (`forecast.studio` null): the Studio forecasts stored columns only.
+
+### 16.3 Contract keys now served (were 501)
+
+| Module | Key | Contents |
+| --- | --- | --- |
+| drought | `timeseries?metric=recovery-province` | one series per province (`key` = province code): probability (%) of no drought (SPI-3 above the D1 threshold) per forecast month, `horizon` 3 / 6 / 12 / 24 (default 12) |
+| drought | `table?metric=early-warning` | rows `spi-3`, `spi-6`, `spei-3`, `drought-area`: `indicator`, `status` (class of the last observation / "x % of the area in D1–D4"), `forecast` (class of the median 3 months ahead / "y % (more / less area in drought)"), `confidence` (% — the probability of that class; for the area, of the forecast direction), plus `statusClass` / `forecastClass` ids, `current`, `h3`. A row without a forecast is null + `unavailable`. |
+| drought | `table?metric=recovery` | rows `h3`, `h6`, `h12`, `h24`: `timeFrame` ("3 months (Jan 2027)"), `conditions` (class of the median SPI-3, type `class` scale `drought`), `conditionClass`, `probability` (% no drought), `pDrought` |
+| drought | `map?layer=outlook-1`, `outlook-2`, `outlook-3` | district choropleth (`geometry: districts`) of the median SPI-3 1 / 2 / 3 months ahead; `title` "SPI-3 outlook – Nov 2026", `date` = that month |
+| drought | `map?layer=forecast-6` | median SPI-6 6 months ahead (the drought-class map's variable), `scale: spi` |
+| rainfall | `map?layer=forecast-1/2/3` | district rainfall outlook 1–3 months ahead as the anomaly in % of the district's same-month mean (`scale: anomalyPct`, 0 = normal) |
+| vegetation | `forecast?metric=recovery-probability` | `xType: category`: probability (%) that VCI ≥ 40 % (no stress) in 12 months, per province (South Africa) or per district of the scope (province, WMA, district) |
+| vegetation | `map?layer=forecast-ndvi`, `forecast-anomaly` | median NDVI 12 months ahead per district; its departure from the district's same-month mean (`scale: ndviAnomaly`) |
+| runoff | `forecast?metric=flow` | modelled river flow (`runoff-flow`), the page's own flow definition |
+| runoff, surface-water | `forecast?metric=flood-probability` | series `p`: probability (%) per forecast month that the monthly flow (runoff: modelled; surface water: 9_1 discharge) exceeds Q10 (the 90th percentile of the monthly history); `refLines` at 50 %; the note gives Q10 |
+| water-quality | `forecast?metric=wqi`, `ecoli-catchment` | WQI (0–100) / E. coli forecast series (band, obs, median) |
+| water-quality | `forecast?metric=params` | six series: `nitrate`, `nitrate-fc`, `phosphate`, `phosphate-fc` (axis 0, mg/L), `turbidity`, `turbidity-fc` (axis 1, NTU); observed + dashed median, no bands |
+| water-quality | `breakdown?metric=risk-outlook` | 12 categories (the next 12 months), stacked series Excellent / Good / Fair / Poor / Very Poor: probability (%) of each WQI band |
+| water-quality | `table?metric=forecast-indicators` | rows `wqi`, `nitrate`, `phosphate`, `turbidity`, `ecoli` (as §15.3 indicator tables) |
+| water-quality | `map?layer=forecast-wqi` | median WQI 12 months ahead per district (choropleth, as the page's other maps) |
+| ai | `forecast?metric=quality` | the WQI forecast |
+| ai | `table?metric=early-warning` | the drought early-warning table |
+| climate | `table?metric=forecast-summary` | rows `temperature`, `hot_days`, `rainfall`, `et`, `streamflow`: `baseline` (mean of the full years 2000–last), `y2030`, `y2050`, `y2070` (linear extrapolation of the Sen's-slope trend), `trendPerDecade`, `pValue`, `significant`. **Not a climate-model projection** (no RCP / SSP scenarios in the database): `baseline` / `baselineNote` say so; no `forecast` block. Fewer than 8 full years → null row + `unavailable`. |
+| climate | `table?metric=risk-outlook` | rows Heat stress, Extreme heat days, Rainfall deficit, Evaporative demand, Runoff decline: `level` (type `class`, scale `risk`: Low / Moderate / High / Very High = extrapolated change by 2050 in the adverse direction ÷ the record's interannual s.d. < 0.5 / < 1 / < 2 / ≥ 2; an insignificant trend, p ≥ 0.05, is Low), `change2050`, `unit`, `zScore`, `basis` |
+
+Outlook maps: a district whose forecast is not computed yet (or whose series cannot support one) is `null`; when every
+district is null the response is 501 "being computed". `forecast` on a map / table of several forecasts is the
+combined block of §15.2 (`model: auto`, the oldest data date, the weakest skill).
+
+**Still 501, with the reason** (data the database does not hold): drought `settlements`, `population`; every dams
+forecast and `ai` `reservoir` (storage withheld, D2); `ai` `demand`, `scenario`; `importance`.
+
+### 16.4 Response checks
+
+A forecast response may carry values dated up to the end of its horizon (`forecast.forecastStart` + `horizon`
+months); the coverage invariant (values inside the source tables' first / last record) allows that.
+
+## 17. Eight more modules served (2026-10-29): water quantity, IWRM, green drop, blue drop, RWQO, alerts, data integration, governance
+
+DECISIONS D42–D45. Every panel below is derived from stored values or published thresholds; nothing is invented.
+"Entities" of the compliance modules are the 52 districts (no plant, system or site register exists).
+
+### 17.1 `water-quantity` (spec §17; `17_1`, `17_2` registered, D42)
+
+| Endpoint | Key | Contents / notes |
+| --- | --- | --- |
+| summary | — | `surface` = mean annual runoff (16.1) summed, `groundwater` = recharge (11.2), `abstraction` = groundwater abstraction (11.3), `transfers` = the four 17.1 schemes over the last 12 served months (Mm³/yr); `availability`, `allocation`, `demand`, `stress` null with reasons (no yield, licences or demand volumes) |
+| timeseries | `storage` | 17_2 surface storage (Mm³), **South Africa only** (the table has no district breakdown; other scopes 501); `pct` series null (no capacity) |
+| timeseries | `groundwater` | annual recharge, abstraction, net (Mm³/yr) summed over the scope |
+| timeseries | `surface` | 501: no inflow / outflow volumes (17_2's runoff withheld) |
+| breakdown | `transfers` | 5 categories: Katse → Vaal, Tugela–Vaal, Orange River system, Thukela–Vaal emergency, transfer losses (Mm³ over the last 12 served months, the 16 transfer-system districts) |
+| breakdown | `waterfall`, `sector`, `allocation` | 501 |
+| table | `summary` | `indicator, value, unit, asOf`: storage, evapotranspiration (national), transfers, losses, recharge, abstraction, MAR |
+| map | `availability`, `transfers` | district choropleths (MAR by district; transfers by district, Mm³) — the contract's points / stress maps stay 501 |
+| entities | — | districts (`municipality` cards: transfers, MAR, donor storage, deficit) |
+
+The 17_1 transfer, loss, energy and deficit columns are zero in every district from January 2025 and are served to
+December 2024 (`valid_until`); 17_2's precipitation, runoff, recharge, demand, reserve and balance columns are
+withheld as implausible in their unit (D42).
+
+### 17.2 `iwrm` (spec §16; `16_1` + 17_1 + 11.x)
+
+| Endpoint | Key | Contents / notes |
+| --- | --- | --- |
+| summary | — | `availability` = MAR + recharge × area (Mm³/yr, summed), `balance` = the stored 16.1 water balance summed, `reserve` = ecological reserve requirement, `recycled` = return flows, `losses` (new KPI, metric `nrw`) = system losses %; `demand`, `stress`, `status` null (no demand volumes: per-capita and per-hectare only) |
+| timeseries | `availability` | annual: `total`, `surface`, `groundwater`, `recycled` (Mm³/yr), `demand` null |
+| timeseries | `nrw` | 16.1 system water losses (%), area-weighted |
+| breakdown | `transfers`, `reserve-compliance`, `recycled` | by province (9 categories); `provided` / `compliance` / `recycled` series null with reasons |
+| breakdown | `waterfall`, `sector` | 501 (no demand volumes) |
+| table | `wmas` | runoff + recharge per WMA by district overlap; demand / balance / WSI null |
+| table | `summary` | the water-quantity summary table |
+| map | `availability`, `transfers`, `swai` (new: surface water availability index, scale `index01`) | district choropleths; `stress`, `wma-stress`, `catchment-stress` 501 |
+
+### 17.3 `green-drop`, `blue-drop`, `rwqo` (spec §13–§15; D43)
+
+A **district compliance score** = share of the served parameters within their limit in the month (0–100 %):
+
+| Module | Judged parameters | Limits | Score band scale |
+| --- | --- | --- | --- |
+| `green-drop` | 13.1 TSS, ammonia, total phosphorus, E. coli, faecal coliforms, EC (pH, DO, BOD₅, COD withheld) | General Authorisation general limits (`effluent_limits`, = frontend `EFFLUENT_LIMITS`) | `greenDrop` (frontend bands) |
+| `blue-drop` | 14.1 colour, total coliforms, nitrate, fluoride, arsenic, total THMs (the rest withheld as copies of effluent values) | SANS 241:2015 (`sans241`) | `blueDrop` |
+| `rwqo` | 15.2 DO, DIN, TP, TDS; 15.3 low flow, dilution, assimilation | the objectives the tables state (`rwqo_objectives`) | shown as % (`coverage` scale) |
+
+They are **not** official Green Drop / Blue Drop assessment scores; every note says so. Shared keys:
+
+| Endpoint | Key | Contents |
+| --- | --- | --- |
+| summary | — | green drop: `works` (districts), `score` (status pill `greenDrop`), `good`, `moderate`, `poor` (districts per band group), `capacity` and `inflow` (13.2, Ml/day, summed), `receiving` null. Blue drop: `systems`, `score` (`blueDrop` pill), `risk`, `plants` null, `samples` (values judged), `micro` (total coliforms at 0), `population` null, `status` (pill). RWQO: `sites`, `compliance`, `sass5`, `aspt`, `fibi`, `pes-ab`, `eflow` (low-flow objective met), `below-rec` null |
+| timeseries | `trend` | `xType: category` (years): stacked `excellent-good`, `moderate`, `poor-critical` district counts + `rate` line (axis 1) |
+| timeseries | green drop `capacity` (design, influent, `treated` null, `utilisation` = hydraulic loading), `effluent` (TSS, ammonia, TP: BOD₅ / COD withheld), `micro`, `receiving` (15.2 DO, TIN, TP); blue drop `params` (nitrate, fluoride, THMs: pH / turbidity / chlorine withheld), `performance` 501; RWQO `ecological` (category: years; SASS5, FIBI, IHI, ASPT), `params` (DO with the ≥ 5 mg/L reference line), `eflow` (low flow vs the 15.1 reserve flow) | |
+| breakdown | `breakdown` (districts per band), `by-province` (mean score); blue drop `param-compliance`; RWQO `pes` (districts per Present Ecological State A–F from habitat integrity, Kleynhans bands), `by-type` 501 | |
+| table | `latest` / RWQO `results` (`parameter, value, unit, limit, status, compliance, sampleDate`), `ranking` (districts by score; RWQO: SASS5, ASPT, PES class on scale `ecological`) | |
+| map | `compliance`, `municipal` (score choropleth); green drop `utilisation` (loading %, scale `nrw`); blue drop `ecoli` 501; RWQO `pes` (class ids), `compliance`, `sass5` (% of 250) | |
+| entities | districts typed `wwtw` / `wss` / `rwqo-site` with the score, band and parameter values | |
+
+### 17.4 `alerts` (spec §2.2; D44)
+
+`GET /api/v1/alerts?module=&severity=&province=` → `AlertList`, **derived on request** from the latest complete
+period and the thresholds: drought (SPI-6 D1 moderate, D2 high, D3 / D4 critical), vegetation (VCI < 40 % moderate,
+< 20 % high), water quality (WQI < 50 moderate, < 25 high), groundwater reserve (exploitation index 0.7–1 moderate,
+> 1 high), green drop (score < 50 moderate, < 30 high), blue drop (< 70 moderate, < 50 high). `id` =
+`module:rule:district:YYYY-MM`, `status` always `open`, `unread` = `total` (no register), `entityId` = the district
+code, no coordinates. `/alerts/summary` (KPIs `active`, `critical`, `high`, `open`, `modules`, `provinces`),
+`/alerts/map?layer=locations` (district choropleth of the worst severity, scale `severity`).
+
+### 17.5 `data-integration`, `governance` (D45)
+
+Served from the API's own metadata (the same for every scope): `/meta/sources` statistics and the registry.
+
+| Module | Served | 501 |
+| --- | --- | --- |
+| `data-integration` | summary (`feeds`, `records` (all tables), `domains`, `latency` (days behind the newest date), `quality`; `providers` null), breakdown `source-status` (Live / Stale / Withheld only / Missing), `by-type` (rows by resolution), tables `pipelines` (per table), `quality` (completeness, validity, timeliness, coverage) | timeseries `ingestion`, table `providers`, map `coverage` |
+| `governance` | summary (`datasets`, `feeds`, `metadata`, `quality`, `incidents` = withheld columns; `providers`, `standards`, `access` null), breakdowns `inventory`, `frequency`, `metadata`, tables `quality`, `issues` (every withheld column with its reason) | breakdowns `standards`, `access`; tables `providers`, `usage`, `retention`; map `status` |
+
+### 17.6 Registry
+
+- A dataset may have no district column (`location: {column: null}`): a **national table**, read as the single
+  location `ZA` (17_2). Its category charts show the national value for every scope; the Studio forecasts it for
+  South Africa only.
+- `/api/v1/health` lists `water-quantity` (tables 17_1, 17_2) and reports the eight modules `live`.
+
+## 18. Water services and tariffs served from the §18 / §19 tables (2026-10-29) — local-municipality data
+
+DECISIONS D46. Six tables keyed by **local municipality** (`Region`: 124 municipalities and metros in 18_2 / 19_x,
+145 in 18_1) and financial year are registered; the API maps every `Region` to its district
+(`app/reference/local_municipalities.csv`, 213 municipalities) and aggregates per district by each column's rule
+(sums of households and volumes, means of rates and prices). "National" rows and one stray HTML row are not read.
+
+### 18.1 `services` (spec §18)
+
+| Endpoint | Key | Contents / notes |
+| --- | --- | --- |
+| summary | — | `served` (households at or above RDP level, summed), `piped` (piped-infrastructure households ÷ total), `nrw` (non-revenue ÷ system input volume, 18.2), `reliability` (April 2026 snapshot: reliable ÷ total households); `sanitation`, `plants`, `reservoirs`, `pumps`, `pipelines` null (no sanitation data, no asset register) |
+| timeseries | `nrw` | annual NRW (%) with the 20 % target line; `interruptions`: `unplanned` events per day (annual mean), `planned` null |
+| timeseries | `plant-performance` | 501 (no plants) |
+| forecast | `nrw`, `coverage`, `demand` | 501: annual series are too short for the forecasting engine |
+| breakdown | `coverage` | piped access by province (`sanitation` null) |
+| breakdown | `service-levels` | share of households per service level by province, from the three static service-level counts and the backlog (stack) |
+| breakdown | `urban-rural` | the April 2026 Urban / Rural rows: RDP access, backlog, schools and clinics with piped water |
+| breakdown | `asset-condition`, `maintenance`, `pipelines`, `projects` | 501 |
+| table | `nrw` | districts by NRW (%) with status against the 20 % target; `plants` 501 |
+| map | `coverage`, `rdp`, `nrw`, `reliability` | district choropleths (ratios of the district sums); `sanitation`, `asset-condition`, `wtp` 501 |
+| entities | — | **213 local municipalities and metros** (`LM001` … `LM213`, type `municipality`, `municipality` = the parent district code); the card reads the municipality's own latest rows of 18.1 / 18.2 (households, RDP access, backlog, new connections, schools, clinics, NRW, pressure, pipe failures, load shedding, pump energy) |
+
+18.1 percentages of the three service levels are withheld (static counts ÷ varying totals reach 1 506 %); the
+18.2 text percentage columns are not read (their numeric twins are); infinities and negative volumes are kept
+outside the valid ranges.
+
+### 18.2 `tariffs` (spec §19)
+
+| Endpoint | Key | Contents / notes |
+| --- | --- | --- |
+| summary | — | `raw` (raw water abstraction tariff, R/m³), `municipal` (block tariff rate, R/kL), `recovery` (municipal tariff ÷ treatment cost per kL, %); `raw-revenue`, `bulk-revenue`, `muni-revenue`, `bulk`, `affordability` null (no revenues, bulk tariffs or household income) |
+| forecast | `tariff`, `affordability`, `revenue` | 501 |
+| breakdown | `comparison` (raw / `bulk` null / municipal by province), `cost-vs-tariff` (treatment cost, tariff, recovery % by province), `increases` (year-on-year % of raw and municipal tariffs by province), `muni-nrw` (18.2 system input and billed water, Mm³/yr, and NRW % by province) | `revenue`, `blocks`, `affordability` 501 |
+| table | `ranking` | districts by municipal tariff with the year-on-year increase; `forecast-indicators` 501 |
+| matrix | `province-increase` | provinces × the last four years: municipal tariff increase (%) |
+| map | `tariff`, `increase`, `recovery`, `nrw` | district choropleths; `affordability` 501 |
+| entities | — | the 213 municipalities (raw tariff, surcharge, capital charge, MAR / demand ratio, block tariff, treatment cost, cost recovery, infrastructure cost, chemical dosing, WWTW penalty) |
+
+19.2's "electricity cost (R/kWh)" is the 18.2 pump-station energy column (kWh/Ml) copied: a duplicate, not a cost.
+The 19.3 cost columns carry no unit in the database; rand per year is assumed from the spec.
+
+### 18.3 Registry
+
+- `location: {column: Region, level: local_municipality}` marks a sub-district table; every canonical column of
+  such a table declares `agg: sum | mean`.
+- `time: {kind: month_name_year, column: "Time Frame"}` reads "April 1994" financial years (18_1).
+- `row_filter` adds an SQL condition to every read (18_1: `"Category" = 'Total'`).
+- Registry identifiers may hold `#`, `%`, `<`, `,`, `³` and an en dash (the 18.x / 19.x column names); never a
+  double quote.
+- `/api/v1/health` lists `services` (18_1 – 18_3) and `tariffs` (19_1 – 19_3) as live; `/reference/municipalities`
+  is unchanged (districts).
+
+## 19. Every dashboard listed by `/health`; the derived pages filled from existing data (2026-10-30)
+
+DECISIONS D47. No new table: the gaps of the pages that have no table of their own are closed from what the
+database already holds, and the health listing names every dashboard of the contract.
+
+### 19.1 `/api/v1/health` — all 24 contract modules
+
+`modules` now lists every dashboard of the contract, in the contract's order, not only the table-backed ones:
+
+| Status | Modules | `reason` / `tables` |
+| --- | --- | --- |
+| `live` | the 17 table-backed modules whose endpoints are served | `tables`: their own tables; `reason` null |
+| `live` | `ai`, `alerts`, `data-integration`, `governance` (no tables of their own) | `reason` says what they are derived from ("no tables of its own: derived from drought, vegetation, …"); `tables`: the tables of the modules they read (empty for the two meta pages) |
+| `partial` | `overview` | its panels come from their modules and the page forecasts; its own summary has no table |
+| `unavailable` | `settlements`, `roadmap` | the module's reason (no settlement register / programme records) |
+
+A table-backed module stays `partial` when only its database view is served, and `unavailable` when a table is
+missing or the database is unreachable (derived modules are then `unavailable` too). The frontend header's
+"N of 24 modules live" therefore reads 21 with every served module in `VITE_LIVE_MODULES`.
+
+### 19.2 `ai` — summary and feature importance (200)
+
+| Endpoint | Contents / notes |
+| --- | --- |
+| `GET /ai/summary` | KPIs for the scope: `models` (distinct models Auto chose for the scope's finished page forecasts; the sublabel gives the Studio's model count), `skill` (mean backtest skill against the same-month climatology — **not** the Nash–Sutcliffe efficiency, which the engine does not compute), `drought6` (P(D1 or worse) six months ahead from the SPI-3 forecast's class probabilities), `reservoir` (*null*: storage withheld, D2), `warnings` (open derived alerts in the scope), `runs` (Studio and on-demand runs started in the last 30 days, counted since the API started — runs are not stored). KPIs are null with `kpis.<id>` reasons while the scope's page forecasts are not computed. |
+| `GET /ai/breakdown?metric=importance` | relative importance (%) of the gradient-boosting drought model's eight lag features (lags 1, 2, 3, 6, 12, the 3- and 12-month means, the calendar month), from a LightGBM fit on the national SPI-3 series (gain share; cached until the data change). 501 with the reason when the national series is too short. Other metrics stay 501. |
+
+### 19.3 `alerts` — four more rules
+
+| Module | Rule | Severity |
+| --- | --- | --- |
+| `services` | non-revenue water above 40 % / above the 20 % target (latest complete year, 18.2) | high / moderate |
+| `rwqo` | RWQO compliance below 30 % / 50 % (latest complete month) | high / moderate |
+| `iwrm` | system water losses above 40 % / 20 % (latest year, 16.1) | high / moderate |
+| `tariffs` | year-on-year municipal block tariff increase above 30 % / 15 % (19.2) | high / moderate |
+
+The thresholds are the pages' own (the NRW target, the compliance bands); the services, IWRM and tariff rules cover
+every district the §16 / §18 / §19 tables hold.
+
+### 19.4 `data-integration` and `governance` — ingestion, coverage, providers, retention (200)
+
+| Endpoint | Contents / notes |
+| --- | --- |
+| `data-integration/timeseries?metric=ingestion` | rows per month by source group over the last 24 months (series `sansa`, `saws`, `municipal`, `other`), counted by the period the rows are dated for — the database keeps no load log, so this is the data's cadence, not when it arrived (annual tables fall in January) |
+| `data-integration/map?layer=coverage` | district choropleth: % of the reachable district-keyed tables holding at least one row for the district |
+| `data-integration/table?metric=providers`, `governance/table?metric=providers` | one row per organisation **named in a table's name** (SANSA: 4 tables, SAWS: 2) and one for the tables that name none; `protocol` null (`rows.protocol` reason) |
+| KPI `providers` (both pages) | the organisations named in the tables' names (2); the sublabel says how many tables carry no source |
+| `governance/table?metric=retention` | the specification's retention policy (§23.3: real-time data 2 years, historical archive indefinitely, satellite imagery 30-year archive, model outputs 5 years, audit logs 7 years) — a policy, not observed; the title says it cannot be verified from the database |
+
+Still 501 with the reason: `governance` breakdowns `standards`, `access`, table `usage`, map `providers` (no usage
+or standards records, no provider locations).

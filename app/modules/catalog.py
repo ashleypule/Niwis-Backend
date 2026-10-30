@@ -15,17 +15,24 @@ from typing import Any
 import httpx
 
 from app.core.response_checks import Coverage, all_violations, invariant_violations
+from app.modules.blue_drop import service as blue_drop
 from app.modules.climate import service as climate
 from app.modules.common import Selector
 from app.modules.dams import service as dams
 from app.modules.drought import service as drought
+from app.modules.green_drop import service as green_drop
 from app.modules.groundwater import service as groundwater
 from app.modules.groundwater_reserve import service as groundwater_reserve
+from app.modules.iwrm import service as iwrm
 from app.modules.rainfall import service as rainfall
 from app.modules.runoff import service as runoff
+from app.modules.rwqo import service as rwqo
+from app.modules.services import service as services
 from app.modules.surface_water import service as surface_water
+from app.modules.tariffs import service as tariffs
 from app.modules.vegetation import service as vegetation
 from app.modules.water_quality import service as water_quality
+from app.modules.water_quantity import service as water_quantity
 from app.registry.catalogue import get_catalogue
 
 SERVICE_MODULES: dict[str, ModuleType] = {
@@ -39,12 +46,34 @@ SERVICE_MODULES: dict[str, ModuleType] = {
     "groundwater": groundwater,
     "groundwater-reserve": groundwater_reserve,
     "water-quality": water_quality,
+    "water-quantity": water_quantity,
+    "iwrm": iwrm,
+    "green-drop": green_drop,
+    "blue-drop": blue_drop,
+    "rwqo": rwqo,
+    "services": services,
+    "tariffs": tariffs,
 }
-ENTITY_MODULES = {"rainfall", "runoff", "dams", "surface-water", "groundwater", "groundwater-reserve", "water-quality"}
+ENTITY_MODULES = {
+    "rainfall",
+    "runoff",
+    "dams",
+    "surface-water",
+    "groundwater",
+    "groundwater-reserve",
+    "water-quality",
+    "water-quantity",
+    "green-drop",
+    "blue-drop",
+    "rwqo",
+    "services",
+    "tariffs",
+}
 KINDS = {"timeseries": "metric", "forecast": "metric", "breakdown": "metric", "table": "metric", "matrix": "metric"}
 KINDS["map"] = "layer"
 PROBE = "__catalog_probe__"
 SAMPLE_ENTITY = "DC44"  # a district present in the recorded fixture DB and in Supabase
+SAMPLE_ENTITIES = {"services": "LM018", "tariffs": "LM018"}  # local-municipality entities: City of Cape Town
 
 
 def selectors(module: str) -> dict[tuple[str, str], tuple[Selector, ...]]:
@@ -77,7 +106,7 @@ async def requests(client: httpx.AsyncClient, scopes: list[dict[str, str]]) -> l
         for scope in scopes:
             out.append((f"{base}/summary", dict(scope)))
         if module in ENTITY_MODULES:
-            out += [(f"{base}/entities", {}), (f"{base}/entities/{SAMPLE_ENTITY}", {})]
+            out += [(f"{base}/entities", {}), (f"{base}/entities/{SAMPLE_ENTITIES.get(module, SAMPLE_ENTITY)}", {})]
         sels = selectors(module)
         for kind, param in KINDS.items():
             for key in await keys(client, module, kind):

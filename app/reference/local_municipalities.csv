@@ -1,0 +1,214 @@
+lm_id,name,aliases,district_code,province
+LM001,Abaqulusi,,DC26,KZN
+LM002,Alfred Duma,,DC23,KZN
+LM003,Amahlathi,,DC12,EC
+LM004,Ba-Phalaborwa,,DC33,LP
+LM005,Beaufort West,,DC5,WC
+LM006,Bela-Bela,,DC36,LP
+LM007,Bergrivier,,DC1,WC
+LM008,Big Five Hlabisa,,DC27,KZN
+LM009,Bitou,,DC4,WC
+LM010,Blouberg,,DC35,LP
+LM011,Blue Crane Route,,DC10,EC
+LM012,Breede Valley,,DC2,WC
+LM013,Buffalo City,,BUF,EC
+LM014,Bushbuckridge,,DC32,MP
+LM015,Cape Agulhas,,DC3,WC
+LM016,Cederberg,,DC1,WC
+LM017,Chief Albert Luthuli,,DC30,MP
+LM018,City of Cape Town,,CPT,WC
+LM019,City of Johannesburg,,JHB,GP
+LM020,City of Matlosana,,DC40,NW
+LM021,City of Tshwane,,TSH,GP
+LM022,Collins Chabane,,DC34,LP
+LM023,Dannhauser,,DC25,KZN
+LM024,Dawid Kruiper,,DC8,NC
+LM025,Dihlabeng,,DC19,FS
+LM026,Dikgatlong,,DC9,NC
+LM027,Dipaleseng,,DC30,MP
+LM028,Ditsobotla,,DC38,NW
+LM029,Dr Beyers Naude,,DC10,EC
+LM030,Dr JS Moroka,,DC31,MP
+LM031,Dr Nkosazana Dlamini Zuma,,DC43,KZN
+LM032,Dr Pixley Ka Isaka Seme,,DC30,MP
+LM033,Drakenstein,,DC2,WC
+LM034,eDumbe,,DC26,KZN
+LM035,Ekurhuleni,,EKU,GP
+LM036,Elias Motsoaledi,,DC47,LP
+LM037,Elundini,,DC14,EC
+LM038,Emadlangeni,,DC25,KZN
+LM039,Emakhazeni,,DC31,MP
+LM040,Emalahleni,,DC13,EC
+LM041,Emalahleni,,DC31,MP
+LM042,Emfuleni,,DC42,GP
+LM043,Emthanjeni,,DC7,NC
+LM044,Endumeni,,DC24,KZN
+LM045,Engcobo,,DC13,EC
+LM046,Enoch Mgijima,,DC13,EC
+LM047,Ephraim Mogale,,DC47,LP
+LM048,eThekwini,,ETH,KZN
+LM049,Ga-Segonyana,,DC45,NC
+LM050,Gamagara,,DC45,NC
+LM051,George,,DC4,WC
+LM052,Govan Mbeki,,DC30,MP
+LM053,Great Kei,,DC12,EC
+LM054,Greater Giyani,,DC33,LP
+LM055,Greater Kokstad,,DC43,KZN
+LM056,Greater Letaba,,DC33,LP
+LM057,Greater Taung,,DC39,NW
+LM058,Greater Tubatse/Fetakgomo,,DC47,LP
+LM059,Greater Tzaneen,,DC33,LP
+LM060,Hantam,,DC6,NC
+LM061,Hessequa,,DC4,WC
+LM062,Impendle,,DC22,KZN
+LM063,Inkosi Langalibalele,,DC23,KZN
+LM064,Intsika Yethu,,DC13,EC
+LM065,Inxuba Yethemba,,DC13,EC
+LM066,Joe Morolong,,DC45,NC
+LM067,Jozini,,DC27,KZN
+LM068,Kagisano/Molopo,,DC39,NW
+LM069,Kai Garib,,DC8,NC
+LM070,Kamiesberg,,DC6,NC
+LM071,Kannaland,,DC4,WC
+LM072,Kareeberg,,DC7,NC
+LM073,Karoo Hoogland,,DC6,NC
+LM074,Kgatelopele,,DC8,NC
+LM075,Kgetlengrivier,,DC37,NW
+LM076,Khâi-Ma,,DC6,NC
+LM077,Kheis,,DC8,NC
+LM078,King Sabata Dalindyebo,,DC15,EC
+LM079,Knysna,,DC4,WC
+LM080,Kopanong,,DC16,FS
+LM081,Kou-Kamma,Koukamma,DC10,EC
+LM082,Kouga,,DC10,EC
+LM083,KwaDukuza,,DC29,KZN
+LM084,Laingsburg,,DC5,WC
+LM085,Langeberg,,DC2,WC
+LM086,Lekwa,,DC30,MP
+LM087,Lekwa-Teemane,,DC39,NW
+LM088,Lepele-Nkumpi,,DC35,LP
+LM089,Lephalale,,DC36,LP
+LM090,Lesedi,,DC42,GP
+LM091,Letsemeng,,DC16,FS
+LM092,Local Municipality of Madibeng,Madibeng,DC37,NW
+LM093,Mafikeng,,DC38,NW
+LM094,Mafube,,DC20,FS
+LM095,Magareng,,DC9,NC
+LM096,Makana,,DC10,EC
+LM097,Makhado,,DC34,LP
+LM098,Makhuduthamaga,,DC47,LP
+LM099,Maluti a Phofung,,DC19,FS
+LM100,Mamusa,,DC39,NW
+LM101,Mandeni,,DC29,KZN
+LM102,Mangaung,,MAN,FS
+LM103,Mantsopa,,DC19,FS
+LM104,Maphumulo,,DC29,KZN
+LM105,Maquassi Hills,,DC40,NW
+LM106,Maruleng,,DC33,LP
+LM107,Masilonyana,,DC18,FS
+LM108,Matatiele,,DC44,EC
+LM109,Matjhabeng,,DC18,FS
+LM110,Matzikama,,DC1,WC
+LM111,Mbhashe,,DC12,EC
+LM112,Mbizana,,DC44,EC
+LM113,Mbombela,City of Mbombela,DC32,MP
+LM114,Merafong City,,DC48,GP
+LM115,Metsimaholo,,DC20,FS
+LM116,Mfolozi,,DC28,KZN
+LM117,Mhlontlo,,DC15,EC
+LM118,Midvaal,,DC42,GP
+LM119,Mkhambathini,,DC22,KZN
+LM120,Mkhondo,,DC30,MP
+LM121,Mnquma,,DC12,EC
+LM122,Modimolle/Mookgophong,,DC36,LP
+LM123,Mogalakwena,,DC36,LP
+LM124,Mogale City,,DC48,GP
+LM125,Mohokare,,DC16,FS
+LM126,Molemole,,DC35,LP
+LM127,Moqhaka,,DC20,FS
+LM128,Moretele,,DC37,NW
+LM129,Moses Kotane,,DC37,NW
+LM130,Mossel Bay,,DC4,WC
+LM131,Mpofana,,DC22,KZN
+LM132,Msinga,,DC24,KZN
+LM133,Msukaligwa,,DC30,MP
+LM134,Mthonjaneni,,DC28,KZN
+LM135,Mtubatuba,,DC27,KZN
+LM136,Musina,,DC34,LP
+LM137,Nala,,DC18,FS
+LM138,Naledi,,DC39,NW
+LM139,Nama Khoi,,DC6,NC
+LM140,Ndlambe,,DC10,EC
+LM141,Ndwedwe,,DC29,KZN
+LM142,Nelson Mandela Bay,,NMA,EC
+LM143,Newcastle,,DC25,KZN
+LM144,Ngqushwa,,DC12,EC
+LM145,Ngquza Hill,,DC15,EC
+LM146,Ngwathe,,DC20,FS
+LM147,Nkandla,,DC28,KZN
+LM148,Nketoana,,DC19,FS
+LM149,Nkomazi,,DC32,MP
+LM150,Nongoma,,DC26,KZN
+LM151,Nqutu,,DC24,KZN
+LM152,Ntabankulu,,DC44,EC
+LM153,Nyandeni,,DC15,EC
+LM154,Okhahlamba,,DC23,KZN
+LM155,Oudtshoorn,,DC4,WC
+LM156,Overstrand,,DC3,WC
+LM157,Phokwane,,DC9,NC
+LM158,Phumelela,,DC19,FS
+LM159,Polokwane,,DC35,LP
+LM160,Port St Johns,,DC15,EC
+LM161,Prince Albert,,DC5,WC
+LM162,Ramotshere Moiloa,,DC38,NW
+LM163,Rand West City,,DC48,GP
+LM164,Ratlou,,DC38,NW
+LM165,Ray Nkonyeni,,DC21,KZN
+LM166,Raymond Mhlaba,,DC12,EC
+LM167,Renosterberg,,DC7,NC
+LM168,Richmond,,DC22,KZN
+LM169,Richtersveld,,DC6,NC
+LM170,Rustenburg,,DC37,NW
+LM171,Sakhisizwe,,DC13,EC
+LM172,Saldanha Bay,,DC1,WC
+LM173,Senqu,,DC14,EC
+LM174,Setsoto,,DC19,FS
+LM175,Siyancuma,,DC7,NC
+LM176,Siyathemba,,DC7,NC
+LM177,Sol Plaatjie,Sol Plaatje,DC9,NC
+LM178,Stellenbosch,,DC2,WC
+LM179,Steve Tshwete,,DC31,MP
+LM180,Sundays River Valley,,DC10,EC
+LM181,Swartland,,DC1,WC
+LM182,Swellendam,,DC3,WC
+LM183,Thaba Chweu,,DC32,MP
+LM184,Thabazimbi,,DC36,LP
+LM185,The Msunduzi,Msunduzi,DC22,KZN
+LM186,Theewaterskloof,,DC3,WC
+LM187,Thembelihle,,DC7,NC
+LM188,Thembisile,Thembisile Hani,DC31,MP
+LM189,Thulamela,,DC34,LP
+LM190,Tokologo,,DC18,FS
+LM191,Tsantsabane,,DC8,NC
+LM192,Tswaing,,DC38,NW
+LM193,Tswelopele,,DC18,FS
+LM194,Ubuhlebezwe,,DC43,KZN
+LM195,Ubuntu,,DC7,NC
+LM196,Ulundi,,DC26,KZN
+LM197,Umdoni,,DC21,KZN
+LM198,Umhlabuyalingana,,DC27,KZN
+LM199,uMhlathuze,City of uMhlathuze,DC28,KZN
+LM200,uMlalazi,,DC28,KZN
+LM201,uMngeni,,DC22,KZN
+LM202,uMshwathi,,DC22,KZN
+LM203,Umsobomvu,,DC7,NC
+LM204,uMuziwabantu,,DC21,KZN
+LM205,Umvoti,,DC24,KZN
+LM206,Umzimkhulu,,DC43,KZN
+LM207,Umzimvubu,,DC44,EC
+LM208,Umzumbe,,DC21,KZN
+LM209,uPhongolo,,DC26,KZN
+LM210,Ventersdorp/Tlokwe,JB Marks,DC40,NW
+LM211,Victor Khanye,,DC31,MP
+LM212,Walter Sisulu,,DC14,EC
+LM213,Witzenberg,,DC2,WC

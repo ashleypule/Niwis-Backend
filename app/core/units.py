@@ -63,6 +63,9 @@ _SUFFIXES: dict[str, str | None] = {
     "_kpa": "kPa",
     "_m_bgl": "m bgl",
     "_pct_fsc": "% FSC",
+    "_fsc_pct": "% FSC",
+    "_kwh_ml": "kWh/Ml",
+    "_mm3": "Mm³",
     "_percent": "%",
     "_pct": "%",
     "_c": "°C",
@@ -193,6 +196,12 @@ _SPEC = {
     "15.2": "spec §15.2",
     "15.3": "spec §15.3",
     "15.1": "spec §15.1",
+    "18.1": "spec §18.1",
+    "18.2": "spec §18.2",
+    "18.3": "spec §18.3",
+    "19.1": "spec §19.1",
+    "19.2": "spec §19.2",
+    "19.3": "spec §19.3",
 }
 
 
@@ -366,6 +375,113 @@ SPEC_UNITS: dict[tuple[str, str], Override] = {
     ),
     **_spec_units("15.1_ecological_variables_master", "15.1", {"ecological_reserve_q": "m³/s"}),
 }
+SPEC_UNITS.update(
+    _spec_units(
+        "18_1_water_access_and_coverage_master",
+        "18.1",
+        {
+            "Total Households": "households",
+            "At or Above RDP Households": "households",
+            "At or Above RDP Percentage": "%",
+            "Piped Infrastructure Households": "households",
+            "Reliable Water Households": "households",
+            "Reliable Water Percentage": "%",
+            "Households Below RDP / Backlog (#)": "households",
+            "Households Below RDP / Backlog (%)": "%",
+            "Annual New Connections Installed (#/year)": "connections/year",
+            "Piped Water Inside Dwelling (#)": "households",
+            "Piped Water On Site / Yard Tap (#)": "households",
+            "Communal Standpipe < 200m (#)": "households",
+            "Piped Water Inside Dwelling (%)": "%",
+            "Piped Water On Site / Yard Tap (%)": "%",
+            "Communal Standpipe < 200m (%)": "%",
+            "Distance to Nearest Water Point for Unserved HH (km)": "km",
+            "Schools with Piped Water (%)": "%",
+            "Clinics with Piped Water (%)": "%",
+        },
+    )
+)
+SPEC_UNITS.update(
+    _spec_units(
+        "18_2_infrastructure_operational_master",
+        "18.2",
+        {
+            "System input volume (litres)": "L/year",
+            "Revenue water (litres)": "L/year",
+            "Non-Revenue water (litres)": "L/year",
+            "Water Losses (litres)": "L/year",
+            "Daily_Water_Production_Volume_m3_day": "m³/day",
+            "Physical_Losses_Real_Losses_m3_day": "m³/day",
+            "Computed_NRW_Percentage": "%",
+            "Revenue_Water_m3_day": "m³/day",
+            "NRW_Volume_m3_day": "m³/day",
+            "Commercial_Losses_m3_day": "m³/day",
+            "Computed_Water_Loss_Ratio_Pct": "%",
+            "Calculated_Demand_Growth_Pct": "%",
+            "System_Supply_Pressure_kPa_bar": "kPa",
+            "Daily_Unplanned_Supply_Interruptions_events_per_day": "events/day",
+            "Average_Duration_Of_Outages_hours_per_event": "h",
+            "Pump_Station_Energy_Consumption_kWh_Ml": "kWh/Ml",
+            "Load_Shedding_Induced_Interruptions_hours_per_day": "h/day",
+            "Pipe_Failure_Rate_breaks_per_100km_year": "breaks/100 km/year",
+        },
+    )
+)
+SPEC_UNITS.update(
+    _spec_units(
+        "18_3_sansa_eo_support_for_services_masters",
+        "18.3",
+        {
+            "Settlement_Extent_Built_km2": "km²",
+            "Informal_Settlements_Extent_km2": "km²",
+            "Water_Infrastructure_Reservoir_Extent_km2": "km²",
+            "Drought_Severity_PDSI": "index",
+            "Climatic_Water_Deficit_mm": "mm/year",
+            "Catchment_Precipitation_mm": "mm",
+        },
+    )
+)
+SPEC_UNITS.update(
+    _spec_units(
+        "19_1_raw_water_tariff_master",
+        "19.1",
+        {
+            "Raw water abstraction tariff (R/m³)": "R/m³",
+            "Drought-season surcharge (R/m³)": "R/m³",
+            "Capital investment recovery charge (R/m³)": "R/m³",
+            "Reservoir storage % (scarcity trigger) (% FSC)": "% FSC",
+            "Inter-basin transfer cost component (R/Ml)": "R/Ml",
+            "Energy cost per Ml transferred (R/Ml)": "R/Ml",
+            "MAR_demand_ratio": "—",
+        },
+    )
+)
+SPEC_UNITS.update(
+    _spec_units(
+        "19_2_municipal_water_tariff_master",
+        "19.2",
+        {
+            "Block tariff rates (R/kL per consumption block)": "R/kL",
+            "6 kL/month free allocation status (L/household/month)": "L/household/month",
+            "Average treatment cost per kL produced (R/kL)": "R/kL",
+            "Electricity cost for pumping and treatment (R/kWh)": "kWh/Ml",
+            "Infrastructure replacement and maintenance cost (R/year)": "R/year",
+            "CPI and PPI affecting operational costs (%)": "%",
+        },
+    )
+)
+SPEC_UNITS.update(
+    _spec_units(
+        "19_3_water_quality_cost_master",
+        "19.3",
+        {
+            "Source water (Turbidity and contamination)": "R/year",
+            "Chemical dosing cost": "R/kL",
+            "Algal bloom treatment": "R/year",
+            "WWTW compliance penalty": "R/year",
+        },
+    )
+)
 LABEL_OVERRIDES.update(SPEC_UNITS)
 LABEL_OVERRIDES.update(
     {

@@ -1,6 +1,81 @@
 # Progress
 
-## Status (2026-10-29): forecasting added — the Forecasting Studio (`/api/v1/forecast/*`, any live column, any area, Auto or a chosen model, chronological backtest) and the pages' forecast tabs fed by precomputed Auto forecasts (D29–D39); before that, completing the system from the database — Parts 1–3 done. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
+## Status (2026-10-30): 21 of the 24 contract modules live and listed so by `/health` (D47: the AI, alerts, data-integration and governance pages count, with their remaining panels filled from existing data; `overview` partial; `settlements` and `roadmap` have no table); before that 20 served (water quantity, IWRM, green / blue drop, RWQO, alerts, data integration and governance added, D42–D45) and every forecast tab live (D41); forecasting added — the Forecasting Studio (`/api/v1/forecast/*`, any live column, any area, Auto or a chosen model, chronological backtest) and the pages' forecast tabs fed by precomputed Auto forecasts (D29–D39); before that, completing the system from the database — Parts 1–3 done. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
+
+### Every dashboard in the health count; the derived pages completed from existing data (2026-10-30)
+
+Decision D47; contract `docs/CONTRACT_CHANGES.md` §19.
+
+- [x] `/api/v1/health` lists all 24 contract modules (derived ones live with the tables they read; Overview
+      partial; settlements / roadmap unavailable with reasons): the header reads "21 of 24 modules live".
+- [x] AI page: `/ai/summary` (models, skill vs climatology, 6-month drought probability, early warnings, runs in
+      30 days) and `/ai/breakdown?metric=importance` (LightGBM gain share of the lag features, national SPI-3).
+- [x] Alerts: services NRW, RWQO compliance, IWRM losses and tariff-increase rules.
+- [x] Data integration / governance: ingestion per month by source group (rows' own dates), district coverage
+      map, providers named in the tables (SANSA, SAWS), the spec's retention policy table.
+- [x] Tests extended (`test_api`, `test_alerts_and_meta_pages`, `test_forecast_api`); OpenAPI re-exported.
+- [x] Docker image: `libgomp1` installed — LightGBM could not load in the container (`libgomp.so.1` missing), so
+      the Studio's LightGBM model and the quick `auto-fast` runs silently fell back to the other models there.
+
+### Water services and tariffs live from the §18 / §19 tables (2026-10-29)
+
+Decision D46; contract `docs/CONTRACT_CHANGES.md` §18; data findings `docs/DATA_GAPS.md` §23.
+
+- [x] Six tables keyed by local municipality registered: `Region` → district via `app/reference/local_municipalities.csv`
+      (213 municipalities, from the frontend's centroid mapping + the tables' spellings), per-column `agg`
+      (sum / mean) when rows combine into districts, `row_filter`, the "April 1994" time kind, wider identifier set;
+      14 withheld / ranged columns with reasons; fixture `05_sections_18_19.sql.gz`; catalogue and role script rebuilt.
+- [x] `services` and `tariffs` modules (`app/modules/lm.py` shared helpers): sums of households and volumes, ratios
+      recomputed from sums, province breakdowns, NRW against the 20 % target, tariff increases and cost recovery,
+      and **municipality entities** with their own latest rows.
+- [x] Tests `tests/test_services_tariffs.py`; registry / catalogue / new-table tests extended; frontend
+      `VITE_LIVE_MODULES` lists both. Every table in the database is now registered or ignored with a reason.
+
+### Eight more modules live (2026-10-29)
+
+Owner's instruction: make the remaining dashboards functional from what the database holds. Decisions D42–D45;
+contract: `docs/CONTRACT_CHANGES.md` §17; frontend guide §3.
+
+- [x] §17 tables profiled and registered (D42): 17_1 transfers (zero-filled from 2025 → served to Dec 2024), 17_2
+      national balance (10 of 12 columns withheld as implausible); national tables (no district column) supported in
+      the registry and every reader (`location: {column: null}`, location `ZA`); fixture `04_section_17.sql.gz`;
+      catalogue and read-only role script regenerated.
+- [x] `water-quantity` and `iwrm` modules (16.1, 17.x, 11.x): availability, transfers, reserve, return flows, losses,
+      storage; demand / stress / allocation panels null or 501 with reasons.
+- [x] `green-drop`, `blue-drop`, `rwqo` (D43): district compliance scores against the General Authorisation limits,
+      SANS 241 and the RWQO objectives the tables state (`app/modules/compliance.py`); bands, trends, rankings, maps,
+      PES classes, district entities; thresholds.json gained `effluent_limits`, `green_drop`, `blue_drop`, `pes`,
+      `rwqo_objectives` (synced with reference/thresholds.ts).
+- [x] `alerts` derived on request from thresholds (D44): `GET /alerts`, `/alerts/summary`, `/alerts/map`.
+- [x] `data-integration`, `governance` from the API's metadata (D45).
+- [x] Tests: `test_water_quantity.py`, `test_iwrm.py`, `test_compliance_modules.py`, `test_alerts_and_meta_pages.py`,
+      registry / catalogue / thresholds updates. Six §18 / §19 tables appeared the same day: pending review
+      (`tests/test_new_tables.py`, DATA_GAPS §22).
+
+### Every dashboard's forecast tab served (2026-10-29)
+
+Owner's instruction: the Predictions & Forecasting tab of each dashboard must be fully functional; the Studio stays
+the shared advanced tool. Decision D41 (`docs/DECISIONS.md`); contract: `docs/CONTRACT_CHANGES.md` §16.
+
+- [x] Any area: a district round of the six outlook variables with the quick models (`auto-fast` = Auto over the
+      baselines, ETS, LightGBM; `registry.py`), and any other variable × district / WMA computed on demand the first
+      time its tab is opened (501 `no-store` "being computed", then 200; dropped when the data change) — `pages.py`.
+- [x] New page variables: CCME WQI and modelled river flow via Python loaders (`Target.loader`, `series.py`),
+      nitrate / orthophosphate / turbidity / E. coli (12.x columns), groundwater depth with gaps ≤ 2 months
+      interpolated (`Target.interpolate`; the telemetry samples 7–8 of 12 months).
+- [x] Products from the forecasts: district outlook maps (drought `outlook-1/2/3`, `forecast-6`; rainfall
+      `forecast-1/2/3`; vegetation `forecast-ndvi`, `forecast-anomaly`; water-quality `forecast-wqi`), flood
+      probability (runoff, surface water: P(flow > Q10)), drought `early-warning`, `recovery`, `recovery-province`,
+      vegetation `recovery-probability`, water-quality `wqi` / `params` / `ecoli-catchment` / `risk-outlook` /
+      `forecast-indicators`, `ai` `quality` + `early-warning`, runoff `flow`; climate `forecast-summary` /
+      `risk-outlook` as labelled Sen's-slope trend extrapolations.
+- [x] Still 501 (no data): settlements / population, dams and `ai` reservoir (D2), demand, scenarios.
+- [x] Response checks: a forecast response may carry values to the end of its horizon.
+- [x] Tests: `test_forecast_api.py` (district round → maps / probabilities / WQ products; on demand for a district
+      and a WMA; early warning, recovery), `test_forecast_engine.py` (band probabilities, gap interpolation,
+      `auto-fast` candidates), `test_climate.py` (projection tables), `test_response_audit.py`.
+- [x] Docs: CONTRACT_CHANGES §16, DECISIONS D41, FRONTEND_INTEGRATION §3 / §10, README / DEPLOYMENT / `.env.example`
+      (`FORECAST_PAGE_DISTRICTS`, `FORECAST_PAGE_ON_DEMAND`), `docs/openapi.json`.
 
 ### Forecasting Studio and page forecasts (2026-10-23 → 29)
 

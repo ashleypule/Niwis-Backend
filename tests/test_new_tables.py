@@ -20,18 +20,43 @@ CAT = get_catalogue()
 BH = "10_1_borehole_and_aquifer_master"
 
 
-# Tables that appeared in the database on 2026-10-23 (during the forecasting work): listed as unregistered, as the
-# catalogue does for every new table, until they are profiled and plausibility-checked (DATA_GAPS §22).
-PENDING_REVIEW = {"17_1_water_quantity_assessment_transfers_master", "17_2_national_water_balance_master"}
+# The §17 tables appeared on 2026-10-23 and were profiled and registered on 2026-10-29 (DECISIONS D42): 17_1 per
+# district, 17_2 national (no district column; its rows are read as the location "ZA").
+NATIONAL = "17_2_national_water_balance_master"
+SUB_DISTRICT = {  # keyed by local municipality (`Region`), aggregated to districts when read (DECISIONS D46)
+    "18_1_water_access_and_coverage_master",
+    "18_2_infrastructure_operational_master",
+    "19_1_raw_water_tariff_master",
+    "19_2_municipal_water_tariff_master",
+    "19_3_water_quality_cost_master",
+}
 
 
 def test_every_new_table_is_registered_or_ignored_with_a_reason() -> None:
-    assert {u.table for u in CAT.unregistered} <= PENDING_REVIEW
+    assert not CAT.unregistered
     assert "16_2_swsa_strategic_water_matrix_master" in REG.ignored_tables
     new = [ds for ds in REG.datasets.values() if ds.db_module >= 6]
-    assert len(new) == 21
+    assert len(new) == 29
     for ds in new:
-        assert ds.location.column == "district_name", ds.table
+        if ds.table == NATIONAL:
+            assert ds.national and ds.location_sql() == "'ZA'" and ds.rows_sql() == ds.not_future_sql()
+        elif ds.table in SUB_DISTRICT:
+            assert ds.sub_district and ds.location.column == "Region"
+            assert all(c.agg in ("sum", "mean") for c in ds.columns.values() if c.role == "canonical"), ds.table
+        else:
+            assert ds.location.column == "district_name" and not ds.national, ds.table
+
+
+def test_local_municipalities_map_to_districts() -> None:
+    from app.core.municipalities import district_of, municipalities
+
+    assert len(municipalities()) == 213
+    assert district_of("!Kheis") == "DC8" and district_of("City of Cape Town Metropolitan Municipality") == "CPT"
+    assert district_of("Dr Beyers Naudé") == "DC10" and district_of("JB Marks ") == "DC40"
+    assert district_of("OR Tambo") == "DC15" and district_of("Alfred Nzo") == "DC44"
+    assert district_of("National") is None and district_of("<b>Subject Area</b>") is None
+    ds = REG.datasets["18_1_water_access_and_coverage_master"]
+    assert ds.date_sql() == "to_date(\"Time Frame\", 'FMMonth YYYY')" and "\"Category\" = 'Total'" in ds.rows_sql()
 
 
 def test_long_format_columns_read_one_variable() -> None:
@@ -93,6 +118,9 @@ def test_every_new_column_has_a_status_and_withheld_ones_a_reason() -> None:
         if REG.datasets[c.table].db_module < 6:
             continue
         for x in c.columns:
+            if c.table == "19_2_municipal_water_tariff_master" and x.column.startswith("Electricity cost"):
+                assert x.status == "duplicate"  # the 18.2 pump-station energy column copied under a cost name (D46)
+                continue
             assert x.status in ("live", "withheld"), (c.table, x.column)
             if x.status == "withheld":
                 assert x.reason and "not reviewed" not in x.reason, (c.table, x.column)

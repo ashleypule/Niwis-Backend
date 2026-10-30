@@ -32,6 +32,8 @@
 | 15 | Plausibility checks for the database view (2026-10-15): **reservoir columns, solar radiation, GRACE, the `4_3` record statistics and `4_6` fail and are withheld** | `hydrological_drought_master`, `meteorological_drought_master`, `satellite_remote_sensing`, `4_3`, `4_6` | P1 |
 | 18 | Constancy check (2026-10-16): **SGI frozen since Sep 2024 — served May 2002 – Aug 2024 only**; satellite soil moisture a constant fill before Mar 2015 (served from Mar 2015) | `hydrological_drought_master`, `satellite_remote_sensing` | P1 |
 | 17 | Rain on the newest day in 42 of 52 districts (2026-09-06): verify the last load | `6.1` | P3 |
+| 23 | §18 / §19 tables registered 2026-10-29 (D46): keyed by **local municipality** (mapped to districts); service-level percentages above 100 %, ±infinity and negative volumes, constants, a PDSI of ±900, a cost column that is a copy of an energy column | `18_x`, `19_x` | P1 |
+| 22 | §17 tables registered 2026-10-29 (D42): **17_1 transfers zero-filled from Jan 2025** (served to Dec 2024); **17_2 national balance implausible in its unit** (10 of 12 columns withheld). §18 / §19 tables (services, tariffs) appeared 2026-10-29: keyed by `Region` / `Time Frame`, infinities and negative NRW — pending profiling | `17_1`, `17_2`, `18_x`, `19_x` | P1 |
 | 16 | ~~New tables not registered~~ — registered 2026-10-20 (§21) | `8_1` … `16_1` | done |
 | 21 | §8–§16 tables checked (2026-10-20): **`8_1` reservoir storage is a placeholder** (51 districts at 100 % FSC every day); `9_1` flow families disagree; `10_1` SGI is white noise; `14.1` drinking-water values are copies of `13.1` effluent; no coordinates anywhere; rows dated up to 2026-12-31 | 21 tables | P1 |
 
@@ -404,3 +406,48 @@ and the drought Dam Storage KPI need it; `8_1` storage is a placeholder). (2) St
 coordinates for point layers. (3) One consistent flow family in `9_1`. (4) An SGI computed from the borehole levels.
 (5) `14.1` must hold drinking-water results, not copies of effluent values; `13.1` pH / DO / COD need their real units.
 (6) Remove rows dated after the load date and forward-filled days.
+
+## 22. §17 water-quantity tables — registered 2026-10-29 (P1); §18 / §19 tables pending
+
+**`17_1_water_quantity_assessment_transfers_master`** (5 152 rows, 16 districts × 322 months). Served. Findings for the
+data team: every transfer, loss, pumping-energy and deficit column is exactly 0 in all 16 districts from January 2025
+to October 2026 (served to December 2024, `valid_until`); donor-basin storage is 10.0–15.3 % FSC in every row (the
+Katse Dam is usually far fuller); the transfer rates differ by district although the schemes are national (11
+distinct Katse values across 16 districts in June 2024).
+
+**`17_2_national_water_balance_master`** (322 rows, one per month, no district). Only evapotranspiration and surface
+storage are served (consistent with ≈ 370 000 Mm³/yr and the ≈ 32 000 Mm³ national dam capacity). Withheld, with the
+national comparison in each reason (DECISIONS D42): precipitation (15 × too low), runoff (15 × too low), recharge
+(months above the national annual recharge), municipal / agricultural demand (10 × too high), environmental reserve
+(25 × too low), net IBT and industrial demand (constants), total demand and net balance (derived from the above).
+Surface storage is 25 600 Mm³ in every month since January 2024. Please confirm the units (the columns say Mm³ per
+month) or supply the national balance in Mm³/year.
+
+**`18_1` – `18_3`, `19_1` – `19_3`** (appeared 2026-10-29). Keyed by `Region` and `Time Frame` (18_3 by district and
+year), 2 852 rows each for 18_2 / 19_x. First look: `Computed_NRW_Percentage`, `Computed_Water_Loss_Ratio_Pct`,
+`Calculated_Demand_Growth_Pct`, `Pipe_Failure_Rate` and the 19_2 replacement cost hold `-inf` / `inf`; non-revenue
+water and losses are negative in some rows; 18_1's piped-water percentages reach 1 506 %; `Average_Duration_Of_Outages`
+is a constant (4.5). They stay unregistered until the `Region` key is mapped and the D1 checks are run.
+
+## 23. §18 water services and §19 tariff tables — registered 2026-10-29 (P1)
+
+Keyed by `Region` (local municipalities and metros; 18_1 also districts) and financial year, not by district and
+month: the API maps each region to its district (`app/reference/local_municipalities.csv`) and aggregates. Findings
+for the data team (DECISIONS D46):
+
+- **18_1**: one HTML fragment stored as a `Region`; `Time Frame` NULL in one row; the Urban / Rural split exists for
+  April 2026 only; the three service-level household counts are the same value in every year 1994–2026 per
+  municipality (a census snapshot) and their percentage columns reach 1 506 %, 6 684 % and 466 % (withheld); the
+  distance-to-water-point column holds three values; "Reliable Water" columns are filled for April 2026 only.
+- **18_2**: `Non_Revenue_Water_Percentage_pct`, `% Water Losses` and `% Water Demand Growth` are text with
+  thousands separators ("4 982.00"); the numeric `Computed_*` columns hold ±infinity (ratios of a zero base) and
+  negative NRW / losses (13 rows), 534 negative interruption and pipe-failure rows; `Average_Duration_Of_Outages` is
+  4.5 in every row; `Pipe_Age_Profile` is one text in every row; a `Region` "National" next to the municipalities.
+- **18_3**: `Drought_Severity_PDSI` runs from −708 to +913 (PDSI is about −10 … +10): withheld;
+  `Catchment_Precipitation_mm` is 5–116 per district-year, far below the districts' mean annual precipitation.
+- **19_1**: the raw water tariff and capital recovery charge are one national value per year (23 distinct values);
+  the SPI/SPEI pricing category is text.
+- **19_2**: the free allocation is 6 000 in every row; "Electricity cost (R/kWh)" equals 18_2's pump-station energy
+  (kWh/Ml) row for row; the infrastructure cost holds ±infinity and 534 negative rows; CPI / PPI is 37.7–65 %.
+- **19_3**: the four cost columns carry no unit (rand per year assumed); the WWTW penalty holds ±infinity and 40
+  negative rows.

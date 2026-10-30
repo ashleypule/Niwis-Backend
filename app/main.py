@@ -37,6 +37,9 @@ from app.middleware import (
     security_headers,
 )
 from app.modules import DATABASE_VIEW_MODULES, IMPLEMENTED_MODULES
+from app.modules.alerts.router import router as alerts_router
+from app.modules.blue_drop.router import router as blue_drop_router
+from app.modules.blue_drop.service import prewarm as prewarm_blue_drop
 from app.modules.categories import build_category_router
 from app.modules.categories import keep_warm as keep_categories_warm
 from app.modules.climate.router import router as climate_router
@@ -45,22 +48,35 @@ from app.modules.dams.router import router as dams_router
 from app.modules.dams.service import prewarm as prewarm_dams
 from app.modules.drought.router import router as drought_router
 from app.modules.drought.service import prewarm as prewarm_drought
+from app.modules.green_drop.router import router as green_drop_router
+from app.modules.green_drop.service import prewarm as prewarm_green_drop
 from app.modules.groundwater.router import router as groundwater_router
 from app.modules.groundwater.service import prewarm as prewarm_groundwater
 from app.modules.groundwater_reserve.router import router as groundwater_reserve_router
 from app.modules.groundwater_reserve.service import prewarm as prewarm_groundwater_reserve
+from app.modules.iwrm.router import router as iwrm_router
+from app.modules.iwrm.service import prewarm as prewarm_iwrm
+from app.modules.meta_pages.router import data_integration_router, governance_router
 from app.modules.rainfall.router import router as rainfall_router
 from app.modules.rainfall.service import prewarm as prewarm_rainfall
 from app.modules.runoff.router import router as runoff_router
 from app.modules.runoff.service import prewarm as prewarm_runoff
 from app.modules.runoff.service import prewarm_views as prewarm_runoff_views
+from app.modules.rwqo.router import router as rwqo_router
+from app.modules.rwqo.service import prewarm as prewarm_rwqo
+from app.modules.services.router import router as services_router
+from app.modules.services.service import prewarm as prewarm_services
 from app.modules.surface_water.router import router as surface_water_router
 from app.modules.surface_water.service import prewarm as prewarm_surface_water
+from app.modules.tariffs.router import router as tariffs_router
+from app.modules.tariffs.service import prewarm as prewarm_tariffs
 from app.modules.unavailable import router as unavailable_router
 from app.modules.vegetation.router import router as vegetation_router
 from app.modules.vegetation.service import prewarm as prewarm_vegetation
 from app.modules.water_quality.router import router as water_quality_router
 from app.modules.water_quality.service import prewarm as prewarm_water_quality
+from app.modules.water_quantity.router import router as water_quantity_router
+from app.modules.water_quantity.service import prewarm as prewarm_water_quantity
 from app.refdata.router import router as reference_router
 from app.refdata.router import search_router
 from app.registry.catalogue import get_catalogue
@@ -99,6 +115,13 @@ async def _warm(state: AppState) -> None:
         ("groundwater", lambda: prewarm_groundwater(state.data)),
         ("groundwater reserve", lambda: prewarm_groundwater_reserve(state.data)),
         ("water quality", lambda: prewarm_water_quality(state.data)),
+        ("water quantity", lambda: prewarm_water_quantity(state.data)),
+        ("iwrm", lambda: prewarm_iwrm(state.data)),
+        ("green drop", lambda: prewarm_green_drop(state.data)),
+        ("blue drop", lambda: prewarm_blue_drop(state.data)),
+        ("rwqo", lambda: prewarm_rwqo(state.data)),
+        ("services", lambda: prewarm_services(state.data)),
+        ("tariffs", lambda: prewarm_tariffs(state.data)),
         ("table statistics", state.meta.table_stats),
     ]
     for name, step in steps:
@@ -252,6 +275,16 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(groundwater_router)
     app.include_router(groundwater_reserve_router)
     app.include_router(water_quality_router)
+    app.include_router(water_quantity_router)
+    app.include_router(iwrm_router)
+    app.include_router(green_drop_router)
+    app.include_router(blue_drop_router)
+    app.include_router(rwqo_router)
+    app.include_router(services_router)
+    app.include_router(tariffs_router)
+    app.include_router(alerts_router)
+    app.include_router(data_integration_router)
+    app.include_router(governance_router)
     app.include_router(forecast_router)
     app.include_router(forecast_contract_router)  # ai / overview forecast keys that follow from the page forecasts
     for module in sorted(IMPLEMENTED_MODULES | DATABASE_VIEW_MODULES):

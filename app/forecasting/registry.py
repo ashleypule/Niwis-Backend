@@ -2,7 +2,8 @@
 
 `auto` is not a model: it runs the candidates (every non-experimental model the series and inputs allow), picks the one
 with the lowest backtest MASE and says why. `compare` runs every allowed model, experimental ones included, and keeps
-the same winner rule. GARCH is deliberately absent: it models volatility, not levels.
+the same winner rule; `auto-fast` keeps it over the quick models only (seconds per run). GARCH is deliberately
+absent: it models volatility, not levels.
 """
 
 from __future__ import annotations
@@ -35,8 +36,12 @@ MODELS: dict[str, type[ForecastModel]] = {
     )
 }
 BASELINES = ("naive", "seasonal-naive", "climatology", "moving-average")
-AUTO, COMPARE = "auto", "compare"
-CHOICES = (AUTO, COMPARE, *MODELS)
+AUTO, COMPARE, FAST = "auto", "compare", "auto-fast"
+# `auto-fast`: Auto over the models that fit in seconds (the baselines, ETS and LightGBM; no SARIMA order search,
+# Prophet, Random Forest or deep models) — what the district page forecasts and on-demand page forecasts use (D41)
+FAST_MODELS = (*BASELINES, "ets", "lightgbm")
+AUTO_CHOICES = (AUTO, COMPARE, FAST)
+CHOICES = (*AUTO_CHOICES, *MODELS)
 
 
 def allowed(model: type[ForecastModel], freq: Freq, n: int, has_inputs: bool) -> str | None:
@@ -56,11 +61,13 @@ def allowed(model: type[ForecastModel], freq: Freq, n: int, has_inputs: bool) ->
 def candidates(choice: str, freq: Freq, n: int, has_inputs: bool) -> list[str]:
     """Models a run fits: the chosen one plus the baselines, every allowed non-experimental model (auto), or every
     allowed model (compare). Exogenous models are candidates only when inputs are given."""
-    if choice in (AUTO, COMPARE):
+    if choice in AUTO_CHOICES:
         out = [
             k
             for k, m in MODELS.items()
-            if allowed(m, freq, n, has_inputs) is None and (choice == COMPARE or not m.experimental)
+            if allowed(m, freq, n, has_inputs) is None
+            and (choice == COMPARE or not m.experimental)
+            and (choice != FAST or k in FAST_MODELS)
         ]
         if has_inputs:  # a univariate model and its input-using twin both run; the backtest decides
             return out

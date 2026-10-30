@@ -382,6 +382,88 @@ variables:
   wrm_system_water_losses_pct: {label: "System Water Losses", unit: "%"}
   wrm_ecological_reserve_water_requirement_m3_yr: {label: "Ecological Reserve Water Requirement", unit: "m³/year"}
   wrm_return_flow_recycled_water_million_m3_yr: {label: "Return Flow Recycled Water", unit: "Mm³/year"}
+  # §17 water quantity (17_1 transfers per district, 17_2 national water balance; registered 2026-10-29, D42)
+  wqa_katse_to_vaal_transfer:        {label: "Katse to Vaal transfer", unit: "m³/day", metric: transfers}
+  wqa_tugela_vaal_transfer:          {label: "Tugela–Vaal transfer", unit: "m³/day", metric: transfers}
+  wqa_orange_river_system_transfer:  {label: "Orange River system transfer", unit: "m³/day", metric: transfers}
+  wqa_thukela_vaal_emergency_transfer: {label: "Thukela–Vaal emergency / regular transfer", unit: "m³/day", metric: transfers}
+  wqa_transfer_loss:                 {label: "Transfer losses (seepage, evaporation)", unit: "m³/day"}
+  wqa_transfer_pumping_energy:       {label: "Transfer pumping energy", unit: "kWh/Ml"}
+  wqa_donor_basin_storage_fsc:       {label: "Donor basin storage", unit: "% FSC", metric: storagePct}
+  wqa_receiving_demand_deficit:      {label: "Receiving system demand deficit", unit: "m³/day"}
+  nwb_map:                           {label: "Precipitation (national)", unit: "Mm³"}
+  nwb_aet:                           {label: "Actual evapotranspiration (national)", unit: "Mm³"}
+  nwb_mar:                           {label: "Runoff (national)", unit: "Mm³"}
+  nwb_groundwater_recharge:          {label: "Groundwater recharge (national)", unit: "Mm³"}
+  nwb_surface_storage:               {label: "Surface storage (national)", unit: "Mm³", metric: storageVolume}
+  nwb_net_ibt:                       {label: "Net inter-basin transfers (national)", unit: "Mm³"}
+  nwb_municipal_demand:              {label: "Municipal demand (national)", unit: "Mm³"}
+  nwb_agricultural_demand:           {label: "Agricultural demand (national)", unit: "Mm³"}
+  nwb_industrial_demand:             {label: "Industrial demand (national)", unit: "Mm³"}
+  nwb_environmental_reserve:         {label: "Environmental reserve (national)", unit: "Mm³"}
+  nwb_total_demand:                  {label: "Total demand (national)", unit: "Mm³"}
+  nwb_net_water_balance:             {label: "Net water balance (national)", unit: "Mm³"}
+  # §18 water services (18_1 access per local municipality, 18_2 operations per local municipality, 18_3 per district)
+  ws_total_households:            {label: "Total households", unit: "households", metric: populationServed}
+  ws_rdp_households:              {label: "Households at or above RDP level", unit: "households"}
+  ws_rdp_pct:                     {label: "Households at or above RDP level", unit: "%", metric: pipedAccess}
+  ws_piped_households:            {label: "Households with piped infrastructure", unit: "households"}
+  ws_reliable_households:         {label: "Households with reliable water", unit: "households"}
+  ws_reliable_pct:                {label: "Households with reliable water", unit: "%", metric: reliability}
+  ws_backlog_households:          {label: "Households below RDP level (backlog)", unit: "households"}
+  ws_backlog_pct:                 {label: "Households below RDP level (backlog)", unit: "%"}
+  ws_new_connections:             {label: "New connections installed", unit: "connections/year"}
+  ws_piped_dwelling_households:   {label: "Piped water inside the dwelling", unit: "households"}
+  ws_piped_yard_households:       {label: "Piped water on site / yard tap", unit: "households"}
+  ws_standpipe_households:        {label: "Communal standpipe within 200 m", unit: "households"}
+  ws_piped_dwelling_pct:          {label: "Piped water inside the dwelling", unit: "%"}
+  ws_piped_yard_pct:              {label: "Piped water on site / yard tap", unit: "%"}
+  ws_standpipe_pct:               {label: "Communal standpipe within 200 m", unit: "%"}
+  ws_distance_to_water_point:     {label: "Distance to the nearest water point (unserved households)", unit: "km"}
+  ws_schools_piped_pct:           {label: "Schools with piped water", unit: "%"}
+  ws_clinics_piped_pct:           {label: "Clinics with piped water", unit: "%"}
+  wo2_system_input_volume:        {label: "System input volume", unit: "L/year"}
+  wo2_revenue_water:              {label: "Revenue water", unit: "L/year"}
+  wo2_nrw_volume_l:               {label: "Non-revenue water", unit: "L/year"}
+  wo2_water_losses_l:             {label: "Water losses", unit: "L/year"}
+  wo2_daily_production:           {label: "Daily water production", unit: "m³/day"}
+  wo2_physical_losses:            {label: "Physical (real) losses", unit: "m³/day"}
+  wo2_nrw_pct:                    {label: "Non-revenue water", unit: "%", metric: nrw}
+  wo2_revenue_water_m3:           {label: "Revenue water", unit: "m³/day"}
+  wo2_nrw_m3:                     {label: "Non-revenue water volume", unit: "m³/day"}
+  wo2_commercial_losses:          {label: "Commercial (apparent) losses", unit: "m³/day"}
+  wo2_water_loss_ratio_pct:       {label: "Water loss ratio", unit: "%"}
+  wo2_demand_growth_pct:          {label: "Water demand growth", unit: "%"}
+  wo2_supply_pressure:            {label: "System supply pressure", unit: "kPa"}
+  wo2_unplanned_interruptions:    {label: "Unplanned supply interruptions", unit: "events/day"}
+  wo2_outage_duration:            {label: "Average outage duration", unit: "h"}
+  wo2_pump_energy:                {label: "Pump-station energy consumption", unit: "kWh/Ml"}
+  wo2_load_shedding_hours:        {label: "Load-shedding-induced interruptions", unit: "h/day"}
+  wo2_pipe_failure_rate:          {label: "Pipe failure rate", unit: "breaks/100 km/year"}
+  eo_settlement_extent:           {label: "Built settlement extent", unit: "km²"}
+  eo_informal_extent:             {label: "Informal settlement extent", unit: "km²"}
+  eo_reservoir_extent:            {label: "Water infrastructure / reservoir extent", unit: "km²"}
+  eo_pdsi:                        {label: "Drought severity (PDSI)", unit: "index"}
+  eo_climatic_water_deficit:      {label: "Climatic water deficit", unit: "mm/year"}
+  eo_catchment_precipitation:     {label: "Catchment precipitation", unit: "mm"}
+  # §19 tariffs (per local municipality)
+  tr_raw_water_tariff:            {label: "Raw water abstraction tariff", unit: "R/m³", metric: rawWaterTariff}
+  tr_drought_surcharge:           {label: "Drought-season surcharge", unit: "R/m³"}
+  tr_capital_recovery_charge:     {label: "Capital investment recovery charge", unit: "R/m³"}
+  tr_reservoir_storage_trigger:   {label: "Reservoir storage (scarcity trigger)", unit: "% FSC"}
+  tr_ibt_cost:                    {label: "Inter-basin transfer cost component", unit: "R/Ml"}
+  tr_energy_cost_per_ml:          {label: "Energy cost per Ml transferred", unit: "R/Ml"}
+  tr_mar_demand_ratio:            {label: "MAR / demand ratio", unit: "—"}
+  tm_block_tariff:                {label: "Block tariff rate", unit: "R/kL", metric: tariff}
+  tm_free_allocation:             {label: "Free basic water allocation", unit: "L/household/month"}
+  tm_treatment_cost:              {label: "Average treatment cost per kL", unit: "R/kL"}
+  tm_infrastructure_cost:         {label: "Infrastructure replacement and maintenance cost", unit: "R/year"}
+  tm_cpi_ppi:                     {label: "CPI and PPI affecting operational costs", unit: "%"}
+  tq_source_water_cost:           {label: "Source water (turbidity and contamination) cost", unit: "R/year"}
+  tq_chemical_dosing_cost:        {label: "Chemical dosing cost", unit: "R/kL"}
+  tq_algal_bloom_cost:            {label: "Algal bloom treatment cost", unit: "R/year"}
+  tq_wwtw_penalty:                {label: "WWTW compliance penalty", unit: "R/year"}
+  tr_spi_category:                {label: "SPI/SPEI pricing category", unit: "—"}
 datasets:
   # ------------------------------------------------------------------ DB Module 1 — Drought (spec §3)
   meteorological_drought_master:
@@ -1163,3 +1245,184 @@ datasets:
       "System_Water_Losses_pct": {var: wrm_system_water_losses_pct, role: canonical}
       "Ecological_Reserve_Water_Requirement_m3_yr": {var: wrm_ecological_reserve_water_requirement_m3_yr, role: canonical}
       "Return_Flow_Recycled_Water_million_m3_yr": {var: wrm_return_flow_recycled_water_million_m3_yr, role: canonical}
+
+  "17_1_water_quantity_assessment_transfers_master":
+    db_module: 17
+    module: water-quantity
+    serves: [water-quantity, iwrm]
+    category_modules: [water-quantity]
+    location: {column: district_name}
+    time: {kind: year_month, year: "year", month: "month", resolution: monthly}
+    key_columns: ["date"]
+    known_issues:
+      - "added 2026-10-23, registered 2026-10-29 (D42): 16 districts of the Vaal / Orange / Thukela transfer systems, one row per district-month 2000–2026"
+      - "donor basin storage is 10.0–15.3 % FSC in every row, far below the Katse Dam's usual level: served as stored, noted (DATA_GAPS §22)"
+      - "every transfer, loss, energy and deficit column is zero in all 16 districts from January 2025: served to December 2024 (valid_until)"
+    columns:
+      "Katse_to_Vaal_Daily_Transfer_m3_day": {var: wqa_katse_to_vaal_transfer, role: canonical, valid_until: 2024-12-31, valid_reason: "zero in every district and month from January 2025 (filled, not measured): served to December 2024"}
+      "Tugela_Vaal_Daily_Transfer_m3_day": {var: wqa_tugela_vaal_transfer, role: canonical, valid_until: 2024-12-31, valid_reason: "zero in every district and month from January 2025 (filled, not measured): served to December 2024"}
+      "Orange_River_System_Transfer_m3_day": {var: wqa_orange_river_system_transfer, role: canonical, valid_until: 2024-12-31, valid_reason: "zero in every district and month from January 2025 (filled, not measured): served to December 2024"}
+      "Thukela_Vaal_Emergency_Regular_Transfer_m3_day": {var: wqa_thukela_vaal_emergency_transfer, role: canonical, valid_until: 2024-12-31, valid_reason: "zero in every district and month from January 2025 (filled, not measured): served to December 2024"}
+      "Transfer_Loss_Seepage_Evaporation_m3_day": {var: wqa_transfer_loss, role: canonical, valid_until: 2024-12-31, valid_reason: "zero in every district and month from January 2025 (filled, not measured): served to December 2024"}
+      "Transfer_Pumping_Energy_kWh_Ml": {var: wqa_transfer_pumping_energy, role: canonical, valid_until: 2024-12-31, valid_reason: "zero in every district and month from January 2025 (filled, not measured): served to December 2024"}
+      "Donor_Basin_Storage_FSC_pct": {var: wqa_donor_basin_storage_fsc, role: canonical, note: "10–15.3 % FSC in every row (the Katse Dam is usually far fuller): shown as stored"}
+      "Receiving_System_Demand_Deficit_m3_day": {var: wqa_receiving_demand_deficit, role: canonical, valid_until: 2024-12-31, valid_reason: "zero in every district and month from January 2025 (filled, not measured): served to December 2024"}
+
+  "17_2_national_water_balance_master":
+    db_module: 17
+    module: water-quantity
+    serves: [water-quantity, iwrm]
+    category_modules: [water-quantity]
+    location: {column: null}
+    time: {kind: year_month, year: "Year", month: "Month", resolution: monthly}
+    key_columns: ["Date"]
+    known_issues:
+      - "added 2026-10-23, registered 2026-10-29 (D42): one national row per month 2000-01 – 2026-10 (no district breakdown)"
+      - "most columns are implausible in their stated unit (Mm³ per month): precipitation and runoff ≈ 15 × too low, recharge and the sector demands 3–10 × too high against the national totals (D42, DATA_GAPS §22); only evapotranspiration and surface storage are served"
+    columns:
+      "MAP_Mm3": {var: nwb_map, role: withheld, reason: "≈ 3 200 Mm³ per month (≈ 38 000 Mm³/year) where South Africa's mean annual precipitation is ≈ 600 000 Mm³ (490 mm over 1.22 million km²): 15 × too low for its unit"}
+      "AET_Mm3": {var: nwb_aet, role: canonical, note: "≈ 31 000 Mm³ per month (≈ 370 000 Mm³/year, about 60 % of the national precipitation): plausible, though 8–10 × the table's own precipitation column, which is withheld"}
+      "MAR_Mm3": {var: nwb_mar, role: withheld, reason: "≈ 265 Mm³ per month (≈ 3 200 Mm³/year) where the national mean annual runoff is ≈ 49 000 Mm³ (WR2012): 15 × too low for its unit"}
+      "Groundwater_Recharge_Mm3": {var: nwb_groundwater_recharge, role: withheld, reason: "single months up to 99 000 Mm³ and ≈ 104 000 Mm³/year where the national recharge is ≈ 30 000 Mm³/year (GRA2): impossible for its unit"}
+      "Surface_Storage_Mm3": {var: nwb_surface_storage, role: canonical, note: "25 600–32 200 Mm³, consistent with the capacity of the national dams (≈ 32 000 Mm³); 25 600 in every month since Jan 2024"}
+      "Net_IBT_Mm3": {var: nwb_net_ibt, role: withheld, reason: "one value (83.33) in every row"}
+      "Municipal_Demand_Mm3": {var: nwb_municipal_demand, role: withheld, reason: "≈ 3 900 Mm³ per month, about the country's annual municipal use (≈ 4 000 Mm³/year, NWRS): 10 × too high for its unit"}
+      "Agricultural_Demand_Mm3": {var: nwb_agricultural_demand, role: withheld, reason: "≈ 10 000 Mm³ per month, above the country's annual irrigation use (≈ 9 000 Mm³/year, NWRS): 10 × too high for its unit"}
+      "Industrial_Demand_Mm3": {var: nwb_industrial_demand, role: withheld, reason: "one value (153) in every row"}
+      "Environmental_Reserve_Mm3": {var: nwb_environmental_reserve, role: withheld, reason: "≈ 32 Mm³ per month (≈ 380 Mm³/year) where the Reserve is a legal share of the ≈ 49 000 Mm³ mean annual runoff (typically 10–30 %): 25 × too low for its unit"}
+      "Total_Demand_Mm3": {var: nwb_total_demand, role: withheld, reason: "the sum of the withheld sector demands (≈ 14 000 Mm³ per month, about the country's total annual use of ≈ 15 000 Mm³)"}
+      "Net_Water_Balance_Mm3": {var: nwb_net_water_balance, role: withheld, reason: "computed from the withheld precipitation, runoff, recharge and demand columns"}
+
+  "18_1_water_access_and_coverage_master":
+    db_module: 18
+    module: services
+    serves: [services]
+    category_modules: [services]
+    location: {column: Region, level: local_municipality}
+    time: {kind: month_name_year, column: "Time Frame", resolution: annual}
+    key_columns: ["Category"]
+    row_filter: "\"Category\" = 'Total'"
+    known_issues:
+      - "added 2026-10-29, registered 2026-10-29 (D46): one row per local municipality (145 regions, 141 mapped to districts) and financial year ('April YYYY', 1994–2026); the Total category rows are read (Urban / Rural splits exist for April 2026 only); one stray HTML row and 'National' are not read"
+      - "the three service-level household counts are one value per municipality repeated in every year (a census snapshot), their percentages reach 1 506 %: counts served as a static snapshot, percentages withheld"
+    columns:
+      "Total Households": {var: ws_total_households, role: canonical, agg: sum}
+      "At or Above RDP Households": {var: ws_rdp_households, role: canonical, agg: sum}
+      "At or Above RDP Percentage": {var: ws_rdp_pct, role: canonical, agg: mean, note: "district value = mean of its local municipalities (the module recomputes it from the household counts)"}
+      "Piped Infrastructure Households": {var: ws_piped_households, role: canonical, agg: sum}
+      "Reliable Water Households": {var: ws_reliable_households, role: canonical, agg: sum, note: "one snapshot (April 2026) in 149 rows"}
+      "Reliable Water Percentage": {var: ws_reliable_pct, role: canonical, agg: mean, note: "one snapshot (April 2026) in 149 rows"}
+      "Households Below RDP / Backlog (#)": {var: ws_backlog_households, role: canonical, agg: sum}
+      "Households Below RDP / Backlog (%)": {var: ws_backlog_pct, role: canonical, agg: mean}
+      "Annual New Connections Installed (#/year)": {var: ws_new_connections, role: canonical, agg: sum}
+      "Piped Water Inside Dwelling (#)": {var: ws_piped_dwelling_households, role: canonical, agg: sum, note: "one value per municipality in every year (a census snapshot repeated)"}
+      "Piped Water On Site / Yard Tap (#)": {var: ws_piped_yard_households, role: canonical, agg: sum, note: "one value per municipality in every year (a census snapshot repeated)"}
+      "Communal Standpipe < 200m (#)": {var: ws_standpipe_households, role: canonical, agg: sum, note: "one value per municipality in every year (a census snapshot repeated)"}
+      "Piped Water Inside Dwelling (%)": {var: ws_piped_dwelling_pct, role: withheld, reason: "a static household count divided by the year's total households: up to 1 506 %, impossible for a share"}
+      "Piped Water On Site / Yard Tap (%)": {var: ws_piped_yard_pct, role: withheld, reason: "a static household count divided by the year's total households: up to 6 684 %, impossible for a share"}
+      "Communal Standpipe < 200m (%)": {var: ws_standpipe_pct, role: withheld, reason: "a static household count divided by the year's total households: up to 466 %, impossible for a share"}
+      "Distance to Nearest Water Point for Unserved HH (km)": {var: ws_distance_to_water_point, role: withheld, reason: "three values in the whole table, one per municipality in every year"}
+      "Schools with Piped Water (%)": {var: ws_schools_piped_pct, role: canonical, agg: mean}
+      "Clinics with Piped Water (%)": {var: ws_clinics_piped_pct, role: canonical, agg: mean}
+
+  "18_2_infrastructure_operational_master":
+    db_module: 18
+    module: services
+    serves: [services, tariffs]
+    category_modules: [services]
+    location: {column: Region, level: local_municipality}
+    time: {kind: year, column: Standardized_Year, resolution: annual}
+    key_columns: ["Time Frame", "Non_Revenue_Water_Percentage_pct", "% Water Losses", "% Water Demand Growth", "Pipe_Age_Profile_pct_by_decade"]
+    exclude_locations: ["National"]
+    known_issues:
+      - "added 2026-10-29, registered 2026-10-29 (D46): 124 local municipalities and metros × 23 years (2004–2026); the text percentage columns ('4 982.00') are not read, the computed numeric ones are"
+      - "ratios of a zero base are stored as infinity and some volumes are negative: served inside their valid ranges"
+    columns:
+      "System input volume (litres)": {var: wo2_system_input_volume, role: canonical, agg: sum}
+      "Revenue water (litres)": {var: wo2_revenue_water, role: canonical, agg: sum}
+      "Non-Revenue water (litres)": {var: wo2_nrw_volume_l, role: canonical, agg: sum, valid_range: [0, null], range_reason: "a volume cannot be negative (13 rows)"}
+      "Water Losses (litres)": {var: wo2_water_losses_l, role: canonical, agg: sum, valid_range: [0, null], range_reason: "a volume cannot be negative (13 rows)"}
+      "Daily_Water_Production_Volume_m3_day": {var: wo2_daily_production, role: canonical, agg: sum}
+      "Physical_Losses_Real_Losses_m3_day": {var: wo2_physical_losses, role: canonical, agg: sum, valid_range: [0, null], range_reason: "a loss cannot be negative (13 rows)"}
+      "Computed_NRW_Percentage": {var: wo2_nrw_pct, role: canonical, agg: mean, valid_range: [0, 100], range_reason: "a share of the input volume (6 infinite and 13 negative rows: ratios of a zero or negative base)"}
+      "Revenue_Water_m3_day": {var: wo2_revenue_water_m3, role: canonical, agg: sum}
+      "NRW_Volume_m3_day": {var: wo2_nrw_m3, role: canonical, agg: sum, valid_range: [0, null], range_reason: "a volume cannot be negative (13 rows)"}
+      "Commercial_Losses_m3_day": {var: wo2_commercial_losses, role: canonical, agg: sum, valid_range: [0, null], range_reason: "a loss cannot be negative (423 rows)"}
+      "Computed_Water_Loss_Ratio_Pct": {var: wo2_water_loss_ratio_pct, role: canonical, agg: mean, valid_range: [0, 100], range_reason: "a share of the input volume (6 infinite and 13 negative rows)"}
+      "Calculated_Demand_Growth_Pct": {var: wo2_demand_growth_pct, role: canonical, agg: mean, valid_range: [-100, null], range_reason: "21 infinite rows (growth from a zero base)"}
+      "System_Supply_Pressure_kPa_bar": {var: wo2_supply_pressure, role: canonical, agg: mean}
+      "Daily_Unplanned_Supply_Interruptions_events_per_day": {var: wo2_unplanned_interruptions, role: canonical, agg: mean, valid_range: [0, null], range_reason: "528 infinite and 534 negative rows: a count of events cannot be negative"}
+      "Average_Duration_Of_Outages_hours_per_event": {var: wo2_outage_duration, role: withheld, reason: "one value (4.5 h) in every row"}
+      "Pump_Station_Energy_Consumption_kWh_Ml": {var: wo2_pump_energy, role: canonical, agg: mean}
+      "Load_Shedding_Induced_Interruptions_hours_per_day": {var: wo2_load_shedding_hours, role: canonical, agg: mean}
+      "Pipe_Failure_Rate_breaks_per_100km_year": {var: wo2_pipe_failure_rate, role: canonical, agg: mean, valid_range: [0, null], range_reason: "528 infinite and 534 negative rows: a rate cannot be negative"}
+
+  "18_3_sansa_eo_support_for_services_masters":
+    db_module: 18
+    module: services
+    serves: [services]
+    category_modules: [services]
+    location: {column: district_name}
+    time: {kind: year, column: Year, resolution: annual}
+    known_issues: ["added 2026-10-29, registered 2026-10-29 (D46): one row per district-year 2000–2026 (earth-observation extents and climate indices)"]
+    columns:
+      "Settlement_Extent_Built_km2": {var: eo_settlement_extent, role: canonical}
+      "Informal_Settlements_Extent_km2": {var: eo_informal_extent, role: canonical}
+      "Water_Infrastructure_Reservoir_Extent_km2": {var: eo_reservoir_extent, role: canonical}
+      "Drought_Severity_PDSI": {var: eo_pdsi, role: withheld, reason: "−708 to +913 where the Palmer Drought Severity Index runs from about −10 to +10: impossible for its definition"}
+      "Climatic_Water_Deficit_mm": {var: eo_climatic_water_deficit, role: canonical}
+      "Catchment_Precipitation_mm": {var: eo_catchment_precipitation, role: canonical, note: "5–116 mm per district-year, far below the districts' mean annual precipitation: shown as stored (unit as named)"}
+
+  "19_1_raw_water_tariff_master":
+    db_module: 19
+    module: tariffs
+    serves: [tariffs]
+    category_modules: [tariffs]
+    location: {column: Region, level: local_municipality}
+    time: {kind: year, column: Standardized_Year, resolution: annual}
+    key_columns: ["Time Frame"]
+    exclude_locations: ["National"]
+    known_issues: ["added 2026-10-29, registered 2026-10-29 (D46): 124 local municipalities and metros × 23 years (2004–2026); the raw water tariff and the capital recovery charge are one national value per year (23 distinct values)"]
+    columns:
+      "Raw water abstraction tariff (R/m³)": {var: tr_raw_water_tariff, role: canonical, agg: mean, note: "one value per year, identical in every municipality"}
+      "Drought-season surcharge (R/m³)": {var: tr_drought_surcharge, role: canonical, agg: mean}
+      "Capital investment recovery charge (R/m³)": {var: tr_capital_recovery_charge, role: canonical, agg: mean, note: "one value per year, identical in every municipality"}
+      "Reservoir storage % (scarcity trigger) (% FSC)": {var: tr_reservoir_storage_trigger, role: canonical, agg: mean}
+      "Inter-basin transfer cost component (R/Ml)": {var: tr_ibt_cost, role: canonical, agg: mean}
+      "Energy cost per Ml transferred (R/Ml)": {var: tr_energy_cost_per_ml, role: canonical, agg: mean}
+      "MAR_demand_ratio": {var: tr_mar_demand_ratio, role: canonical, agg: mean}
+      "SPI/SPEI category (D0–D4 affects pricing) (dimensionless)": {var: tr_spi_category, role: unused, note: "a text drought class per row; the drought page classes are computed from the indices"}
+
+  "19_2_municipal_water_tariff_master":
+    db_module: 19
+    module: tariffs
+    serves: [tariffs]
+    category_modules: [tariffs]
+    location: {column: Region, level: local_municipality}
+    time: {kind: year, column: Standardized_Year, resolution: annual}
+    key_columns: ["Time Frame", "Non-revenue water reducing revenue efficiency (% of production)", "Demand projections for tariff planning (capita)"]
+    exclude_locations: ["National"]
+    known_issues: ["added 2026-10-29, registered 2026-10-29 (D46): 124 local municipalities and metros × 23 years (2004–2026)"]
+    columns:
+      "Block tariff rates (R/kL per consumption block)": {var: tm_block_tariff, role: canonical, agg: mean, note: "one rate per municipality-year (no consumption blocks)"}
+      "6 kL/month free allocation status (L/household/month)": {var: tm_free_allocation, role: withheld, reason: "one value (6 000 L) in every row"}
+      "Average treatment cost per kL produced (R/kL)": {var: tm_treatment_cost, role: canonical, agg: mean}
+      "Electricity cost for pumping and treatment (R/kWh)": {var: wo2_pump_energy, role: duplicate, note: "identical to the 18.2 pump-station energy consumption (kWh/Ml) in every row; not a cost in R/kWh"}
+      "Infrastructure replacement and maintenance cost (R/year)": {var: tm_infrastructure_cost, role: canonical, agg: sum, valid_range: [0, null], range_reason: "528 infinite and 534 negative rows: a cost cannot be negative"}
+      "CPI and PPI affecting operational costs (%)": {var: tm_cpi_ppi, role: canonical, agg: mean, note: "37.7–65 % in every year: shown as stored"}
+
+  "19_3_water_quality_cost_master":
+    db_module: 19
+    module: tariffs
+    serves: [tariffs]
+    category_modules: [tariffs]
+    location: {column: Region, level: local_municipality}
+    time: {kind: year, column: Standardized_Year, resolution: annual}
+    key_columns: ["Time Frame"]
+    exclude_locations: ["National"]
+    known_issues: ["added 2026-10-29, registered 2026-10-29 (D46): 124 local municipalities and metros × 23 years (2004–2026); the columns carry no unit in the database (costs in rand assumed from spec §19.3)"]
+    columns:
+      "Source water (Turbidity and contamination)": {var: tq_source_water_cost, role: canonical, agg: sum, note: "22 distinct values: one per year for most municipalities"}
+      "Chemical dosing cost": {var: tq_chemical_dosing_cost, role: canonical, agg: mean}
+      "Algal bloom treatment": {var: tq_algal_bloom_cost, role: canonical, agg: sum, note: "19 distinct values"}
+      "WWTW compliance penalty": {var: tq_wwtw_penalty, role: canonical, agg: sum, valid_range: [0, null], range_reason: "32 infinite and 40 negative rows: a penalty cannot be negative"}

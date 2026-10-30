@@ -23,7 +23,7 @@ import pandas as pd
 
 from app.core.thresholds import drought_class, thresholds
 from app.forecasting.base import PANDAS_FREQ, Z90, ForecastModel, Freq, ModelError, future_index
-from app.forecasting.registry import AUTO, BASELINES, COMPARE, MODELS, allowed, candidates
+from app.forecasting.registry import AUTO_CHOICES, BASELINES, MODELS, allowed, candidates
 from app.forecasting.statistical import ETS, SARIMA
 from app.forecasting.validation import (
     Backtest,
@@ -199,7 +199,7 @@ class Run:
     def models(self) -> tuple[list[str], list[int], dict[str, str]]:
         n, has_x = len(self.y), bool(self.inputs)
         choice = self.spec.model
-        if choice not in (AUTO, COMPARE):
+        if choice not in AUTO_CHOICES:
             why = allowed(MODELS[choice], self.freq, n, has_x)
             if why:
                 raise SeriesError(why)
@@ -219,7 +219,7 @@ class Run:
                 skipped[m] = f"needs {MODELS[m].minimum(self.freq)} periods before the first backtest origin"
             else:
                 keep.append(m)
-        if choice not in (AUTO, COMPARE) and choice in skipped:
+        if choice not in AUTO_CHOICES and choice in skipped:
             raise SeriesError(f"{MODELS[choice].label} {skipped[choice]}: choose a shorter horizon")
         return keep, origins, skipped
 
@@ -259,7 +259,7 @@ class Run:
         clim = ok.get("climatology")
         scores = {m: metrics(bt, clim, self.h, self.signed) for m, bt in ok.items()}
         choice = self.spec.model
-        if choice in (AUTO, COMPARE):
+        if choice in AUTO_CHOICES:
             winner = min(ok, key=lambda m: (_num(scores[m].get("mase")), list(MODELS).index(m)))
         elif choice in ok:
             winner = choice
@@ -292,7 +292,7 @@ class Run:
     def why(self, winner: str, scores: dict[str, dict[str, Any]], choice: str) -> str:
         w = MODELS[winner].label
         mase = scores[winner].get("mase")
-        if choice not in (AUTO, COMPARE):
+        if choice not in AUTO_CHOICES:
             return f"{w} was requested."
         others = sorted(
             ((m, s.get("mase")) for m, s in scores.items() if m != winner and s.get("mase") is not None),

@@ -152,3 +152,23 @@ def test_wq_guidelines_match_the_frontend_config() -> None:
     for g in thresholds()["wq_guidelines"]["params"]:
         bounds = "".join(f", {k}: {g[k]:g}" for k in ("min", "max") if k in g)
         assert re.search(rf"id: '{g['id']}', label: '[^']*', unit: '[^']*'{re.escape(bounds)}(\.0)?,", ts), g["id"]
+
+
+def test_compliance_bands_and_effluent_limits_match_ts() -> None:
+    from app.core.thresholds import blue_drop_band, effluent_pass, green_drop_band, pes_class, rwqo_pass, thresholds
+
+    assert [green_drop_band(v) for v in (95, 70, 50, 30, 10)] == ["Excellent", "Good", "Moderate", "Poor", "Critical"]
+    assert [blue_drop_band(v) for v in (95, 90, 70, 50, 10)] == ["Excellent", "Good", "Moderate", "Poor", "Critical"]
+    for line in (
+        "if (score >= 90) return 'Excellent';",
+        "if (score >= 95) return 'Excellent';",
+        "if (score >= 30) return 'Poor';",
+    ):
+        assert line in TS
+    for lim in thresholds()["effluent_limits"]["params"]:
+        assert re.search(rf"(?<![A-Za-z]){lim['id']}: \{{ label: '{re.escape(lim['label'])}'", TS), lim["id"]
+        if "max" in lim:
+            assert re.search(rf"(?<![A-Za-z]){lim['id']}: \{{.*max: {lim['max']:g}(\.0)?", TS), lim["id"]
+    assert effluent_pass("tss", 25) and not effluent_pass("tss", 25.1) and not effluent_pass("ph", 5.4)
+    assert rwqo_pass("do", 5.0) and not rwqo_pass("do", 4.9) and not rwqo_pass("tp", 0.13)
+    assert [pes_class(v) for v in (95, 85, 65, 45, 25, 5)] == ["A", "B", "C", "D", "E", "F"]

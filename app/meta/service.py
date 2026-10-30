@@ -62,7 +62,7 @@ class MetaService:
                 st.error = "table not found"
                 return st
             st.exists = True
-            d, end, loc = ds.date_sql(), ds.period_end_sql(), ident(ds.location.column)
+            d, end, loc = ds.date_sql(), ds.period_end_sql(), ds.location_sql()
             row = await self.db.fetchrow_slow(  # whole-table statistics: background, cached for an hour
                 f"SELECT count(*) AS n, count(DISTINCT {loc}) AS locs, min({d}) AS first, max({d}) AS last, "
                 f"max({end}) AS covered_to FROM {ds.fq} WHERE {ds.rows_sql()}"  # rows after today never count
@@ -71,7 +71,10 @@ class MetaService:
             st.rows, st.locations = int(row["n"]), int(row["locs"])
             st.first_date, st.last_date, st.covered_to = row["first"], row["last"], row["covered_to"]
             if st.first_date and st.last_date:
-                expected = len(districts()) * _periods(st.first_date, st.last_date, ds.time.resolution)
+                n_locs = (
+                    1 if ds.national else (st.locations or len(districts())) if ds.sub_district else len(districts())
+                )
+                expected = n_locs * _periods(st.first_date, st.last_date, ds.time.resolution)
                 st.completeness_pct = round(min(100.0, 100.0 * st.rows / expected), 2) if expected else None
             cat = await self.db.fetchrow(
                 "SELECT pg_total_relation_size(to_regclass($1)) AS size, "
@@ -154,6 +157,8 @@ class MetaService:
         """
         col, loc = ds.time.column, ds.location.column
         assert col
+        if loc is None:  # a national table: one row per period, a plain max() is cheap
+            return f"SELECT max({ident(col)}) FROM {ds.fq} WHERE {ds.rows_sql()}"
         c, lc, t = ident(col), ident(loc), ds.fq
         leading = await self.db.fetchval(
             "SELECT EXISTS (SELECT 1 FROM pg_index i "

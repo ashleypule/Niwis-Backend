@@ -141,12 +141,29 @@ def _span(sources: Iterable[str], coverage: Coverage) -> tuple[dt.date, dt.date]
     return min(a for a, _ in spans), max(b for _, b in spans)
 
 
+def _forecast_end(body: Mapping[str, Any]) -> dt.date | None:
+    """A forecast response (`forecast` block, CONTRACT_CHANGES §15.2) legitimately carries values up to the end of
+    its horizon: the last day of the month `horizon` periods after `forecastStart`."""
+    fc = body.get("forecast")
+    if not isinstance(fc, Mapping):
+        return None
+    start, horizon = _date(fc.get("forecastStart")), fc.get("horizon")
+    if start is None or not isinstance(horizon, int) or horizon < 1:
+        return None
+    months = start.year * 12 + start.month - 1 + horizon  # first month after the horizon
+    return dt.date(months // 12, months % 12 + 1, 1) - dt.timedelta(days=1)
+
+
 def coverage_violations(body: Mapping[str, Any], coverage: Coverage) -> list[str]:
-    """Non-null values dated outside the first/last record of the response's source tables."""
+    """Non-null values dated outside the first/last record of the response's source tables (a forecast response may
+    reach to the end of its horizon)."""
     span = _span(body.get("source") or [], coverage)
     if span is None:
         return []
     first, last = span
+    fc_end = _forecast_end(body)
+    if fc_end is not None:
+        last = max(last, fc_end)
     out: list[str] = []
 
     def check(d: dt.date | None, what: str, lo: dt.date = first, hi: dt.date = last) -> None:

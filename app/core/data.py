@@ -16,11 +16,11 @@ from typing import Any
 import pandas as pd
 
 from app.config import Settings
-from app.core import districts
+from app.core import districts, municipalities
 from app.core.cache import Cache
 from app.core.errors import DataUnavailable
-from app.db import Database, ident
-from app.registry.registry import Dataset, Registry
+from app.db import Database
+from app.registry.registry import NATIONAL_CODE, Dataset, Registry
 
 COLS = ["district", "date", "value"]
 log = logging.getLogger("niwis.data")
@@ -52,9 +52,18 @@ class DataAccess:
         SQL filters compare names exactly, but tables differ in case ("UMgungundlovu", "Pixley Ka Seme" in 9_1) and in
         old names; discovering the table's own spellings keeps every district in scope. Indexed tables are read with
         an index skip-scan (one probe per district), others with one DISTINCT scan."""
-        loc = ident(ds.location.column)
+        if ds.national:
+            return {NATIONAL_CODE: (NATIONAL_CODE,)}
+        loc = ds.location_sql()
 
         async def load() -> dict[str, tuple[str, ...]]:
+            if ds.sub_district:  # every local-municipality spelling, grouped by its district
+                out_lm: dict[str, set[str]] = {}
+                for r in await self.db.fetch(f"SELECT DISTINCT {loc} FROM {ds.fq} WHERE {loc} IS NOT NULL"):
+                    code = municipalities.district_of(str(r[0]))
+                    if code is not None:
+                        out_lm.setdefault(code, set()).add(str(r[0]))
+                return {k: tuple(sorted(v)) for k, v in out_lm.items()}
             indexed = await self.db.fetchval(
                 "SELECT EXISTS (SELECT 1 FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid "
                 "AND a.attnum = i.indkey[0] WHERE i.indrelid = to_regclass($1) AND a.attname = $2)",
@@ -79,7 +88,16 @@ class DataAccess:
         return res
 
     async def names(self, ds: Dataset, code: str) -> list[str]:
-        """Every spelling of a district to match in `ds`: the known aliases plus those found in the table."""
+        """Every spelling of a district to match in `ds`: the known aliases plus those found in the table. A national
+        table has one location, "ZA"."""
+        if ds.national:
+            return [NATIONAL_CODE] if code == NATIONAL_CODE else []
+        if ds.sub_district:  # the table's own spellings of the district's local municipalities (no aliases)
+            try:
+                return list((await self.spellings(ds)).get(code, ()))
+            except Exception:
+                log.warning("local-municipality discovery failed", extra={"table": ds.table})
+                return []
         d = districts.by_code(code)
         if d is None:
             return []
@@ -91,20 +109,34 @@ class DataAccess:
         return sorted(known)
 
     @staticmethod
-    def _frame(rows: list[Any]) -> pd.DataFrame:
+    def _frame(rows: list[Any], ds: Dataset | None = None, agg: str | None = None) -> pd.DataFrame:
+        """district, date, value. A local-municipality table's rows are mapped to their districts and combined per
+        district-period by `agg` (sum / mean; the registry column's `agg`, mean by default)."""
         df = pd.DataFrame([tuple(r) for r in rows], columns=COLS)
         if df.empty:
             return df
-        codes = {n: (d.code if (d := districts.resolve(n)) else None) for n in df["district"].unique()}
+        sub = ds is not None and ds.sub_district
+        codes = {
+            n: NATIONAL_CODE
+            if n == NATIONAL_CODE
+            else municipalities.district_of(n)
+            if sub
+            else (d.code if (d := districts.resolve(n)) else None)
+            for n in df["district"].unique()
+        }
         df["district"] = df["district"].map(codes)
         df = df.dropna(subset=["district"])
         df["date"] = pd.to_datetime(df["date"])
         df["value"] = pd.to_numeric(df["value"], errors="coerce").astype(float)
+        if sub:
+            df = df.dropna(subset=["value"]).groupby(["district", "date"], as_index=False)["value"].agg(agg or "mean")
         return df.reset_index(drop=True)
 
-    async def _cached(self, key: str, sql: str, *args: Any) -> pd.DataFrame:
+    async def _cached(
+        self, key: str, sql: str, *args: Any, ds: Dataset | None = None, agg: str | None = None
+    ) -> pd.DataFrame:
         async def load() -> pd.DataFrame:
-            return self._frame(await self.db.fetch(sql, *args))
+            return self._frame(await self.db.fetch(sql, *args), ds=ds, agg=agg)
 
         df: pd.DataFrame = await self.cache.get_or_set(key, self.settings.cache_ttl_long_series_s, load)
         return df
@@ -114,7 +146,7 @@ class DataAccess:
     async def monthly(self, var: str) -> pd.DataFrame:
         """One value per district-month (whole record)."""
         ds, col = self.source(var)
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        c, loc, d = ds.column_sql(col), ds.location_sql(), ds.date_sql()
         if ds.time.resolution == "monthly" and ds.columns[col].repeats is None and not ds.duplicate_rows:
             sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
         elif ds.time.resolution == "monthly" or ds.columns[col].repeats == "monthly":  # one value per month
@@ -124,12 +156,12 @@ class DataAccess:
             )
         else:
             raise ValueError(f"{var} is not a monthly variable")
-        return await self._cached(f"data:monthly:{var}", sql)
+        return await self._cached(f"data:monthly:{var}", sql, ds=ds, agg=ds.columns[col].agg)
 
     async def annual(self, var: str) -> pd.DataFrame:
         """One value per district-year (annual tables, or annual values repeated on daily rows)."""
         ds, col = self.source(var)
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        c, loc, d = ds.column_sql(col), ds.location_sql(), ds.date_sql()
         if ds.time.resolution == "annual" and not ds.duplicate_rows:
             sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
         elif ds.time.resolution == "annual" or ds.columns[col].repeats == "annual":  # one value per year
@@ -139,7 +171,7 @@ class DataAccess:
             )
         else:
             raise ValueError(f"{var} is not an annual variable")
-        return await self._cached(f"data:annual:{var}", sql)
+        return await self._cached(f"data:annual:{var}", sql, ds=ds, agg=ds.columns[col].agg)
 
     async def daily_window_stats(
         self, var: str, start: dt.date, end: dt.date, thresholds: tuple[float, ...] = ()
@@ -149,7 +181,7 @@ class DataAccess:
         Columns: district, sum, days, max, max_date, last_ge_<t>, ge_<t>…  (last_ge = last date with value ≥ t).
         """
         ds, col = self.source(var)
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        c, loc, d = ds.column_sql(col), ds.location_sql(), ds.date_sql()
         extra = "".join(
             f", count(*) FILTER (WHERE {c} >= {float(t)!r}), max({d}) FILTER (WHERE {c} >= {float(t)!r})"
             for t in thresholds
@@ -186,7 +218,7 @@ class DataAccess:
         returned only when all districts in `factors` have a value.
         """
         ds, col = self.source(var)
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        c, loc, d = ds.column_sql(col), ds.location_sql(), ds.date_sql()
         names: list[str] = []
         facs: list[float] = []
         for code, f in factors.items():
@@ -218,7 +250,7 @@ class DataAccess:
         Only exceedance rows travel and are cached, so arbitrary windows cannot fill memory with daily slices.
         """
         ds, col = self.source(var)
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        c, loc, d = ds.column_sql(col), ds.location_sql(), ds.date_sql()
         names: list[str] = []
         thr: list[float] = []
         for code, t in thresholds.items():
@@ -240,7 +272,7 @@ class DataAccess:
         table (500 000 rows, 21 s on Supabase — past the statement timeout), one district reads ~9 500 rows through
         the (district, date) index in 1–2 s."""
         ds, col = self.source(var)
-        c, loc = ds.column_sql(col), ident(ds.location.column)
+        c, loc = ds.column_sql(col), ds.location_sql()
         sql = (
             f"SELECT percentile_cont($3) WITHIN GROUP (ORDER BY {c}) FROM {ds.fq} "
             f"WHERE {ds.range_sql()} AND {ds.valid_sql(col)} AND {loc} = ANY($4::text[])"
@@ -268,7 +300,7 @@ class DataAccess:
         Columns: district, date, sum, max, days, ge_<t>…  (computed in SQL over the whole record).
         """
         ds, col = self.source(var)
-        c, loc, d = ds.column_sql(col), ident(ds.location.column), ds.date_sql()
+        c, loc, d = ds.column_sql(col), ds.location_sql(), ds.date_sql()
         counts = ", ".join(f"count(*) FILTER (WHERE {c} >= {float(t)!r})" for t in thresholds)
         sql = (
             f"SELECT {loc}, date_trunc('month', {d})::date, sum({c}), max({c}), count({c})"

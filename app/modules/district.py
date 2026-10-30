@@ -224,8 +224,8 @@ class DistrictModule:
             id=kid,
             metric=metric,
             label=label,
-            sublabel=sublabel,
             value=rnd(value, decimals),
+            **({"sublabel": sublabel} if sublabel else {}),  # optional contract fields are omitted, never null
             **({"unit": unit} if unit is not None else {}),
             decimals=decimals,
             **self.stamp(month, var),
@@ -240,6 +240,8 @@ class DistrictModule:
 
     def kpi_set(self, kpis: list[c.Kpi]) -> dict[str, Any]:
         dates = [dt.date.fromisoformat(k.as_of) for k in kpis if k.as_of and k.value is not None]
+        if not dates:  # nothing served for this scope: the latest period looked at, never a date past the sources
+            dates = [dt.date.fromisoformat(k.as_of) for k in kpis if k.as_of]
         as_of = max(dates) if dates else None
         body = c.KpiSet(
             module=self.MODULE,

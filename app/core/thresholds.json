@@ -429,5 +429,202 @@
     "max": 10
    }
   ]
+ },
+ "effluent_limits": {
+  "_source": "reference/thresholds.ts EFFLUENT_LIMITS: wastewater effluent general limits (General Authorisation, DWS 2013). A value passes when min <= value <= max.",
+  "params": [
+   {
+    "id": "ph",
+    "label": "pH",
+    "unit": "pH units",
+    "min": 5.5,
+    "max": 9.5
+   },
+   {
+    "id": "bod",
+    "label": "BOD₅",
+    "unit": "mg/L",
+    "max": 30
+   },
+   {
+    "id": "cod",
+    "label": "COD",
+    "unit": "mg/L",
+    "max": 75
+   },
+   {
+    "id": "ammonia",
+    "label": "Ammonia (as N)",
+    "unit": "mg/L",
+    "max": 6
+   },
+   {
+    "id": "nitrate",
+    "label": "Nitrate/Nitrite (as N)",
+    "unit": "mg/L",
+    "max": 15
+   },
+   {
+    "id": "tp",
+    "label": "Total phosphorus",
+    "unit": "mg/L",
+    "max": 10
+   },
+   {
+    "id": "ortho",
+    "label": "Ortho-phosphate (as P)",
+    "unit": "mg/L",
+    "max": 10
+   },
+   {
+    "id": "ecoli",
+    "label": "E. coli",
+    "unit": "cfu/100 mL",
+    "max": 1000
+   },
+   {
+    "id": "faecal",
+    "label": "Faecal coliforms",
+    "unit": "cfu/100 mL",
+    "max": 1000
+   },
+   {
+    "id": "tss",
+    "label": "Suspended solids",
+    "unit": "mg/L",
+    "max": 25
+   },
+   {
+    "id": "ec",
+    "label": "Electrical conductivity",
+    "unit": "mS/m",
+    "max": 150
+   }
+  ]
+ },
+ "green_drop": {
+  "_spec": "reference/thresholds.ts greenDropBand (screen 35): >= comparisons on a 0-100 % score",
+  "classes": [
+   {
+    "min": 90,
+    "id": "Excellent"
+   },
+   {
+    "min": 70,
+    "id": "Good"
+   },
+   {
+    "min": 50,
+    "id": "Moderate"
+   },
+   {
+    "min": 30,
+    "id": "Poor"
+   }
+  ],
+  "otherwise": "Critical"
+ },
+ "blue_drop": {
+  "_spec": "reference/thresholds.ts blueDropBand (screen 36): >= comparisons on a 0-100 % score",
+  "classes": [
+   {
+    "min": 95,
+    "id": "Excellent"
+   },
+   {
+    "min": 90,
+    "id": "Good"
+   },
+   {
+    "min": 70,
+    "id": "Moderate"
+   },
+   {
+    "min": 50,
+    "id": "Poor"
+   }
+  ],
+  "otherwise": "Critical"
+ },
+ "pes": {
+  "_spec": "Present Ecological State from a 0-100 habitat-integrity score (Kleynhans 1996 index of habitat integrity classes): A natural >= 90, B largely natural >= 80, C moderately modified >= 60, D largely modified >= 40, E seriously modified >= 20, F critically modified below 20; >= comparisons",
+  "classes": [
+   {
+    "min": 90,
+    "id": "A",
+    "label": "Natural"
+   },
+   {
+    "min": 80,
+    "id": "B",
+    "label": "Largely natural"
+   },
+   {
+    "min": 60,
+    "id": "C",
+    "label": "Moderately modified"
+   },
+   {
+    "min": 40,
+    "id": "D",
+    "label": "Largely modified"
+   },
+   {
+    "min": 20,
+    "id": "E",
+    "label": "Seriously modified"
+   }
+  ],
+  "otherwise": {
+   "id": "F",
+   "label": "Critically modified"
+  }
+ },
+ "rwqo_objectives": {
+  "_source": "The objectives stated in the 15.2 / 15.3 *_Limit columns (one text per column in every row, read 2026-10-29): DO >= 5.0 mg/L; DIN <= 1.5 and TP <= 0.12 mg/L; TDS <= 450 mg/L; low flow >= 0.8 m3/s; dilution >= 2.0 m3/s; assimilation capacity >= 50 %. A value passes when min <= value <= max.",
+  "params": [
+   {
+    "id": "do",
+    "label": "Dissolved oxygen",
+    "unit": "mg/L",
+    "min": 5.0
+   },
+   {
+    "id": "tn",
+    "label": "Total inorganic nitrogen",
+    "unit": "mg/L",
+    "max": 1.5
+   },
+   {
+    "id": "tp",
+    "label": "Total phosphorus",
+    "unit": "mg/L",
+    "max": 0.12
+   },
+   {
+    "id": "tds",
+    "label": "Total dissolved solids",
+    "unit": "mg/L",
+    "max": 450
+   },
+   {
+    "id": "lowFlow",
+    "label": "Low flow",
+    "unit": "m³/s",
+    "min": 0.8
+   },
+   {
+    "id": "dilution",
+    "label": "Dilution flow",
+    "unit": "m³/s",
+    "min": 2.0
+   },
+   {
+    "id": "assimilation",
+    "label": "Assimilation capacity",
+    "unit": "%",
+    "min": 50
+   }
+  ]
  }
 }
