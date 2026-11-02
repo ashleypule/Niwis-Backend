@@ -15,11 +15,13 @@ B = "/api/v1/water-quality"
 
 
 def test_ccme_wqi() -> None:
-    assert ccme_wqi([("ph", 7.0), ("ec", 50.0)]) == 100  # every test within guideline
+    ok = [("ph", 7.0), ("do", 8.0), ("turbidity", 5.0)]
+    assert ccme_wqi([*ok, ("ec", 50.0)]) == 100  # every test within guideline
     assert ccme_wqi([]) is None
-    # one of two parameters fails once in two tests: F1 = 50, F2 = 50, excursion 1 (2 × limit) → F3 = 33.3
-    v = ccme_wqi([("ec", 300.0), ("ph", 7.0)])
-    assert v is not None and round(v, 1) == round(100 - (50**2 + 50**2 + (0.5 / 0.015) ** 2) ** 0.5 / 1.732, 1)
+    assert ccme_wqi(ok) is None  # fewer than 4 parameters: no thin index
+    # one of four parameters fails once in four tests: F1 = 25, F2 = 25, excursion 1 (2 × limit) → nse 0.25, F3 = 20
+    v = ccme_wqi([("ec", 300.0), *ok])
+    assert v is not None and round(v, 1) == round(100 - (25**2 + 25**2 + (0.25 / 0.0125) ** 2) ** 0.5 / 1.732, 1)
 
 
 def test_guidelines_and_ratios() -> None:

@@ -29,6 +29,7 @@ from app.core.thresholds import thresholds, veg_class
 from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, unknown
 from app.modules.drivers import driver_series
+from app.modules.land_cover import land_cover_set
 from app.modules.rainfall.service import RainfallService, _months
 from app.schemas import contract as c
 
@@ -67,10 +68,12 @@ INDEX_IDS = (*LIVE_INDICES, *ONLY_IN_5_1)
 INDEX_SET = Selector("set", INDEX_IDS, "ndvi,evi,savi,msavi2", multi=True)
 INDEX = Selector("index", INDEX_IDS, "ndvi")
 DRIVER_VAR = Selector("var", ("rain", "temp", "pet", "sm"), "rain")
+LAND_COVER_KIND = Selector("kind", ("ndvi", "share"), "ndvi")
 SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
     ("timeseries", "indices"): (INDEX_SET,),
     ("timeseries", "index-trend"): (INDEX,),
     ("timeseries", "drivers"): (DRIVER_VAR,),
+    ("breakdown", "land-cover"): (LAND_COVER_KIND,),
 }
 
 
@@ -406,7 +409,7 @@ class VegetationService:
     async def breakdown(self, metric: str) -> dict[str, Any]:
         m = await self.last()
         if metric == "land-cover":
-            raise DataUnavailable("No land-cover data per district in the database", missing=["land_cover"])
+            return await land_cover_set(self.ctx, "ndvi" if self.ctx.select(LAND_COVER_KIND) == "ndvi" else "share")
         if metric == "classification":
             w = self.ctx.weights()
             a = class_areas((await self.at("vhi", m)).dropna().map(veg_class), w)

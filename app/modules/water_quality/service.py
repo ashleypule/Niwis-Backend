@@ -73,6 +73,7 @@ ENTITY_DATASETS = {
     ("timeseries", "group"),
     ("table", "latest"),
 }
+WQI_MIN_PARAMS = 4
 NO_TYPES = "No water-body type (river, dam, wetland, groundwater) in the database: one record per district"
 GUIDE_NOTE = (
     "Guidelines: resource quality objectives for domestic use (DWAF 1996 TWQR / SANS 241), thresholds.json "
@@ -110,10 +111,11 @@ def excursion(pid: str, v: float) -> float:
 
 
 def ccme_wqi(tests: list[tuple[str, float]]) -> float | None:
-    """CCME WQI (CCME 2001) of (parameter, value) tests: 100 − √(F1² + F2² + F3²) / 1.732. None without tests."""
-    if not tests:
-        return None
+    """CCME WQI (CCME 2001) of (parameter, value) tests: 100 − √(F1² + F2² + F3²) / 1.732. None with fewer than
+    `WQI_MIN_PARAMS` parameters: a thin index says little (CCME 2001 asks for at least four variables)."""
     params = {p for p, _ in tests}
+    if len(params) < WQI_MIN_PARAMS:
+        return None
     failed_params = {p for p, v in tests if not passes(p, v)}
     failed = [(p, v) for p, v in tests if not passes(p, v)]
     f1 = len(failed_params) / len(params) * 100

@@ -7,7 +7,7 @@ volumes and flows from the **real district area**:
     volume (Mm³) = depth (mm) × area (km²) / 1000        flow (m³/s) = depth × area × 1000 / 86 400
 
 Withheld (D5): the table's own volumes, peak flows, catchment area and constants. Rainfall from `6.1`. There are no
-gauging stations: station counts, station maps and the by-province station breakdown are unavailable; districts serve
+gauging stations: station counts and point layers are unavailable; flow status is derived per district (D49); districts serve
 as entities (D1).
 
 Methods (docs/DATA_MAPPING.md §5): depths area-weighted; flows and volumes summed over the scope (WMA: district volume
@@ -40,6 +40,7 @@ from app.core.stats import rnd, sens_slope, trend_gap
 from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, drought_status, unknown
 from app.modules.drivers import driver_series
+from app.modules.land_cover import land_cover_set
 from app.modules.rainfall.service import HISTORY_START, MONTHS, RainfallService, _months
 from app.schemas import contract as c
 
@@ -48,6 +49,16 @@ Q = "runoff_depth_daily"
 ANOM = "runoff_anomaly_monthly"  # 7.2_derived_runoff_indicators_master
 RETURN_PERIODS = [2, 5, 10, 20, 50, 100]  # spec §7.2 flood frequency analysis
 NO_STATIONS = "No gauging-station data in the database (runoff is modelled per district municipality)"
+FLOW_STATUS = {"High Flow": "#2166AC", "Normal": "#4CAF50", "Low Flow": "#F6CF3E"}  # `flowStatus` palette
+PEAK_METHOD = (
+    "Derived: the highest daily mean flow, runoff depth × the district's real area ÷ 86 400 s (mm × km² × 1000 m³). "
+    "A modelled daily mean, not an instantaneous peak; the table's own peak column is withheld (scaled to 6 500 km²)."
+)
+STATUS_METHOD = (
+    "Derived: a district's monthly mean flow (runoff depth × real area) above its own Q10 (flow exceeded 10 % of "
+    "months) is high, below its own Q90 is low, otherwise normal; thresholds from the district's complete months "
+    "of the full years since 2000. Modelled flow per district, not gauged stations."
+)
 DRIVER_VAR = Selector("var", ("rain", "aet", "sm"), "rain")
 TOP_ORDER = Selector("order", ("highest", "lowest"), "highest")
 SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
@@ -184,6 +195,24 @@ class RunoffService:
             )
         return flow
 
+    async def flow_status(self) -> tuple[pd.Series, pd.Timestamp, int]:
+        """Flow class per district for the latest complete month: its monthly mean derived flow against its own Q10 /
+        Q90 of the complete months of the full years since 2000 (the Surface Water page's rule on the modelled flow)."""
+        a, y1 = self.areas(), await self.last_full_year()
+        last = pd.Timestamp(await self.latest_complete_month())
+        dm = await self.monthly_depth()
+        dm = dm[dm["days"] >= dm["date"].dt.days_in_month]
+        flow = dm.assign(flow=dm["value"] / dm["days"] * dm["district"].map(a) * 1000 / 86400).dropna(subset=["flow"])
+        ref = flow[flow["date"].dt.year.between(HISTORY_START.year, y1)].groupby("district")["flow"]
+        q10, q90 = ref.quantile(0.9), ref.quantile(0.1)  # Qn = the flow exceeded n % of the time
+        cur = flow[flow["date"] == last].set_index("district")["flow"]
+        out = {
+            str(k): "High Flow" if v > q10[k] else "Low Flow" if v < q90[k] else "Normal"
+            for k, v in cur.items()
+            if k in q10.index
+        }
+        return pd.Series(out, dtype=object), last, y1
+
     # ---------------------------------------------------------------- summary
 
     async def summary(self) -> dict[str, Any]:
@@ -221,15 +250,22 @@ class RunoffService:
                 **self.kpi_extra(end, Q, ANOM),
             )
         )
-        reason_peak = "Peak flows are withheld: the table scales them to a constant 6 500 km² area for every district"
+        flow = await self.daily_flow(start, end, required=False)
+        peak_day = flow.idxmax() if not flow.empty else None
+        if peak_day is None:
+            self.ctx.explain("kpis.peak", "No day in this period has runoff for every district of the scope")
         kpis.append(
             c.Kpi(
                 id="peak",
                 metric="peakFlow",
                 label="Peak Flow (Qmax)",
-                value=None,
+                sublabel=(f"derived, highest daily mean flow, {peak_day:%d %b %Y}" if peak_day is not None else "derived"),
+                value=rnd(float(flow.max()), 0) if peak_day is not None else None,
                 unit="m³/s",
-                unavailable_reason=reason_peak,
+                decimals=0,
+                derived=True,
+                method_note=PEAK_METHOD,
+                **self.kpi_extra(end, Q),
             )
         )
         bf = await self.data.daily_window_stats("baseflow_component", start, end)
@@ -285,11 +321,29 @@ class RunoffService:
                 **self.kpi_extra(lm, Q, res="monthly"),
             )
         )
-        for kid, metric, label in (
-            ("normal", "stationsHighFlow", "Stations with Normal Flow"),
-            ("low", "stationsLowFlow", "Stations with Low Flow"),
+        status, smonth, y_status = await self.flow_status()
+        mine = status[status.index.isin(self.ctx.filters.scope.district_codes)]
+        for kid, metric, label, cls, how in (
+            ("normal", "stationsHighFlow", "Districts with Normal Flow", "Normal", "between own Q90 and Q10"),
+            ("low", "stationsLowFlow", "Districts with Low Flow", "Low Flow", "below own Q90"),
+            ("high", "stationsHighFlow", "Districts with High Flow", "High Flow", "above own Q10"),
         ):
-            kpis.append(c.Kpi(id=kid, metric=metric, label=label, value=None, unit="%", unavailable_reason=NO_STATIONS))
+            if mine.empty:
+                self.ctx.explain(f"kpis.{kid}", "No district of this scope has a complete month of modelled flow")
+            kpis.append(
+                c.Kpi(
+                    id=kid,
+                    metric=metric,
+                    label=label,
+                    sublabel=f"derived, {how} ({HISTORY_START.year}–{y_status}), {smonth:%b %Y}, of {len(mine)}",
+                    value=rnd(float((mine == cls).mean() * 100), 0) if not mine.empty else None,
+                    unit="%",
+                    decimals=0,
+                    derived=True,
+                    method_note=STATUS_METHOD,
+                    **self.kpi_extra(smonth.date(), Q, res="monthly"),
+                )
+            )
         as_of = max(dt.date.fromisoformat(k.as_of) for k in kpis if k.as_of)
         body = c.KpiSet(
             module=MODULE,
@@ -306,11 +360,6 @@ class RunoffService:
                 )
                 for k in kpis
                 if k.as_of
-            ],
-            unavailable=[
-                c.UnavailableField(field="kpis.peak", reason=reason_peak),
-                c.UnavailableField(field="kpis.normal", reason=NO_STATIONS),
-                c.UnavailableField(field="kpis.low", reason=NO_STATIONS),
             ],
             **self._prov(as_of, Q, "baseflow_component", "rain_daily", baseline=base),
         )
@@ -738,10 +787,12 @@ class RunoffService:
         )
 
     async def breakdown(self, metric: str) -> dict[str, Any]:
+        if metric == "land-cover":
+            return await land_cover_set(self.ctx, "share")
         if metric == "by-province":
-            raise DataUnavailable(f"Stations by flow status: {NO_STATIONS}", missing=["gauging stations"])
+            return await self.status_by_province()
         if metric != "by-wma":
-            raise unknown("metric", metric, ["by-province", "by-wma"])
+            raise unknown("metric", metric, ["by-province", "by-wma", "land-cover"])
         sp = self.ctx.state.spatial
         ov, areas = sp.wma_overlap(), sp.district_areas()
         if ov is None or areas is None:
@@ -973,6 +1024,34 @@ class RunoffService:
             },
         )
 
+    async def status_by_province(self) -> dict[str, Any]:
+        status, last, _ = await self.flow_status()
+        provinces = list(districts.PROVINCES)
+        codes = {p: {d.code for d in districts.districts() if d.province == p} for p in provinces}
+        prov = self.ctx.provenance(last.date(), self.src(Q), res="monthly")
+        prov.pop("asOf")
+        prov["aggregation"] = "district"
+        return c.CategorySet(
+            id="by-province",
+            title=f"Districts by flow status per province – {last:%b %Y}",
+            unit="districts",
+            categories=[districts.PROVINCES[p] for p in provinces],
+            series=[
+                c.CategorySeries(
+                    key=k.lower().replace(" ", "-"),
+                    name=k,
+                    values=[float((status[status.index.isin(codes[p])] == k).sum()) for p in provinces],
+                    color=col,
+                    stack="status",
+                )
+                for k, col in FLOW_STATUS.items()
+            ],
+            as_of=iso(last.date()),
+            derived=True,
+            method_note=STATUS_METHOD,
+            **prov,
+        ).dump()
+
     # ---------------------------------------------------------------- maps
 
     async def map(self, layer: str) -> dict[str, Any]:
@@ -980,7 +1059,53 @@ class RunoffService:
             raise DataUnavailable(
                 "Catchment runoff is not available: data are per district", missing=["catchment-level data"]
             )
-        if layer in ("stations", "flow-status", "flow-anomaly", "ssi"):
+        if layer == "flow-status":
+            status, m, _ = await self.flow_status()
+            sel = self.ctx.filters.scope
+            prov = self.ctx.provenance(m.date(), self.src(Q), res="monthly")
+            prov["aggregation"] = "district"
+            return c.MapLayer(
+                id=layer,
+                title=f"Flow status (derived) – {m:%b %Y}",
+                kind="choropleth",
+                level="municipality",
+                scale="flowStatus",
+                unit="",
+                date=iso(m.date()) or "",
+                values={str(k): v for k, v in status.items() if sel.level == "national" or k in sel.district_codes},
+                geometry="districts",
+                derived=True,
+                method_note=STATUS_METHOD,
+                **prov,
+            ).dump()
+        if layer == "peak-flow":
+            m = pd.Timestamp(await self.latest_complete_month())
+            st = await self.data.daily_monthly_stats(Q, ())
+            a = pd.Series(self.areas())
+            cur = st[st["date"] == m].set_index("district")["max"]
+            peak = (cur * a.reindex(cur.index) * 1000 / 86400).dropna()
+            sel = self.ctx.filters.scope
+            prov = self.ctx.provenance(m.date(), self.src(Q), res="monthly")
+            prov["aggregation"] = "district"
+            return c.MapLayer(
+                id=layer,
+                title=f"Peak daily flow (derived) – {m:%b %Y}",
+                kind="choropleth",
+                level="municipality",
+                scale="flow",
+                unit="m³/s",
+                date=iso(m.date()) or "",
+                values={
+                    str(k): rnd(float(v), 1)
+                    for k, v in peak.items()
+                    if sel.level == "national" or k in sel.district_codes
+                },
+                geometry="districts",
+                derived=True,
+                method_note=PEAK_METHOD,
+                **prov,
+            ).dump()
+        if layer in ("stations", "flow-anomaly", "ssi"):
             raise DataUnavailable(
                 f"Station map layers need gauging stations with coordinates: {NO_STATIONS}",
                 missing=["gauging stations"],
@@ -1032,6 +1157,7 @@ class RunoffService:
                     "runoff-anomaly",
                     "monthly-runoff",
                     "runoff-coefficient",
+                    "peak-flow",
                     "catchment-runoff",
                     "stations",
                     "flow-status",

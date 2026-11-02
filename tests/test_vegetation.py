@@ -93,7 +93,6 @@ async def test_maps(client: httpx.AsyncClient, layer: str) -> None:
         ("map", {"layer": "forecast-anomaly"}),
         ("forecast", {"metric": "ndvi"}),
         ("forecast", {"metric": "recovery-probability"}),
-        ("breakdown", {"metric": "land-cover"}),
         ("table", {"metric": "forecast-indicators"}),
     ],
 )

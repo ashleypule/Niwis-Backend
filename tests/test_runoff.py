@@ -48,13 +48,19 @@ async def test_volume_uses_real_area_not_6500(
     assert vol != pytest.approx(float(model_m3) / 1e6, rel=0.01)  # not the table's 6 500 km² volume
 
 
-async def test_withheld_and_station_kpis(client: httpx.AsyncClient) -> None:
+async def test_derived_peak_and_flow_status_kpis(client: httpx.AsyncClient) -> None:
     body = (await client.get(f"{B}/summary", params={"municipality": "CPT"})).json()
     k = kpis(body)
-    for kid in ("peak", "normal", "low"):
-        assert k[kid]["value"] is None and k[kid]["unavailableReason"]
+    assert k["peak"]["derived"] is True and k["peak"]["value"] > 0 and "6 500 km²" in k["peak"]["methodNote"]
+    for kid, label in (
+        ("normal", "Districts with Normal Flow"),
+        ("low", "Districts with Low Flow"),
+        ("high", "Districts with High Flow"),
+    ):
+        assert k[kid]["label"] == label and k[kid]["unit"] == "%" and k[kid]["derived"] is True
+    assert k["normal"]["value"] + k["low"]["value"] + k["high"]["value"] == 100  # one district: one class
     reasons = {u["field"]: u["reason"] for u in body["unavailable"]}
-    assert set(reasons) == {"kpis.peak", "kpis.normal", "kpis.low", "kpis.ssi6"}
+    assert set(reasons) == {"kpis.ssi6"}
     assert k["ssi6"]["value"] is None  # fixture: < 10 calibration years → no SSI rather than a poor fit
     assert "status" not in k["ssi6"]  # no "No drought" pill for a missing value
     assert "10 calibration years" in reasons["kpis.ssi6"] == k["ssi6"]["unavailableReason"]
@@ -135,10 +141,8 @@ async def test_maps(client: httpx.AsyncClient, layer: str) -> None:
     [
         ("forecast", {"metric": "runoff"}),
         ("forecast", {"metric": "flood-probability"}),
-        ("breakdown", {"metric": "by-province"}),
         ("map", {"layer": "catchment-runoff"}),
         ("map", {"layer": "stations"}),
-        ("map", {"layer": "flow-status"}),
         ("map", {"layer": "flow-anomaly"}),
         ("map", {"layer": "ssi"}),
     ],

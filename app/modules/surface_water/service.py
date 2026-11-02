@@ -11,6 +11,8 @@ DECISIONS D12). Its daily flow family passes the checks and its monthly family d
   flows over the full years 2000–(last full year); SSI-k = the standardised index (gamma per calendar month,
   app.core.indices) of the monthly mean flow — the spec's streamflow index computed from the stored discharge;
 - `9_2` static catchment attributes on the entity card; `9_3` is withheld entirely (constancy check, DATA_GAPS §21);
+- River WQ Status = the Water Quality page's CCME WQI of the same districts (12.x tables, DECISIONS D49), so one water
+  quality index is served, not two;
 - the modelled-runoff layers are the runoff module's (same source as the runoff page).
 
 Not in the database (501 with the reason): gauging stations and point layers, baseflow separation, ecological-flow
@@ -30,7 +32,7 @@ from app.core.indices import standardized_index
 from app.core.palettes import NORMAL, OBSERVED, SERIES, YEAR_COLOURS
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope
-from app.core.thresholds import drought_class_or_none
+from app.core.thresholds import drought_class_or_none, wqi_class
 from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, drought_status
 from app.modules.district import NO_POINTS, DistrictModule
@@ -63,6 +65,13 @@ ENTITY_DATASETS = {
 STATUS = ("High Flow", "Normal", "Low Flow")
 MAP_LAYERS = ("discharge", "flow-status", "flow-anomaly", "ssi")
 RUNOFF_LAYERS = ("annual-runoff", "runoff-anomaly", "monthly-runoff", "runoff-coefficient")
+WQI_METHOD = (
+    "Derived: the CCME Water Quality Index (CCME 2001) of each district over the trailing 12 months of the 14 guideline "
+    "parameters in 12.1–12.3, WQI = 100 − √(F1² + F2² + F3²) / 1.732 with F1 = % of parameters failing, F2 = % of tests "
+    "failing and F3 = the scaled excursion from the guideline (thresholds.json `wq_guidelines`); area-weighted for a "
+    "scope and null below 4 parameters. The value is the Water Quality page's WQI: one index per district, one record "
+    "per district, no sampling sites."
+)
 FLOW_NOTE = (
     "Discharge = the stored daily mean flow (m³/day) / 86 400 s, summed over the scope's districts (9_1 holds one flow "
     "record per district; no gauging stations)."
@@ -249,9 +258,28 @@ class SurfaceWaterService(DistrictModule):
                 sublabel=f"{ssc_m:%b %Y}" + ("" if len(self.ctx.weights()) == 1 else " · area-weighted mean"),
             )
         )
+        from app.modules.water_quality.service import PARAM_VARS, WaterQualityService
+
+        wq = WaterQualityService(self.ctx)
+        river_wqi, wq_m = await wq.district_wqi()
+        wqi_v = wq.aggregate(river_wqi.dropna(), False)
+        wqi_cls = wqi_class(wqi_v) if wqi_v is not None else None
         kpis.append(
-            self.kpi_unavailable(
-                "wqi", "wqi", "River WQ Status", None, "Water quality is on the Water Quality page (district values)"
+            self.kpi(
+                "wqi",
+                "wqi",
+                "River WQ Status",
+                wqi_v,
+                None,
+                wq_m,
+                PARAM_VARS["ph"],
+                decimals=0,
+                sublabel=f"derived, CCME WQI, 12 months to {wq_m:%b %Y}"
+                + ("" if len(self.ctx.weights()) == 1 else " (area-weighted)"),
+                reason="Fewer than 4 water-quality parameters for this scope, or too few of its districts have a WQI",
+                status=c.Status(scale="wqi", id=wqi_cls, label=wqi_cls) if wqi_cls else None,
+                derived=True,
+                method_note=WQI_METHOD,
             )
         )
         return self.kpi_set(kpis)

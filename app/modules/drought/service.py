@@ -52,7 +52,7 @@ from app.core.thresholds import (
 from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, drought_status, unknown
 from app.modules.groundwater.service import DEPTH as GW_DEPTH
-from app.modules.groundwater.service import GroundwaterService
+from app.modules.groundwater.service import SGI_METHOD, SGI_NO_DISTRICT, GroundwaterService
 from app.modules.rainfall.service import HISTORY_START, MONTHS, WINDOW, RainfallService, _months
 from app.modules.runoff.service import RunoffService
 from app.modules.surface_water.service import FLOW as SW_FLOW
@@ -199,19 +199,16 @@ class DroughtService:
         return (min(first, lt), lt)
 
     async def sgi_unavailable(self) -> str | None:
-        """Why the SGI KPI / cascade stage are null: SGI withheld, or its latest valid month (it is served only up to
-        `valid_until`) is older than the staleness limit. None when a current SGI exists."""
+        """Why the SGI KPI / cascade stage have no current SGI, or None when the SGI derived from the 10_1 telemetry
+        (D49) exists: the older SGI is withheld, or its latest valid month is older than the staleness limit."""
+        if (await GroundwaterService(self.ctx).district_sgi())[1] is not None:
+            return None
         if reason := self.withheld("sgi"):
             return reason
         last = await self.latest("sgi")
         if self.ctx.stale(last, "monthly"):
             days = self.ctx.state.settings.stale_after_days
-            extra = (
-                "; the newer 10_1 SGI is withheld (not an index of any water level in the database)"
-                if self.ctx.state.registry.withheld_reasons("bh_sgi_dimensionless")
-                else ""
-            )
-            return f"Latest valid SGI is {last:%b %Y} (more than {days} days old){extra}"
+            return f"Latest valid SGI is {last:%b %Y} (more than {days} days old); {SGI_NO_DISTRICT}"
         return None
 
     def page_window_ending(self, last: dt.date) -> tuple[pd.Timestamp, pd.Timestamp]:
@@ -371,17 +368,23 @@ class DroughtService:
             kpis.append(c.Kpi(id="sgi", metric="sgi", label="SGI", value=None, unavailable_reason=reason_sgi))
             unavail.append(c.UnavailableField(field="kpis.sgi", reason=reason_sgi))
         else:
-            msg = await self.latest("sgi")
-            sgi = weighted_scalar(await self.at("sgi", msg), w)
+            sgi_now, sgi_ts = await GroundwaterService(self.ctx).district_sgi()
+            assert sgi_ts is not None  # sgi_unavailable() returned None
+            msg = sgi_ts.date()
+            sgi = weighted_scalar(sgi_now, w)
+            if sgi is None:
+                self.ctx.explain("kpis.sgi", "The derived SGI does not cover enough of this scope's area")
             kpis.append(
                 c.Kpi(
                     id="sgi",
                     metric="sgi",
                     label=self.mean_label("SGI"),
-                    sublabel=f"{msg:%b %Y}",
+                    sublabel=f"derived from depth telemetry, {msg:%b %Y}",
                     value=rnd(sgi, 2),
                     decimals=2,
-                    **self.kpi_extra(msg, "sgi", res="monthly"),
+                    derived=True,
+                    method_note=SGI_METHOD,
+                    **self.kpi_extra(msg, GW_DEPTH, res="monthly"),
                 )
             )
         reason_set = "No settlement register in the database"
@@ -422,7 +425,7 @@ class DroughtService:
                 "soil_moisture_surface",
                 "runoff_depth_daily",
                 "dam_storage",
-                *([] if reason_sgi else ["sgi"]),  # a source only when the SGI KPI has a value
+                *([] if reason_sgi else [GW_DEPTH]),  # a source only when the SGI KPI has a value
                 res="monthly",
             ),
         )
@@ -567,6 +570,49 @@ class DroughtService:
         )
 
     async def ts_gw_sgi(self) -> c.SeriesSet:
+        gw = GroundwaterService(self.ctx)
+        derived = await gw.sgi_frame()
+        if not derived.empty:
+            g = gw.aggregate_frame(derived)
+            end = pd.Timestamp(derived["date"].max())
+            first, _ = self.page_window_ending(end.date())
+            win = g[(g.index >= first) & (g.index <= end)]
+            depth = await gw.scope_depth()
+            if win.dropna().empty:
+                self.ctx.explain("series.sgi", "The derived SGI does not cover enough of this scope's area")
+            if depth[(depth.index >= first) & (depth.index <= end)].dropna().empty:
+                self.ctx.explain("series.level", "No sampled depth to water for this scope in the selected period")
+            return c.SeriesSet(
+                id="gw-sgi",
+                title="Groundwater",
+                x_type="time",
+                axes=[c.Axis(unit="m bgl", label="Depth to water", inverse=True), c.Axis(unit="index", label="SGI")],
+                series=[
+                    c.Series(
+                        key="level",
+                        name="Depth to water (m bgl)",
+                        kind="line",
+                        axis=0,
+                        color=SERIES[0],
+                        data=[[iso(t.date()), rnd(depth.get(t), 2)] for t in win.index],
+                    ),
+                    c.Series(
+                        key="sgi",
+                        name="SGI (derived)",
+                        kind="line",
+                        axis=1,
+                        color=SERIES[3],
+                        data=[[iso(t.date()), rnd(v, 2)] for t, v in win.items()],
+                        as_of=iso(end.date()),
+                        **self.ctx.stamp(end.date(), "monthly"),
+                    ),
+                ],
+                as_of=iso(end.date()),
+                note=SGI_METHOD,
+                derived=True,
+                method_note=SGI_METHOD,
+                **self._prov(end.date(), GW_DEPTH, res="monthly"),
+            )
         last = await self.latest("sgi")  # the last valid month (registry valid_until)
         sgi = await self._monthly_series("sgi", last, own_window=True)
         reason = "Borehole water level is withheld: values (−0.18 … +0.20) are not depths below ground"
@@ -577,7 +623,7 @@ class DroughtService:
             id="gw-sgi",
             title="Groundwater",
             x_type="time",
-            axes=[c.Axis(unit="m bgl", label="Level", inverse=True), c.Axis(unit="—", label="SGI")],
+            axes=[c.Axis(unit="m bgl", label="Level", inverse=True), c.Axis(unit="index", label="SGI")],
             series=[
                 c.Series(
                     key="level",
@@ -1083,8 +1129,9 @@ class DroughtService:
                     )
                 )
         else:
-            mg = await self.latest("sgi")
-            sgi_d = (await self.at("sgi", mg)).dropna()
+            sgi_d, mg_ts = await GroundwaterService(self.ctx).district_sgi()
+            assert mg_ts is not None  # sgi_unavailable() returned None
+            mg = mg_ts.date()
             sgi = weighted_scalar(sgi_d, w)
             gw_cls = borehole_status(sgi) if sgi is not None else None
             low = sum(w[k] for k, v in sgi_d.items() if k in w and borehole_status(float(v)) in ("Low", "Critical"))
@@ -1094,7 +1141,7 @@ class DroughtService:
                     6,
                     "groundwater",
                     "groundwater",
-                    "Groundwater (SGI)",
+                    "Groundwater (SGI, derived)",
                     "sgi",
                     "status",
                     rnd(sgi, 2),
@@ -1105,7 +1152,7 @@ class DroughtService:
                     as_of=mg,
                 )
             )
-            component("groundwater", mg, "sgi")
+            component("groundwater", mg, GW_DEPTH)
         # 7 socio-economic impact
         rows.append(
             stage(
@@ -1146,7 +1193,7 @@ class DroughtService:
             components=components,
             unavailable=unavailable,
             **{
-                **self._prov(as_of, "spi_6", "soil_moisture_surface", "vhi", "dam_storage", "sgi", res="monthly"),
+                **self._prov(as_of, "spi_6", "soil_moisture_surface", "vhi", "dam_storage", GW_DEPTH, res="monthly"),
                 "isStale": any(comp.is_stale for comp in components),
             },
         )

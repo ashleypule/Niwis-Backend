@@ -80,6 +80,8 @@ class Provenance(ContractModel):
     aggregation: Aggregation | None = None
     unavailable: list[UnavailableField] | None = None
     forecast: ForecastInfo | None = None
+    derived: bool | None = None  # computed by the API from live columns (audit step 3, D49), see `methodNote`
+    method_note: str | None = Field(None, alias="methodNote")
 
 
 # ------------------------------------------------------------------ scope / KPIs
@@ -118,6 +120,8 @@ class Kpi(ContractModel):
     is_stale: bool | None = Field(None, alias="isStale")
     period_end: str | None = Field(None, alias="periodEnd")
     unavailable_reason: str | None = Field(None, alias="unavailableReason")
+    derived: bool | None = None  # computed by the API from live columns (audit step 3, D49), see `methodNote`
+    method_note: str | None = Field(None, alias="methodNote")
 
 
 class KpiSet(Provenance):

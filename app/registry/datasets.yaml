@@ -764,7 +764,7 @@ datasets:
       Baseflow_Component_m3s:                 {var: baseflow_component, role: canonical, use: ratio_only,
                                                note: "only the baseflow index (ratio to total flow, same area scaling) is served",
                                                raw_reason: "flow scaled to the constant 6 500 km² area for every district; only the baseflow index (a ratio) is served"}
-      Dominant_LandCover_Class:               {var: land_cover, role: withheld, reason: "one constant class for every district"}
+      Dominant_LandCover_Class:               {var: land_cover, role: withheld, reason: "one constant class for every district; land-cover shares per district come from 9_2 (the page's land-cover breakdown and catchment-characteristics group)"}
       Impervious_Surface_Fraction_percent:    {var: impervious_fraction, role: withheld, reason: "constant 4.5 %"}
 
   # ------------------------------------------------------------------ DB Module 5 — Runoff, derived indicators (spec §7.2)
@@ -841,8 +841,8 @@ datasets:
   "9_2_catchment_characteristics_master":
     db_module: 7
     module: surface-water
-    serves: [surface-water]
-    category_modules: [surface-water]
+    serves: [surface-water, vegetation, runoff]
+    category_modules: [surface-water, runoff]
     location: {column: district_name}
     time: {kind: date, column: "date", resolution: monthly, year: "year"}
     known_issues: ["added 2026-10-19; static attributes repeated every month (read once per year)"]

@@ -119,8 +119,9 @@ async def test_drought_cascade_has_the_specs_seven_stages(
     assert gw["valueNum"] == gw_kpi["value"] and gw["cls"] is None and gw["scale"] == "status"
     assert reasons["rows.groundwater.cls"] == (
         "Borehole status classes need a current SGI, which the database does not have (Latest valid SGI is Aug 2024 "
-        "(more than 90 days old); the newer 10_1 SGI is withheld (not an index of any water level in the database)): "
-        "the level anomaly is shown without a class"
+        "(more than 90 days old); the SGI derived from the 10_1 telemetry needs at least 36 months with at most 20% of "
+        "them missing after filling gaps of up to 2 months, and this record does not have that): the level anomaly is "
+        "shown without a class"
     )
 
     sm = by["soil-moisture"]

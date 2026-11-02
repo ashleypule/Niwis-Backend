@@ -133,7 +133,10 @@ class DistrictModule:
                 cap = pd.Timestamp(latest_complete_period_end(ref, "annual").year, 1, 1)
             else:
                 cap = month_start(latest_complete_period_end(ref, "monthly"))
-            last = min(last, cap)
+            # the newest month at or before the cap that has a value: telemetry skips months (a sample on 1 Nov with
+            # none in October must not make the unsampled October the "latest month", with every KPI null)
+            within = df.loc[df["date"] <= cap, "date"]
+            last = pd.Timestamp(within.max()) if not within.empty else min(last, cap)
         return last
 
     async def district_values(self, var: str, month: pd.Timestamp, how: How = "mean") -> pd.Series:

@@ -18,6 +18,22 @@ MIN_FIT = 10
 P_CLIP = 1e-6
 
 
+def normal_score_index(monthly: pd.Series) -> pd.Series:
+    """Standardised level index (Bloomfield & Marchant 2013, HESS 17; the SPI family's empirical-normal form).
+
+    Per calendar month the values of the whole record are ranked (mid-ranks for ties) and converted with
+    index = Φ⁻¹((r − 0.5) / n). Unlike the gamma fit of `standardized_index` it assumes no distribution, which suits
+    levels (they are not accumulations and can be of any shape). A higher value gets a higher index; missing months stay
+    missing and do not count in n."""
+    s = monthly.sort_index().astype(float)
+    out = pd.Series(np.nan, index=s.index)
+    for month in range(1, 13):
+        x = s[s.index.month == month].dropna()
+        if len(x):
+            out.loc[x.index] = stats.norm.ppf((x.rank(method="average").to_numpy() - 0.5) / len(x))
+    return out
+
+
 def calibration_gap(monthly: pd.Series, scale: int, calibration: tuple[int, int], name: str) -> str | None:
     """Why `standardized_index` is all-NaN for this series (too short a calibration record), or None."""
     s = monthly.sort_index().astype(float).rolling(scale, min_periods=scale).sum()

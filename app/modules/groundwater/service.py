@@ -7,8 +7,10 @@
   means (last 12 months vs the 12 before) so they never depend on which months were sampled;
 - level anomaly = latest sampled month − the mean of all samples in that calendar month over the full years
   2000–(last full year), sign flipped so + = shallower (higher water table), as the contract's chart says;
-- SGI from `hydrological_drought_master` (the 10_1 SGI is withheld, D8), valid May 2002 – Aug 2024 only, so it is
-  served marked stale and the SGI KPI / borehole status classes stay null with the reason;
+- SGI derived from the 10_1 depths (`sgi_frame`, DECISIONS D49): a normal-score index per calendar month over the
+  telemetry record, after the forecast rule's gap handling; the stored `10_1` SGI stays withheld (D8) and the
+  `hydrological_drought_master` SGI (valid May 2002 – Aug 2024) stays a database variable, and is the panels' fallback
+  (marked stale) only where no district's telemetry qualifies;
 - recharge from `11.2` direct recharge (mm/year; × district area for Mm³/year), abstraction from `11.3` total
   abstraction (m³/year, summed); `10_1`'s recharge rate (41 districts share a series) and aquifer constants are
   withheld (D9); the per-borehole abstraction / pumping rate and recharge fraction are shown on the entity card;
@@ -24,10 +26,14 @@ import numpy as np
 import pandas as pd
 
 from app.core import districts
+from app.core.indices import normal_score_index
 from app.core.palettes import NORMAL, SERIES, YEAR_COLOURS, drought_bands
 from app.core.provenance import iso
 from app.core.stats import rnd, sens_slope, trend_line
+from app.core.thresholds import borehole_status, thresholds
 from app.forecasting import pages as fc
+from app.forecasting.engine import MAX_MISSING
+from app.forecasting.series import interpolate_short_gaps
 from app.modules.common import Ctx, Selector, anomaly_split_reasons
 from app.modules.district import NO_POINTS, DistrictModule
 from app.modules.rainfall.service import MONTHS
@@ -51,6 +57,22 @@ ENTITY_DATASETS = {
     ("timeseries", "sgi"),
     ("timeseries", "seasonal"),
 }
+SGI_MIN_MONTHS = 36  # the forecast rule (D35): at least 36 months …
+SGI_INTERPOLATE = 2  # … with single gaps of at most 2 months filled first, as the depth forecast does (D41.3) …
+SGI_MAX_MISSING = MAX_MISSING  # … and at most 20 % of months still missing
+SGI_METHOD = (
+    "Derived from the 10_1 telemetry depths: per calendar month, the district's monthly mean depth is ranked over its "
+    "whole record (shallowest highest) and SGI = Φ⁻¹((r − 0.5) / n) (Bloomfield & Marchant 2013, the SPI family's "
+    "empirical-normal form). Telemetry is sampled about every seven weeks, so about 38 % of months have no sample and "
+    "are interpolated linearly first (gaps of at most 2 months), as for the depth forecast; a district needs at least "
+    "36 months and at most 20 % of months still missing. In this record the index marks 2015–16 strongly and other "
+    "droughts weakly, and it does not follow the older SGI (ended Aug 2024), which remains a database variable."
+)
+SGI_NO_DISTRICT = (
+    f"the SGI derived from the 10_1 telemetry needs at least {SGI_MIN_MONTHS} months with at most "
+    f"{SGI_MAX_MISSING:.0%} of them missing after filling gaps of up to {SGI_INTERPOLATE} months, and this record "
+    "does not have that"
+)
 DEPTH_NOTE = (
     "Depth to water from NGA telemetry (10_1), one record per district; a month's value is the mean of its samples "
     "(about one every seven weeks), unsampled months are gaps."
@@ -103,6 +125,38 @@ class GroundwaterService(DistrictModule):
     async def scope_depth(self) -> pd.Series:
         return await self.scope_series(DEPTH)
 
+    async def sgi_frame(self) -> pd.DataFrame:
+        """district, date, value = SGI (+ = shallower) of the districts whose telemetry qualifies (SGI_MIN_MONTHS,
+        SGI_MAX_MISSING after SGI_INTERPOLATE); interpolation never runs past a district's last sample."""
+
+        async def load() -> pd.DataFrame:
+            df = await self.depth_frame()
+            parts = []
+            for code, g in df.groupby("district"):
+                s = g.set_index("date")["value"].sort_index()
+                months = pd.date_range(s.index.min(), s.index.max(), freq="MS")
+                filled = interpolate_short_gaps(s.reindex(months), SGI_INTERPOLATE)
+                if len(filled) < SGI_MIN_MONTHS or filled.isna().mean() > SGI_MAX_MISSING:
+                    continue
+                z = normal_score_index(-filled).dropna()  # depth: smaller = higher water table
+                parts.append(pd.DataFrame({"district": code, "date": z.index, "value": z.to_numpy()}))
+            if not parts:
+                return pd.DataFrame(columns=["district", "date", "value"])
+            return pd.concat(parts, ignore_index=True)
+
+        res: pd.DataFrame = await self.ctx.state.cache.get_or_set(
+            "gw:sgi", self.ctx.state.settings.cache_ttl_long_series_s, load
+        )
+        return res
+
+    async def district_sgi(self) -> tuple[pd.Series, pd.Timestamp | None]:
+        """The derived SGI per district at its latest month (None: no district qualifies)."""
+        df = await self.sgi_frame()
+        if df.empty:
+            return pd.Series(dtype=float), None
+        last = pd.Timestamp(df["date"].max())
+        return df[df["date"] == last].set_index("district")["value"].astype(float), last
+
     # ---------------------------------------------------------------- summary
 
     async def summary(self) -> dict[str, Any]:
@@ -138,17 +192,40 @@ class GroundwaterService(DistrictModule):
                 good_direction="up",
             ),
         ]
-        sgi_df = await self.data.monthly(SGI)
-        sgi_last = pd.Timestamp(sgi_df["date"].max()) if not sgi_df.empty else None
-        why = (
-            f"Latest valid SGI is {sgi_last:%b %Y} (more than {self.ctx.state.settings.stale_after_days} days old): "
-            + self.registry.datasets["hydrological_drought_master"]
-            .columns["sgi_dimensionless"]
-            .valid_reason.split(";")[0]  # type: ignore[union-attr]
-            if sgi_last is not None
-            else self.reason(SGI)
-        ) + "; the 10_1 SGI is withheld (not an index of any water level in the database)"
-        kpis.append(self.kpi_unavailable("sgi", "sgi", "SGI", None, why))
+        sgi_now, sgi_m = await self.district_sgi()
+        if sgi_m is not None:
+            sgi_v = self.aggregate(sgi_now, False)
+            sgi_cls = borehole_status(sgi_v) if sgi_v is not None else None
+            kpis.append(
+                self.kpi(
+                    "sgi",
+                    "sgi",
+                    "SGI",
+                    sgi_v,
+                    None,
+                    sgi_m,
+                    DEPTH,
+                    decimals=2,
+                    sublabel=f"derived from depth telemetry, {sgi_m:%b %Y}"
+                    + ("" if len(self.ctx.weights()) == 1 else " (area-weighted)"),
+                    status=c.Status(scale="status", id=sgi_cls, label=sgi_cls) if sgi_cls else None,
+                    derived=True,
+                    method_note=SGI_METHOD,
+                )
+            )
+        else:
+            sgi_df = await self.data.monthly(SGI)
+            sgi_last = pd.Timestamp(sgi_df["date"].max()) if not sgi_df.empty else None
+            why = (
+                f"Latest valid SGI is {sgi_last:%b %Y} (more than {self.ctx.state.settings.stale_after_days} days "
+                "old): "
+                + self.registry.datasets["hydrological_drought_master"]
+                .columns["sgi_dimensionless"]
+                .valid_reason.split(";")[0]  # type: ignore[union-attr]
+                if sgi_last is not None
+                else self.reason(SGI)
+            ) + f"; {SGI_NO_DISTRICT}"
+            kpis.append(self.kpi_unavailable("sgi", "sgi", "SGI", None, why))
         rm = await self.latest_month(RECHARGE)
         kpis.append(
             self.kpi(
@@ -339,6 +416,26 @@ class GroundwaterService(DistrictModule):
         )
 
     async def ts_sgi(self) -> dict[str, Any]:
+        derived = await self.sgi_frame()
+        if not derived.empty:
+            g = self.aggregate_frame(derived)
+            last = pd.Timestamp(derived["date"].max())
+            start, end = await self.window(DEPTH)
+            win = g[(g.index >= start) & (g.index <= min(end, last))]
+            if win.dropna().empty:
+                self.ctx.explain("series.sgi", "No derived SGI for this scope in the selected period")
+            return self.series_set(
+                "sgi",
+                self.entity_title("Standardised Groundwater Index (SGI, derived)"),
+                [self.series("sgi", "SGI (derived)", win, nd=2, i=0)],
+                [c.Axis(unit="index", label="SGI")],
+                [DEPTH],
+                last,
+                note=SGI_METHOD,
+                bands=[c.Band.model_validate(b) for b in drought_bands()],
+                derived=True,
+                method_note=SGI_METHOD,
+            )
         df = await self.data.monthly(SGI)
         if df.empty:
             raise self.no_key("timeseries", "sgi", [], {"sgi": self.reason(SGI)})
@@ -353,7 +450,7 @@ class GroundwaterService(DistrictModule):
             "sgi",
             self.entity_title("Standardised Groundwater Index (SGI)"),
             [self.series("sgi", "SGI", win, nd=2, i=0, source=self.ctx.col_source(SGI).get("source"))],
-            [c.Axis(unit="—", label="SGI")],
+            [c.Axis(unit="index", label="SGI")],
             [SGI],
             last,
             note=f"SGI from hydrological_drought_master, served May 2002 – {last:%b %Y} only: {reason}",
@@ -482,13 +579,34 @@ class GroundwaterService(DistrictModule):
                 as_of=iso(last.date()),
                 **prov,
             ).dump()
+        if metric == "status":
+            sgi, sgi_m = await self.district_sgi()
+            if sgi_m is None:
+                raise self.no_key("breakdown", metric, [], {"status": f"Borehole status classes need {SGI_NO_DISTRICT}"})
+            mine = sgi[sgi.index.isin(self.ctx.filters.scope.district_codes)].dropna().map(borehole_status)
+            cfg = thresholds()["borehole_status_sgi"]
+            classes = [cfg["otherwise"], *[x["id"] for x in reversed(cfg["classes"])]]
+            prov = self.ctx.provenance(sgi_m.date(), self.src(DEPTH), res="monthly")
+            prov.pop("asOf")
+            prov["aggregation"] = "district"
+            return c.CategorySet(
+                id="status",
+                title=f"Districts by groundwater status (derived SGI) – {sgi_m:%b %Y}",
+                unit="districts",
+                categories=classes,
+                series=[
+                    c.CategorySeries(key="districts", name="Districts", values=[float((mine == k).sum()) for k in classes])
+                ],
+                as_of=iso(sgi_m.date()),
+                derived=True,
+                method_note=SGI_METHOD,
+                **prov,
+            ).dump()
         raise self.no_key(
             "breakdown",
             metric,
-            ["distribution"],
+            ["distribution", "status"],
             {
-                "status": "Borehole status classes come from a current SGI, which the database does not have (the "
-                "valid SGI ends Aug 2024)",
                 "by-aquifer": "No aquifer units or aquifer codes in the database (districts only)",
                 "sector": "Abstraction by sector is not in the database",
             },
@@ -631,6 +749,12 @@ class GroundwaterService(DistrictModule):
                 DEPTH,
             )
         if layer == "sgi":
+            sgi, sgi_m = await self.district_sgi()
+            if sgi_m is not None:
+                body = self._map(
+                    layer, f"Standardised Groundwater Index (derived) – {sgi_m:%b %Y}", sgi, sgi_m, "spi", "", 2, DEPTH
+                )
+                return {**body, "derived": True, "methodNote": SGI_METHOD}
             df = await self.data.monthly(SGI)
             last = pd.Timestamp(df["date"].max())
             vals = df[df["date"] == df["date"].max()].set_index("district")["value"]
@@ -649,8 +773,7 @@ class GroundwaterService(DistrictModule):
             layer,
             ["gw-level", "level-change", "sgi"],
             {
-                "status": "Borehole status classes come from a current SGI, which the database does not have; "
-                + NO_POINTS,
+                "status": NO_POINTS + " (districts by status: the `status` breakdown)",
                 "ec": "No groundwater EC in the database",
             },
         )

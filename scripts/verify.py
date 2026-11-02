@@ -204,6 +204,141 @@ LATEST_COMPLETE_MONTH = (
 )
 
 
+def _area(name: str) -> tuple[str, str, float] | None:
+    from app.core import districts
+
+    d = districts.resolve(name)
+    return (d.code, d.province, (get_spatial().district_areas() or {})[d.code]) if d else None
+
+
+def _land_share(rows: list[tuple[Any, ...]], province: str | None = None) -> float:
+    """rows: district_name, catchment_area_km2, share (%): Σ area × share / Σ area with the table's own area."""
+    num = den = 0.0
+    for name, area, share in rows:
+        a = _area(name)
+        if a and (province is None or a[1] == province):
+            num += float(area) * float(share)
+            den += float(area)
+    return round(num / den, 1)
+
+
+def _peak_national(rows: list[tuple[Any, ...]]) -> float:
+    """rows: day, district_name, depth (mm): the highest day of Σ depth × real area × 1000 / 86 400."""
+    day: dict[Any, float] = {}
+    for d, name, depth in rows:
+        a = _area(name)
+        if a:
+            day[d] = day.get(d, 0.0) + float(depth) * a[2] * 1000 / 86400
+    return round(max(day.values()))
+
+
+def _peak_district(rows: list[tuple[Any, ...]], name: str) -> float:
+    """rows: one max daily depth (mm) of the district's latest complete month."""
+    a = _area(name)
+    assert a
+    return round(float(rows[0][0]) * a[2] * 1000 / 86400, 1)
+
+
+def _status_share(rows: list[tuple[Any, ...]], cls: str) -> float:
+    """rows: district_name, month, depth (mm/day mean, complete months): share (%) of districts in `cls` for the last
+    month, thresholds from the 2000–2025 percentiles of the district's own monthly flow."""
+    import numpy as np
+
+    by: dict[str, list[tuple[Any, float]]] = {}
+    for name, m, v in rows:
+        a = _area(name)
+        if a:
+            by.setdefault(a[0], []).append((m, float(v) * a[2] * 1000 / 86400))
+    last = max(m for vals in by.values() for m, _ in vals)
+    out = []
+    for vals in by.values():
+        ref = [v for m, v in vals if 2000 <= m.year <= 2025]
+        cur = next(v for m, v in vals if m == last)
+        hi, lo = np.percentile(ref, 90), np.percentile(ref, 10)
+        out.append("high" if cur > hi else "low" if cur < lo else "normal")
+    return round(sum(x == cls for x in out) / len(out) * 100)
+
+
+CCME_LIMITS = {  # independent copy of the guideline values, (min, max)
+    "pH": (6.5, 9.0),
+    "EC": (None, 150),
+    "Turbidity": (None, 25),
+    "DO": (5, None),
+    "BOD5": (None, 10),
+    "COD": (None, 75),
+    "NO3": (None, 6),
+    "NH3": (None, 1),
+    "PO4": (None, 0.125),
+    "Ecoli": (None, 1000),
+    "Chla": (None, 20),
+    "TDS": (None, 1000),
+    "SO4": (None, 250),
+    "F": (None, 1.5),
+}
+
+
+def _ccme_national(rows: list[tuple[Any, ...]]) -> float:
+    """rows: district_name, parameter, value over the 12 months: per district 100 − √(F1²+F2²+F3²)/1.732; area-weighted."""
+    import math
+
+    tests: dict[str, list[tuple[str, float]]] = {}
+    for name, par, v in rows:
+        a = _area(name)
+        if a and v is not None:
+            tests.setdefault(a[0] + "|" + str(a[2]), []).append((par, float(v)))
+    num = den = 0.0
+    for key, ts in tests.items():
+        area = float(key.split("|")[1])
+        failed, excur = set(), 0.0
+        n_failed = 0
+        for par, v in ts:
+            lo, hi = CCME_LIMITS[par]
+            if hi is not None and v > hi:
+                failed.add(par)
+                n_failed += 1
+                excur += v / hi - 1
+            elif lo is not None and v < lo:
+                failed.add(par)
+                n_failed += 1
+                excur += lo / v - 1
+        f1 = len(failed) / len({p for p, _ in ts}) * 100
+        f2 = n_failed / len(ts) * 100
+        nse = excur / len(ts)
+        f3 = nse / (0.01 * nse + 0.01)
+        num += area * max(0.0, 100 - math.sqrt(f1**2 + f2**2 + f3**2) / 1.732)
+        den += area
+    return round(num / den)
+
+
+def _sgi_scores(rows: list[tuple[Any, ...]]) -> dict[str, float]:
+    from statistics import NormalDist
+
+    return {str(name): NormalDist().inv_cdf((float(r) - 0.5) / float(n)) for name, r, n in rows}
+
+
+def _sgi_national(rows: list[tuple[Any, ...]]) -> float:
+    num = den = 0.0
+    for name, z in _sgi_scores(rows).items():
+        a = _area(name)
+        if a:
+            num += a[2] * z
+            den += a[2]
+    return round(num / den, 2)
+
+
+_SGI_SQL = """WITH s AS (SELECT lower(district_name) d, date_trunc('month', date)::date m, avg(value) v
+  FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'groundwater_table_depth_m_bgl' AND date <= '2026-10-31' GROUP BY 1, 2),
+g AS (SELECT d, generate_series(min(m), max(m), interval '1 month')::date m FROM s GROUP BY 1),
+f AS (SELECT g.d, g.m, s.v,
+  (SELECT p.m FROM s p WHERE p.d = g.d AND p.m <= g.m ORDER BY p.m DESC LIMIT 1) m0,
+  (SELECT n.m FROM s n WHERE n.d = g.d AND n.m >= g.m ORDER BY n.m LIMIT 1) m1 FROM g LEFT JOIN s USING (d, m)),
+i AS (SELECT f.d, f.m, coalesce(f.v, s0.v + (s1.v - s0.v) * (f.m - f.m0)::float8 / (f.m1 - f.m0)) v
+  FROM f JOIN s s0 ON s0.d = f.d AND s0.m = f.m0 JOIN s s1 ON s1.d = f.d AND s1.m = f.m1),
+r AS (SELECT d, m, rank() OVER (PARTITION BY d ORDER BY v DESC) r, count(*) OVER (PARTITION BY d) n
+  FROM i WHERE extract(month FROM m) = 9)
+SELECT d, r, n FROM r WHERE m = '2026-09-01'"""
+
+
 CHECKS: list[Check] = [
     Check(
         "rainfall",
@@ -841,6 +976,111 @@ FROM "12.2_chemical_water_quality_master" WHERE make_date(year, month, 1) =
 (SELECT max(make_date(year, month, 1)) FROM "12.2_chemical_water_quality_master"
  WHERE make_date(year, month, 1) < date_trunc('month', CURRENT_DATE))""",
         tol=0.5,
+    ),
+    # ---------------------------------------------------------------- audit step 3: derivations (DECISIONS D49)
+    Check(
+        "audit-step3",
+        "Land cover, national: shrubland / fynbos share = Σ catchment area × share / Σ catchment area (9_2)",
+        "/api/v1/vegetation/breakdown?metric=land-cover&kind=share",
+        lambda b: b["series"][0]["values"][b["categories"].index("Shrubland / fynbos")],
+        """SELECT district_name, max(catchment_area_km2), max(shrubland_fynbos_pct)
+FROM "9_2_catchment_characteristics_master" WHERE year = 2025 GROUP BY 1""",
+        sql_post=_land_share,
+    ),
+    Check(
+        "audit-step3",
+        "Land cover, KwaZulu-Natal: tree cover share (9_2), and the runoff page's breakdown is the same table",
+        "/api/v1/runoff/breakdown?metric=land-cover&province=KZN",
+        lambda b: b["series"][0]["values"][b["categories"].index("Tree cover")],
+        """SELECT district_name, max(catchment_area_km2), max(tree_cover_pct)
+FROM "9_2_catchment_characteristics_master" WHERE year = 2025 GROUP BY 1""",
+        sql_post=lambda rows: _land_share(rows, "KZN"),
+    ),
+    Check(
+        "audit-step3",
+        "Runoff Peak Flow, national, 12 months: highest day of Σ district depth × real area × 1000 / 86 400 (never the "
+        "withheld 6 500 km² peak column)",
+        "/api/v1/runoff/summary",
+        kpi("peak"),
+        """SELECT "Date", "District_Name", "Daily_Surface_Runoff_Volume_m3_day" / 6.5e9 * 1000 FROM runoff_variables_master
+WHERE "Date" BETWEEN (SELECT (max("Date") - interval '1 year' + interval '1 day')::date FROM runoff_variables_master WHERE "Date" <= CURRENT_DATE AND "Date" <= (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master"))
+  AND (SELECT max("Date") FROM runoff_variables_master WHERE "Date" <= CURRENT_DATE AND "Date" <= (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master"))""",
+        tol=1.0,
+        sql_post=_peak_national,
+    ),
+    Check(
+        "audit-step3",
+        "Runoff peak-flow map, Alfred Nzo (DC44), latest complete month: max daily depth × real area × 1000 / 86 400",
+        "/api/v1/runoff/map?layer=peak-flow",
+        lambda b: b["values"]["DC44"],
+        """SELECT max("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 FROM runoff_variables_master
+WHERE "District_Name" = 'Alfred Nzo' AND "Date" >= '2026-08-01' AND "Date" < '2026-09-01'""",
+        sql_post=lambda rows: _peak_district(rows, "Alfred Nzo"),
+    ),
+    Check(
+        "audit-step3",
+        "Runoff districts with normal flow (%), national, Aug 2026: within own Q90–Q10 of 2000–2025 monthly flows",
+        "/api/v1/runoff/summary",
+        kpi("normal"),
+        """SELECT "District_Name", date_trunc('month', "Date")::date m, avg("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000
+FROM runoff_variables_master WHERE "Date" <= '2026-08-31' GROUP BY 1, 2
+HAVING count(*) = extract(day FROM (min(date_trunc('month', "Date")) + interval '1 month - 1 day'))""",
+        tol=0.5,
+        sql_post=lambda rows: _status_share(rows, "normal"),
+    ),
+    Check(
+        "audit-step3",
+        "Runoff districts with low flow (%), national, Aug 2026",
+        "/api/v1/runoff/summary",
+        kpi("low"),
+        """SELECT "District_Name", date_trunc('month', "Date")::date m, avg("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000
+FROM runoff_variables_master WHERE "Date" <= '2026-08-31' GROUP BY 1, 2
+HAVING count(*) = extract(day FROM (min(date_trunc('month', "Date")) + interval '1 month - 1 day'))""",
+        tol=0.5,
+        sql_post=lambda rows: _status_share(rows, "low"),
+    ),
+    Check(
+        "audit-step3",
+        "Surface-water River WQ Status, national: CCME WQI of 14 parameters over 12 months to Sep 2026, area-weighted, "
+        "recomputed from the 12.x rows",
+        "/api/v1/surface-water/summary",
+        kpi("wqi"),
+        """WITH w AS (SELECT make_date(2025, 10, 1) a, make_date(2026, 9, 1) b)
+SELECT district_name, 'pH', max("pH") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'DO', max("Dissolved Oxygen (DO)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'BOD5', max("BOD5") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'COD', max("COD") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'NO3', max("Nitrate (NO3-N)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'NH3', max("Ammonia (NH3-N)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'PO4', max("Orthophosphate (PO43-)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'SO4', max("Sulphate") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'F', max("Fluoride") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'EC', max("Electrical Conductivity (EC)") FROM "12.1_physical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'Turbidity', max("Turbidity") FROM "12.1_physical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'TDS', max("Total Dissolved Solids (TDS)") FROM "12.1_physical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'Ecoli', max("E. coli") FROM "12.3_biological_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'Chla', max("Chlorophyll-a") FROM "12.3_biological_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month""",
+        tol=0.5,
+        sql_post=_ccme_national,
+    ),
+    Check(
+        "audit-step3",
+        "Derived SGI, national, Sep 2026: rank of the month's depth (interpolated record, deepest = rank 1) per district, "
+        "Φ⁻¹((r − 0.5) / n), area-weighted (Φ⁻¹ in Python, the only non-SQL step besides the areas)",
+        "/api/v1/groundwater/summary",
+        kpi("sgi"),
+        _SGI_SQL,
+        tol=0.011,
+        sql_post=_sgi_national,
+    ),
+    Check(
+        "audit-step3",
+        "Drought page SGI KPI = the same derived SGI",
+        "/api/v1/drought/summary",
+        kpi("sgi"),
+        _SGI_SQL,
+        tol=0.011,
+        sql_post=_sgi_national,
     ),
 ]
 
