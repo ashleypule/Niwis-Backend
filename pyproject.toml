@@ -43,7 +43,7 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-extend-exclude = ["reference", "migrations"]
+extend-exclude = ["reference", "migrations", "scripts/audit_step1", "scripts/audit_step3"]  # one-off audit scripts
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
