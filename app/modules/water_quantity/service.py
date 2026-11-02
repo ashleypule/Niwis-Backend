@@ -132,13 +132,13 @@ class WaterQuantityService(DistrictModule):
         schemes = [v for k, v in totals.items() if k != "loss" and v is not None]
         transfers = sum(schemes) if schemes else None
         kpis = [
-            self.kpi_unavailable("availability", "availability", "Total Water Availability", "Mm³/yr", NO_YIELD),
+            self.kpi_unavailable("availability", "availability", "Total Water Availability", "Mm³/year", NO_YIELD),
             self.kpi(
                 "surface",
                 "availability",
                 "Surface Water Availability",
                 mar,
-                "Mm³/yr",
+                "Mm³/year",
                 mar_year,
                 MAR,
                 decimals=0,
@@ -150,7 +150,7 @@ class WaterQuantityService(DistrictModule):
                 "availability",
                 "Groundwater Availability",
                 rech,
-                "Mm³/yr",
+                "Mm³/year",
                 yr,
                 DIRECT,
                 decimals=0,
@@ -162,7 +162,7 @@ class WaterQuantityService(DistrictModule):
                 "abstraction",
                 "Total Abstraction",
                 abst,
-                "Mm³/yr",
+                "Mm³/year",
                 yr,
                 ABSTRACTION,
                 decimals=0,
@@ -181,14 +181,14 @@ class WaterQuantityService(DistrictModule):
                 "transfers",
                 "Inter-basin Transfers",
                 transfers,
-                "Mm³/yr",
+                "Mm³/year",
                 end,
                 SCHEMES["katse"][0],
                 decimals=0,
                 sublabel=f"{start:%b %Y} – {end:%b %Y}: four schemes (17.1)",
                 reason="No transfer-system district in this scope (17.1 covers 16 districts)",
             ),
-            self.kpi_unavailable("demand", "demand", "Total Water Demand", "Mm³/yr", NO_YIELD),
+            self.kpi_unavailable("demand", "demand", "Total Water Demand", "Mm³/year", NO_YIELD),
             self.kpi_unavailable("stress", "stressIndex", "Water Security Index", None, NO_YIELD),
         ]
         return self.kpi_set(kpis)
@@ -242,7 +242,7 @@ class WaterQuantityService(DistrictModule):
                     self.series("abstraction", "Abstraction", a, nd=0, i=1),
                     self.series("net", "Net recharge", r - a, nd=0, i=2),
                 ],
-                [c.Axis(unit="Mm³/yr", label="Volume")],
+                [c.Axis(unit="Mm³/year", label="Volume")],
                 [DIRECT, ABSTRACTION],
                 idx[-1] if idx else None,
                 note="Annual values (11.2 recharge = direct × district area + indirect; 11.3 abstraction), summed over "
@@ -283,7 +283,7 @@ class WaterQuantityService(DistrictModule):
             return c.CategorySet(
                 id="transfers",
                 title=f"Inter-basin transfers, {start:%b %Y} – {end:%b %Y}",
-                unit="Mm³/yr",
+                unit="Mm³/year",
                 categories=cats,
                 series=[c.CategorySeries(key="volume", name="Transfer volume (last 12 months)", values=vals)],
                 as_of=iso(end.date()),
@@ -366,7 +366,7 @@ class WaterQuantityService(DistrictModule):
             "recharge",
             f"Groundwater recharge ({yr:%Y})",
             self.gw.sum_scope(await self.gw.recharge_by_district(yr)),
-            "Mm³/yr",
+            "Mm³/year",
             yr,
             DIRECT,
         )
@@ -374,7 +374,7 @@ class WaterQuantityService(DistrictModule):
             "abstraction",
             f"Groundwater abstraction ({yr:%Y})",
             self.gw.sum_scope(await self.gw.abstraction_by_district(yr)),
-            "Mm³/yr",
+            "Mm³/year",
             yr,
             ABSTRACTION,
         )
@@ -383,7 +383,7 @@ class WaterQuantityService(DistrictModule):
             "mar",
             f"Mean annual runoff ({mar_year:%Y}, 16.1)",
             self.gw.sum_scope(await self.district_values(MAR, mar_year)),
-            "Mm³/yr",
+            "Mm³/year",
             mar_year,
             MAR,
         )
@@ -409,7 +409,7 @@ class WaterQuantityService(DistrictModule):
     async def map(self, layer: str) -> dict[str, Any]:
         if layer == "availability":
             return await self.district_map(
-                layer, "Mean annual runoff by district (16.1)", MAR, "runoff", nd=0, unit="Mm³/yr"
+                layer, "Mean annual runoff by district (16.1)", MAR, "volume", nd=0, unit="Mm³/year"
             )
         if layer == "transfers":
             per, start, end = await self.transfers_by_district()
@@ -426,7 +426,7 @@ class WaterQuantityService(DistrictModule):
                 kind="choropleth",
                 level="municipality",
                 scale="runoff",
-                unit="Mm³/yr",
+                unit="Mm³/year",
                 date=iso(end.date()) or "",
                 values=out,
                 geometry="districts",

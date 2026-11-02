@@ -119,7 +119,7 @@ class GroundwaterReserveService(DistrictModule):
                 "rechargeVolume",
                 "Total Recharge",
                 self.sum_scope(rech),
-                "Mm³/yr",
+                "Mm³/year",
                 yr,
                 DIRECT,
                 decimals=0,
@@ -131,7 +131,7 @@ class GroundwaterReserveService(DistrictModule):
                 "abstraction",
                 "Total Abstraction",
                 self.sum_scope(abst),
-                "Mm³/yr",
+                "Mm³/year",
                 yr,
                 ABSTRACTION,
                 decimals=0,
@@ -143,7 +143,7 @@ class GroundwaterReserveService(DistrictModule):
                 "dynamicReserve",
                 "Dynamic Reserve",
                 self.sum_scope(await self.district_values(DYNAMIC, await self.latest_month(DYNAMIC))),
-                "Mm³/yr",
+                "Mm³/year",
                 await self.latest_month(DYNAMIC),
                 DYNAMIC,
                 decimals=0,
@@ -163,18 +163,19 @@ class GroundwaterReserveService(DistrictModule):
                 reason="A sum needs every district of the scope",
             ),
         ]
-        ei_v = self.aggregate(ei, False)
-        cls = exploitation_class(ei_v / 100) if ei_v is not None else None
+        ei_pct = self.aggregate(ei, False)
+        ei_v = ei_pct / 100 if ei_pct is not None else None  # the table stores %; spec §11.3 and the map use the ratio
+        cls = exploitation_class(ei_v) if ei_v is not None else None
         kpis.append(
             self.kpi(
                 "ei",
                 "exploitationIndex",
                 "Exploitation Index",
                 ei_v,
-                "%",
+                None,
                 yr,
                 EI,
-                decimals=1,
+                decimals=2,
                 sublabel=f"{yr:%Y}, abstraction / recharge"
                 + ("" if len(self.ctx.weights()) == 1 else " (area-weighted mean)")
                 + (f" · {cls}" if cls else ""),
@@ -300,7 +301,7 @@ class GroundwaterReserveService(DistrictModule):
                     data=[[str(y), rnd(abst[y], 1)] for y in years],
                 ),
             ],
-            [c.Axis(unit="Mm³/yr", label="Volume")],
+            [c.Axis(unit="Mm³/year", label="Volume")],
             [DIRECT, ABSTRACTION],
             last,
             x_type="category",
@@ -342,7 +343,7 @@ class GroundwaterReserveService(DistrictModule):
             return c.CategorySet(
                 id="components",
                 title=self.entity_title(f"Groundwater reserve components – {yr:%Y}"),
-                unit="Mm³/yr",
+                unit="Mm³/year",
                 categories=[
                     "Dynamic reserve",
                     "Ecological reserve (not in the database)",
@@ -384,7 +385,7 @@ class GroundwaterReserveService(DistrictModule):
                     "aquifer": d.official_name,
                     "recharge": rnd(rech.get(code), 1),
                     "abstraction": rnd(abst.get(code), 1),
-                    "ei": rnd(v / 100, 3),
+                    "ei": rnd(v / 100, 2),
                     "static": rnd(static.get(code), 0),
                     "status": exploitation_class(v / 100),
                 }
@@ -397,11 +398,11 @@ class GroundwaterReserveService(DistrictModule):
             title=f"Groundwater balance by district – {yr:%Y}",
             columns=[
                 c.Column(key="aquifer", label="District", type="text"),
-                c.Column(key="recharge", label="Recharge", type="number", unit="Mm³/yr", decimals=1, align="right"),
+                c.Column(key="recharge", label="Recharge", type="number", unit="Mm³/year", decimals=0, align="right"),
                 c.Column(
-                    key="abstraction", label="Abstraction", type="number", unit="Mm³/yr", decimals=1, align="right"
+                    key="abstraction", label="Abstraction", type="number", unit="Mm³/year", decimals=0, align="right"
                 ),
-                c.Column(key="ei", label="EI", type="number", decimals=3, align="right"),
+                c.Column(key="ei", label="EI", type="number", decimals=2, align="right"),
                 c.Column(key="static", label="Static reserve", type="number", unit="Mm³", decimals=0, align="right"),
                 c.Column(key="status", label="Status", type="class", scale="exploitation"),
             ],
@@ -422,7 +423,7 @@ class GroundwaterReserveService(DistrictModule):
                 "Exploitation index (abstraction / recharge)",
                 EI,
                 "exploitation",
-                nd=3,
+                nd=2,
                 transform=lambda v: v / 100,
                 unit="—",
             )

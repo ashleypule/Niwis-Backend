@@ -19,11 +19,12 @@ import pandas as pd
 
 from app.core import districts
 from app.core.aggregate import weighted_scalar
+from app.core.errors import DataUnavailable
 from app.core.palettes import SERIES
 from app.core.provenance import iso
 from app.core.stats import rnd
 from app.core.thresholds import pes_class, pes_label, rwqo_pass, thresholds
-from app.modules.common import Ctx
+from app.modules.common import Ctx, Selector
 from app.modules.compliance import ComplianceService
 from app.schemas import contract as c
 
@@ -34,7 +35,21 @@ FIBI = "eco_fibi"
 SASS5 = "eco_sass5_score"
 RIPARIAN = "eco_riparian_vegetation"
 RESERVE_Q = "eco_ecological_reserve_q"
-SELECTORS: dict[tuple[str, str], tuple[Any, ...]] = {}
+# param id → (registry variable, label, objective line); pH, EC and turbidity are in the frontend's tabs: 15.2's pH and
+# EC are withheld (copies of 13.1 effluent values, DATA_GAPS §21.7) and the table has no turbidity
+PARAM_SERIES: dict[str, tuple[str, str, float | None, str]] = {
+    "do": ("rwc_do_value", "Dissolved oxygen", 5.0, "Objective ≥ 5 mg/L"),
+    "tds": ("rwc_salinity_value_tds", "Total dissolved solids", None, ""),
+    "tn": ("rwc_nutrient_value_tn", "Total nitrogen", None, ""),
+    "tp": ("rwc_nutrient_value_tp", "Total phosphorus", None, ""),
+}
+PARAM_WITHHELD = {
+    "ph": "rwc_ph_range_value",
+    "ec": "rwc_ec_target_value",
+    "turbidity": "",
+}
+PARAM = Selector("param", (*PARAM_SERIES, *PARAM_WITHHELD), "do")
+SELECTORS: dict[tuple[str, str], tuple[Any, ...]] = {("timeseries", "params"): (PARAM,)}
 PES_CLASSES = ["A", "B", "C", "D", "E", "F"]
 PES_COLORS = ["#1565C0", "#2E9E5B", "#8BC34A", "#F6CF3E", "#F28C28", "#B2182B"]
 SASS5_MAX = 250.0
@@ -212,6 +227,7 @@ class RwqoService(ComplianceService):
                         key=var.removeprefix("eco_"),
                         name=name,
                         kind="line",
+                        axis=1 if var in (FIBI, HABITAT) else 0,  # % on its own axis, never with the unitless scores
                         color=SERIES[i % len(SERIES)],
                         data=[[str(y), v] for y, v in zip(years, vals, strict=True)],
                     )
@@ -220,24 +236,31 @@ class RwqoService(ComplianceService):
                 "ecological",
                 "Ecological indices by year (15.1, annual means)",
                 series,
-                [c.Axis(unit="score", label="SASS5 / FIBI / IHI / ASPT")],
+                [c.Axis(unit="index", label="SASS5 / ASPT"), c.Axis(unit="%", label="FIBI / IHI", min=0, max=100)],
                 [SASS5, FIBI, HABITAT, ASPT],
                 em,
                 x_type="category",
                 note="Area-weighted means of the district values per year.",
             )
         if metric == "params":
-            var = self.PARAMS["do"]
+            pid = self.ctx.select(PARAM)
+            if pid in PARAM_WITHHELD:
+                var_w = PARAM_WITHHELD[pid]
+                raise DataUnavailable(
+                    self.reason(var_w) if var_w else "Turbidity is not in the 15.2 table",
+                    missing=[var_w or "turbidity"],
+                )
+            var, label, ref, ref_label = PARAM_SERIES[pid]
             start, end = await self.window(var)
             s = await self.scope_series(var, start, end)
             return self.series_set(
                 "params",
-                "Dissolved oxygen (15.2)",
-                [self.series("do", "Dissolved oxygen", s, nd=2)],
-                [c.Axis(unit="mg/L", label="Dissolved oxygen")],
+                f"{label} (15.2)",
+                [self.series(pid, label, s, nd=2)],
+                [c.Axis(unit=self.unit(var), label=label)],
                 [var],
                 end,
-                ref_lines=[c.RefLine(y=5.0, label="Objective ≥ 5 mg/L")],
+                ref_lines=[c.RefLine(y=ref, label=ref_label)] if ref is not None else [],
             )
         if metric == "eflow":
             var = self.PARAMS["lowFlow"]

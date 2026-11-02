@@ -431,7 +431,7 @@ class WaterQualityService(DistrictModule):
             return c.CategorySet(
                 id="param-range",
                 title=f"Parameter range across districts – {last:%b %Y}",
-                unit="mixed",
+                unit="",
                 units=[guideline(p)["unit"] for p in RANGE_PARAMS],
                 categories=cats,
                 series=series,

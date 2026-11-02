@@ -735,7 +735,7 @@ categories:
       band: null
     - id: grace-tws
       label: GRACE TWS
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - grace_tws
@@ -806,7 +806,7 @@ categories:
       band: null
     - id: grace-tws
       label: GRACE TWS
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - grace_tws
@@ -1306,7 +1306,7 @@ categories:
       band: null
     - id: frost-day-flag
       label: Frost Day Flag
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - Frost_Day_Flag
@@ -1732,7 +1732,7 @@ categories:
       band: null
     - id: nino34-annual-mean
       label: Nino34 Annual Mean
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Nino34_Annual_Mean
@@ -1762,7 +1762,7 @@ categories:
       band: null
     - id: mk-p-value
       label: MK P Value
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - MK_p_value
@@ -1782,7 +1782,7 @@ categories:
       band: null
     - id: enso-nino34-correlation
       label: ENSO Nino34 Correlation
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - ENSO_Nino34_Correlation
@@ -1820,7 +1820,7 @@ categories:
       band: null
     - id: nino34-annual-mean
       label: Nino34 Annual Mean
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Nino34_Annual_Mean
@@ -1850,7 +1850,7 @@ categories:
       band: null
     - id: mk-p-value
       label: MK P Value
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - MK_p_value
@@ -1870,7 +1870,7 @@ categories:
       band: null
     - id: enso-nino34-correlation
       label: ENSO Nino34 Correlation
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - ENSO_Nino34_Correlation
@@ -2288,7 +2288,7 @@ categories:
       band: null
     - id: rainfall-runoff-ratio
       label: Rainfall Runoff Ratio
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Rainfall_Runoff_Ratio
@@ -2298,7 +2298,7 @@ categories:
       band: null
     - id: climate-streamflow-elasticity
       label: Climate Streamflow Elasticity
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Climate_Streamflow_Elasticity
@@ -3524,7 +3524,7 @@ categories:
       band: null
     - id: runoff-coefficient
       label: Runoff Coefficient
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - Runoff_Coefficient_dimensionless
@@ -3544,7 +3544,7 @@ categories:
       band: null
     - id: curve-number-cn
       label: Curve Number CN
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - Curve_Number_CN
@@ -4060,7 +4060,7 @@ categories:
       band: null
     - id: mean-ndwi
       label: Mean NDWI
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - mean_ndwi
@@ -4384,7 +4384,7 @@ categories:
       band: null
     - id: a-coeff
       label: A Coeff
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - a_coeff
@@ -4394,7 +4394,7 @@ categories:
       band: null
     - id: b-exponent
       label: B Exponent
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - b_exponent
@@ -4404,7 +4404,7 @@ categories:
       band: null
     - id: r-squared
       label: R Squared
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - r_squared
@@ -4745,7 +4745,7 @@ categories:
       band: null
     - id: mean-twi
       label: Mean TWI
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - mean_twi
@@ -4833,7 +4833,7 @@ categories:
       band: null
     - id: mean-twi
       label: Mean TWI
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - mean_twi
@@ -4966,7 +4966,7 @@ categories:
       band: null
     - id: turbidity-proxy-ratio
       label: Turbidity Proxy Ratio
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - turbidity_proxy_ratio
@@ -5314,7 +5314,7 @@ categories:
       band: null
     - id: storativity-specific-yield
       label: Storativity Specific Yield
-      unit: —
+      unit: index
       resolution: daily
       columns:
       - storativity_specific_yield_dimensionless
@@ -5733,7 +5733,7 @@ categories:
       band: null
     - id: groundwater-storage-coefficient
       label: Groundwater Storage Coefficient
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Groundwater storage coefficient
@@ -5763,7 +5763,7 @@ categories:
       band: null
     - id: specific-storage-specific-yield
       label: Specific Storage / Specific Yield
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Specific storage
@@ -5785,7 +5785,7 @@ categories:
       band: null
     - id: storage-coefficient-storativity-specific-yield
       label: Storage Coefficient / Storativity / Specific Yield
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Storage coefficient / storativity / specific yield
@@ -6063,7 +6063,7 @@ categories:
     groups:
     - id: water-quality-for-use
       label: Water Quality For Use
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Water quality for use
@@ -6103,7 +6103,7 @@ categories:
       band: null
     - id: recharge-sensitivity
       label: Recharge Sensitivity
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Recharge sensitivity
@@ -6542,7 +6542,7 @@ categories:
     groups:
     - id: ph
       label: pH
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - pH
@@ -6601,8 +6601,8 @@ categories:
   - date
   columns:
   - column: E. coli
-    name: E. Coli
-    label: E. Coli (cfu/100 mL)
+    name: E. coli
+    label: E. coli (cfu/100 mL)
     unit: cfu/100 mL
     db_type: double precision
     kind: numeric
@@ -6703,7 +6703,7 @@ categories:
     shown_duplicates: []
     groups:
     - id: e-coli-total-coliforms-cfu-100-ml
-      label: E. Coli / Total Coliforms (cfu/100 mL)
+      label: E. coli / Total Coliforms (cfu/100 mL)
       unit: cfu/100 mL
       resolution: monthly
       columns:
@@ -6738,7 +6738,7 @@ categories:
       band: null
     - id: macroinvertebrate-index-sass5
       label: Macroinvertebrate Index (SASS5)
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Macroinvertebrate index (SASS5)
@@ -6748,7 +6748,7 @@ categories:
       band: null
     - id: pathogens
       label: Pathogens
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Pathogens
@@ -6845,7 +6845,7 @@ categories:
     groups:
     - id: turbidity
       label: Turbidity
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Turbidity
@@ -6855,7 +6855,7 @@ categories:
       band: null
     - id: chlorophyll-a
       label: Chlorophyll-a
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Chlorophyll-a
@@ -6865,7 +6865,7 @@ categories:
       band: null
     - id: cyanobacterial-bloom
       label: Cyanobacterial Bloom
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Cyanobacterial bloom
@@ -6875,7 +6875,7 @@ categories:
       band: null
     - id: cdom
       label: CDOM
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - CDOM
@@ -6885,7 +6885,7 @@ categories:
       band: null
     - id: total-suspended-matter-tsm
       label: Total Suspended Matter (TSM)
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Total Suspended Matter (TSM)
@@ -7075,8 +7075,8 @@ categories:
     unit_override: name has no unit; spec §13.1 gives µg/L
     aggregate: mean
   - column: E_coli
-    name: E Coli
-    label: E Coli (cfu/100 mL)
+    name: E coli
+    label: E coli (cfu/100 mL)
     unit: cfu/100 mL
     db_type: double precision
     kind: numeric
@@ -7167,7 +7167,7 @@ categories:
       band: null
     - id: ph
       label: pH
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - ph
@@ -7198,7 +7198,7 @@ categories:
       chart: line
       band: null
     - id: e-coli-faecal-coliforms-cfu-100-ml
-      label: E Coli / Faecal Coliforms (cfu/100 mL)
+      label: E coli / Faecal Coliforms (cfu/100 mL)
       unit: cfu/100 mL
       resolution: monthly
       columns:
@@ -7493,7 +7493,7 @@ categories:
       band: null
     - id: flood-events-proxy
       label: Flood Events Proxy
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Flood_events_proxy
@@ -7679,8 +7679,8 @@ categories:
     unit_override: a yes / no compliance flag, served as % compliant (100 = compliant; scope values = % of the area)
     aggregate: mean
   - column: E_coli_Value
-    name: E Coli Value
-    label: E Coli Value (cfu/100 mL)
+    name: E coli Value
+    label: E coli Value (cfu/100 mL)
     unit: cfu/100 mL
     db_type: double precision
     kind: numeric
@@ -7693,8 +7693,8 @@ categories:
     unit_override: name has no unit; spec §14.1 gives cfu/100 mL
     aggregate: mean
   - column: E_coli_Compliant
-    name: E Coli Compliant
-    label: E Coli Compliant (%)
+    name: E coli Compliant
+    label: E coli Compliant (%)
     unit: '%'
     db_type: boolean
     kind: numeric
@@ -8015,7 +8015,7 @@ categories:
       chart: line
       band: null
     - id: turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct
-      label: Turbidity Compliant / Colour Compliant / Temperature Compliant / E Coli Compliant / pH Compliant / EC Compliant / Free Chlorine Compliant / Nitrate Compliant / Fluoride Compliant / Arsenic
+      label: Turbidity Compliant / Colour Compliant / Temperature Compliant / E coli Compliant / pH Compliant / EC Compliant / Free Chlorine Compliant / Nitrate Compliant / Fluoride Compliant / Arsenic
         Compliant / Lead Compliant / Cyanide Compliant (%)
       unit: '%'
       resolution: monthly
@@ -8059,7 +8059,7 @@ categories:
       chart: line
       band: null
     - id: e-coli-value-total-coliforms-value-cfu-100-ml
-      label: E Coli Value / Total Coliforms Value (cfu/100 mL)
+      label: E coli Value / Total Coliforms Value (cfu/100 mL)
       unit: cfu/100 mL
       resolution: monthly
       columns:
@@ -8083,7 +8083,7 @@ categories:
       band: null
     - id: ph-value
       label: pH Value
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - pH_Value
@@ -8121,7 +8121,7 @@ categories:
       band: null
     - id: sans-241-compliance-score
       label: SANS 241 Compliance Score
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - SANS_241_Compliance_Score
@@ -8234,7 +8234,7 @@ categories:
     groups:
     - id: aquatic-habitat-integrity
       label: Aquatic Habitat Integrity
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - aquatic_habitat_integrity
@@ -8244,7 +8244,7 @@ categories:
       band: null
     - id: aspt
       label: ASPT
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - aspt
@@ -8264,7 +8264,7 @@ categories:
       band: null
     - id: fibi
       label: FIBI
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - fibi
@@ -8274,7 +8274,7 @@ categories:
       band: null
     - id: riparian-vegetation
       label: Riparian Vegetation
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - riparian_vegetation
@@ -8284,7 +8284,7 @@ categories:
       band: null
     - id: sass5-score
       label: SASS5 Score
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - sass5_score
@@ -8562,7 +8562,7 @@ categories:
       band: null
     - id: ph-range-value
       label: pH Range Value
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - pH_Range_Value
@@ -8604,7 +8604,7 @@ categories:
       band: null
     - id: rwqo-compliance-score
       label: RWQO Compliance Score
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - RWQO_Compliance_Score
@@ -8835,7 +8835,7 @@ categories:
       band: null
     - id: high-flow-value
       label: High Flow Value
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - High_Flow_Value
@@ -8845,7 +8845,7 @@ categories:
       band: null
     - id: seasonality-value
       label: Seasonality Value
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Seasonality_Value
@@ -8855,7 +8855,7 @@ categories:
       band: null
     - id: assimilation-value
       label: Assimilation Value
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Assimilation_Value
@@ -8865,7 +8865,7 @@ categories:
       band: null
     - id: hydrological-rwqo-score
       label: Hydrological RWQO Score
-      unit: —
+      unit: index
       resolution: monthly
       columns:
       - Hydrological_RWQO_Score
@@ -9129,7 +9129,7 @@ categories:
       band: null
     - id: climate-variability-index-cv-rainfall
       label: Climate Variability Index CV Rainfall
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Climate_Variability_Index_CV_rainfall
@@ -9154,7 +9154,7 @@ categories:
       band: null
     - id: surface-water-availability-index-ratio
       label: Surface Water Availability Index Ratio
-      unit: —
+      unit: index
       resolution: annual
       columns:
       - Surface_Water_Availability_Index_ratio
@@ -9294,8 +9294,8 @@ categories:
     aggregate: sum
   - column: Transfer_Pumping_Energy_kWh_Ml
     name: Transfer Pumping Energy
-    label: Transfer Pumping Energy (kWh/Ml)
-    unit: kWh/Ml
+    label: Transfer Pumping Energy (kWh/ML)
+    unit: kWh/ML
     db_type: double precision
     kind: numeric
     resolution: monthly
@@ -9357,8 +9357,8 @@ categories:
       chart: bar
       band: null
     - id: transfer-pumping-energy-kwh-ml
-      label: Transfer Pumping Energy (kWh/Ml)
-      unit: kWh/Ml
+      label: Transfer Pumping Energy (kWh/ML)
+      unit: kWh/ML
       resolution: monthly
       columns:
       - Transfer_Pumping_Energy_kWh_Ml
@@ -9706,7 +9706,7 @@ categories:
     aggregate: mean
   - column: Households Below RDP / Backlog (%)
     name: Households Below RDP / Backlog (%)
-    label: Households Below RDP / Backlog (%) (%)
+    label: Households Below RDP / Backlog (%)
     unit: '%'
     db_type: double precision
     kind: numeric
@@ -9776,7 +9776,7 @@ categories:
     aggregate: mean
   - column: Piped Water Inside Dwelling (%)
     name: Piped Water Inside Dwelling (%)
-    label: Piped Water Inside Dwelling (%) (%)
+    label: Piped Water Inside Dwelling (%)
     unit: '%'
     db_type: double precision
     kind: numeric
@@ -9790,7 +9790,7 @@ categories:
     aggregate: mean
   - column: Piped Water On Site / Yard Tap (%)
     name: Piped Water on Site / Yard Tap (%)
-    label: Piped Water on Site / Yard Tap (%) (%)
+    label: Piped Water on Site / Yard Tap (%)
     unit: '%'
     db_type: double precision
     kind: numeric
@@ -9804,7 +9804,7 @@ categories:
     aggregate: mean
   - column: Communal Standpipe < 200m (%)
     name: Communal Standpipe < 200m (%)
-    label: Communal Standpipe < 200m (%) (%)
+    label: Communal Standpipe < 200m (%)
     unit: '%'
     db_type: double precision
     kind: numeric
@@ -9818,7 +9818,7 @@ categories:
     aggregate: mean
   - column: Distance to Nearest Water Point for Unserved HH (km)
     name: Distance to Nearest Water Point For Unserved HH (km)
-    label: Distance to Nearest Water Point For Unserved HH (km) (km)
+    label: Distance to Nearest Water Point For Unserved HH (km)
     unit: km
     db_type: double precision
     kind: numeric
@@ -9832,7 +9832,7 @@ categories:
     aggregate: mean
   - column: Schools with Piped Water (%)
     name: Schools With Piped Water (%)
-    label: Schools With Piped Water (%) (%)
+    label: Schools With Piped Water (%)
     unit: '%'
     db_type: double precision
     kind: numeric
@@ -9846,7 +9846,7 @@ categories:
     aggregate: mean
   - column: Clinics with Piped Water (%)
     name: Clinics With Piped Water (%)
-    label: Clinics With Piped Water (%) (%)
+    label: Clinics With Piped Water (%)
     unit: '%'
     db_type: double precision
     kind: numeric
@@ -9878,8 +9878,8 @@ categories:
       - Reliable Water Households
       chart: line
       band: null
-    - id: at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct
-      label: At Or Above RDP Percentage / Reliable Water Percentage / Households Below RDP / Backlog (%) / Communal Standpipe < 200m (%) / Schools With Piped Water (%) / Clinics With Piped Water (%) (%)
+    - id: at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct
+      label: At Or Above RDP Percentage / Reliable Water Percentage / Households Below RDP / Backlog (%) / Communal Standpipe < 200m (%) / Schools With Piped Water (%) / Clinics With Piped Water (%)
       unit: '%'
       resolution: annual
       columns:
@@ -9931,8 +9931,8 @@ categories:
       - Piped Water On Site / Yard Tap (%)
       chart: line
       band: null
-    - id: distance-to-nearest-water-point-for-unserved-hh-km-km
-      label: Distance to Nearest Water Point For Unserved HH (km) (km)
+    - id: distance-to-nearest-water-point-for-unserved-hh-km
+      label: Distance to Nearest Water Point For Unserved HH (km)
       unit: km
       resolution: annual
       columns:
@@ -10170,8 +10170,8 @@ categories:
     aggregate: mean
   - column: Pump_Station_Energy_Consumption_kWh_Ml
     name: Pump Station Energy Consumption
-    label: Pump Station Energy Consumption (kWh/Ml)
-    unit: kWh/Ml
+    label: Pump Station Energy Consumption (kWh/ML)
+    unit: kWh/ML
     db_type: double precision
     kind: numeric
     resolution: annual
@@ -10180,7 +10180,7 @@ categories:
     duplicate_of: null
     chart: line
     note: null
-    unit_override: name has no unit; spec §18.2 gives kWh/Ml
+    unit_override: name has no unit; spec §18.2 gives kWh/ML
     aggregate: mean
   - column: Load_Shedding_Induced_Interruptions_hours_per_day
     name: Load Shedding Induced Interruptions Hours per Day
@@ -10298,8 +10298,8 @@ categories:
       chart: line
       band: null
     - id: pump-station-energy-consumption-kwh-ml
-      label: Pump Station Energy Consumption (kWh/Ml)
-      unit: kWh/Ml
+      label: Pump Station Energy Consumption (kWh/ML)
+      unit: kWh/ML
       resolution: annual
       columns:
       - Pump_Station_Energy_Consumption_kWh_Ml
@@ -10484,7 +10484,7 @@ categories:
   columns:
   - column: Raw water abstraction tariff (R/m³)
     name: Raw Water Abstraction Tariff (R/m³)
-    label: Raw Water Abstraction Tariff (R/m³) (R/m³)
+    label: Raw Water Abstraction Tariff (R/m³)
     unit: R/m³
     db_type: double precision
     kind: numeric
@@ -10498,7 +10498,7 @@ categories:
     aggregate: mean
   - column: Drought-season surcharge (R/m³)
     name: Drought-season Surcharge (R/m³)
-    label: Drought-season Surcharge (R/m³) (R/m³)
+    label: Drought-season Surcharge (R/m³)
     unit: R/m³
     db_type: double precision
     kind: numeric
@@ -10512,7 +10512,7 @@ categories:
     aggregate: mean
   - column: Capital investment recovery charge (R/m³)
     name: Capital Investment Recovery Charge (R/m³)
-    label: Capital Investment Recovery Charge (R/m³) (R/m³)
+    label: Capital Investment Recovery Charge (R/m³)
     unit: R/m³
     db_type: double precision
     kind: numeric
@@ -10526,7 +10526,7 @@ categories:
     aggregate: mean
   - column: Reservoir storage % (scarcity trigger) (% FSC)
     name: Reservoir Storage % (scarcity Trigger) (% FSC)
-    label: Reservoir Storage % (scarcity Trigger) (% FSC) (% FSC)
+    label: Reservoir Storage % (scarcity Trigger) (% FSC)
     unit: '% FSC'
     db_type: double precision
     kind: numeric
@@ -10540,8 +10540,8 @@ categories:
     aggregate: mean
   - column: Inter-basin transfer cost component (R/Ml)
     name: Inter-basin Transfer Cost Component (R/Ml)
-    label: Inter-basin Transfer Cost Component (R/Ml) (R/Ml)
-    unit: R/Ml
+    label: Inter-basin Transfer Cost Component (R/ML)
+    unit: R/ML
     db_type: double precision
     kind: numeric
     resolution: annual
@@ -10550,12 +10550,12 @@ categories:
     duplicate_of: null
     chart: line
     note: null
-    unit_override: name has no unit; spec §19.1 gives R/Ml
+    unit_override: name has no unit; spec §19.1 gives R/ML
     aggregate: mean
   - column: Energy cost per Ml transferred (R/Ml)
     name: Energy Cost per Ml Transferred (R/Ml)
-    label: Energy Cost per Ml Transferred (R/Ml) (R/Ml)
-    unit: R/Ml
+    label: Energy Cost per Ml Transferred (R/ML)
+    unit: R/ML
     db_type: double precision
     kind: numeric
     resolution: annual
@@ -10564,11 +10564,11 @@ categories:
     duplicate_of: null
     chart: line
     note: null
-    unit_override: name has no unit; spec §19.1 gives R/Ml
+    unit_override: name has no unit; spec §19.1 gives R/ML
     aggregate: mean
   - column: MAR_demand_ratio
     name: MAR Demand Ratio
-    label: MAR Demand Ratio (—)
+    label: MAR Demand Ratio
     unit: —
     db_type: double precision
     kind: numeric
@@ -10598,8 +10598,8 @@ categories:
   - module: tariffs
     shown_duplicates: []
     groups:
-    - id: raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3-r-m3
-      label: Raw Water Abstraction Tariff (R/m³) / Drought-season Surcharge (R/m³) / Capital Investment Recovery Charge (R/m³) (R/m³)
+    - id: raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3
+      label: Raw Water Abstraction Tariff (R/m³) / Drought-season Surcharge (R/m³) / Capital Investment Recovery Charge (R/m³)
       unit: R/m³
       resolution: annual
       columns:
@@ -10612,8 +10612,8 @@ categories:
       - Capital investment recovery charge (R/m³)
       chart: line
       band: null
-    - id: reservoir-storage-pct-scarcity-trigger-pct-fsc-pct-fsc
-      label: Reservoir Storage % (scarcity Trigger) (% FSC) (% FSC)
+    - id: reservoir-storage-pct-scarcity-trigger-pct-fsc
+      label: Reservoir Storage % (scarcity Trigger) (% FSC)
       unit: '% FSC'
       resolution: annual
       columns:
@@ -10622,9 +10622,9 @@ categories:
       - Reservoir storage % (scarcity trigger) (% FSC)
       chart: line
       band: null
-    - id: inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml-r-ml
-      label: Inter-basin Transfer Cost Component (R/Ml) / Energy Cost per Ml Transferred (R/Ml) (R/Ml)
-      unit: R/Ml
+    - id: inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml
+      label: Inter-basin Transfer Cost Component (R/Ml) / Energy Cost per Ml Transferred (R/ML)
+      unit: R/ML
       resolution: annual
       columns:
       - Inter-basin transfer cost component (R/Ml)
@@ -10635,7 +10635,7 @@ categories:
       chart: line
       band: null
     - id: mar-demand-ratio
-      label: MAR Demand Ratio (—)
+      label: MAR Demand Ratio
       unit: —
       resolution: annual
       columns:
@@ -10684,7 +10684,7 @@ categories:
     aggregate: mean
   - column: 6 kL/month free allocation status (L/household/month)
     name: 6 KL/month Free Allocation Status (L/household/month)
-    label: 6 KL/month Free Allocation Status (L/household/month) (L/household/month)
+    label: 6 KL/month Free Allocation Status (L/household/month)
     unit: L/household/month
     db_type: double precision
     kind: numeric
@@ -10698,7 +10698,7 @@ categories:
     aggregate: mean
   - column: Average treatment cost per kL produced (R/kL)
     name: Average Treatment Cost per KL Produced (R/kL)
-    label: Average Treatment Cost per KL Produced (R/kL) (R/kL)
+    label: Average Treatment Cost per KL Produced (R/kL)
     unit: R/kL
     db_type: double precision
     kind: numeric
@@ -10712,8 +10712,8 @@ categories:
     aggregate: mean
   - column: Electricity cost for pumping and treatment (R/kWh)
     name: Electricity Cost For Pumping and Treatment (R/kWh)
-    label: Electricity Cost For Pumping and Treatment (R/kWh) (kWh/Ml)
-    unit: kWh/Ml
+    label: Electricity Cost For Pumping and Treatment (R/kWh) (kWh/ML)
+    unit: kWh/ML
     db_type: double precision
     kind: numeric
     resolution: annual
@@ -10722,11 +10722,11 @@ categories:
     duplicate_of: 18_2_infrastructure_operational_master.Pump_Station_Energy_Consumption_kWh_Ml
     chart: line
     note: identical to the 18.2 pump-station energy consumption (kWh/Ml) in every row; not a cost in R/kWh
-    unit_override: name has no unit; spec §19.2 gives kWh/Ml
+    unit_override: name has no unit; spec §19.2 gives kWh/ML
     aggregate: mean
   - column: Infrastructure replacement and maintenance cost (R/year)
     name: Infrastructure Replacement and Maintenance Cost (R/year)
-    label: Infrastructure Replacement and Maintenance Cost (R/year) (R/year)
+    label: Infrastructure Replacement and Maintenance Cost (R/year)
     unit: R/year
     db_type: double precision
     kind: numeric
@@ -10740,7 +10740,7 @@ categories:
     aggregate: mean
   - column: CPI and PPI affecting operational costs (%)
     name: CPI and PPI Affecting Operational Costs (%)
-    label: CPI and PPI Affecting Operational Costs (%) (%)
+    label: CPI and PPI Affecting Operational Costs (%)
     unit: '%'
     db_type: double precision
     kind: numeric
@@ -10757,8 +10757,8 @@ categories:
     shown_duplicates:
     - Electricity cost for pumping and treatment (R/kWh)
     groups:
-    - id: block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl-r-kl
-      label: Block Tariff Rates (R/kL per Consumption Block) / Average Treatment Cost per KL Produced (R/kL) (R/kL)
+    - id: block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl
+      label: Block Tariff Rates (R/kL per Consumption Block) / Average Treatment Cost per KL Produced (R/kL)
       unit: R/kL
       resolution: annual
       columns:
@@ -10769,8 +10769,8 @@ categories:
       - Average treatment cost per kL produced (R/kL)
       chart: line
       band: null
-    - id: 6-kl-month-free-allocation-status-l-household-month-l-household-month
-      label: 6 KL/month Free Allocation Status (L/household/month) (L/household/month)
+    - id: 6-kl-month-free-allocation-status-l-household-month
+      label: 6 KL/month Free Allocation Status (L/household/month)
       unit: L/household/month
       resolution: annual
       columns:
@@ -10780,8 +10780,8 @@ categories:
       chart: line
       band: null
     - id: electricity-cost-for-pumping-and-treatment-r-kwh-kwh-ml
-      label: Electricity Cost For Pumping and Treatment (R/kWh) (kWh/Ml)
-      unit: kWh/Ml
+      label: Electricity Cost For Pumping and Treatment (R/kWh) (kWh/ML)
+      unit: kWh/ML
       resolution: annual
       columns:
       - Electricity cost for pumping and treatment (R/kWh)
@@ -10789,8 +10789,8 @@ categories:
       - Electricity cost for pumping and treatment (R/kWh)
       chart: line
       band: null
-    - id: infrastructure-replacement-and-maintenance-cost-r-year-r-year
-      label: Infrastructure Replacement and Maintenance Cost (R/year) (R/year)
+    - id: infrastructure-replacement-and-maintenance-cost-r-year
+      label: Infrastructure Replacement and Maintenance Cost (R/year)
       unit: R/year
       resolution: annual
       columns:
@@ -10799,8 +10799,8 @@ categories:
       - Infrastructure replacement and maintenance cost (R/year)
       chart: line
       band: null
-    - id: cpi-and-ppi-affecting-operational-costs-pct-pct
-      label: CPI and PPI Affecting Operational Costs (%) (%)
+    - id: cpi-and-ppi-affecting-operational-costs-pct
+      label: CPI and PPI Affecting Operational Costs (%)
       unit: '%'
       resolution: annual
       columns:

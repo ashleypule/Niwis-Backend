@@ -47,7 +47,7 @@ variables:
   rain_season_jas:       {label: JAS rainfall, unit: mm}
   rain_seasonal_met:     {label: Seasonal rainfall (definition undocumented), unit: mm}
   rain_cv:               {label: Interannual rainfall CV, unit: "%"}
-  rain_trend_sen:        {label: Rainfall trend (Sen's slope), unit: mm/yr}
+  rain_trend_sen:        {label: Rainfall trend (Sen's slope), unit: mm/year}
   rain_trend_mk_p:       {label: Mann-Kendall p-value, unit: "—"}
   rain_trend_mk:         {label: Mann-Kendall trend class, unit: "—"}
   rai:                   {label: Rainfall Anomaly Index, unit: "—"}
@@ -96,10 +96,10 @@ variables:
   rainfall_deficit:      {label: Rainfall deficit, unit: mm}
   soil_moisture_deficit: {label: Soil moisture deficit, unit: m³/m³}
   irrigation_return:     {label: Irrigation return flow, unit: mm}
-  mar_volume:            {label: Mean annual runoff, unit: m³/yr}
+  mar_volume:            {label: Mean annual runoff, unit: m³/year}
   streamflow_anomaly:    {label: Streamflow anomaly, unit: "%", metric: runoffAnomaly}
-  q90_low_flow:          {label: Q90 low flow, unit: m³/yr}
-  q10_flood_flow:        {label: Q10 flood flow, unit: m³/yr}
+  q90_low_flow:          {label: Q90 low flow, unit: m³/year}
+  q10_flood_flow:        {label: Q10 flood flow, unit: m³/year}
   rainfall_runoff_ratio: {label: Rainfall–runoff ratio, unit: "—"}
   streamflow_elasticity: {label: Climate–streamflow elasticity, unit: "—"}
   ndvi:                  {label: NDVI, unit: "—", metric: ndvi}
@@ -267,7 +267,7 @@ variables:
   wqc_sulphate: {label: "Sulphate", unit: "mg/L"}
   wqc_chloride: {label: "Chloride", unit: "mg/L"}
   wqc_fluoride: {label: "Fluoride", unit: "mg/L"}
-  wqb_e_coli: {label: "E. Coli", unit: "cfu/100 mL"}
+  wqb_e_coli: {label: "E. coli", unit: "cfu/100 mL"}
   wqb_total_coliforms: {label: "Total Coliforms", unit: "cfu/100 mL"}
   wqb_chlorophyll_a: {label: "Chlorophyll-a", unit: "µg/L"}
   wqb_blue_green_algae: {label: "Blue-green Algae", unit: "cells/mL"}
@@ -388,7 +388,7 @@ variables:
   wqa_orange_river_system_transfer:  {label: "Orange River system transfer", unit: "m³/day", metric: transfers}
   wqa_thukela_vaal_emergency_transfer: {label: "Thukela–Vaal emergency / regular transfer", unit: "m³/day", metric: transfers}
   wqa_transfer_loss:                 {label: "Transfer losses (seepage, evaporation)", unit: "m³/day"}
-  wqa_transfer_pumping_energy:       {label: "Transfer pumping energy", unit: "kWh/Ml"}
+  wqa_transfer_pumping_energy:       {label: "Transfer pumping energy", unit: "kWh/ML"}
   wqa_donor_basin_storage_fsc:       {label: "Donor basin storage", unit: "% FSC", metric: storagePct}
   wqa_receiving_demand_deficit:      {label: "Receiving system demand deficit", unit: "m³/day"}
   nwb_map:                           {label: "Precipitation (national)", unit: "Mm³"}
@@ -437,7 +437,7 @@ variables:
   wo2_supply_pressure:            {label: "System supply pressure", unit: "kPa"}
   wo2_unplanned_interruptions:    {label: "Unplanned supply interruptions", unit: "events/day"}
   wo2_outage_duration:            {label: "Average outage duration", unit: "h"}
-  wo2_pump_energy:                {label: "Pump-station energy consumption", unit: "kWh/Ml"}
+  wo2_pump_energy:                {label: "Pump-station energy consumption", unit: "kWh/ML"}
   wo2_load_shedding_hours:        {label: "Load-shedding-induced interruptions", unit: "h/day"}
   wo2_pipe_failure_rate:          {label: "Pipe failure rate", unit: "breaks/100 km/year"}
   eo_settlement_extent:           {label: "Built settlement extent", unit: "km²"}
@@ -451,8 +451,8 @@ variables:
   tr_drought_surcharge:           {label: "Drought-season surcharge", unit: "R/m³"}
   tr_capital_recovery_charge:     {label: "Capital investment recovery charge", unit: "R/m³"}
   tr_reservoir_storage_trigger:   {label: "Reservoir storage (scarcity trigger)", unit: "% FSC"}
-  tr_ibt_cost:                    {label: "Inter-basin transfer cost component", unit: "R/Ml"}
-  tr_energy_cost_per_ml:          {label: "Energy cost per Ml transferred", unit: "R/Ml"}
+  tr_ibt_cost:                    {label: "Inter-basin transfer cost component", unit: "R/ML"}
+  tr_energy_cost_per_ml:          {label: "Energy cost per ML transferred", unit: "R/ML"}
   tr_mar_demand_ratio:            {label: "MAR / demand ratio", unit: "—"}
   tm_block_tariff:                {label: "Block tariff rate", unit: "R/kL", metric: tariff}
   tm_free_allocation:             {label: "Free basic water allocation", unit: "L/household/month"}

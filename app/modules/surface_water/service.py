@@ -66,11 +66,11 @@ STATUS = ("High Flow", "Normal", "Low Flow")
 MAP_LAYERS = ("discharge", "flow-status", "flow-anomaly", "ssi")
 RUNOFF_LAYERS = ("annual-runoff", "runoff-anomaly", "monthly-runoff", "runoff-coefficient")
 WQI_METHOD = (
-    "Derived: the CCME Water Quality Index (CCME 2001) of each district over the trailing 12 months of the 14 guideline "
-    "parameters in 12.1–12.3, WQI = 100 − √(F1² + F2² + F3²) / 1.732 with F1 = % of parameters failing, F2 = % of tests "
-    "failing and F3 = the scaled excursion from the guideline (thresholds.json `wq_guidelines`); area-weighted for a "
-    "scope and null below 4 parameters. The value is the Water Quality page's WQI: one index per district, one record "
-    "per district, no sampling sites."
+    "Derived: the CCME Water Quality Index (CCME 2001) of each district over the trailing 12 months of the 14 "
+    "guideline parameters in 12.1–12.3, WQI = 100 − √(F1² + F2² + F3²) / 1.732 with F1 = % of parameters failing, "
+    "F2 = % of tests failing and F3 = the scaled excursion from the guideline (thresholds.json `wq_guidelines`); "
+    "area-weighted for a scope and null below 4 parameters. The value is the Water Quality page's WQI: one index per "
+    "district, one record per district, no sampling sites."
 )
 FLOW_NOTE = (
     "Discharge = the stored daily mean flow (m³/day) / 86 400 s, summed over the scope's districts (9_1 holds one flow "

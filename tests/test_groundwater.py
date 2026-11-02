@@ -56,7 +56,7 @@ async def test_recharge_and_abstraction_kpis_vs_sql(
                    WHERE district_name = 'Namakwa' AND year = 2025)"""
     )
     assert kpi(body, "recharge")["value"] == round(float(rech))
-    assert kpi(body, "abstraction")["value"] == round(float(abst) / 1e6, 1)
+    assert kpi(body, "abstraction")["value"] == round(float(abst) / 1e6)
     assert kpi(body, "recharge")["asOf"] == "2025-01-01"  # 2026 is not a complete year
 
 

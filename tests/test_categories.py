@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 import pytest
 
+from app.core.units import canon_unit
 from app.modules import IMPLEMENTED_MODULES
 from app.registry.catalogue import get_catalogue
 from app.schemas import contract as c
@@ -71,14 +72,14 @@ async def test_every_group_serves_all_its_columns(client: httpx.AsyncClient, mod
     body = c.SeriesSet.model_validate(r.json()).dump()
     assert [s["key"] for s in body["series"]] == list(g.columns)
     # axis rule: one axis, and every series with a unit carries the axis unit
-    assert len(body["axes"]) == 1 and body["axes"][0]["unit"] == g.unit
+    assert len(body["axes"]) == 1 and body["axes"][0]["unit"] == (canon_unit(g.unit) or "index")
     cols = {x.column: x for x in cat.columns}
     assert len({cols[k].unit for k in g.columns}) == 1
     unavailable = {u["field"] for u in body.get("unavailable", [])}
     for s in body["series"]:
         x = cols[s["key"]]
         assert s["name"] == x.label and s["source"] == [f"{cat.table}.{x.column}"] and s["axis"] == 0
-        assert s.get("unit") == x.unit and s["status"] == cat.status_on(module, x.column)
+        assert s.get("unit") == canon_unit(x.unit) and s["status"] == cat.status_on(module, x.column)
         if cat.status_on(module, x.column) == "withheld":
             assert all(p[1] is None for p in s["data"]) and f"series.{x.column}" in unavailable
     assert body["source"] == [cat.table]

@@ -10,9 +10,14 @@ the extra optional fields marked `# addition`.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+import calendar
+import datetime as dt
+import re
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
+
+from app.core.units import canon_unit
 
 Num = float | None
 XVal = str | float
@@ -27,6 +32,11 @@ class ContractModel(BaseModel):
 
 
 # ------------------------------------------------------------------ provenance additions
+
+
+# Every unit in a response is spelled as in the naming register (`canon_unit`).
+Unit = Annotated[str, BeforeValidator(canon_unit)]
+OptUnit = Annotated[str | None, BeforeValidator(canon_unit)]
 
 
 class UnavailableField(ContractModel):
@@ -105,7 +115,7 @@ class Kpi(ContractModel):
     label: str
     sublabel: str | None = None
     value: Num
-    unit: str | None = None
+    unit: OptUnit = None
     decimals: float | None = None
     status: Status | None = None
     text: str | None = None
@@ -146,7 +156,7 @@ class Series(ContractModel):
     symbol: bool | None = None
     data: list[list[XVal | None]]
     # additions (database category charts): the series' own unit, provenance and source column
-    unit: str | None = None
+    unit: OptUnit = None
     as_of: str | None = Field(None, alias="asOf")
     is_stale: bool | None = Field(None, alias="isStale")
     period_end: str | None = Field(None, alias="periodEnd")
@@ -156,13 +166,27 @@ class Series(ContractModel):
     chart: Literal["bar", "diverging-bar", "line"] | None = None  # recommended chart type (BACKEND_ISSUES #8)
 
 
+AXIS_UNIT_SUFFIX = re.compile(r"\s*\(([^()]*)\)\s*$")
+
+
 class Axis(ContractModel):
-    unit: str
+    unit: Unit
     label: str | None = None
     min: float | None = None
     max: float | None = None
     inverse: bool | None = None
     log: bool | None = None
+
+    @model_validator(mode="after")
+    def _axis_rules(self) -> Axis:
+        """A unitless axis says "index"; the label never repeats the unit ("Monthly rainfall (mm)" → "Monthly
+        rainfall")."""
+        if not self.unit:
+            self.unit = "index"
+        m = AXIS_UNIT_SUFFIX.search(self.label or "")
+        if m and self.unit != "index" and (m.group(1) == self.unit or self.unit.startswith(m.group(1))):
+            self.label = (self.label or "")[: m.start()].rstrip()
+        return self
 
 
 class Band(ContractModel):
@@ -183,7 +207,7 @@ class SeriesSet(Provenance):
     id: str
     title: str | None = None
     x_type: Literal["time", "category", "value"] = Field(alias="xType")
-    x_unit: str | None = Field(None, alias="xUnit")
+    x_unit: OptUnit = Field(None, alias="xUnit")
     x_log: bool | None = Field(None, alias="xLog")
     axes: list[Axis] = Field(min_length=1, max_length=2)
     series: list[Series]
@@ -217,13 +241,13 @@ class Center(ContractModel):
 class CategorySet(Provenance):
     id: str
     title: str | None = None
-    unit: str
-    units: list[str] | None = None  # addition: one unit per category when they differ (`unit` is then "mixed")
+    unit: Unit
+    units: list[Unit] | None = None  # addition: one unit per category when they differ (`unit` is then "")
     categories: list[str]
     colors: list[str] | None = None
     series: list[CategorySeries]
     center: Center | None = None
-    axis2_unit: str | None = Field(None, alias="axis2Unit")
+    axis2_unit: OptUnit = Field(None, alias="axis2Unit")
     as_of: str | None = Field(None, alias="asOf")  # addition
 
 
@@ -234,7 +258,7 @@ class Column(ContractModel):
     key: str
     label: str
     type: Literal["text", "number", "class", "trend", "delta", "bar", "date", "rank"]
-    unit: str | None = None
+    unit: OptUnit = None
     decimals: float | None = None
     scale: str | None = None
     good_direction: Literal["up", "down", "neutral"] | None = Field(None, alias="goodDirection")
@@ -251,6 +275,15 @@ class TableSet(Provenance):
     total: float | None = None
     as_of: str | None = Field(None, alias="asOf")  # addition
 
+    @model_validator(mode="after")
+    def _row_units(self) -> TableSet:
+        """Statistics tables carry a `unit` column in their rows: spelled as the register, like every other unit."""
+        for r in self.rows:
+            u = r.get("unit")
+            if isinstance(u, str):
+                r["unit"] = canon_unit(u)
+        return self
+
 
 # ------------------------------------------------------------------ matrix
 
@@ -261,7 +294,7 @@ class MatrixSet(Provenance):
     rows: list[str]
     cols: list[str]
     values: list[list[Cell]]
-    unit: str
+    unit: Unit
     scale: str
     as_of: str | None = Field(None, alias="asOf")  # addition
 
@@ -295,7 +328,7 @@ class MapLayer(Provenance):
     kind: Literal["choropleth", "grid", "points"]
     level: Literal["province", "wma", "catchment", "municipality", "grid", "point"]
     scale: str
-    unit: str
+    unit: Unit
     date: str
     values: dict[str, Cell] | None = None
     cell_size: float | None = Field(None, alias="cellSize")
@@ -330,11 +363,24 @@ class EntityList(Provenance):
 class EntityField(ContractModel):
     label: str
     value: Cell
-    unit: str | None = None
+    unit: OptUnit = None
     scale: str | None = None
     # additions
     as_of: str | None = Field(None, alias="asOf")
     is_stale: bool | None = Field(None, alias="isStale")
+    period_end: str | None = Field(None, alias="periodEnd")  # last day of the period `asOf` stands for
+
+    @model_validator(mode="after")
+    def _default_period_end(self) -> EntityField:
+        """A field dated on a first of month covers that month unless the caller says otherwise (annual fields do)."""
+        if self.as_of and self.period_end is None:
+            d = dt.date.fromisoformat(self.as_of)
+            self.period_end = (
+                dt.date(d.year, d.month, calendar.monthrange(d.year, d.month)[1]).isoformat()
+                if d.day == 1
+                else self.as_of
+            )
+        return self
 
 
 class EntityDetail(Entity):
@@ -346,8 +392,16 @@ class EntityDetail(Entity):
     ) = None
     # additions
     as_of: str | None = Field(None, alias="asOf")
+    period_end: str | None = Field(None, alias="periodEnd")  # the newest of the fields' periodEnd
     source: list[str] | None = None
     unavailable: list[UnavailableField] | None = None  # fields returned as null, with the reason (`fields.<label>`)
+
+    @model_validator(mode="after")
+    def _card_period_end(self) -> EntityDetail:
+        ends = [f.period_end for f in self.fields if f.period_end]
+        if self.period_end is None and ends:
+            self.period_end = max(ends)
+        return self
 
 
 # ------------------------------------------------------------------ database category view (addition)
@@ -359,7 +413,7 @@ class CatalogueVariable(ContractModel):
     column: str  # exact database column name (the `vars` value)
     label: str  # from the column name, with the unit: "Daily Rainfall (mm/day)"
     name: str  # the label without the unit
-    unit: str | None = None
+    unit: OptUnit = None
     kind: Literal["numeric", "categorical"]
     resolution: Literal["daily", "monthly", "annual"]
     status: Literal["live", "withheld", "duplicate"]
@@ -379,13 +433,19 @@ class CatalogueVariable(ContractModel):
 class CatalogueGroup(ContractModel):
     id: str
     label: str
-    unit: str  # the group's single axis unit ("index" for unitless indices, "—" for other unitless columns)
+    unit: Unit  # the group's single axis unit ("index" for unitless columns, standardised or not)
     resolution: Literal["daily", "monthly", "annual"]
     columns: list[str]
     default_visible: list[str] = Field(alias="defaultVisible")
     path: str  # the series endpoint for this group
     chart: Literal["bar", "diverging-bar", "line", "band", "mixed"] = "line"
     band: list[str] | None = None  # [min column, max column] when chart is "band"
+
+    @model_validator(mode="after")
+    def _group_unit(self) -> CatalogueGroup:
+        if not self.unit:
+            self.unit = "index"
+        return self
 
 
 class CatalogueTable(ContractModel):

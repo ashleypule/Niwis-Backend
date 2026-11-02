@@ -201,6 +201,7 @@ class TariffsService(LocalMunicipalModule):
                 TREATMENT,
                 BLOCK,
                 aggregation="district-area-weighted",
+                axis2_unit="%",
             )
         if metric == "increases":
             areas = self.ctx.state.spatial.district_areas() or {}
@@ -234,7 +235,7 @@ class TariffsService(LocalMunicipalModule):
             return self.category_set(
                 "muni-nrw",
                 f"System input, billed water and non-revenue water by province – {oy:%Y} (18.2)",
-                "Mm³/yr",
+                "Mm³/year",
                 provs,
                 [
                     c.CategorySeries(
@@ -257,6 +258,7 @@ class TariffsService(LocalMunicipalModule):
                 INPUT_L,
                 REVENUE_L,
                 NRW_L,
+                axis2_unit="%",
             )
         raise self.no_key(
             "breakdown",

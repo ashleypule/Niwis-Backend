@@ -435,7 +435,7 @@ class RainfallService:
             id="intensity",
             title="Rainfall intensity",
             x_type="time",
-            axes=[c.Axis(unit="mm", label="Daily max rainfall"), c.Axis(unit="days", label="R20mm days")],
+            axes=[c.Axis(unit="mm", label="Daily max rainfall"), c.Axis(unit="days", label="Heavy rain days (R20mm)")],
             series=[
                 c.Series(
                     key="max",
@@ -447,7 +447,7 @@ class RainfallService:
                 ),
                 c.Series(
                     key="r20",
-                    name="R20mm days (district mean)",
+                    name="Heavy rain days (R20mm, district mean)",
                     kind="line",
                     axis=1,
                     color=SERIES[3],
@@ -455,7 +455,7 @@ class RainfallService:
                 ),
             ],
             as_of=iso(last),
-            note="Daily max = highest district daily total in the scope; R20mm days = area-weighted district mean.",
+            note="Daily max = highest district daily total in the scope; heavy rain days (R20mm) = area-weighted mean.",
             **self._prov(last.date(), "rain_daily", res="monthly"),
         )
 
@@ -802,7 +802,12 @@ class RainfallService:
                     key="anomaly", label="Anomaly", type="delta", decimals=1, good_direction="neutral", align="right"
                 ),
                 c.Column(
-                    key="trend", label="Trend (Sen's slope)", type="number", unit="/decade", decimals=2, align="right"
+                    key="trend",
+                    label="Trend (Sen's slope)",
+                    type="number",
+                    unit="per decade",
+                    decimals=2,
+                    align="right",
                 ),
             ],
             rows=rows,
@@ -897,7 +902,7 @@ class RainfallService:
             "spi12": ("SPI-12", "spi", "—"),
             "spei6": ("SPEI-6", "spi", "—"),
             "cdd": (f"Consecutive dry days (current, to {newest:%d %b})", "days", "days"),
-            "r20": (f"R20mm days ({y1})", "days", "days"),
+            "r20": (f"Heavy rain days (R20mm, {y1})", "days", "days"),
         }
         if layer not in spec:
             raise unknown("layer", layer, [*spec, "forecast-1", "forecast-2", "forecast-3"])

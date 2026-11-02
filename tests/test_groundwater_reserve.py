@@ -34,7 +34,8 @@ async def test_recharge_is_direct_times_area_plus_indirect(
     assert kpi(body, "recharge")["value"] == round(float(direct) * area / 1000 + float(indirect) / 1e6)
     assert kpi(body, "abstraction")["value"] == round(float(abst) / 1e6)
     k = kpi(body, "ei")
-    assert k["value"] == round(float(ei), 1) and k["status"]["id"] == exploitation_class(float(ei) / 100)
+    assert k["value"] == round(float(ei) / 100, 2) and "unit" not in k
+    assert k["status"]["id"] == exploitation_class(float(ei) / 100)
 
 
 async def test_reserves_are_the_stored_11_1_values(

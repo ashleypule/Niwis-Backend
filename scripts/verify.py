@@ -840,11 +840,12 @@ WHERE district_name = 'City of Cape Town' AND year = 2025""",
     # ---------------------------------------------------------------- §11 groundwater reserve
     Check(
         "groundwater-reserve",
-        "Exploitation index, Namakwa (DC6), 2025 (11.3, %)",
+        "Exploitation index, Namakwa (DC6), 2025 (11.3, stored in %, served as the ratio of spec §11.3)",
         "/api/v1/groundwater-reserve/summary?municipality=DC6",
         kpi("ei"),
-        """SELECT round(max("Exploitation index")::numeric, 1) FROM "11.3_aquifer_sustainability"
+        """SELECT round(max("Exploitation index")::numeric / 100, 2) FROM "11.3_aquifer_sustainability"
 WHERE district_name = 'Namakwa' AND year = 2025""",
+        tol=0.006,
     ),
     Check(
         "groundwater-reserve",
@@ -1087,7 +1088,7 @@ UNION ALL SELECT district_name, 'Chla', max("Chlorophyll-a") FROM "12.3_biologic
 
 async def run(modules: list[str]) -> list[dict[str, Any]]:
     url = dotenv_values(ROOT / ".env")["SUPABASE_DB_URL"]
-    app = create_app(Settings(rate_limit_per_minute=0, log_level="WARNING"))
+    app = create_app(Settings(rate_limit_per_minute=0, log_level="WARNING", prewarm_categories=False, forecast_pages=False))
     results = []
     async with (
         app.router.lifespan_context(app),

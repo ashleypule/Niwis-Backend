@@ -114,7 +114,7 @@ async def test_temperature_drivers_change_in_their_own_unit(
     """B5: temperature-type drivers are absolute changes (°C, °C·days), never % of a temperature."""
     body = (await client.get(f"{B}/breakdown", params={"metric": "drivers", "municipality": "DC44"})).json()
     units = dict(zip(body["categories"], body["units"], strict=True))
-    assert body["unit"] == "mixed"
+    assert body["unit"] == ""
     assert units == {
         "Rainfall (%)": "%",
         "Mean temperature (°C)": "°C",

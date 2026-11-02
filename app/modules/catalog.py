@@ -76,6 +76,15 @@ SAMPLE_ENTITY = "DC44"  # a district present in the recorded fixture DB and in S
 SAMPLE_ENTITIES = {"services": "LM018", "tariffs": "LM018"}  # local-municipality entities: City of Cape Town
 
 
+def service_class(module: str) -> type[Any]:
+    """The service class of a module: the class defined there with a `summary`."""
+    mod = SERVICE_MODULES[module]
+    found: type[Any] = next(
+        v for v in vars(mod).values() if isinstance(v, type) and v.__module__ == mod.__name__ and hasattr(v, "summary")
+    )
+    return found
+
+
 def selectors(module: str) -> dict[tuple[str, str], tuple[Selector, ...]]:
     """(endpoint kind, key) → selectors declared by the module's service."""
     out: dict[tuple[str, str], tuple[Selector, ...]] = getattr(SERVICE_MODULES[module], "SELECTORS", {})

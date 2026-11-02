@@ -1,7 +1,7 @@
 """Audit step 3: derivations filling gaps from live data (DECISIONS D49) and the backend follow-ups of step 2.
 
-The fixture DB holds three districts and under 36 months of telemetry, so the formulas are tested on synthetic series and
-the API paths with a patched frame; the national values are checked against independent SQL on the real database
+The fixture DB holds three districts and under 36 months of telemetry, so the formulas are tested on synthetic series
+and the API paths with a patched frame; the national values are checked against independent SQL on the real database
 (`scripts/verify.py audit-step3`).
 """
 
@@ -36,7 +36,9 @@ def test_normal_score_index_is_the_empirical_normal_per_calendar_month() -> None
     jan = z[z.index.month == 1].to_numpy()
     assert jan == pytest.approx(stats.norm.ppf((np.arange(1, 5) - 0.5) / 4))
     # ties share a mid-rank, missing months stay missing and do not count in n
-    s2 = pd.Series([1.0, 1.0, 3.0, np.nan], index=pd.to_datetime(["2000-01-01", "2001-01-01", "2002-01-01", "2003-01-01"]))
+    s2 = pd.Series(
+        [1.0, 1.0, 3.0, np.nan], index=pd.to_datetime(["2000-01-01", "2001-01-01", "2002-01-01", "2003-01-01"])
+    )
     z2 = normal_score_index(s2)
     assert z2.iloc[0] == z2.iloc[1] == pytest.approx(stats.norm.ppf((1.5 - 0.5) / 3))
     assert np.isnan(z2.iloc[3])
@@ -105,9 +107,7 @@ async def test_sgi_keeps_the_reason_where_the_telemetry_does_not_qualify(client:
 
 @pytest.mark.db
 @requires_db
-async def test_land_cover_shares_sum_to_100_and_name_the_table(
-    client: httpx.AsyncClient, fixture_db: Any
-) -> None:
+async def test_land_cover_shares_sum_to_100_and_name_the_table(client: httpx.AsyncClient, fixture_db: Any) -> None:
     b = (
         await client.get(
             "/api/v1/vegetation/breakdown", params={"metric": "land-cover", "kind": "share", "municipality": "DC6"}
@@ -126,7 +126,9 @@ async def test_land_cover_shares_sum_to_100_and_name_the_table(
 @pytest.mark.db
 @requires_db
 async def test_land_cover_ndvi_is_null_for_one_district_and_says_why(client: httpx.AsyncClient) -> None:
-    b = (await client.get("/api/v1/vegetation/breakdown", params={"metric": "land-cover", "municipality": "DC6"})).json()
+    b = (
+        await client.get("/api/v1/vegetation/breakdown", params={"metric": "land-cover", "municipality": "DC6"})
+    ).json()
     assert all(v is None for v in b["series"][0]["values"])
     assert "one NDVI" in next(u["reason"] for u in b["unavailable"] if u["field"] == "series.a")
 
@@ -155,8 +157,8 @@ async def test_runoff_peak_flow_uses_the_real_area_never_the_6500_km2_column(
     area = (get_spatial().district_areas() or {})["DC6"]
     ((depth,),) = fixture_db(
         f"""SELECT max("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 FROM runoff_variables_master
-            WHERE "District_Name" = 'Namakwa' AND "Date" BETWEEN DATE '{k["asOf"]}' - interval '1 year' + interval '1 day'
-            AND DATE '{k["asOf"]}'"""
+            WHERE "District_Name" = 'Namakwa'
+            AND "Date" BETWEEN DATE '{k["asOf"]}' - interval '1 year' + interval '1 day' AND DATE '{k["asOf"]}'"""
     )
     assert k["value"] == round(float(depth) * area * 1000 / 86400)
 

@@ -233,7 +233,7 @@ class GroundwaterService(DistrictModule):
                 "recharge",
                 "Estimated Recharge",
                 await self.scope_value(RECHARGE, rm),
-                "mm/yr",
+                "mm/year",
                 rm,
                 RECHARGE,
                 decimals=0,
@@ -249,10 +249,10 @@ class GroundwaterService(DistrictModule):
                 "abstraction",
                 "Annual Abstraction",
                 ab / 1e6 if ab is not None else None,
-                "Mm³/yr",
+                "Mm³/year",
                 am,
                 ABSTRACTION,
-                decimals=1,
+                decimals=0,
                 sublabel=f"total abstraction {am:%Y} (11.3), sum over the scope's districts",
                 reason="A sum needs every district of the scope",
             )
@@ -542,7 +542,7 @@ class GroundwaterService(DistrictModule):
             "recharge-abstraction",
             "Recharge and abstraction",
             series,
-            [c.Axis(unit="Mm³/yr", label="Volume")],
+            [c.Axis(unit="Mm³/year", label="Volume")],
             [RECHARGE, ABSTRACTION],
             last,
             x_type="category",
@@ -582,7 +582,9 @@ class GroundwaterService(DistrictModule):
         if metric == "status":
             sgi, sgi_m = await self.district_sgi()
             if sgi_m is None:
-                raise self.no_key("breakdown", metric, [], {"status": f"Borehole status classes need {SGI_NO_DISTRICT}"})
+                raise self.no_key(
+                    "breakdown", metric, [], {"status": f"Borehole status classes need {SGI_NO_DISTRICT}"}
+                )
             mine = sgi[sgi.index.isin(self.ctx.filters.scope.district_codes)].dropna().map(borehole_status)
             cfg = thresholds()["borehole_status_sgi"]
             classes = [cfg["otherwise"], *[x["id"] for x in reversed(cfg["classes"])]]
@@ -595,7 +597,9 @@ class GroundwaterService(DistrictModule):
                 unit="districts",
                 categories=classes,
                 series=[
-                    c.CategorySeries(key="districts", name="Districts", values=[float((mine == k).sum()) for k in classes])
+                    c.CategorySeries(
+                        key="districts", name="Districts", values=[float((mine == k).sum()) for k in classes]
+                    )
                 ],
                 as_of=iso(sgi_m.date()),
                 derived=True,
@@ -721,7 +725,9 @@ class GroundwaterService(DistrictModule):
                     decimals=2,
                     align="right",
                 ),
-                c.Column(key="trend", label="Trend (+ = rising)", type="delta", unit="m/yr", decimals=3, align="right"),
+                c.Column(
+                    key="trend", label="Trend (+ = rising)", type="delta", unit="m/year", decimals=3, align="right"
+                ),
             ],
             rows=rows[: limit or 10],
             row_key="id",

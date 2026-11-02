@@ -227,7 +227,7 @@ def _wqi_target(reg: Registry) -> Target:
         table=WQ_TABLES[1],
         column="",
         label="Water Quality Index (CCME)",
-        unit="WQI",
+        unit="",
         resolution="monthly",
         aggregate="mean",
         extensive=False,
@@ -661,7 +661,7 @@ def series_set(ctx: Ctx, var_id: str, *, set_id: str, title: str | None = None) 
         id=set_id,
         title=title or f"{v.label} forecast",
         x_type="time",
-        axes=[c.Axis(unit=unit or "—", label=v.axis)],
+        axes=[c.Axis(unit=unit or "index", label=v.axis)],
         series=[
             c.Series(key="band", name="Uncertainty (10th–90th pct)", kind="band", color=BAND, data=band),
             c.Series(

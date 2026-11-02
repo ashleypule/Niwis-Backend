@@ -26,6 +26,7 @@ from app.core.palettes import NDVI_TREND, NEGATIVE, OBSERVED, POSITIVE, SERIES, 
 from app.core.provenance import Resolution, iso
 from app.core.stats import rnd, sens_slope
 from app.core.thresholds import thresholds, veg_class
+from app.core.units import canon_unit
 from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, unknown
 from app.modules.drivers import driver_series
@@ -253,8 +254,8 @@ class VegetationService:
         units = list(dict.fromkeys(LIVE_INDICES[i][2] if i in LIVE_INDICES else WITHHELD_UNITS[i] for i in ids))
         if len(units) > 2:
             raise BadRequest(
-                f"`set` mixes {len(units)} units ({', '.join(units)}); a chart has at most two axes",
-                issues=[{"param": "set", "value": ",".join(ids), "units": units}],
+                f"`set` mixes {len(units)} kinds of unit; a chart has at most two axes",
+                issues=[{"param": "set", "value": ",".join(ids), "units": [canon_unit(u) or "index" for u in units]}],
             )
         m = await self.last()
         ms = await self.window_months(m)
@@ -548,7 +549,7 @@ class VegetationService:
         return c.CategorySet(
             id="drivers",
             title="Drivers: change vs normal (last 6 months)",
-            unit="mixed",
+            unit="",
             units=units,
             categories=cats,
             series=[c.CategorySeries(key="change", name="Change vs normal (6 months)", values=vals)],
@@ -746,11 +747,11 @@ class VegetationService:
                 out[code] = rnd(tr.slope * 10, 4) if tr else None
             vals = pd.Series(out)
             title = f"NDVI trend (Sen's slope per decade, {CLIM[0]}–{CLIM[1]})"
-            scale, unit, variables = "ndviTrend", "/decade", ["ndvi"]
+            scale, unit, variables = "ndviTrend", "per decade", ["ndvi"]
             # breaks from the distribution of all 52 district trends (stable across scopes); the palette's fixed
             # ±0.05 / ±0.1 per decade put nearly every district in the middle class (B12)
             legend = symmetric_legend(
-                [float(v) for v in out.values() if v is not None], NDVI_TREND, "/decade", "browning", "greening"
+                [float(v) for v in out.values() if v is not None], NDVI_TREND, "per decade", "browning", "greening"
             )
         else:
             raise unknown(

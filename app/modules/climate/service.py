@@ -604,7 +604,7 @@ class ClimateService:
             id="evaporation",
             title="Evaporation",
             x_type="time",
-            axes=[c.Axis(unit="mm/yr", label="Evaporation"), c.Axis(unit="kPa", label="VPD")],
+            axes=[c.Axis(unit="mm/year", label="Evaporation"), c.Axis(unit="kPa", label="VPD")],
             series=[
                 c.Series(key="et0", name="ET₀", kind="line", axis=0, color=SERIES[3], data=self.series(yrs, et0, 0)),
                 c.Series(key="pet", name="PET", kind="line", axis=0, color=SERIES[2], data=self.series(yrs, pet, 0)),
@@ -652,7 +652,7 @@ class ClimateService:
             id="streamflow-linkage",
             title="Runoff and climate",
             x_type="time",
-            axes=[c.Axis(unit="mm/yr", label="Runoff"), c.Axis(unit="%", label="Anomaly")],
+            axes=[c.Axis(unit="mm/year", label="Runoff"), c.Axis(unit="%", label="Anomaly")],
             series=[
                 c.Series(
                     key="runoff",
@@ -722,7 +722,7 @@ class ClimateService:
             title="Drought frequency: area in severe drought or worse (SPI-3 ≤ −1.3)",
             x_type="time",
             axes=[
-                c.Axis(unit="%", label="Area in class (% of area, mean of months)", min=0),
+                c.Axis(unit="%", label="Area in class", min=0),
                 c.Axis(unit="district-months", label="District-months in D2 or worse", min=0),
             ],
             series=[
@@ -1264,7 +1264,7 @@ class ClimateService:
                     key="trend",
                     label="Trend",
                     type="number",
-                    unit="°C/dec",
+                    unit="°C/decade",
                     decimals=2,
                     scale="tempTrend",
                     align="right",
@@ -1393,7 +1393,7 @@ class ClimateService:
                 k: rnd(v, 0)
                 for k, v in df[df["date"].dt.year.between(y0, y1)].groupby("district")["value"].mean().items()
             }
-            spec = (f"Reference ET₀ (mm/yr, {y0}–{y1} mean)", "rainfall", "mm", dt.date(y1, 12, 31), ["et0_daily"])
+            spec = (f"Reference ET₀ (mm/year, {y0}–{y1} mean)", "rainfall", "mm", dt.date(y1, 12, 31), ["et0_daily"])
         else:
             raise unknown(
                 "layer",

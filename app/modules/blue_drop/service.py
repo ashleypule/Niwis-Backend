@@ -16,12 +16,27 @@ from typing import Any, ClassVar
 
 from app.core.aggregate import weighted_scalar
 from app.core.thresholds import blue_drop_band, sans241_pass
-from app.modules.common import Ctx
+from app.modules.common import Ctx, Selector
 from app.modules.compliance import ComplianceService
 from app.schemas import contract as c
 
 MODULE = "blue-drop"
-SELECTORS: dict[tuple[str, str], tuple[Any, ...]] = {}
+# group → (key, registry variable, label) of the served determinands; the withheld ones are copies of 13.1 (D17)
+PARAM_GROUPS: dict[str, tuple[tuple[str, str, str], ...]] = {
+    "key": (
+        ("nitrate", "sans_nitrate_value", "Nitrate"),
+        ("fluoride", "sans_fluoride_value", "Fluoride"),
+        ("thm", "sans_total_thms_value", "Total THMs"),
+    ),
+    "micro": (("totalColiforms", "sans_total_coliforms_value", "Total coliforms"),),
+    "nutrients": (
+        ("nitrate", "sans_nitrate_value", "Nitrate"),
+        ("fluoride", "sans_fluoride_value", "Fluoride"),
+    ),
+    "metals": (("arsenic", "sans_arsenic_value", "Arsenic"),),
+}
+GROUP = Selector("group", tuple(PARAM_GROUPS), "key")
+SELECTORS: dict[tuple[str, str], tuple[Any, ...]] = {("timeseries", "params"): (GROUP,)}
 NO_SYSTEMS = "No water-supply-system register in the database: one monthly record per district (14.1)"
 COPIED = "withheld: the 14.1 value is a copy of the 13.1 wastewater effluent value in every district-month (D17)"
 
@@ -152,26 +167,24 @@ class BlueDropService(ComplianceService):
 
     async def timeseries(self, metric: str) -> dict[str, Any]:
         if metric == "trend":
-            return await self.trend("systems (districts)")
+            return await self.trend("districts")
         if metric == "params":
-            items = [
-                ("nitrate", "sans_nitrate_value", "Nitrate (mg/L)"),
-                ("fluoride", "sans_fluoride_value", "Fluoride (mg/L)"),
-                ("thm", "sans_total_thms_value", "Total THMs (mg/L)"),
-            ]
+            group = self.ctx.select(GROUP)
+            items = list(PARAM_GROUPS[group])
             start, end = await self.window(items[0][1])
             series = [
                 self.series(k, n, await self.scope_series(v, start, end), nd=3, i=i)
                 for i, (k, v, n) in enumerate(items)
             ]
+            labels = ", ".join(n for _, _, n in items)
             return self.series_set(
                 "params",
                 "Served SANS 241 determinands (14.1)",
                 series,
-                [c.Axis(unit="mg/L", label="Value")],
+                [c.Axis(unit=self.unit(items[0][1]), label="Value")],
                 [v for _, v, _ in items],
                 end,
-                note="pH, turbidity and free chlorine are " + COPIED + "; nitrate, fluoride and total THMs are shown.",
+                note="pH, turbidity and free chlorine are " + COPIED + f"; served in this group: {labels}.",
             )
         raise self.no_key(
             "timeseries",
@@ -187,7 +200,7 @@ class BlueDropService(ComplianceService):
 
     async def breakdown(self, metric: str) -> dict[str, Any]:
         if metric == "breakdown":
-            return await self.band_breakdown("systems (districts)")
+            return await self.band_breakdown("districts")
         if metric == "by-province":
             return await self.by_province()
         if metric == "param-compliance":

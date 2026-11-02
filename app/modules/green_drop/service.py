@@ -135,7 +135,7 @@ class GreenDropService(ComplianceService):
                 "capacity",
                 "Total Design Capacity",
                 (self.aggregate(design, True) or 0) / 1000 if self.aggregate(design, True) is not None else None,
-                "Ml/day",
+                "ML/day",
                 await self.latest_month(DESIGN),
                 DESIGN,
                 decimals=0,
@@ -147,7 +147,7 @@ class GreenDropService(ComplianceService):
                 "inflow",
                 "Total Influent Flow",
                 (self.aggregate(influent, True) or 0) / 1000 if self.aggregate(influent, True) is not None else None,
-                "Ml/day",
+                "ML/day",
                 await self.latest_month(INFLUENT),
                 INFLUENT,
                 decimals=0,
@@ -168,7 +168,7 @@ class GreenDropService(ComplianceService):
 
     async def timeseries(self, metric: str) -> dict[str, Any]:
         if metric == "trend":
-            return await self.trend("WWTWs (districts)")
+            return await self.trend("districts")
         if metric == "capacity":
             start, end = await self.window(DESIGN)
             design = await self.scope_series(DESIGN, start, end)
@@ -191,10 +191,10 @@ class GreenDropService(ComplianceService):
                     ),
                     self.series("utilisation", "Utilisation (%)", loading, nd=1, i=3, axis=1),
                 ],
-                [c.Axis(unit="Ml/day", label="Flow"), c.Axis(unit="%", label="Utilisation", min=0)],
+                [c.Axis(unit="ML/day", label="Flow"), c.Axis(unit="%", label="Utilisation", min=0)],
                 [DESIGN, INFLUENT, LOADING],
                 end,
-                note="Design capacity and influent flow summed over the scope's districts (m³/day → Ml/day); "
+                note="Design capacity and influent flow summed over the scope's districts (m³/day → ML/day); "
                 "utilisation = the hydraulic loading rate (13.2), area-weighted.",
             )
         if metric in ("effluent", "micro", "receiving"):
@@ -251,7 +251,7 @@ class GreenDropService(ComplianceService):
 
     async def breakdown(self, metric: str) -> dict[str, Any]:
         if metric == "breakdown":
-            return await self.band_breakdown("WWTWs (districts)")
+            return await self.band_breakdown("districts")
         if metric == "by-province":
             return await self.by_province()
         raise self.no_key("breakdown", metric, ["breakdown", "by-province"], {})

@@ -64,7 +64,7 @@ _SUFFIXES: dict[str, str | None] = {
     "_m_bgl": "m bgl",
     "_pct_fsc": "% FSC",
     "_fsc_pct": "% FSC",
-    "_kwh_ml": "kWh/Ml",
+    "_kwh_ml": "kWh/ML",
     "_mm3": "Mm³",
     "_percent": "%",
     "_pct": "%",
@@ -147,7 +147,12 @@ _ACRONYM_LIST = (
     "COD",
     "TIN",
 )
-ACRONYMS: dict[str, str] = {w.lower(): w for w in _ACRONYM_LIST} | {"et0": "ET₀", "thms": "THMs", "ph": "pH"}
+ACRONYMS: dict[str, str] = {w.lower(): w for w in _ACRONYM_LIST} | {
+    "et0": "ET₀",
+    "thms": "THMs",
+    "ph": "pH",
+    "coli": "coli",
+}
 SMALL_WORDS = {"of", "and", "from", "per", "the", "to", "in", "on"}
 # standardised indices share one "index" axis; vegetation / water indices (−1 … +1) share another (axis rule A3)
 STANDARDISED_INDICES = {"SPI", "SPEI", "SSI", "SGI", "RAI", "SVI"}
@@ -421,7 +426,7 @@ SPEC_UNITS.update(
             "System_Supply_Pressure_kPa_bar": "kPa",
             "Daily_Unplanned_Supply_Interruptions_events_per_day": "events/day",
             "Average_Duration_Of_Outages_hours_per_event": "h",
-            "Pump_Station_Energy_Consumption_kWh_Ml": "kWh/Ml",
+            "Pump_Station_Energy_Consumption_kWh_Ml": "kWh/ML",
             "Load_Shedding_Induced_Interruptions_hours_per_day": "h/day",
             "Pipe_Failure_Rate_breaks_per_100km_year": "breaks/100 km/year",
         },
@@ -450,8 +455,8 @@ SPEC_UNITS.update(
             "Drought-season surcharge (R/m³)": "R/m³",
             "Capital investment recovery charge (R/m³)": "R/m³",
             "Reservoir storage % (scarcity trigger) (% FSC)": "% FSC",
-            "Inter-basin transfer cost component (R/Ml)": "R/Ml",
-            "Energy cost per Ml transferred (R/Ml)": "R/Ml",
+            "Inter-basin transfer cost component (R/Ml)": "R/ML",
+            "Energy cost per Ml transferred (R/Ml)": "R/ML",
             "MAR_demand_ratio": "—",
         },
     )
@@ -464,7 +469,7 @@ SPEC_UNITS.update(
             "Block tariff rates (R/kL per consumption block)": "R/kL",
             "6 kL/month free allocation status (L/household/month)": "L/household/month",
             "Average treatment cost per kL produced (R/kL)": "R/kL",
-            "Electricity cost for pumping and treatment (R/kWh)": "kWh/Ml",
+            "Electricity cost for pumping and treatment (R/kWh)": "kWh/ML",
             "Infrastructure replacement and maintenance cost (R/year)": "R/year",
             "CPI and PPI affecting operational costs (%)": "%",
         },
@@ -519,6 +524,40 @@ UNIT_REPAIRS: dict[str, str] = {
 }
 
 
+# Retired spellings → the naming register's (reference/units.json, exported from the frontend's register). Every unit
+# in a response passes through `canon_unit` (app.schemas.contract); the registry and catalogue keep their internal "—".
+UNIT_SPELLINGS: dict[str, str] = {
+    "Mm³/yr": "Mm³/year",
+    "mm/yr": "mm/year",
+    "m³/yr": "m³/year",
+    "m/yr": "m/year",
+    "Ml/day": "ML/day",
+    "kWh/Ml": "kWh/ML",
+    "R/Ml": "R/ML",
+    "°C/dec": "°C/decade",
+    "/decade": "per decade",
+    "/year": "per year",
+    "/month": "per month",
+    "R bn": "R billion",
+    "% of income": "%",
+    "% of households": "%",
+    "pH units": "",
+    "pH": "",
+    "WQI": "",
+    "—": "",
+    "-": "",
+    "?": "",
+    "score": "",
+    "probability": "",
+    "dimensionless": "",
+}
+
+
+def canon_unit(unit: str | None) -> str | None:
+    """The naming register's spelling of a unit ("" = none: a value with no unit, `index` on an axis)."""
+    return unit if unit is None else UNIT_SPELLINGS.get(unit, unit)
+
+
 def repair_unit(stored: str | None) -> str | None:
     """Clean unit text stored in a long-format table's `unit` column (`UNIT_REPAIRS`); empty → None."""
     if stored is None:
@@ -563,7 +602,12 @@ def name_of(base: str) -> str:
 
 
 def with_unit(name: str, unit: str | None) -> str:
-    return f"{name} ({unit})" if unit else name
+    """ "Name (unit)". A column name that already ends in the unit, in any spelling, does not repeat it; a unitless
+    column has no parenthesis."""
+    m = re.search(r"\s*\(([^()]*)\)$", name)
+    if m and unit and canon_unit(m.group(1)) == canon_unit(unit):
+        name = name[: m.start()]
+    return f"{name} ({canon_unit(unit)})" if canon_unit(unit) else name
 
 
 def column_label(table: str, column: str) -> tuple[str, str | None, str | None]:

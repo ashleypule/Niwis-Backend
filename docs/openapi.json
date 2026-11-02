@@ -663,6 +663,17 @@
             ],
             "title": "Components"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -683,6 +694,17 @@
               }
             ],
             "title": "Isstale"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "module": {
             "title": "Module",
@@ -932,6 +954,17 @@
             ],
             "title": "Components"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -956,6 +989,17 @@
               }
             ],
             "title": "Isstale"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "periodEnd": {
             "anyOf": [
@@ -1404,6 +1448,17 @@
             "title": "Name",
             "type": "string"
           },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
+          },
           "province": {
             "anyOf": [
               {
@@ -1523,6 +1578,17 @@
             "title": "Label",
             "type": "string"
           },
+          "periodEnd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodend"
+          },
           "scale": {
             "anyOf": [
               {
@@ -1622,6 +1688,17 @@
             ],
             "title": "Components"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -1649,6 +1726,17 @@
             },
             "title": "Items",
             "type": "array"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "periodEnd": {
             "anyOf": [
@@ -1965,6 +2053,17 @@
             ],
             "title": "Deltaunit"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "goodDirection": {
             "anyOf": [
               {
@@ -1999,6 +2098,17 @@
           "label": {
             "title": "Label",
             "type": "string"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "metric": {
             "title": "Metric",
@@ -2177,6 +2287,17 @@
             ],
             "title": "Components"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -2204,6 +2325,17 @@
             },
             "title": "Kpis",
             "type": "array"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "module": {
             "title": "Module",
@@ -2420,6 +2552,17 @@
             "title": "Date",
             "type": "string"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -2490,6 +2633,17 @@
             ],
             "title": "Level",
             "type": "string"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "periodEnd": {
             "anyOf": [
@@ -2743,6 +2897,17 @@
             ],
             "title": "Components"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -2767,6 +2932,17 @@
               }
             ],
             "title": "Isstale"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "periodEnd": {
             "anyOf": [
@@ -3526,6 +3702,17 @@
             ],
             "title": "Components"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -3550,6 +3737,17 @@
               }
             ],
             "title": "Isstale"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "note": {
             "anyOf": [
@@ -3771,6 +3969,17 @@
             ],
             "title": "Components"
           },
+          "derived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived"
+          },
           "forecast": {
             "anyOf": [
               {
@@ -3806,6 +4015,17 @@
               }
             ],
             "title": "Linkto"
+          },
+          "methodNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodnote"
           },
           "periodEnd": {
             "anyOf": [

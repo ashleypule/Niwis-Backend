@@ -38,7 +38,7 @@ async def test_summary_national(client: httpx.AsyncClient, fixture_db: Callable[
     ]
     # transfers: the four schemes' rates × days in the month over the last 12 complete months, all 16 districts
     t = kpi(body, "transfers")
-    assert t["value"] and t["value"] > 0 and t["unit"] == "Mm³/yr"
+    assert t["value"] and t["value"] > 0 and t["unit"] == "Mm³/year"
     ((total,),) = fixture_db(  # the transfer columns are served to Dec 2024 (zero-filled afterwards, valid_until)
         """SELECT sum(("Katse_to_Vaal_Daily_Transfer_m3_day" + "Tugela_Vaal_Daily_Transfer_m3_day"
                    + "Orange_River_System_Transfer_m3_day" + "Thukela_Vaal_Emergency_Regular_Transfer_m3_day")

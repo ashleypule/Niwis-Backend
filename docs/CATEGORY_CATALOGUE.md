@@ -137,7 +137,7 @@ Table `satellite_remote_sensing` · id `satellite-remote-sensing` · monthly · 
 | VCI / TCI / VHI (%) | `vci-tci-vhi-pct` | % | monthly | line | `vci` ★, `tci` ★, `vhi` ★ |
 | Soil Moisture (m³/m³) | `soil-moisture-m3-m3` | m³/m³ | monthly | line | `rootzone_soil_moisture` ★, `surface_soil_moisture` ★ |
 | Surface Water Extent (km²) | `surface-water-extent-km2` | km² | monthly | line | `surface_water_extent_km2` ★ |
-| GRACE TWS | `grace-tws` | — | monthly | line | `grace_tws` ★ |
+| GRACE TWS | `grace-tws` | index | monthly | line | `grace_tws` ★ |
 
 **Vegetation page**
 
@@ -148,7 +148,7 @@ Table `satellite_remote_sensing` · id `satellite-remote-sensing` · monthly · 
 | VCI / TCI / VHI (%) | `vci-tci-vhi-pct` | % | monthly | line | `vci` ★, `tci` ★, `vhi` ★ |
 | Soil Moisture (m³/m³) | `soil-moisture-m3-m3` | m³/m³ | monthly | line | `rootzone_soil_moisture` ★, `surface_soil_moisture` ★ |
 | Surface Water Extent (km²) | `surface-water-extent-km2` | km² | monthly | line | `surface_water_extent_km2` ★ |
-| GRACE TWS | `grace-tws` | — | monthly | line | `grace_tws` ★ |
+| GRACE TWS | `grace-tws` | index | monthly | line | `grace_tws` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -216,7 +216,7 @@ Table `4_1_temperature_change_master` · id `temperature-change` · daily · pag
 | Temperature (°C) | `temperature-c` | °C | daily | band (Tmin_C – Tmax_C) | `Tmin_C` ★, `Tmax_C` ★, `Tavg_C` ★ |
 | Temperature Anomaly (°C) | `temperature-anomaly-c` | °C | monthly | diverging-bar | `Temperature_Anomaly_C` ★ |
 | Heatwave (days) | `heatwave-days` | days | annual | bar | `Heatwave_Frequency_Days` ★, `Heatwave_Duration_Max_Consecutive_Days` ★ |
-| Frost Day Flag | `frost-day-flag` | — | daily | line | `Frost_Day_Flag` ★ |
+| Frost Day Flag | `frost-day-flag` | index | daily | line | `Frost_Day_Flag` ★ |
 | LST Day / LST Night (°C) | `lst-day-lst-night-c` | °C | daily | line | `LST_Day_C` ★, `LST_Night_C` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
@@ -274,12 +274,12 @@ Table `4_3_mean_annual_precipitation_master` · id `mean-annual-precipitation` �
 | --- | --- | --- | --- | --- | --- |
 | MAP (mm) | `map-mm` | mm | annual | bar | `MAP_mm` ★ |
 | Precipitation (mm) | `precipitation-mm` | mm | annual | bar | `Precip_DJF_mm` ★, `Precip_JJA_mm` ★, `Precip_MAM_mm` ★, `Precip_SON_mm` |
-| Nino34 Annual Mean | `nino34-annual-mean` | — | annual | line | `Nino34_Annual_Mean` ★ |
+| Nino34 Annual Mean | `nino34-annual-mean` | index | annual | line | `Nino34_Annual_Mean` ★ |
 | Precip CV (%) | `precip-cv-pct` | % | annual | line | `Precip_CV_Percent` ★ |
 | MK Sens Slope (mm/year) | `mk-sens-slope-mm-year` | mm/year | annual | line | `MK_Sens_Slope_mm_yr` ★ |
-| MK P Value | `mk-p-value` | — | annual | line | `MK_p_value` ★ |
+| MK P Value | `mk-p-value` | index | annual | line | `MK_p_value` ★ |
 | MK Trend (class) | `mk-trend-class` | class | annual | line | `MK_Trend` ★ |
-| ENSO Nino34 Correlation | `enso-nino34-correlation` | — | annual | line | `ENSO_Nino34_Correlation` ★ |
+| ENSO Nino34 Correlation | `enso-nino34-correlation` | index | annual | line | `ENSO_Nino34_Correlation` ★ |
 
 **Rainfall page**
 
@@ -287,12 +287,12 @@ Table `4_3_mean_annual_precipitation_master` · id `mean-annual-precipitation` �
 | --- | --- | --- | --- | --- | --- |
 | MAP (mm) | `map-mm` | mm | annual | bar | `MAP_mm` ★ |
 | Precipitation (mm) | `precipitation-mm` | mm | annual | bar | `Precip_DJF_mm` ★, `Precip_JJA_mm` ★, `Precip_MAM_mm` ★, `Precip_SON_mm` |
-| Nino34 Annual Mean | `nino34-annual-mean` | — | annual | line | `Nino34_Annual_Mean` ★ |
+| Nino34 Annual Mean | `nino34-annual-mean` | index | annual | line | `Nino34_Annual_Mean` ★ |
 | Precip CV (%) | `precip-cv-pct` | % | annual | line | `Precip_CV_Percent` ★ |
 | MK Sens Slope (mm/year) | `mk-sens-slope-mm-year` | mm/year | annual | line | `MK_Sens_Slope_mm_yr` ★ |
-| MK P Value | `mk-p-value` | — | annual | line | `MK_p_value` ★ |
+| MK P Value | `mk-p-value` | index | annual | line | `MK_p_value` ★ |
 | MK Trend (class) | `mk-trend-class` | class | annual | line | `MK_Trend` ★ |
-| ENSO Nino34 Correlation | `enso-nino34-correlation` | — | annual | line | `ENSO_Nino34_Correlation` ★ |
+| ENSO Nino34 Correlation | `enso-nino34-correlation` | index | annual | line | `ENSO_Nino34_Correlation` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -365,8 +365,8 @@ Table `4_6_streamflow_and_climate_linkage_annual _master` · id `streamflow-and-
 | --- | --- | --- | --- | --- | --- |
 | MAR / Q90 LowFlow / Q10 FloodFlow (m³/year) | `mar-q90-lowflow-q10-floodflow-m3-year` | m³/year | annual | bar | `MAR_m3_year` ★, `Q90_LowFlow_m3_year` ★, `Q10_FloodFlow_m3_year` ★ |
 | Streamflow Anomaly (%) | `streamflow-anomaly-pct` | % | annual | diverging-bar | `Streamflow_Anomaly_percent` ★ |
-| Rainfall Runoff Ratio | `rainfall-runoff-ratio` | — | annual | line | `Rainfall_Runoff_Ratio` ★ |
-| Climate Streamflow Elasticity | `climate-streamflow-elasticity` | — | annual | line | `Climate_Streamflow_Elasticity` ★ |
+| Rainfall Runoff Ratio | `rainfall-runoff-ratio` | index | annual | line | `Rainfall_Runoff_Ratio` ★ |
+| Climate Streamflow Elasticity | `climate-streamflow-elasticity` | index | annual | line | `Climate_Streamflow_Elasticity` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -514,9 +514,9 @@ Table `runoff_variables_master` · id `runoff-variables` · daily · pages: runo
 | Mean Catchment Rainfall / Actual ET from Catchment (mm) | `mean-catchment-rainfall-actual-et-from-catchment-mm` | mm | daily | mixed | `Mean_Catchment_Rainfall_mm` ★, `Actual_ET_from_Catchment_mm` ★ |
 | Daily Surface Runoff Volume (m³/day) | `daily-surface-runoff-volume-m3-day` | m³/day | daily | bar | `Daily_Surface_Runoff_Volume_m3_day` ★ |
 | Monthly Runoff Totals (Mm³/month) | `monthly-runoff-totals-mm3-month` | Mm³/month | monthly | bar | `Monthly_Runoff_Totals_Million_m3_month` ★ |
-| Runoff Coefficient | `runoff-coefficient` | — | daily | line | `Runoff_Coefficient_dimensionless` ★ |
+| Runoff Coefficient | `runoff-coefficient` | index | daily | line | `Runoff_Coefficient_dimensionless` ★ |
 | Soil Moisture Prior (m³/m³) | `soil-moisture-prior-m3-m3` | m³/m³ | daily | line | `Soil_Moisture_Prior_m3m3` ★ |
-| Curve Number CN | `curve-number-cn` | — | daily | bar | `Curve_Number_CN` ★ |
+| Curve Number CN | `curve-number-cn` | index | daily | bar | `Curve_Number_CN` ★ |
 | Peak Flow Rates / Baseflow Component (m³/s) | `peak-flow-rates-baseflow-component-m3-s` | m³/s | daily | line | `Peak_Flow_Rates_m3s` ★, `Baseflow_Component_m3s` ★ |
 | Dominant LandCover Class | `dominant-landcover-class` | class | daily | line | `Dominant_LandCover_Class` ★ |
 | Impervious Surface Fraction (%) | `impervious-surface-fraction-pct` | % | daily | line | `Impervious_Surface_Fraction_percent` ★ |
@@ -576,7 +576,7 @@ Table `8_1_reservoir_operational_master` · id `reservoir-operational` · daily 
 | Soil Moisture (m³/m³) | `soil-moisture-m3-m3` | m³/m³ | daily | line | `soil_moisture_m3_m3` ★ |
 | Rainfall / Evaporation / Runoff (mm/day) | `rainfall-evaporation-runoff-mm-day` | mm/day | daily | mixed | `rainfall_mm_day` ★, `evaporation_mm_day`, `runoff_mm_day` |
 | District Area / Water Area (km²) | `district-area-water-area-km2` | km² | daily | line | `district_area_km2` ★, `water_area_km2` ★ |
-| Mean NDWI | `mean-ndwi` | — | daily | line | `mean_ndwi` ★ |
+| Mean NDWI | `mean-ndwi` | index | daily | line | `mean_ndwi` ★ |
 | Storage Volume (m³) | `storage-volume-m3` | m³ | daily | line | `storage_volume_m3` ★ |
 | Pct FSC (% FSC) | `pct-fsc-pct-fsc` | % FSC | daily | line | `pct_fsc` ★ |
 | Fsl / Water Level (m amsl) | `fsl-water-level-m-amsl` | m amsl | daily | line | `fsl_m_amsl` ★, `water_level_m_amsl` ★ |
@@ -616,9 +616,9 @@ Table `9_1_hydrological_station_master` · id `hydrological-station` · daily ·
 | Stage Height (m) | `stage-height-m` | m | monthly | line | `stage_height` ★ |
 | Monthly Mean Flow (m³/month) | `monthly-mean-flow-m3-month` | m³/month | daily | line | `monthly_mean_flow` ★ |
 | Suspended Sediment Concentration (mg/L) | `suspended-sediment-concentration-mg-l` | mg/L | monthly | line | `suspended_sediment_concentration` ★ |
-| A Coeff | `a-coeff` | — | daily | line | `a_coeff` ★ |
-| B Exponent | `b-exponent` | — | daily | line | `b_exponent` ★ |
-| R Squared | `r-squared` | — | daily | line | `r_squared` ★ |
+| A Coeff | `a-coeff` | index | daily | line | `a_coeff` ★ |
+| B Exponent | `b-exponent` | index | daily | line | `b_exponent` ★ |
+| R Squared | `r-squared` | index | daily | line | `r_squared` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -650,7 +650,7 @@ Table `9_2_catchment_characteristics_master` · id `catchment-characteristics` �
 | Dominant HSG (class) | `dominant-hsg-class` | class | annual | line | `dominant_hsg` ★ |
 | HSG A / HSG B / HSG C / HSG D (%) | `hsg-a-hsg-b-hsg-c-hsg-d-pct` | % | annual | line | `hsg_a_pct` ★, `hsg_b_pct` ★, `hsg_c_pct` ★, `hsg_d_pct` |
 | Mean Slope (°) | `mean-slope` | ° | monthly | line | `mean_slope_degrees` ★ |
-| Mean TWI | `mean-twi` | — | monthly | line | `mean_twi` ★ |
+| Mean TWI | `mean-twi` | index | monthly | line | `mean_twi` ★ |
 
 **Runoff page**
 
@@ -662,7 +662,7 @@ Table `9_2_catchment_characteristics_master` · id `catchment-characteristics` �
 | Dominant HSG (class) | `dominant-hsg-class` | class | annual | line | `dominant_hsg` ★ |
 | HSG A / HSG B / HSG C / HSG D (%) | `hsg-a-hsg-b-hsg-c-hsg-d-pct` | % | annual | line | `hsg_a_pct` ★, `hsg_b_pct` ★, `hsg_c_pct` ★, `hsg_d_pct` |
 | Mean Slope (°) | `mean-slope` | ° | monthly | line | `mean_slope_degrees` ★ |
-| Mean TWI | `mean-twi` | — | monthly | line | `mean_twi` ★ |
+| Mean TWI | `mean-twi` | index | monthly | line | `mean_twi` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -695,7 +695,7 @@ Table `9_3_sansa_earth_observation_master` · id `sansa-earth-observation` · mo
 | --- | --- | --- | --- | --- | --- |
 | Surface Water Extent / Flood Inundation Extent (km²) | `surface-water-extent-flood-inundation-extent-km2` | km² | monthly | line | `surface_water_extent_km2` ★, `flood_inundation_extent_km2` ★ |
 | NDWI (index) | `ndwi-index` | index | monthly | line | `ndwi_mean` ★ |
-| Turbidity Proxy Ratio | `turbidity-proxy-ratio` | — | monthly | line | `turbidity_proxy_ratio` ★ |
+| Turbidity Proxy Ratio | `turbidity-proxy-ratio` | index | monthly | line | `turbidity_proxy_ratio` ★ |
 | Chlorophyll A (mg/m³) | `chlorophyll-a-mg-m3` | mg/m³ | monthly | line | `chlorophyll_a_mg_m3` ★ |
 | Sediment Plume (%) | `sediment-plume-pct` | % | monthly | line | `sediment_plume_pct` ★ |
 
@@ -728,7 +728,7 @@ Table `10_1_borehole_and_aquifer_master` · id `borehole-and-aquifer` · daily �
 | Saturated Thickness (m) | `saturated-thickness-m` | m | daily | line | `saturated_thickness_m` ★ |
 | Seasonal Water Table Fluctuation (m/season) | `seasonal-water-table-fluctuation-m-season` | m/season | annual | line | `seasonal_water_table_fluctuation_m` ★ |
 | SGI (index) | `sgi-index` | index | daily | line | `sgi_dimensionless` ★ |
-| Storativity Specific Yield | `storativity-specific-yield` | — | daily | line | `storativity_specific_yield_dimensionless` ★ |
+| Storativity Specific Yield | `storativity-specific-yield` | index | daily | line | `storativity_specific_yield_dimensionless` ★ |
 | Transmissivity (m²/day) | `transmissivity-m2-day` | m²/day | daily | line | `transmissivity_m2_day` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
@@ -784,12 +784,12 @@ Table `11_1_hydrogeological` · id `hydrogeological` · monthly · pages: ground
 | Aquifer Saturated Thickness (m) | `aquifer-saturated-thickness-m` | m | annual | line | `Aquifer saturated thickness` ★ |
 | Depth to (m bgl) | `depth-to-m-bgl` | m bgl | monthly | line | `Depth to bedrock / aquifer base`, `Depth to water table` ★ |
 | Dynamic (renewable) Reserve (Mm³/year) | `dynamic-renewable-reserve-mm3-year` | Mm³/year | annual | line | `Dynamic (renewable) reserve` ★ |
-| Groundwater Storage Coefficient | `groundwater-storage-coefficient` | — | annual | line | `Groundwater storage coefficient` ★ |
+| Groundwater Storage Coefficient | `groundwater-storage-coefficient` | index | annual | line | `Groundwater storage coefficient` ★ |
 | Permeability / Hydraulic Conductivity (m/day) | `permeability-hydraulic-conductivity-m-day` | m/day | annual | line | `Permeability / hydraulic conductivity` ★ |
 | Porosity (total and Effective) (%) | `porosity-total-and-effective-pct` | % | annual | line | `Porosity (total and effective)` ★ |
-| Specific Storage / Specific Yield | `specific-storage-specific-yield` | — | annual | line | `Specific storage` ★, `Specific yield` ★ |
+| Specific Storage / Specific Yield | `specific-storage-specific-yield` | index | annual | line | `Specific storage` ★, `Specific yield` ★ |
 | Static Reserve Volume (Mm³) | `static-reserve-volume-mm3` | Mm³ | annual | bar | `Static reserve volume` ★ |
-| Storage Coefficient / Storativity / Specific Yield | `storage-coefficient-storativity-specific-yield` | — | monthly | line | `Storage coefficient / storativity / specific yield` ★ |
+| Storage Coefficient / Storativity / Specific Yield | `storage-coefficient-storativity-specific-yield` | index | monthly | line | `Storage coefficient / storativity / specific yield` ★ |
 | Transmissivity (m²/day) | `transmissivity-m2-day` | m²/day | annual | line | `Transmissivity` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
@@ -841,11 +841,11 @@ Table `11.3_aquifer_sustainability` · id `aquifer-sustainability` · monthly ·
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
-| Water Quality For Use | `water-quality-for-use` | — | monthly | line | `Water quality for use` ★ |
+| Water Quality For Use | `water-quality-for-use` | index | monthly | line | `Water quality for use` ★ |
 | Aquifer Depletion Rate (m/year) | `aquifer-depletion-rate-m-year` | m/year | annual | line | `Aquifer depletion rate` ★ |
 | Borehole Yield (m³/h) | `borehole-yield-m3-h` | m³/h | annual | line | `Borehole yield` ★ |
 | Exploitation Index (%) | `exploitation-index-pct` | % | annual | line | `Exploitation index` ★ |
-| Recharge Sensitivity | `recharge-sensitivity` | — | annual | line | `Recharge sensitivity` ★ |
+| Recharge Sensitivity | `recharge-sensitivity` | index | annual | line | `Recharge sensitivity` ★ |
 | Total Abstraction (m³/year) | `total-abstraction-m3-year` | m³/year | annual | bar | `Total abstraction` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
@@ -892,7 +892,7 @@ Table `12.2_chemical_water_quality_master` · id `chemical-water-quality` · mon
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
-| pH | `ph` | — | monthly | line | `pH` ★ |
+| pH | `ph` | index | monthly | line | `pH` ★ |
 | Dissolved Oxygen (DO) / BOD5 / COD / Ammonia (NH3-N) / Nitrate (NO3-N) / Nitrite (NO2-N) / Total Phosphorus (TP) / Orthophosphate (PO43-) / Iron/Manganese / TOC / Sulphate / Chloride / Fluoride (mg/L) | `dissolved-oxygen-do-bod5-cod-ammonia-nh3-n-nitrate-no3-n-nitrite-no2-n-total-phosphorus-tp-orthophosphate-po43-iron-manganese-toc-sulphate-chloride-fluoride-mg-l` | mg/L | monthly | line | `Dissolved Oxygen (DO)` ★, `BOD5` ★, `COD` ★, `Ammonia (NH3-N)`, `Nitrate (NO3-N)`, `Nitrite (NO2-N)`, `Total Phosphorus (TP)`, `Orthophosphate (PO43-)`, `Iron/Manganese`, `TOC`, `Sulphate`, `Chloride`, `Fluoride` |
 | Lead/Cadmium/Chromium / Arsenic/Mercury (µg/L) | `lead-cadmium-chromium-arsenic-mercury-g-l` | µg/L | monthly | line | `Lead/Cadmium/Chromium` ★, `Arsenic/Mercury` ★ |
 
@@ -924,15 +924,15 @@ Table `12.3_biological_water_quality_master` · id `biological-water-quality` ·
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
-| E. Coli / Total Coliforms (cfu/100 mL) | `e-coli-total-coliforms-cfu-100-ml` | cfu/100 mL | monthly | line | `E. coli` ★, `Total coliforms` ★ |
+| E. coli / Total Coliforms (cfu/100 mL) | `e-coli-total-coliforms-cfu-100-ml` | cfu/100 mL | monthly | line | `E. coli` ★, `Total coliforms` ★ |
 | Chlorophyll-a / Microcystin (µg/L) | `chlorophyll-a-microcystin-g-l` | µg/L | monthly | line | `Chlorophyll-a` ★, `Microcystin` ★ |
 | Blue-green Algae (cells/mL) | `blue-green-algae-cells-ml` | cells/mL | monthly | line | `Blue-green algae` ★ |
-| Macroinvertebrate Index (SASS5) | `macroinvertebrate-index-sass5` | — | monthly | line | `Macroinvertebrate index (SASS5)` ★ |
-| Pathogens | `pathogens` | — | monthly | line | `Pathogens` ★ |
+| Macroinvertebrate Index (SASS5) | `macroinvertebrate-index-sass5` | index | monthly | line | `Macroinvertebrate index (SASS5)` ★ |
+| Pathogens | `pathogens` | index | monthly | line | `Pathogens` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `E. coli` | E. Coli (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | water-quality: `e-coli-total-coliforms-cfu-100-ml` | live |
+| `E. coli` | E. coli (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | water-quality: `e-coli-total-coliforms-cfu-100-ml` | live |
 | `Total coliforms` | Total Coliforms (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | water-quality: `e-coli-total-coliforms-cfu-100-ml` | live |
 | `Chlorophyll-a` | Chlorophyll-a (µg/L) | µg/L ¹ | monthly | line | water-quality: `chlorophyll-a-microcystin-g-l` | live |
 | `Blue-green algae` | Blue-green Algae (cells/mL) | cells/mL ¹ | monthly | line | water-quality: `blue-green-algae-cells-ml` | live |
@@ -949,11 +949,11 @@ Table `12.4_sansa_water_quality_master` · id `sansa-water-quality` · monthly �
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
-| Turbidity | `turbidity` | — | monthly | line | `Turbidity` ★ |
-| Chlorophyll-a | `chlorophyll-a` | — | monthly | line | `Chlorophyll-a` ★ |
-| Cyanobacterial Bloom | `cyanobacterial-bloom` | — | monthly | line | `Cyanobacterial bloom` ★ |
-| CDOM | `cdom` | — | monthly | line | `CDOM` ★ |
-| Total Suspended Matter (TSM) | `total-suspended-matter-tsm` | — | monthly | line | `Total Suspended Matter (TSM)` ★ |
+| Turbidity | `turbidity` | index | monthly | line | `Turbidity` ★ |
+| Chlorophyll-a | `chlorophyll-a` | index | monthly | line | `Chlorophyll-a` ★ |
+| Cyanobacterial Bloom | `cyanobacterial-bloom` | index | monthly | line | `Cyanobacterial bloom` ★ |
+| CDOM | `cdom` | index | monthly | line | `CDOM` ★ |
+| Total Suspended Matter (TSM) | `total-suspended-matter-tsm` | index | monthly | line | `Total Suspended Matter (TSM)` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -976,10 +976,10 @@ Table `13.1_wastewater_effluent_quality_master` · id `wastewater-effluent-quali
 | Turbidity (NTU) | `turbidity-ntu` | NTU | monthly | line | `turbidity` ★ |
 | EC Salinity (mS/m) | `ec-salinity-ms-m` | mS/m | monthly | line | `ec_salinity` ★ |
 | TSS / DO / BOD5 / COD / Ammonia NH3 N (mg/L) | `tss-do-bod5-cod-ammonia-nh3-n-mg-l` | mg/L | monthly | line | `tss` ★, `do`, `BOD5`, `COD`, `Ammonia_NH3_N` ★ |
-| pH | `ph` | — | monthly | line | `ph` ★ |
+| pH | `ph` | index | monthly | line | `ph` ★ |
 | Total (mg/L) | `total-mg-l` | mg/L | monthly | line | `Total_Inorganic_Nitrogen` ★, `Total_Phosphorus` ★ |
 | Heavy Metals (µg/L) | `heavy-metals-g-l` | µg/L | monthly | line | `Heavy_Metals` ★ |
-| E Coli / Faecal Coliforms (cfu/100 mL) | `e-coli-faecal-coliforms-cfu-100-ml` | cfu/100 mL | monthly | line | `E_coli` ★, `Faecal_coliforms` ★ |
+| E coli / Faecal Coliforms (cfu/100 mL) | `e-coli-faecal-coliforms-cfu-100-ml` | cfu/100 mL | monthly | line | `E_coli` ★, `Faecal_coliforms` ★ |
 | Helminth Eggs (eggs/L) | `helminth-eggs-eggs-l` | eggs/L | monthly | line | `Helminth_eggs` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
@@ -996,7 +996,7 @@ Table `13.1_wastewater_effluent_quality_master` · id `wastewater-effluent-quali
 | `Total_Inorganic_Nitrogen` | Total Inorganic Nitrogen (mg/L) | mg/L ¹ | monthly | line | green-drop: `total-mg-l` | live |
 | `Total_Phosphorus` | Total Phosphorus (mg/L) | mg/L ¹ | monthly | line | green-drop: `total-mg-l` | live |
 | `Heavy_Metals` | Heavy Metals (µg/L) | µg/L ¹ | monthly | line | green-drop: `heavy-metals-g-l` | live |
-| `E_coli` | E Coli (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | green-drop: `e-coli-faecal-coliforms-cfu-100-ml` | live |
+| `E_coli` | E coli (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | green-drop: `e-coli-faecal-coliforms-cfu-100-ml` | live |
 | `Faecal_coliforms` | Faecal Coliforms (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | green-drop: `e-coli-faecal-coliforms-cfu-100-ml` | live |
 | `Helminth_eggs` | Helminth Eggs (eggs/L) | eggs/L ¹ | monthly | line | green-drop: `helminth-eggs-eggs-l` | live |
 
@@ -1036,7 +1036,7 @@ Table `13.3_meteorological_variables_(SAWS)_for_WWTW_Compliance_master` · id `m
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
 | Rainfall / Evaporation (mm) | `rainfall-evaporation-mm` | mm | monthly | bar | `Rainfall_mm` ★, `Evaporation_mm` ★ |
-| Flood Events Proxy | `flood-events-proxy` | — | monthly | line | `Flood_events_proxy` ★ |
+| Flood Events Proxy | `flood-events-proxy` | index | monthly | line | `Flood_events_proxy` ★ |
 | Temperature (°C) | `temperature-c` | °C | monthly | line | `Temperature_C` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
@@ -1056,15 +1056,15 @@ Table `14.1_SANS_241_compliance_master` · id `sans-241-compliance` · monthly �
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
 | Turbidity Value (NTU) | `turbidity-value-ntu` | NTU | monthly | line | `Turbidity_Value` ★ |
-| Turbidity Compliant / Colour Compliant / Temperature Compliant / E Coli Compliant / pH Compliant / EC Compliant / Free Chlorine Compliant / Nitrate Compliant / Fluoride Compliant / Arsenic Compliant / Lead Compliant / Cyanide Compliant (%) | `turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct` | % | monthly | line | `Turbidity_Compliant` ★, `Colour_Compliant` ★, `Temperature_Compliant` ★, `E_coli_Compliant`, `pH_Compliant`, `EC_Compliant`, `Free_Chlorine_Compliant`, `Nitrate_Compliant`, `Fluoride_Compliant`, `Arsenic_Compliant`, `Lead_Compliant`, `Cyanide_Compliant` |
+| Turbidity Compliant / Colour Compliant / Temperature Compliant / E coli Compliant / pH Compliant / EC Compliant / Free Chlorine Compliant / Nitrate Compliant / Fluoride Compliant / Arsenic Compliant / Lead Compliant / Cyanide Compliant (%) | `turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct` | % | monthly | line | `Turbidity_Compliant` ★, `Colour_Compliant` ★, `Temperature_Compliant` ★, `E_coli_Compliant`, `pH_Compliant`, `EC_Compliant`, `Free_Chlorine_Compliant`, `Nitrate_Compliant`, `Fluoride_Compliant`, `Arsenic_Compliant`, `Lead_Compliant`, `Cyanide_Compliant` |
 | Colour Value (TCU) | `colour-value-tcu` | TCU | monthly | line | `Colour_Value` ★ |
 | Temperature Value (°C) | `temperature-value-c` | °C | monthly | line | `Temperature_Value` ★ |
-| E Coli Value / Total Coliforms Value (cfu/100 mL) | `e-coli-value-total-coliforms-value-cfu-100-ml` | cfu/100 mL | monthly | line | `E_coli_Value`, `Total_Coliforms_Value` ★ |
+| E coli Value / Total Coliforms Value (cfu/100 mL) | `e-coli-value-total-coliforms-value-cfu-100-ml` | cfu/100 mL | monthly | line | `E_coli_Value`, `Total_Coliforms_Value` ★ |
 | Total (%) | `total-pct` | % | monthly | line | `Total_Coliforms_Compliant` ★, `Total_THMs_Compliant` ★ |
-| pH Value | `ph-value` | — | monthly | line | `pH_Value` ★ |
+| pH Value | `ph-value` | index | monthly | line | `pH_Value` ★ |
 | EC Value (mS/m) | `ec-value-ms-m` | mS/m | monthly | line | `EC_Value` ★ |
 | Free Chlorine Value / Nitrate Value / Fluoride Value / Arsenic Value / Lead Value / Cyanide Value / Total THMs Value (mg/L) | `free-chlorine-value-nitrate-value-fluoride-value-arsenic-value-lead-value-cyanide-value-total-thms-value-mg-l` | mg/L | monthly | line | `Free_Chlorine_Value`, `Nitrate_Value` ★, `Fluoride_Value` ★, `Arsenic_Value` ★, `Lead_Value`, `Cyanide_Value`, `Total_THMs_Value` |
-| SANS 241 Compliance Score | `sans-241-compliance-score` | — | monthly | line | `SANS_241_Compliance_Score` ★ |
+| SANS 241 Compliance Score | `sans-241-compliance-score` | index | monthly | line | `SANS_241_Compliance_Score` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1074,8 +1074,8 @@ Table `14.1_SANS_241_compliance_master` · id `sans-241-compliance` · monthly �
 | `Colour_Compliant` | Colour Compliant (%) | % ¹ | monthly | line | blue-drop: `turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct` | withheld — compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included) |
 | `Temperature_Value` | Temperature Value (°C) | °C ¹ | monthly | line | blue-drop: `temperature-value-c` | withheld — identical to 13.1 temperature (wastewater effluent) in all 16 744 district-months |
 | `Temperature_Compliant` | Temperature Compliant (%) | % ¹ | monthly | line | blue-drop: `turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct` | withheld — compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included) |
-| `E_coli_Value` | E Coli Value (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | blue-drop: `e-coli-value-total-coliforms-value-cfu-100-ml` | withheld — identical to 13.1 E_coli (wastewater effluent) in all 16 744 district-months |
-| `E_coli_Compliant` | E Coli Compliant (%) | % ¹ | monthly | line | blue-drop: `turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct` | withheld — compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included) |
+| `E_coli_Value` | E coli Value (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | blue-drop: `e-coli-value-total-coliforms-value-cfu-100-ml` | withheld — identical to 13.1 E_coli (wastewater effluent) in all 16 744 district-months |
+| `E_coli_Compliant` | E coli Compliant (%) | % ¹ | monthly | line | blue-drop: `turbidity-compliant-colour-compliant-temperature-compliant-e-coli-compliant-ph-compliant-ec-compliant-free-chlorine-compliant-nitrate-compliant-fluoride-compliant-arsenic-compliant-lead-compliant-cyanide-compliant-pct` | withheld — compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included) |
 | `Total_Coliforms_Value` | Total Coliforms Value (cfu/100 mL) | cfu/100 mL ¹ | monthly | line | blue-drop: `e-coli-value-total-coliforms-value-cfu-100-ml` | live |
 | `Total_Coliforms_Compliant` | Total Coliforms Compliant (%) | % ¹ | monthly | line | blue-drop: `total-pct` | withheld — compliance flag judged on values copied from 13.1 wastewater effluent (impossible pH included) |
 | `pH_Value` | pH Value | — | monthly | line | blue-drop: `ph-value` | withheld — identical to 13.1 ph (wastewater effluent) in all 16 744 district-months; pH from −0.54 to 3.33 is impossible |
@@ -1107,12 +1107,12 @@ Table `15.1_ecological_variables_master` · id `ecological-variables` · monthly
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
-| Aquatic Habitat Integrity | `aquatic-habitat-integrity` | — | monthly | line | `aquatic_habitat_integrity` ★ |
-| ASPT | `aspt` | — | monthly | line | `aspt` ★ |
+| Aquatic Habitat Integrity | `aquatic-habitat-integrity` | index | monthly | line | `aquatic_habitat_integrity` ★ |
+| ASPT | `aspt` | index | monthly | line | `aspt` ★ |
 | Ecological Reserve Q (m³/s) | `ecological-reserve-q-m3-s` | m³/s | monthly | line | `ecological_reserve_q` ★ |
-| FIBI | `fibi` | — | monthly | line | `fibi` ★ |
-| Riparian Vegetation | `riparian-vegetation` | — | monthly | line | `riparian_vegetation` ★ |
-| SASS5 Score | `sass5-score` | — | monthly | line | `sass5_score` ★ |
+| FIBI | `fibi` | index | monthly | line | `fibi` ★ |
+| Riparian Vegetation | `riparian-vegetation` | index | monthly | line | `riparian_vegetation` ★ |
+| SASS5 Score | `sass5-score` | index | monthly | line | `sass5_score` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1134,11 +1134,11 @@ Table `15.2_chemical_RWQO_variables_master` · id `chemical-rwqo-variables` · m
 | --- | --- | --- | --- | --- | --- |
 | DO Value / Salinity Value TDS (mg/L) | `do-value-salinity-value-tds-mg-l` | mg/L | monthly | line | `DO_Value` ★, `Salinity_Value_TDS` ★ |
 | DO Compliant / pH Range Compliant / EC Target Compliant / Nutrient Compliant / Toxicant Compliant / Salinity Compliant (%) | `do-compliant-ph-range-compliant-ec-target-compliant-nutrient-compliant-toxicant-compliant-salinity-compliant-pct` | % | monthly | line | `DO_Compliant` ★, `pH_Range_Compliant` ★, `EC_Target_Compliant` ★, `Nutrient_Compliant`, `Toxicant_Compliant`, `Salinity_Compliant` |
-| pH Range Value | `ph-range-value` | — | monthly | line | `pH_Range_Value` ★ |
+| pH Range Value | `ph-range-value` | index | monthly | line | `pH_Range_Value` ★ |
 | EC Target Value (mS/m) | `ec-target-value-ms-m` | mS/m | monthly | line | `EC_Target_Value` ★ |
 | Nutrient Value TN / Nutrient Value TP (mg/L) | `nutrient-value-tn-nutrient-value-tp-mg-l` | mg/L | monthly | line | `Nutrient_Value_TN` ★, `Nutrient_Value_TP` ★ |
 | Toxicant Value (µg/L) | `toxicant-value-g-l` | µg/L | monthly | line | `Toxicant_Value_ugL` ★ |
-| RWQO Compliance Score | `rwqo-compliance-score` | — | monthly | line | `RWQO_Compliance_Score` ★ |
+| RWQO Compliance Score | `rwqo-compliance-score` | index | monthly | line | `RWQO_Compliance_Score` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1168,10 +1168,10 @@ Table `15.3_hydrological_RWQO_variables_master` · id `hydrological-rwqo-variabl
 | --- | --- | --- | --- | --- | --- |
 | Low Flow Value / Dilution Value (m³/s) | `low-flow-value-dilution-value-m3-s` | m³/s | monthly | line | `Low_Flow_Value` ★, `Dilution_Value` ★ |
 | Low Flow Compliant / High Flow Compliant / Seasonality Compliant / Dilution Compliant / Assimilation Compliant (%) | `low-flow-compliant-high-flow-compliant-seasonality-compliant-dilution-compliant-assimilation-compliant-pct` | % | monthly | line | `Low_Flow_Compliant` ★, `High_Flow_Compliant` ★, `Seasonality_Compliant` ★, `Dilution_Compliant`, `Assimilation_Compliant` |
-| High Flow Value | `high-flow-value` | — | monthly | line | `High_Flow_Value` ★ |
-| Seasonality Value | `seasonality-value` | — | monthly | line | `Seasonality_Value` ★ |
-| Assimilation Value | `assimilation-value` | — | monthly | line | `Assimilation_Value` ★ |
-| Hydrological RWQO Score | `hydrological-rwqo-score` | — | monthly | line | `Hydrological_RWQO_Score` ★ |
+| High Flow Value | `high-flow-value` | index | monthly | line | `High_Flow_Value` ★ |
+| Seasonality Value | `seasonality-value` | index | monthly | line | `Seasonality_Value` ★ |
+| Assimilation Value | `assimilation-value` | index | monthly | line | `Assimilation_Value` ★ |
+| Hydrological RWQO Score | `hydrological-rwqo-score` | index | monthly | line | `Hydrological_RWQO_Score` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1197,9 +1197,9 @@ Table `16_1_complete_wrm_matrix_master` · id `complete-wrm-matrix` · annual ·
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
 | Mean Annual (mm/year) | `mean-annual-mm-year` | mm/year | annual | line | `Mean_Annual_Precipitation_MAP_mm_yr` ★, `Mean_Annual_Evapotranspiration_MAE_mm_yr` ★, `Mean_Annual_Groundwater_Recharge_mm_yr` ★ |
-| Climate Variability Index CV Rainfall | `climate-variability-index-cv-rainfall` | — | annual | line | `Climate_Variability_Index_CV_rainfall` ★ |
+| Climate Variability Index CV Rainfall | `climate-variability-index-cv-rainfall` | index | annual | line | `Climate_Variability_Index_CV_rainfall` ★ |
 | Mean Annual Runoff MAR / Inter Basin Transfer Volumes / National Water Balance / Return Flow Recycled Water (Mm³/year) | `mean-annual-runoff-mar-inter-basin-transfer-volumes-national-water-balance-return-flow-recycled-water-mm3-year` | Mm³/year | annual | line | `Mean_Annual_Runoff_MAR_million_m3_yr` ★, `Inter_Basin_Transfer_Volumes_million_m3_yr` ★, `National_Water_Balance_million_m3_yr` ★, `Return_Flow_Recycled_Water_million_m3_yr` |
-| Surface Water Availability Index Ratio | `surface-water-availability-index-ratio` | — | annual | line | `Surface_Water_Availability_Index_ratio` ★ |
+| Surface Water Availability Index Ratio | `surface-water-availability-index-ratio` | index | annual | line | `Surface_Water_Availability_Index_ratio` ★ |
 | Inter Annual Storage Efficiency / Groundwater Dependency Index / System Water Losses (%) | `inter-annual-storage-efficiency-groundwater-dependency-index-system-water-losses-pct` | % | annual | line | `Inter_Annual_Storage_Efficiency_pct` ★, `Groundwater_Dependency_Index_pct` ★, `System_Water_Losses_pct` ★ |
 | Municipal Water Demand (L/capita/day) | `municipal-water-demand-l-capita-day` | L/capita/day | annual | line | `Municipal_Water_Demand_L_cap_day` ★ |
 | Agricultural Water Demand (m³/ha/season) | `agricultural-water-demand-m3-ha-season` | m³/ha/season | annual | line | `Agricultural_Water_Demand_m3_ha_season` ★ |
@@ -1234,7 +1234,7 @@ Table `17_1_water_quantity_assessment_transfers_master` · id `water-quantity-as
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
 | Katse to Vaal Daily Transfer / Tugela Vaal Daily Transfer / Orange River System Transfer / Thukela Vaal Emergency Regular Transfer / Transfer Loss Seepage Evaporation / Receiving System Demand Deficit (m³/day) | `katse-to-vaal-daily-transfer-tugela-vaal-daily-transfer-orange-river-system-transfer-thukela-vaal-emergency-regular-transfer-transfer-loss-seepage-evaporation-receiving-system-demand-deficit-m3-day` | m³/day | monthly | bar | `Katse_to_Vaal_Daily_Transfer_m3_day` ★, `Tugela_Vaal_Daily_Transfer_m3_day` ★, `Orange_River_System_Transfer_m3_day` ★, `Thukela_Vaal_Emergency_Regular_Transfer_m3_day`, `Transfer_Loss_Seepage_Evaporation_m3_day`, `Receiving_System_Demand_Deficit_m3_day` |
-| Transfer Pumping Energy (kWh/Ml) | `transfer-pumping-energy-kwh-ml` | kWh/Ml | monthly | line | `Transfer_Pumping_Energy_kWh_Ml` ★ |
+| Transfer Pumping Energy (kWh/ML) | `transfer-pumping-energy-kwh-ml` | kWh/ML | monthly | line | `Transfer_Pumping_Energy_kWh_Ml` ★ |
 | Donor Basin Storage (% FSC) | `donor-basin-storage-pct-fsc` | % FSC | monthly | line | `Donor_Basin_Storage_FSC_pct` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
@@ -1244,7 +1244,7 @@ Table `17_1_water_quantity_assessment_transfers_master` · id `water-quantity-as
 | `Orange_River_System_Transfer_m3_day` | Orange River System Transfer (m³/day) | m³/day | monthly | bar | water-quantity: `katse-to-vaal-daily-transfer-tugela-vaal-daily-transfer-orange-river-system-transfer-thukela-vaal-emergency-regular-transfer-transfer-loss-seepage-evaporation-receiving-system-demand-deficit-m3-day` | live — Served up to Dec 2024: zero in every district and month from January 2025 (filled, not measured): served to December 2024 |
 | `Thukela_Vaal_Emergency_Regular_Transfer_m3_day` | Thukela Vaal Emergency Regular Transfer (m³/day) | m³/day | monthly | bar | water-quantity: `katse-to-vaal-daily-transfer-tugela-vaal-daily-transfer-orange-river-system-transfer-thukela-vaal-emergency-regular-transfer-transfer-loss-seepage-evaporation-receiving-system-demand-deficit-m3-day` | live — Served up to Dec 2024: zero in every district and month from January 2025 (filled, not measured): served to December 2024 |
 | `Transfer_Loss_Seepage_Evaporation_m3_day` | Transfer Loss Seepage Evaporation (m³/day) | m³/day | monthly | bar | water-quantity: `katse-to-vaal-daily-transfer-tugela-vaal-daily-transfer-orange-river-system-transfer-thukela-vaal-emergency-regular-transfer-transfer-loss-seepage-evaporation-receiving-system-demand-deficit-m3-day` | live — Served up to Dec 2024: zero in every district and month from January 2025 (filled, not measured): served to December 2024 |
-| `Transfer_Pumping_Energy_kWh_Ml` | Transfer Pumping Energy (kWh/Ml) | kWh/Ml | monthly | line | water-quantity: `transfer-pumping-energy-kwh-ml` | live — Served up to Dec 2024: zero in every district and month from January 2025 (filled, not measured): served to December 2024 |
+| `Transfer_Pumping_Energy_kWh_Ml` | Transfer Pumping Energy (kWh/ML) | kWh/ML | monthly | line | water-quantity: `transfer-pumping-energy-kwh-ml` | live — Served up to Dec 2024: zero in every district and month from January 2025 (filled, not measured): served to December 2024 |
 | `Donor_Basin_Storage_FSC_pct` | Donor Basin Storage (% FSC) | % FSC | monthly | line | water-quantity: `donor-basin-storage-pct-fsc` | live — 10–15.3 % FSC in every row (the Katse Dam is usually far fuller): shown as stored |
 | `Receiving_System_Demand_Deficit_m3_day` | Receiving System Demand Deficit (m³/day) | m³/day | monthly | bar | water-quantity: `katse-to-vaal-daily-transfer-tugela-vaal-daily-transfer-orange-river-system-transfer-thukela-vaal-emergency-regular-transfer-transfer-loss-seepage-evaporation-receiving-system-demand-deficit-m3-day` | live — Served up to Dec 2024: zero in every district and month from January 2025 (filled, not measured): served to December 2024 |
 
@@ -1285,32 +1285,32 @@ Table `18_1_water_access_and_coverage_master` · id `water-access-and-coverage` 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
 | Total Households / At Or Above RDP Households / Reliable Water Households / Households Below RDP / Backlog (#) / Communal Standpipe < 200m (#) (households) | `total-households-at-or-above-rdp-households-reliable-water-households-households-below-rdp-backlog-communal-standpipe-200m-households` | households | annual | line | `Total Households` ★, `At or Above RDP Households` ★, `Reliable Water Households` ★, `Households Below RDP / Backlog (#)`, `Communal Standpipe < 200m (#)` |
-| At Or Above RDP Percentage / Reliable Water Percentage / Households Below RDP / Backlog (%) / Communal Standpipe < 200m (%) / Schools With Piped Water (%) / Clinics With Piped Water (%) (%) | `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct` | % | annual | line | `At or Above RDP Percentage` ★, `Reliable Water Percentage` ★, `Households Below RDP / Backlog (%)` ★, `Communal Standpipe < 200m (%)`, `Schools with Piped Water (%)`, `Clinics with Piped Water (%)` |
+| At Or Above RDP Percentage / Reliable Water Percentage / Households Below RDP / Backlog (%) / Communal Standpipe < 200m (%) / Schools With Piped Water (%) / Clinics With Piped Water (%) | `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct` | % | annual | line | `At or Above RDP Percentage` ★, `Reliable Water Percentage` ★, `Households Below RDP / Backlog (%)` ★, `Communal Standpipe < 200m (%)`, `Schools with Piped Water (%)`, `Clinics with Piped Water (%)` |
 | Piped (households) | `piped-households` | households | annual | line | `Piped Infrastructure Households` ★, `Piped Water Inside Dwelling (#)` ★, `Piped Water On Site / Yard Tap (#)` ★ |
 | Annual New Connections Installed (#/year) (connections/year) | `annual-new-connections-installed-year-connections-year` | connections/year | annual | line | `Annual New Connections Installed (#/year)` ★ |
 | Piped Water (%) | `piped-water-pct` | % | annual | line | `Piped Water Inside Dwelling (%)` ★, `Piped Water On Site / Yard Tap (%)` ★ |
-| Distance to Nearest Water Point For Unserved HH (km) (km) | `distance-to-nearest-water-point-for-unserved-hh-km-km` | km | annual | line | `Distance to Nearest Water Point for Unserved HH (km)` ★ |
+| Distance to Nearest Water Point For Unserved HH (km) | `distance-to-nearest-water-point-for-unserved-hh-km` | km | annual | line | `Distance to Nearest Water Point for Unserved HH (km)` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | `Total Households` | Total Households (households) | households ¹ | annual | line | services: `total-households-at-or-above-rdp-households-reliable-water-households-households-below-rdp-backlog-communal-standpipe-200m-households` | live |
 | `At or Above RDP Households` | At Or Above RDP Households (households) | households ¹ | annual | line | services: `total-households-at-or-above-rdp-households-reliable-water-households-households-below-rdp-backlog-communal-standpipe-200m-households` | live |
-| `At or Above RDP Percentage` | At Or Above RDP Percentage (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct` | live — district value = mean of its local municipalities (the module recomputes it from the household counts) |
+| `At or Above RDP Percentage` | At Or Above RDP Percentage (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct` | live — district value = mean of its local municipalities (the module recomputes it from the household counts) |
 | `Piped Infrastructure Households` | Piped Infrastructure Households (households) | households ¹ | annual | line | services: `piped-households` | live |
 | `Reliable Water Households` | Reliable Water Households (households) | households ¹ | annual | line | services: `total-households-at-or-above-rdp-households-reliable-water-households-households-below-rdp-backlog-communal-standpipe-200m-households` | live — one snapshot (April 2026) in 149 rows |
-| `Reliable Water Percentage` | Reliable Water Percentage (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct` | live — one snapshot (April 2026) in 149 rows |
+| `Reliable Water Percentage` | Reliable Water Percentage (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct` | live — one snapshot (April 2026) in 149 rows |
 | `Households Below RDP / Backlog (#)` | Households Below RDP / Backlog (#) (households) | households ¹ | annual | line | services: `total-households-at-or-above-rdp-households-reliable-water-households-households-below-rdp-backlog-communal-standpipe-200m-households` | live |
-| `Households Below RDP / Backlog (%)` | Households Below RDP / Backlog (%) (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct` | live |
+| `Households Below RDP / Backlog (%)` | Households Below RDP / Backlog (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct` | live |
 | `Annual New Connections Installed (#/year)` | Annual New Connections Installed (#/year) (connections/year) | connections/year ¹ | annual | line | services: `annual-new-connections-installed-year-connections-year` | live |
 | `Piped Water Inside Dwelling (#)` | Piped Water Inside Dwelling (#) (households) | households ¹ | annual | line | services: `piped-households` | live — one value per municipality in every year (a census snapshot repeated) |
 | `Piped Water On Site / Yard Tap (#)` | Piped Water on Site / Yard Tap (#) (households) | households ¹ | annual | line | services: `piped-households` | live — one value per municipality in every year (a census snapshot repeated) |
 | `Communal Standpipe < 200m (#)` | Communal Standpipe < 200m (#) (households) | households ¹ | annual | line | services: `total-households-at-or-above-rdp-households-reliable-water-households-households-below-rdp-backlog-communal-standpipe-200m-households` | live — one value per municipality in every year (a census snapshot repeated) |
-| `Piped Water Inside Dwelling (%)` | Piped Water Inside Dwelling (%) (%) | % ¹ | annual | line | services: `piped-water-pct` | withheld — a static household count divided by the year's total households: up to 1 506 %, impossible for a share |
-| `Piped Water On Site / Yard Tap (%)` | Piped Water on Site / Yard Tap (%) (%) | % ¹ | annual | line | services: `piped-water-pct` | withheld — a static household count divided by the year's total households: up to 6 684 %, impossible for a share |
-| `Communal Standpipe < 200m (%)` | Communal Standpipe < 200m (%) (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct` | withheld — a static household count divided by the year's total households: up to 466 %, impossible for a share |
-| `Distance to Nearest Water Point for Unserved HH (km)` | Distance to Nearest Water Point For Unserved HH (km) (km) | km ¹ | annual | line | services: `distance-to-nearest-water-point-for-unserved-hh-km-km` | withheld — three values in the whole table, one per municipality in every year |
-| `Schools with Piped Water (%)` | Schools With Piped Water (%) (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct` | live |
-| `Clinics with Piped Water (%)` | Clinics With Piped Water (%) (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct-pct` | live |
+| `Piped Water Inside Dwelling (%)` | Piped Water Inside Dwelling (%) | % ¹ | annual | line | services: `piped-water-pct` | withheld — a static household count divided by the year's total households: up to 1 506 %, impossible for a share |
+| `Piped Water On Site / Yard Tap (%)` | Piped Water on Site / Yard Tap (%) | % ¹ | annual | line | services: `piped-water-pct` | withheld — a static household count divided by the year's total households: up to 6 684 %, impossible for a share |
+| `Communal Standpipe < 200m (%)` | Communal Standpipe < 200m (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct` | withheld — a static household count divided by the year's total households: up to 466 %, impossible for a share |
+| `Distance to Nearest Water Point for Unserved HH (km)` | Distance to Nearest Water Point For Unserved HH (km) | km ¹ | annual | line | services: `distance-to-nearest-water-point-for-unserved-hh-km` | withheld — three values in the whole table, one per municipality in every year |
+| `Schools with Piped Water (%)` | Schools With Piped Water (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct` | live |
+| `Clinics with Piped Water (%)` | Clinics With Piped Water (%) | % ¹ | annual | line | services: `at-or-above-rdp-percentage-reliable-water-percentage-households-below-rdp-backlog-pct-communal-standpipe-200m-pct-schools-with-piped-water-pct-clinics-with-piped-water-pct` | live |
 
 <a id="infrastructure-operational"></a>
 ## Infrastructure Operational · §18.2
@@ -1328,7 +1328,7 @@ Table `18_2_infrastructure_operational_master` · id `infrastructure-operational
 | System Supply Pressure KPa Bar (kPa) | `system-supply-pressure-kpa-bar-kpa` | kPa | annual | line | `System_Supply_Pressure_kPa_bar` ★ |
 | Daily Unplanned Supply Interruptions Events per Day (events/day) | `daily-unplanned-supply-interruptions-events-per-day-events-day` | events/day | annual | line | `Daily_Unplanned_Supply_Interruptions_events_per_day` ★ |
 | Average Duration of Outages Hours per Event (h) | `average-duration-of-outages-hours-per-event-h` | h | annual | line | `Average_Duration_Of_Outages_hours_per_event` ★ |
-| Pump Station Energy Consumption (kWh/Ml) | `pump-station-energy-consumption-kwh-ml` | kWh/Ml | annual | line | `Pump_Station_Energy_Consumption_kWh_Ml` ★ |
+| Pump Station Energy Consumption (kWh/ML) | `pump-station-energy-consumption-kwh-ml` | kWh/ML | annual | line | `Pump_Station_Energy_Consumption_kWh_Ml` ★ |
 | Load Shedding Induced Interruptions Hours per Day (h/day) | `load-shedding-induced-interruptions-hours-per-day-h-day` | h/day | annual | line | `Load_Shedding_Induced_Interruptions_hours_per_day` ★ |
 | Pipe Failure Rate Breaks per 100km Year (breaks/100 km/year) | `pipe-failure-rate-breaks-per-100km-year-breaks-100-km-year` | breaks/100 km/year | annual | line | `Pipe_Failure_Rate_breaks_per_100km_year` ★ |
 
@@ -1349,7 +1349,7 @@ Table `18_2_infrastructure_operational_master` · id `infrastructure-operational
 | `System_Supply_Pressure_kPa_bar` | System Supply Pressure KPa Bar (kPa) | kPa ¹ | annual | line | services: `system-supply-pressure-kpa-bar-kpa` | live |
 | `Daily_Unplanned_Supply_Interruptions_events_per_day` | Daily Unplanned Supply Interruptions Events per Day (events/day) | events/day ¹ | annual | line | services: `daily-unplanned-supply-interruptions-events-per-day-events-day` | live — Values below 0 are not served: 528 infinite and 534 negative rows: a count of events cannot be negative |
 | `Average_Duration_Of_Outages_hours_per_event` | Average Duration of Outages Hours per Event (h) | h ¹ | annual | line | services: `average-duration-of-outages-hours-per-event-h` | withheld — one value (4.5 h) in every row |
-| `Pump_Station_Energy_Consumption_kWh_Ml` | Pump Station Energy Consumption (kWh/Ml) | kWh/Ml ¹ | annual | line | services: `pump-station-energy-consumption-kwh-ml` | live |
+| `Pump_Station_Energy_Consumption_kWh_Ml` | Pump Station Energy Consumption (kWh/ML) | kWh/ML ¹ | annual | line | services: `pump-station-energy-consumption-kwh-ml` | live |
 | `Load_Shedding_Induced_Interruptions_hours_per_day` | Load Shedding Induced Interruptions Hours per Day (h/day) | h/day ¹ | annual | line | services: `load-shedding-induced-interruptions-hours-per-day-h-day` | live |
 | `Pipe_Failure_Rate_breaks_per_100km_year` | Pipe Failure Rate Breaks per 100km Year (breaks/100 km/year) | breaks/100 km/year ¹ | annual | line | services: `pipe-failure-rate-breaks-per-100km-year-breaks-100-km-year` | live — Values below 0 are not served: 528 infinite and 534 negative rows: a rate cannot be negative |
 
@@ -1385,21 +1385,21 @@ Table `19_1_raw_water_tariff_master` · id `raw-water-tariff` · annual · pages
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
-| Raw Water Abstraction Tariff (R/m³) / Drought-season Surcharge (R/m³) / Capital Investment Recovery Charge (R/m³) (R/m³) | `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3-r-m3` | R/m³ | annual | line | `Raw water abstraction tariff (R/m³)` ★, `Drought-season surcharge (R/m³)` ★, `Capital investment recovery charge (R/m³)` ★ |
-| Reservoir Storage % (scarcity Trigger) (% FSC) (% FSC) | `reservoir-storage-pct-scarcity-trigger-pct-fsc-pct-fsc` | % FSC | annual | line | `Reservoir storage % (scarcity trigger) (% FSC)` ★ |
-| Inter-basin Transfer Cost Component (R/Ml) / Energy Cost per Ml Transferred (R/Ml) (R/Ml) | `inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml-r-ml` | R/Ml | annual | line | `Inter-basin transfer cost component (R/Ml)` ★, `Energy cost per Ml transferred (R/Ml)` ★ |
-| MAR Demand Ratio (—) | `mar-demand-ratio` | — | annual | line | `MAR_demand_ratio` ★ |
+| Raw Water Abstraction Tariff (R/m³) / Drought-season Surcharge (R/m³) / Capital Investment Recovery Charge (R/m³) | `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3` | R/m³ | annual | line | `Raw water abstraction tariff (R/m³)` ★, `Drought-season surcharge (R/m³)` ★, `Capital investment recovery charge (R/m³)` ★ |
+| Reservoir Storage % (scarcity Trigger) (% FSC) | `reservoir-storage-pct-scarcity-trigger-pct-fsc` | % FSC | annual | line | `Reservoir storage % (scarcity trigger) (% FSC)` ★ |
+| Inter-basin Transfer Cost Component (R/Ml) / Energy Cost per Ml Transferred (R/ML) | `inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml` | R/ML | annual | line | `Inter-basin transfer cost component (R/Ml)` ★, `Energy cost per Ml transferred (R/Ml)` ★ |
+| MAR Demand Ratio | `mar-demand-ratio` | — | annual | line | `MAR_demand_ratio` ★ |
 | SPI/SPEI Category (D0–D4 Affects Pricing) (dimensionless) (class) | `spi-spei-category-d0-d4-affects-pricing-dimensionless-class` | class | annual | line | `SPI/SPEI category (D0–D4 affects pricing) (dimensionless)` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `Raw water abstraction tariff (R/m³)` | Raw Water Abstraction Tariff (R/m³) (R/m³) | R/m³ ¹ | annual | line | tariffs: `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3-r-m3` | live — one value per year, identical in every municipality |
-| `Drought-season surcharge (R/m³)` | Drought-season Surcharge (R/m³) (R/m³) | R/m³ ¹ | annual | line | tariffs: `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3-r-m3` | live |
-| `Capital investment recovery charge (R/m³)` | Capital Investment Recovery Charge (R/m³) (R/m³) | R/m³ ¹ | annual | line | tariffs: `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3-r-m3` | live — one value per year, identical in every municipality |
-| `Reservoir storage % (scarcity trigger) (% FSC)` | Reservoir Storage % (scarcity Trigger) (% FSC) (% FSC) | % FSC ¹ | annual | line | tariffs: `reservoir-storage-pct-scarcity-trigger-pct-fsc-pct-fsc` | live |
-| `Inter-basin transfer cost component (R/Ml)` | Inter-basin Transfer Cost Component (R/Ml) (R/Ml) | R/Ml ¹ | annual | line | tariffs: `inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml-r-ml` | live |
-| `Energy cost per Ml transferred (R/Ml)` | Energy Cost per Ml Transferred (R/Ml) (R/Ml) | R/Ml ¹ | annual | line | tariffs: `inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml-r-ml` | live |
-| `MAR_demand_ratio` | MAR Demand Ratio (—) | — ¹ | annual | line | tariffs: `mar-demand-ratio` | live |
+| `Raw water abstraction tariff (R/m³)` | Raw Water Abstraction Tariff (R/m³) | R/m³ ¹ | annual | line | tariffs: `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3` | live — one value per year, identical in every municipality |
+| `Drought-season surcharge (R/m³)` | Drought-season Surcharge (R/m³) | R/m³ ¹ | annual | line | tariffs: `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3` | live |
+| `Capital investment recovery charge (R/m³)` | Capital Investment Recovery Charge (R/m³) | R/m³ ¹ | annual | line | tariffs: `raw-water-abstraction-tariff-r-m3-drought-season-surcharge-r-m3-capital-investment-recovery-charge-r-m3` | live — one value per year, identical in every municipality |
+| `Reservoir storage % (scarcity trigger) (% FSC)` | Reservoir Storage % (scarcity Trigger) (% FSC) | % FSC ¹ | annual | line | tariffs: `reservoir-storage-pct-scarcity-trigger-pct-fsc` | live |
+| `Inter-basin transfer cost component (R/Ml)` | Inter-basin Transfer Cost Component (R/ML) | R/ML ¹ | annual | line | tariffs: `inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml` | live |
+| `Energy cost per Ml transferred (R/Ml)` | Energy Cost per Ml Transferred (R/ML) | R/ML ¹ | annual | line | tariffs: `inter-basin-transfer-cost-component-r-ml-energy-cost-per-ml-transferred-r-ml` | live |
+| `MAR_demand_ratio` | MAR Demand Ratio | — ¹ | annual | line | tariffs: `mar-demand-ratio` | live |
 | `SPI/SPEI category (D0–D4 affects pricing) (dimensionless)` | SPI/SPEI Category (D0–D4 Affects Pricing) (dimensionless) (class) | — | annual | line | tariffs: `spi-spei-category-d0-d4-affects-pricing-dimensionless-class` | live — a text drought class per row; the drought page classes are computed from the indices |
 
 <a id="municipal-water-tariff"></a>
@@ -1411,20 +1411,20 @@ Table `19_2_municipal_water_tariff_master` · id `municipal-water-tariff` · ann
 
 | Chart group | id | Axis unit | Resolution | Chart | Columns (★ default) |
 | --- | --- | --- | --- | --- | --- |
-| Block Tariff Rates (R/kL per Consumption Block) / Average Treatment Cost per KL Produced (R/kL) (R/kL) | `block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl-r-kl` | R/kL | annual | line | `Block tariff rates (R/kL per consumption block)` ★, `Average treatment cost per kL produced (R/kL)` ★ |
-| 6 KL/month Free Allocation Status (L/household/month) (L/household/month) | `6-kl-month-free-allocation-status-l-household-month-l-household-month` | L/household/month | annual | line | `6 kL/month free allocation status (L/household/month)` ★ |
-| Electricity Cost For Pumping and Treatment (R/kWh) (kWh/Ml) | `electricity-cost-for-pumping-and-treatment-r-kwh-kwh-ml` | kWh/Ml | annual | line | `Electricity cost for pumping and treatment (R/kWh)` ★ |
-| Infrastructure Replacement and Maintenance Cost (R/year) (R/year) | `infrastructure-replacement-and-maintenance-cost-r-year-r-year` | R/year | annual | line | `Infrastructure replacement and maintenance cost (R/year)` ★ |
-| CPI and PPI Affecting Operational Costs (%) (%) | `cpi-and-ppi-affecting-operational-costs-pct-pct` | % | annual | line | `CPI and PPI affecting operational costs (%)` ★ |
+| Block Tariff Rates (R/kL per Consumption Block) / Average Treatment Cost per KL Produced (R/kL) | `block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl` | R/kL | annual | line | `Block tariff rates (R/kL per consumption block)` ★, `Average treatment cost per kL produced (R/kL)` ★ |
+| 6 KL/month Free Allocation Status (L/household/month) | `6-kl-month-free-allocation-status-l-household-month` | L/household/month | annual | line | `6 kL/month free allocation status (L/household/month)` ★ |
+| Electricity Cost For Pumping and Treatment (R/kWh) (kWh/ML) | `electricity-cost-for-pumping-and-treatment-r-kwh-kwh-ml` | kWh/ML | annual | line | `Electricity cost for pumping and treatment (R/kWh)` ★ |
+| Infrastructure Replacement and Maintenance Cost (R/year) | `infrastructure-replacement-and-maintenance-cost-r-year` | R/year | annual | line | `Infrastructure replacement and maintenance cost (R/year)` ★ |
+| CPI and PPI Affecting Operational Costs (%) | `cpi-and-ppi-affecting-operational-costs-pct` | % | annual | line | `CPI and PPI affecting operational costs (%)` ★ |
 
 | Column | Label | Unit | Resolution | Chart | Group | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `Block tariff rates (R/kL per consumption block)` | Block Tariff Rates (R/kL per Consumption Block) (R/kL) | R/kL ¹ | annual | line | tariffs: `block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl-r-kl` | live — one rate per municipality-year (no consumption blocks) |
-| `6 kL/month free allocation status (L/household/month)` | 6 KL/month Free Allocation Status (L/household/month) (L/household/month) | L/household/month ¹ | annual | line | tariffs: `6-kl-month-free-allocation-status-l-household-month-l-household-month` | withheld — one value (6 000 L) in every row |
-| `Average treatment cost per kL produced (R/kL)` | Average Treatment Cost per KL Produced (R/kL) (R/kL) | R/kL ¹ | annual | line | tariffs: `block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl-r-kl` | live |
-| `Electricity cost for pumping and treatment (R/kWh)` | Electricity Cost For Pumping and Treatment (R/kWh) (kWh/Ml) | kWh/Ml ¹ | annual | line | tariffs: `electricity-cost-for-pumping-and-treatment-r-kwh-kwh-ml` | duplicate of `18_2_infrastructure_operational_master.Pump_Station_Energy_Consumption_kWh_Ml`; live on tariffs |
-| `Infrastructure replacement and maintenance cost (R/year)` | Infrastructure Replacement and Maintenance Cost (R/year) (R/year) | R/year ¹ | annual | line | tariffs: `infrastructure-replacement-and-maintenance-cost-r-year-r-year` | live — Values below 0 are not served: 528 infinite and 534 negative rows: a cost cannot be negative |
-| `CPI and PPI affecting operational costs (%)` | CPI and PPI Affecting Operational Costs (%) (%) | % ¹ | annual | line | tariffs: `cpi-and-ppi-affecting-operational-costs-pct-pct` | live — 37.7–65 % in every year: shown as stored |
+| `Block tariff rates (R/kL per consumption block)` | Block Tariff Rates (R/kL per Consumption Block) (R/kL) | R/kL ¹ | annual | line | tariffs: `block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl` | live — one rate per municipality-year (no consumption blocks) |
+| `6 kL/month free allocation status (L/household/month)` | 6 KL/month Free Allocation Status (L/household/month) | L/household/month ¹ | annual | line | tariffs: `6-kl-month-free-allocation-status-l-household-month` | withheld — one value (6 000 L) in every row |
+| `Average treatment cost per kL produced (R/kL)` | Average Treatment Cost per KL Produced (R/kL) | R/kL ¹ | annual | line | tariffs: `block-tariff-rates-r-kl-per-consumption-block-average-treatment-cost-per-kl-produced-r-kl` | live |
+| `Electricity cost for pumping and treatment (R/kWh)` | Electricity Cost For Pumping and Treatment (R/kWh) (kWh/ML) | kWh/ML ¹ | annual | line | tariffs: `electricity-cost-for-pumping-and-treatment-r-kwh-kwh-ml` | duplicate of `18_2_infrastructure_operational_master.Pump_Station_Energy_Consumption_kWh_Ml`; live on tariffs |
+| `Infrastructure replacement and maintenance cost (R/year)` | Infrastructure Replacement and Maintenance Cost (R/year) | R/year ¹ | annual | line | tariffs: `infrastructure-replacement-and-maintenance-cost-r-year` | live — Values below 0 are not served: 528 infinite and 534 negative rows: a cost cannot be negative |
+| `CPI and PPI affecting operational costs (%)` | CPI and PPI Affecting Operational Costs (%) | % ¹ | annual | line | tariffs: `cpi-and-ppi-affecting-operational-costs-pct` | live — 37.7–65 % in every year: shown as stored |
 
 <a id="water-quality-cost"></a>
 ## Water Quality Cost · §19.3
@@ -1472,7 +1472,7 @@ Table `19_3_water_quality_cost_master` · id `water-quality-cost` · annual · p
 | `_m_amsl` | m amsl |
 | `_mm_day` | mm/day |
 | `_m3_day` | m³/day |
-| `_kwh_ml` | kWh/Ml |
+| `_kwh_ml` | kWh/ML |
 | `_m3_m3` | m³/m³ |
 | `_m3_yr` | m³/year |
 | `_m_day` | m/day |
@@ -1641,7 +1641,7 @@ Only where the name carries no unit or the wrong one; never to rename a variable
 | `18_2_infrastructure_operational_master` | `System_Supply_Pressure_kPa_bar` | kPa | name has no unit; spec §18.2 gives kPa |
 | `18_2_infrastructure_operational_master` | `Daily_Unplanned_Supply_Interruptions_events_per_day` | events/day | name has no unit; spec §18.2 gives events/day |
 | `18_2_infrastructure_operational_master` | `Average_Duration_Of_Outages_hours_per_event` | h | name has no unit; spec §18.2 gives h |
-| `18_2_infrastructure_operational_master` | `Pump_Station_Energy_Consumption_kWh_Ml` | kWh/Ml | name has no unit; spec §18.2 gives kWh/Ml |
+| `18_2_infrastructure_operational_master` | `Pump_Station_Energy_Consumption_kWh_Ml` | kWh/ML | name has no unit; spec §18.2 gives kWh/ML |
 | `18_2_infrastructure_operational_master` | `Load_Shedding_Induced_Interruptions_hours_per_day` | h/day | name has no unit; spec §18.2 gives h/day |
 | `18_2_infrastructure_operational_master` | `Pipe_Failure_Rate_breaks_per_100km_year` | breaks/100 km/year | name has no unit; spec §18.2 gives breaks/100 km/year |
 | `18_3_sansa_eo_support_for_services_masters` | `Settlement_Extent_Built_km2` | km² | name has no unit; spec §18.3 gives km² |
@@ -1654,13 +1654,13 @@ Only where the name carries no unit or the wrong one; never to rename a variable
 | `19_1_raw_water_tariff_master` | `Drought-season surcharge (R/m³)` | R/m³ | name has no unit; spec §19.1 gives R/m³ |
 | `19_1_raw_water_tariff_master` | `Capital investment recovery charge (R/m³)` | R/m³ | name has no unit; spec §19.1 gives R/m³ |
 | `19_1_raw_water_tariff_master` | `Reservoir storage % (scarcity trigger) (% FSC)` | % FSC | name has no unit; spec §19.1 gives % FSC |
-| `19_1_raw_water_tariff_master` | `Inter-basin transfer cost component (R/Ml)` | R/Ml | name has no unit; spec §19.1 gives R/Ml |
-| `19_1_raw_water_tariff_master` | `Energy cost per Ml transferred (R/Ml)` | R/Ml | name has no unit; spec §19.1 gives R/Ml |
+| `19_1_raw_water_tariff_master` | `Inter-basin transfer cost component (R/Ml)` | R/ML | name has no unit; spec §19.1 gives R/ML |
+| `19_1_raw_water_tariff_master` | `Energy cost per Ml transferred (R/Ml)` | R/ML | name has no unit; spec §19.1 gives R/ML |
 | `19_1_raw_water_tariff_master` | `MAR_demand_ratio` | — | name has no unit; spec §19.1 gives — |
 | `19_2_municipal_water_tariff_master` | `Block tariff rates (R/kL per consumption block)` | R/kL | name has no unit; spec §19.2 gives R/kL |
 | `19_2_municipal_water_tariff_master` | `6 kL/month free allocation status (L/household/month)` | L/household/month | name has no unit; spec §19.2 gives L/household/month |
 | `19_2_municipal_water_tariff_master` | `Average treatment cost per kL produced (R/kL)` | R/kL | name has no unit; spec §19.2 gives R/kL |
-| `19_2_municipal_water_tariff_master` | `Electricity cost for pumping and treatment (R/kWh)` | kWh/Ml | name has no unit; spec §19.2 gives kWh/Ml |
+| `19_2_municipal_water_tariff_master` | `Electricity cost for pumping and treatment (R/kWh)` | kWh/ML | name has no unit; spec §19.2 gives kWh/ML |
 | `19_2_municipal_water_tariff_master` | `Infrastructure replacement and maintenance cost (R/year)` | R/year | name has no unit; spec §19.2 gives R/year |
 | `19_2_municipal_water_tariff_master` | `CPI and PPI affecting operational costs (%)` | % | name has no unit; spec §19.2 gives % |
 | `19_3_water_quality_cost_master` | `Source water (Turbidity and contamination)` | R/year | name has no unit; spec §19.3 gives R/year |

@@ -102,7 +102,7 @@ class CatColumn(_Strict):
 class CatGroup(_Strict):
     id: str
     label: str
-    unit: str  # axis unit: the columns' unit, "index" for unitless indices, "—" for other unitless, "class"
+    unit: str  # axis unit: the columns' unit, "index" for unitless columns, "class" for categorical ones
     resolution: Resolution
     columns: list[str]
     default_visible: list[str]
@@ -248,7 +248,7 @@ def axis_unit(cols: list[CatColumn], family: str | None) -> str:
         return "class"
     if family in ("standardised", "spectral"):
         return "index"
-    return cols[0].unit or "—"
+    return cols[0].unit or "index"
 
 
 # ---------------------------------------------------------------- builder

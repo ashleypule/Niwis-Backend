@@ -16,8 +16,11 @@ Each function returns human-readable violation strings; an empty list means the 
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 from collections.abc import Iterable, Mapping
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 from app.core.provenance import period_end
@@ -239,11 +242,57 @@ def attach_reasons(body: Any, reasons: Mapping[str, str]) -> None:
                     k.setdefault("unavailableReason", reason)
 
 
+@lru_cache(maxsize=1)
+def register_units() -> frozenset[str] | None:
+    """The naming register's units (reference/units.json, written by the frontend's `npm run naming:register`).
+    None where the file is not deployed (the Docker image holds app/ only): the check then does nothing."""
+    path = Path(__file__).resolve().parents[2] / "reference" / "units.json"
+    if not path.exists():
+        return None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return frozenset([*data["units"], *data["axisOnly"]])
+
+
+def unit_violations(body: Any) -> list[str]:
+    """Every unit string is spelled as in the register; an axis label does not repeat its unit; `—`, `score` and
+    `mixed` never appear; a category set with a second axis says its unit."""
+    allowed = register_units()
+    out: list[str] = []
+
+    def walk(o: Any, at: str) -> None:
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if (
+                    k in ("unit", "axis2Unit", "xUnit")
+                    and isinstance(v, str)
+                    and allowed is not None
+                    and v not in allowed
+                ):
+                    out.append(f"{at}.{k}: {v!r} is not a register unit")
+                if k == "units" and isinstance(v, list) and allowed is not None:
+                    out.extend(f"{at}.units: {u!r} is not a register unit" for u in v if u not in allowed)
+                walk(v, f"{at}.{k}")
+        elif isinstance(o, list):
+            for x in o:
+                walk(x, at)
+
+    walk(body, "")
+    if isinstance(body, dict):
+        for a in body.get("axes") or []:
+            label, unit = str(a.get("label") or ""), str(a.get("unit") or "")
+            if unit and unit != "index" and label.endswith(f"({unit})"):
+                out.append(f"axis label {label!r} repeats its unit")
+        second_axis = "categories" in body and any((s.get("axis") or 0) == 1 for s in body.get("series") or [])
+        if second_axis and not body.get("axis2Unit"):
+            out.append("category set with `axis: 1` series has no axis2Unit")
+    return out
+
+
 def invariant_violations(body: Any, coverage: Coverage | None = None) -> list[str]:
     """Checks that guard against wrong numbers: unavailable-but-valued fields, values outside source coverage."""
     if not isinstance(body, dict):
         return []
-    out = unavailable_violations(body)
+    out = unavailable_violations(body) + unit_violations(body)
     if coverage is not None:
         out += coverage_violations(body, coverage)
     return out

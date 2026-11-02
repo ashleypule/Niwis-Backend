@@ -107,7 +107,7 @@ async def test_unknown_index_lists_the_valid_ones(client: httpx.AsyncClient) -> 
 
 async def test_set_with_more_units_than_axes_is_a_400(client: httpx.AsyncClient) -> None:
     r = await client.get(IDX, params={"metric": "indices", "set": "ndvi,vci,lst"})
-    assert r.status_code == 400 and r.json()["issues"][0]["units"] == ["—", "%", "°C"]
+    assert r.status_code == 400 and r.json()["issues"][0]["units"] == ["index", "%", "°C"]
 
 
 async def test_withheld_index_trend_is_501(client: httpx.AsyncClient) -> None:

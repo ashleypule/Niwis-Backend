@@ -73,6 +73,8 @@ def _raw_period_sql(ds: Dataset) -> str:
     if t.kind == "year_month":
         assert t.year and t.month
         return f"make_date({ident(t.year)}::int, {ident(t.month)}::int, 1)"
+    if t.kind == "month_name_year":  # "April 2026": text that does not sort or parse as a date
+        return ds.date_sql()
     assert t.column
     return ident(t.column)
 
@@ -698,7 +700,8 @@ async def prewarm(state: AppState) -> int:
 
 
 async def keep_warm(state: AppState) -> None:
-    """Warm every category group now, then again shortly before the cached series expire."""
+    """After the module warm-up: warm every category group, then again shortly before the cached series expire."""
+    await state.warm_done.wait()
     while True:
         try:
             await prewarm(state)

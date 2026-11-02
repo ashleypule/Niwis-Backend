@@ -25,7 +25,11 @@ def period_end(d: dt.date, resolution: Resolution) -> dt.date:
     if resolution == "monthly":
         return d.replace(day=calendar.monthrange(d.year, d.month)[1])
     if resolution == "annual":
-        return dt.date(d.year, 12, 31)
+        if d.month in (1, 12):
+            return dt.date(d.year, 12, 31)
+        # one row a year dated inside it ("April 2026", a snapshot of 18_1): it describes that month, not a calendar
+        # year still running ("as of Dec 2026" would be a future date)
+        return d.replace(day=calendar.monthrange(d.year, d.month)[1])
     return d
 
 

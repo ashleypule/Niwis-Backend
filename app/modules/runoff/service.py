@@ -7,8 +7,8 @@ volumes and flows from the **real district area**:
     volume (Mm³) = depth (mm) × area (km²) / 1000        flow (m³/s) = depth × area × 1000 / 86 400
 
 Withheld (D5): the table's own volumes, peak flows, catchment area and constants. Rainfall from `6.1`. There are no
-gauging stations: station counts and point layers are unavailable; flow status is derived per district (D49); districts serve
-as entities (D1).
+gauging stations: station counts and point layers are unavailable; flow status is derived per district (D49);
+districts serve as entities (D1).
 
 Methods (docs/DATA_MAPPING.md §5): depths area-weighted; flows and volumes summed over the scope (WMA: district volume
 apportioned by the share of its area inside the WMA); runoff normals = the same-month means stored in
@@ -259,7 +259,9 @@ class RunoffService:
                 id="peak",
                 metric="peakFlow",
                 label="Peak Flow (Qmax)",
-                sublabel=(f"derived, highest daily mean flow, {peak_day:%d %b %Y}" if peak_day is not None else "derived"),
+                sublabel=(
+                    f"derived, highest daily mean flow, {peak_day:%d %b %Y}" if peak_day is not None else "derived"
+                ),
                 value=rnd(float(flow.max()), 0) if peak_day is not None else None,
                 unit="m³/s",
                 decimals=0,
@@ -909,7 +911,12 @@ class RunoffService:
                 ),
                 c.Column(key="anomaly", label="Anomaly", type="delta", decimals=3, good_direction="up", align="right"),
                 c.Column(
-                    key="trend", label="Trend (Sen's slope)", type="number", unit="/decade", decimals=4, align="right"
+                    key="trend",
+                    label="Trend (Sen's slope)",
+                    type="number",
+                    unit="per decade",
+                    decimals=4,
+                    align="right",
                 ),
             ],
             rows=rows,

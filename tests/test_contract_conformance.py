@@ -21,8 +21,9 @@ CONTRACT = (Path(__file__).resolve().parent.parent / "reference" / "API_CONTRACT
 
 PROVENANCE = {"source", "isStale", "periodEnd", "components", "baseline", "baselineNote", "aggregation", "unavailable"}
 PROVENANCE |= {"forecast"}  # forecast responses: model, skill, data date, disclaimer (CONTRACT_CHANGES §15)
+PROVENANCE |= {"derived", "methodNote"}  # computed by the API from live columns (CONTRACT_CHANGES §20)
 ADDITIONS: dict[str, set[str]] = {
-    "KpiSchema": {"asOf", "source", "isStale", "periodEnd", "unavailableReason"},
+    "KpiSchema": {"asOf", "source", "isStale", "periodEnd", "unavailableReason", "derived", "methodNote"},
     "KpiSetSchema": PROVENANCE,
     "SeriesSchema": {"unit", "asOf", "isStale", "periodEnd", "source", "resolution", "status", "chart"},
     "SeriesSetSchema": PROVENANCE | {"chart", "band"},
@@ -31,7 +32,7 @@ ADDITIONS: dict[str, set[str]] = {
     "MatrixSetSchema": PROVENANCE | {"asOf"},
     "MapLayerSchema": PROVENANCE | {"asOf", "geometry", "legend"},
     "EntityListSchema": PROVENANCE,
-    "EntityDetailSchema": {"asOf", "source", "unavailable"},
+    "EntityDetailSchema": {"asOf", "periodEnd", "source", "unavailable"},
 }
 MODELS: dict[str, type[BaseModel]] = {
     "ScopeSchema": c.Scope,

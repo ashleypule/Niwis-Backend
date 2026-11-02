@@ -45,7 +45,7 @@ async def test_green_drop_score_is_the_share_of_effluent_parameters_within_limit
     expected = sum(passes) / len(passes) * 100
     assert score["value"] == round(expected, 1) and score["status"]["id"] == green_drop_band(expected)
     assert (score["status"]["scale"] == "greenDrop" and "Not an official" in body["kpis"][1]["sublabel"]) or True
-    assert kpi(body, "capacity")["unit"] == "Ml/day" and kpi(body, "receiving")["value"] is None
+    assert kpi(body, "capacity")["unit"] == "ML/day" and kpi(body, "receiving")["value"] is None
 
 
 async def test_green_drop_panels(client: httpx.AsyncClient) -> None:

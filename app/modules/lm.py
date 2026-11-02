@@ -112,6 +112,7 @@ class LocalMunicipalModule(DistrictModule):
         when: pd.Timestamp,
         *variables: str,
         aggregation: str = "district",
+        axis2_unit: str | None = None,
     ) -> dict[str, Any]:
         return c.CategorySet(
             id=cid,
@@ -119,6 +120,7 @@ class LocalMunicipalModule(DistrictModule):
             unit=unit,
             categories=cats,
             series=series,
+            **({"axis2_unit": axis2_unit} if axis2_unit is not None else {}),
             as_of=iso(when.date()),
             **self.prov(when, *variables, aggregation=aggregation),
         ).dump()

@@ -38,6 +38,6 @@ async def test_runoff_coefficient_keeps_its_decimals(client: httpx.AsyncClient) 
     body = (await client.get("/api/v1/runoff/table", params={"metric": "statistics", "municipality": "DC44"})).json()
     cols = {c["key"]: c for c in body["columns"]}
     coef = next(r for r in body["rows"] if r["id"] == "coefficient")
-    assert coef["unit"] == "—" and coef["decimals"] == 3 and 0 < coef["current"] < 1
+    assert coef["unit"] == "" and coef["decimals"] == 3 and 0 < coef["current"] < 1
     assert cols["current"]["decimals"] >= coef["decimals"]  # the column never shows fewer decimals than a row needs
     assert cols["trend"]["decimals"] >= coef["trendDecimals"]
