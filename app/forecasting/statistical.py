@@ -7,7 +7,6 @@ seasonal ARIMA is not practical, and the climatology carries the seasonal cycle.
 
 from __future__ import annotations
 
-import logging
 import warnings
 from typing import Any, ClassVar
 
@@ -15,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from app.forecasting.base import LOWER_Q, UPPER_Q, ForecastModel, Freq, ModelError, Prediction, season_key
+from app.logging_config import quiet_model_loggers
 
 DAILY_WINDOW = 3 * 365  # days a daily ETS / ARIMA is fitted on
 ALPHA = 1 - (UPPER_Q - LOWER_Q)  # 0.2 → the 10th–90th percentile interval
@@ -226,10 +226,10 @@ class Prophet(ForecastModel):
     native_interval = True
 
     def _fit(self, y: pd.Series, exog: pd.DataFrame | None) -> None:
-        logging.getLogger("cmdstanpy").setLevel(logging.ERROR)
-        logging.getLogger("prophet").setLevel(logging.ERROR)
+        quiet_model_loggers()  # worker processes do not run configure_logging
         from prophet import Prophet as P
 
+        quiet_model_loggers()
         self.m = P(
             yearly_seasonality=True,
             weekly_seasonality=False,

@@ -132,6 +132,13 @@ class DataAccess:
             df = df.dropna(subset=["value"]).groupby(["district", "date"], as_index=False)["value"].agg(agg or "mean")
         return df.reset_index(drop=True)
 
+    async def _grouped(self, key: str, ds: Dataset, select_where: str, group_by: str, agg: str | None) -> pd.DataFrame:
+        async def load() -> pd.DataFrame:
+            return self._frame(await self._rows_by_district(ds, select_where, group_by), ds=ds, agg=agg)
+
+        df: pd.DataFrame = await self.cache.get_or_set(key, self.settings.cache_ttl_long_series_s, load)
+        return df
+
     async def _cached(
         self, key: str, sql: str, *args: Any, ds: Dataset | None = None, agg: str | None = None
     ) -> pd.DataFrame:
@@ -140,6 +147,44 @@ class DataAccess:
 
         df: pd.DataFrame = await self.cache.get_or_set(key, self.settings.cache_ttl_long_series_s, load)
         return df
+
+    async def _indexed_by_location(self, ds: Dataset) -> bool:
+        async def load() -> bool:
+            return bool(
+                await self.db.fetchval(
+                    "SELECT EXISTS (SELECT 1 FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid "
+                    "AND a.attnum = i.indkey[0] WHERE i.indrelid = to_regclass($1) AND a.attname = $2)",
+                    ds.fq,
+                    ds.location.column,
+                )
+            )
+
+        res: bool = await self.cache.get_or_set(f"data:indexed:{ds.table}", 86400, load)
+        return res
+
+    async def _rows_by_district(self, ds: Dataset, select_where: str, group_by: str) -> list[Any]:
+        """A grouped read of a whole daily table: one statement per district, at most `db_pool_max − 3` at a time.
+
+        A single statement over the whole record sorts 500 000 rows and passes the statement timeout on a cold database
+        (seen on 9_1 and 6.1 at start-up); one district reads about 9 800 rows through its (district, date) index. A
+        table without such an index, a national table or a local-municipality table is read at once with the longer
+        timeout of a background statement, never more than `db.background` at a time."""
+        if ds.national or ds.sub_district or not await self._indexed_by_location(ds):
+            async with self.db.background:
+                rows: list[Any] = await self.db.fetch_slow(f"{select_where} {group_by}")
+            return rows
+        loc = ds.location_sql()
+        sql = f"{select_where} AND {loc} = ANY($1::text[]) {group_by}"
+        sem = asyncio.Semaphore(max(1, self.settings.db_pool_max - 3))
+
+        async def one(d: districts.District) -> list[Any]:
+            names = await self.names(ds, d.code)
+            async with sem:
+                part: list[Any] = await self.db.fetch(sql, names)
+            return part
+
+        parts = await asyncio.gather(*(one(d) for d in districts.districts()))
+        return [r for part in parts for r in part]
 
     # ---------------------------------------------------------------- loaders
 
@@ -150,10 +195,10 @@ class DataAccess:
         if ds.time.resolution == "monthly" and ds.columns[col].repeats is None and not ds.duplicate_rows:
             sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
         elif ds.time.resolution == "monthly" or ds.columns[col].repeats == "monthly":  # one value per month
-            sql = (
-                f"SELECT {loc}, date_trunc('month', {d})::date AS m, max({c}) FROM {ds.fq} "
-                f"WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
+            select = (
+                f"SELECT {loc}, date_trunc('month', {d})::date AS m, max({c}) FROM {ds.fq} WHERE {ds.valid_sql(col)}"
             )
+            return await self._grouped(f"data:monthly:{var}", ds, select, "GROUP BY 1, 2", ds.columns[col].agg)
         else:
             raise ValueError(f"{var} is not a monthly variable")
         return await self._cached(f"data:monthly:{var}", sql, ds=ds, agg=ds.columns[col].agg)
@@ -165,10 +210,8 @@ class DataAccess:
         if ds.time.resolution == "annual" and not ds.duplicate_rows:
             sql = f"SELECT {loc}, {d}, {c} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
         elif ds.time.resolution == "annual" or ds.columns[col].repeats == "annual":  # one value per year
-            sql = (
-                f"SELECT {loc}, date_trunc('year', {d})::date, max({c}) FROM {ds.fq} "
-                f"WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
-            )
+            select = f"SELECT {loc}, date_trunc('year', {d})::date, max({c}) FROM {ds.fq} WHERE {ds.valid_sql(col)}"
+            return await self._grouped(f"data:annual:{var}", ds, select, "GROUP BY 1, 2", ds.columns[col].agg)
         else:
             raise ValueError(f"{var} is not an annual variable")
         return await self._cached(f"data:annual:{var}", sql, ds=ds, agg=ds.columns[col].agg)
@@ -302,14 +345,14 @@ class DataAccess:
         ds, col = self.source(var)
         c, loc, d = ds.column_sql(col), ds.location_sql(), ds.date_sql()
         counts = ", ".join(f"count(*) FILTER (WHERE {c} >= {float(t)!r})" for t in thresholds)
-        sql = (
+        select = (
             f"SELECT {loc}, date_trunc('month', {d})::date, sum({c}), max({c}), count({c})"
-            f"{', ' + counts if counts else ''} FROM {ds.fq} WHERE {ds.valid_sql(col)} GROUP BY 1, 2"
+            f"{', ' + counts if counts else ''} FROM {ds.fq} WHERE {ds.valid_sql(col)}"
         )
         names = ["district", "date", "sum", "max", "days", *[f"ge_{t:g}" for t in thresholds]]
 
         async def load() -> pd.DataFrame:
-            rows = await self.db.fetch(sql)
+            rows = await self._rows_by_district(ds, select, "GROUP BY 1, 2")
             df = pd.DataFrame([tuple(r) for r in rows], columns=names)
             codes = {n: (x.code if (x := districts.resolve(n)) else None) for n in df["district"].unique()}
             df["district"] = df["district"].map(codes)

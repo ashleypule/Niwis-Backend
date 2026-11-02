@@ -38,6 +38,15 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(out, default=str, ensure_ascii=False)
 
 
+def quiet_model_loggers() -> None:
+    """Prophet and cmdstanpy log every fit ("Chain [1] start processing") and, at ERROR, that plotly is not installed
+    (not needed: nothing here draws Prophet's plots). cmdstanpy resets its level when first imported, so callers run
+    this again after importing it."""
+    logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
+    logging.getLogger("prophet").setLevel(logging.WARNING)
+    logging.getLogger("prophet.plot").setLevel(logging.CRITICAL)
+
+
 def configure_logging(level: str = "INFO") -> None:
     handler = logging.StreamHandler()
     handler.setFormatter(JsonFormatter())
@@ -46,3 +55,4 @@ def configure_logging(level: str = "INFO") -> None:
     root.setLevel(level.upper())
     for noisy in ("uvicorn.access",):  # replaced by our request log
         logging.getLogger(noisy).disabled = True
+    quiet_model_loggers()

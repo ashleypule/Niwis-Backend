@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import functools
 import logging
+import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
@@ -18,7 +21,8 @@ from app import __version__
 from app.config import Settings, get_settings
 from app.core.cache import MemoryCache
 from app.core.data import DataAccess
-from app.core.errors import APIError
+from app.core.errors import APIError, DataUnavailable
+from app.core.filters import Filters, Window, parse_scope
 from app.core.spatial import get_spatial
 from app.db import Database
 from app.forecasting.contract import router as forecast_contract_router
@@ -36,14 +40,16 @@ from app.middleware import (
     SecurityHeadersMiddleware,
     security_headers,
 )
-from app.modules import DATABASE_VIEW_MODULES, IMPLEMENTED_MODULES
+from app.modules import DATABASE_VIEW_MODULES, IMPLEMENTED_MODULES, catalog
 from app.modules.alerts.router import router as alerts_router
+from app.modules.alerts.service import AlertsService
 from app.modules.blue_drop.router import router as blue_drop_router
 from app.modules.blue_drop.service import prewarm as prewarm_blue_drop
 from app.modules.categories import build_category_router
 from app.modules.categories import keep_warm as keep_categories_warm
 from app.modules.climate.router import router as climate_router
 from app.modules.climate.service import prewarm as prewarm_climate
+from app.modules.common import Ctx
 from app.modules.dams.router import router as dams_router
 from app.modules.dams.service import prewarm as prewarm_dams
 from app.modules.drought.router import router as drought_router
@@ -57,6 +63,7 @@ from app.modules.groundwater_reserve.service import prewarm as prewarm_groundwat
 from app.modules.iwrm.router import router as iwrm_router
 from app.modules.iwrm.service import prewarm as prewarm_iwrm
 from app.modules.meta_pages.router import data_integration_router, governance_router
+from app.modules.meta_pages.service import DataIntegrationService, GovernanceService
 from app.modules.rainfall.router import router as rainfall_router
 from app.modules.rainfall.service import prewarm as prewarm_rainfall
 from app.modules.runoff.router import router as runoff_router
@@ -96,11 +103,33 @@ Backend for the National Integrated Water Information System (DWS). Serves the f
 """
 
 
-async def _warm(state: AppState) -> None:
-    """Pre-load the newest DB date, the module frames, the table statistics and the category dates in the background.
+async def _warm_summary(state: AppState, svc: type[Any]) -> None:
+    """A page's KPIs for the default view (national, 12 months): loads every frame the page's first request needs,
+    including derived ones (land cover, SGI, WQI, flow status). A 501 is a valid answer: its reads are cached too."""
+    newest = await state.meta.newest_date()
+    ctx = Ctx(state, Filters(parse_scope(), Window("12M", None, None), False, None), newest)
+    with contextlib.suppress(DataUnavailable):
+        await svc(ctx).summary()
+
+
+def page_services() -> dict[str, type[Any]]:
+    """Every live page with a summary of its own (the Overview shows other modules' panels; the AI page reads the page
+    forecasts, kept fresh by their own loop)."""
+    return {
+        **{m: catalog.service_class(m) for m in catalog.SERVICE_MODULES},
+        "alerts": AlertsService,
+        "data-integration": DataIntegrationService,
+        "governance": GovernanceService,
+    }
+
+
+async def _warm(state: AppState) -> dict[str, float | None]:
+    """Pre-load the newest DB date, the module frames, each page's summary, the table statistics and the category dates
+    in the background. Logs one line per step with its duration and returns step → seconds (None: failed twice).
 
     Each step is independent: one that fails (e.g. a statement timeout on an unindexed table) is logged and the
-    others still run; the request that needs it later simply loads it then.
+    others still run; a failed step is retried once at the end, when nothing else is competing for the pool, and the
+    request that needs it later simply loads it then.
     """
     steps: list[tuple[str, Callable[[], Awaitable[Any]]]] = [
         ("newest date", state.meta.newest_date),
@@ -122,14 +151,31 @@ async def _warm(state: AppState) -> None:
         ("rwqo", lambda: prewarm_rwqo(state.data)),
         ("services", lambda: prewarm_services(state.data)),
         ("tariffs", lambda: prewarm_tariffs(state.data)),
+        *((f"{page} summary", functools.partial(_warm_summary, state, svc)) for page, svc in page_services().items()),
         ("table statistics", state.meta.table_stats),
     ]
-    for name, step in steps:
+
+    async def run(name: str, step: Callable[[], Awaitable[Any]]) -> float | None:
+        t0 = time.perf_counter()
         try:
             await step()
         except Exception:
-            log.exception("cache warm-up step failed", extra={"step": name})
-    log.info("cache warm-up finished")
+            log.warning("cache warm-up step failed", exc_info=True, extra={"step": name})
+            return None
+        seconds = round(time.perf_counter() - t0, 1)
+        log.info("cache warm-up step", extra={"step": name, "seconds": seconds})
+        return seconds
+
+    t0 = time.perf_counter()
+    results = {name: await run(name, step) for name, step in steps}
+    for name, step in steps:
+        if results[name] is None:
+            results[name] = await run(name, step)
+    failed = [k for k, v in results.items() if v is None]
+    if failed:
+        log.error("cache warm-up steps failed twice", extra={"steps": failed})
+    log.info("cache warm-up finished", extra={"seconds": round(time.perf_counter() - t0, 1), "failed": failed})
+    return results
 
 
 async def _keep_warm(state: AppState) -> None:
@@ -137,7 +183,13 @@ async def _keep_warm(state: AppState) -> None:
     reloads it in the background (app.core.cache), so the module frames never expire into a cold request."""
     while True:
         await _warm(state)
+        state.warm_done.set()
         await asyncio.sleep(max(300, int(state.settings.cache_ttl_long_series_s * 0.8)))
+
+
+async def _after_warm(state: AppState, job: Callable[[], Awaitable[None]]) -> None:
+    await state.warm_done.wait()
+    await job()
 
 
 def cache_ttl(settings: Settings) -> Callable[[str], int | None]:
@@ -192,10 +244,12 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         tasks = []
         if database.configured:
             tasks.append(asyncio.create_task(_keep_warm(state)))
+            # the two below wait for the first warm-up round: run beside it they compete for the pool and its
+            # statements time out on a cold database (a request's pool wait is unaffected: at most two run at once)
             if settings.prewarm_categories:  # every category chart group, refreshed before the cache expires
                 tasks.append(asyncio.create_task(keep_categories_warm(state)))
             if settings.forecast_enabled and settings.forecast_pages:  # page forecasts, recomputed on new data
-                tasks.append(asyncio.create_task(state.page_forecasts.keep_fresh()))
+                tasks.append(asyncio.create_task(_after_warm(state, state.page_forecasts.keep_fresh)))
         yield
         for task in tasks:
             if not task.done():

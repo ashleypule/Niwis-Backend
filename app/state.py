@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import asyncio
+from dataclasses import dataclass, field
 from typing import Any
 
 from fastapi import Request
@@ -27,6 +28,7 @@ class AppState:
     data: DataAccess
     forecast_jobs: Any = None  # app.forecasting.jobs.ForecastJobs (None: forecasting disabled)
     page_forecasts: Any = None  # app.forecasting.pages.PageForecasts
+    warm_done: asyncio.Event = field(default_factory=asyncio.Event)  # the first cache warm-up round has finished
 
 
 def get_state(request: Request) -> AppState:
