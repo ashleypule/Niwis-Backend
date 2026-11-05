@@ -16,6 +16,7 @@ from app.config import Settings
 from app.core.cache import Cache
 from app.core.districts import districts
 from app.core.provenance import is_stale, iso
+from app.core.units import canon_unit
 from app.db import Database, ident
 from app.registry.registry import Dataset, Registry
 
@@ -272,7 +273,7 @@ class MetaService:
                 {
                     "id": var,
                     "label": meta.label,
-                    "unit": meta.unit,
+                    "unit": canon_unit(meta.unit) or "",
                     "metric": meta.metric,
                     "status": "live" if src else "unavailable",
                     "source": f"{src[0].table}.{src[1]}" if src else None,
