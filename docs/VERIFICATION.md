@@ -121,6 +121,134 @@ SELECT sum(v) FROM (SELECT district_name, avg(daily_sediment_load_t_day) v
 FROM "9_1_hydrological_station_master" WHERE date BETWEEN '2026-08-01' AND '2026-08-31' GROUP BY 1) x
 ```
 
+## audit-step3 — 2026-11-05
+
+### ✅ Land cover, national: shrubland / fynbos share = Σ catchment area × share / Σ catchment area (9_2)
+
+- API: `GET /api/v1/vegetation/breakdown?metric=land-cover&kind=share` → **69.1**
+- SQL result: **69.1** (tolerance ± 0.05)
+
+```sql
+SELECT district_name, max(catchment_area_km2), max(shrubland_fynbos_pct)
+FROM "9_2_catchment_characteristics_master" WHERE year = 2025 GROUP BY 1
+```
+
+### ✅ Land cover, KwaZulu-Natal: tree cover share (9_2), and the runoff page's breakdown is the same table
+
+- API: `GET /api/v1/runoff/breakdown?metric=land-cover&province=KZN` → **30.5**
+- SQL result: **30.5** (tolerance ± 0.05)
+
+```sql
+SELECT district_name, max(catchment_area_km2), max(tree_cover_pct)
+FROM "9_2_catchment_characteristics_master" WHERE year = 2025 GROUP BY 1
+```
+
+### ✅ Runoff Peak Flow, national, 12 months: highest day of Σ district depth × real area × 1000 / 86 400 (never the withheld 6 500 km² peak column)
+
+- API: `GET /api/v1/runoff/summary` → **57525.0**
+- SQL result: **57525** (tolerance ± 1.0)
+
+```sql
+SELECT "Date", "District_Name", "Daily_Surface_Runoff_Volume_m3_day" / 6.5e9 * 1000 FROM runoff_variables_master
+WHERE "Date" BETWEEN (SELECT (max("Date") - interval '1 year' + interval '1 day')::date FROM runoff_variables_master WHERE "Date" <= CURRENT_DATE AND "Date" <= (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master"))
+  AND (SELECT max("Date") FROM runoff_variables_master WHERE "Date" <= CURRENT_DATE AND "Date" <= (SELECT max("Date")::date FROM "6.1_core_rainfall_variables_master"))
+```
+
+### ✅ Runoff peak-flow map, Alfred Nzo (DC44), latest complete month: max daily depth × real area × 1000 / 86 400
+
+- API: `GET /api/v1/runoff/map?layer=peak-flow` → **575.1**
+- SQL result: **575.1** (tolerance ± 0.05)
+
+```sql
+SELECT max("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000 FROM runoff_variables_master
+WHERE "District_Name" = 'Alfred Nzo' AND "Date" >= '2026-08-01' AND "Date" < '2026-09-01'
+```
+
+### ✅ Runoff districts with normal flow (%), national, Aug 2026: within own Q90–Q10 of 2000–2025 monthly flows
+
+- API: `GET /api/v1/runoff/summary` → **98.0**
+- SQL result: **98** (tolerance ± 0.5)
+
+```sql
+SELECT "District_Name", date_trunc('month', "Date")::date m, avg("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000
+FROM runoff_variables_master WHERE "Date" <= '2026-08-31' GROUP BY 1, 2
+HAVING count(*) = extract(day FROM (min(date_trunc('month', "Date")) + interval '1 month - 1 day'))
+```
+
+### ✅ Runoff districts with low flow (%), national, Aug 2026
+
+- API: `GET /api/v1/runoff/summary` → **2.0**
+- SQL result: **2** (tolerance ± 0.5)
+
+```sql
+SELECT "District_Name", date_trunc('month', "Date")::date m, avg("Daily_Surface_Runoff_Volume_m3_day") / 6.5e9 * 1000
+FROM runoff_variables_master WHERE "Date" <= '2026-08-31' GROUP BY 1, 2
+HAVING count(*) = extract(day FROM (min(date_trunc('month', "Date")) + interval '1 month - 1 day'))
+```
+
+### ✅ Surface-water River WQ Status, national: CCME WQI of 14 parameters over 12 months to Sep 2026, area-weighted, recomputed from the 12.x rows
+
+- API: `GET /api/v1/surface-water/summary` → **91.0**
+- SQL result: **91** (tolerance ± 0.5)
+
+```sql
+WITH w AS (SELECT make_date(2025, 10, 1) a, make_date(2026, 9, 1) b)
+SELECT district_name, 'pH', max("pH") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'DO', max("Dissolved Oxygen (DO)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'BOD5', max("BOD5") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'COD', max("COD") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'NO3', max("Nitrate (NO3-N)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'NH3', max("Ammonia (NH3-N)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'PO4', max("Orthophosphate (PO43-)") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'SO4', max("Sulphate") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'F', max("Fluoride") FROM "12.2_chemical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'EC', max("Electrical Conductivity (EC)") FROM "12.1_physical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'Turbidity', max("Turbidity") FROM "12.1_physical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'TDS', max("Total Dissolved Solids (TDS)") FROM "12.1_physical_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'Ecoli', max("E. coli") FROM "12.3_biological_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+UNION ALL SELECT district_name, 'Chla', max("Chlorophyll-a") FROM "12.3_biological_water_quality_master", w WHERE make_date(year, month, 1) BETWEEN a AND b GROUP BY 1, year, month
+```
+
+### ✅ Derived SGI, national, Sep 2026: rank of the month's depth (interpolated record, deepest = rank 1) per district, Φ⁻¹((r − 0.5) / n), area-weighted (Φ⁻¹ in Python, the only non-SQL step besides the areas)
+
+- API: `GET /api/v1/groundwater/summary` → **0.03**
+- SQL result: **0.03** (tolerance ± 0.011)
+
+```sql
+WITH s AS (SELECT lower(district_name) d, date_trunc('month', date)::date m, avg(value) v
+  FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'groundwater_table_depth_m_bgl' AND date <= '2026-10-31' GROUP BY 1, 2),
+g AS (SELECT d, generate_series(min(m), max(m), interval '1 month')::date m FROM s GROUP BY 1),
+j AS (SELECT g.d, g.m, s.v, CASE WHEN s.v IS NOT NULL THEN g.m END sampled FROM g LEFT JOIN s USING (d, m)),
+f AS (SELECT d, m, v,
+  max(sampled) OVER (PARTITION BY d ORDER BY m) m0,
+  min(sampled) OVER (PARTITION BY d ORDER BY m DESC) m1 FROM j),
+i AS (SELECT f.d, f.m, coalesce(f.v, s0.v + (s1.v - s0.v) * (f.m - f.m0)::float8 / (f.m1 - f.m0)) v
+  FROM f JOIN s s0 ON s0.d = f.d AND s0.m = f.m0 JOIN s s1 ON s1.d = f.d AND s1.m = f.m1),
+r AS (SELECT d, m, rank() OVER (PARTITION BY d ORDER BY v DESC) r, count(*) OVER (PARTITION BY d) n
+  FROM i WHERE extract(month FROM m) = 9)
+SELECT d, r, n FROM r WHERE m = '2026-09-01'
+```
+
+### ✅ Drought page SGI KPI = the same derived SGI
+
+- API: `GET /api/v1/drought/summary` → **0.03**
+- SQL result: **0.03** (tolerance ± 0.011)
+
+```sql
+WITH s AS (SELECT lower(district_name) d, date_trunc('month', date)::date m, avg(value) v
+  FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'groundwater_table_depth_m_bgl' AND date <= '2026-10-31' GROUP BY 1, 2),
+g AS (SELECT d, generate_series(min(m), max(m), interval '1 month')::date m FROM s GROUP BY 1),
+j AS (SELECT g.d, g.m, s.v, CASE WHEN s.v IS NOT NULL THEN g.m END sampled FROM g LEFT JOIN s USING (d, m)),
+f AS (SELECT d, m, v,
+  max(sampled) OVER (PARTITION BY d ORDER BY m) m0,
+  min(sampled) OVER (PARTITION BY d ORDER BY m DESC) m1 FROM j),
+i AS (SELECT f.d, f.m, coalesce(f.v, s0.v + (s1.v - s0.v) * (f.m - f.m0)::float8 / (f.m1 - f.m0)) v
+  FROM f JOIN s s0 ON s0.d = f.d AND s0.m = f.m0 JOIN s s1 ON s1.d = f.d AND s1.m = f.m1),
+r AS (SELECT d, m, rank() OVER (PARTITION BY d ORDER BY v DESC) r, count(*) OVER (PARTITION BY d) n
+  FROM i WHERE extract(month FROM m) = 9)
+SELECT d, r, n FROM r WHERE m = '2026-09-01'
+```
+
 ## categories — 2026-10-22
 
 ### ✅ Rainfall category: core-rainfall-variables / Seasonal_Total_JFM_mm, Alfred Nzo (DC44), 2025 — the stored column

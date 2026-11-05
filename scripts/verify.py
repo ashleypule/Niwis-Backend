@@ -329,9 +329,10 @@ def _sgi_national(rows: list[tuple[Any, ...]]) -> float:
 _SGI_SQL = """WITH s AS (SELECT lower(district_name) d, date_trunc('month', date)::date m, avg(value) v
   FROM "10_1_borehole_and_aquifer_master" WHERE variable_name = 'groundwater_table_depth_m_bgl' AND date <= '2026-10-31' GROUP BY 1, 2),
 g AS (SELECT d, generate_series(min(m), max(m), interval '1 month')::date m FROM s GROUP BY 1),
-f AS (SELECT g.d, g.m, s.v,
-  (SELECT p.m FROM s p WHERE p.d = g.d AND p.m <= g.m ORDER BY p.m DESC LIMIT 1) m0,
-  (SELECT n.m FROM s n WHERE n.d = g.d AND n.m >= g.m ORDER BY n.m LIMIT 1) m1 FROM g LEFT JOIN s USING (d, m)),
+j AS (SELECT g.d, g.m, s.v, CASE WHEN s.v IS NOT NULL THEN g.m END sampled FROM g LEFT JOIN s USING (d, m)),
+f AS (SELECT d, m, v,
+  max(sampled) OVER (PARTITION BY d ORDER BY m) m0,
+  min(sampled) OVER (PARTITION BY d ORDER BY m DESC) m1 FROM j),
 i AS (SELECT f.d, f.m, coalesce(f.v, s0.v + (s1.v - s0.v) * (f.m - f.m0)::float8 / (f.m1 - f.m0)) v
   FROM f JOIN s s0 ON s0.d = f.d AND s0.m = f.m0 JOIN s s1 ON s1.d = f.d AND s1.m = f.m1),
 r AS (SELECT d, m, rank() OVER (PARTITION BY d ORDER BY v DESC) r, count(*) OVER (PARTITION BY d) n
