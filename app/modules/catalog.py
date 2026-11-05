@@ -10,9 +10,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from itertools import product
 from types import ModuleType
-from typing import Any
-
-import httpx
+from typing import TYPE_CHECKING, Any
 
 from app.core.response_checks import Coverage, all_violations, invariant_violations
 from app.modules.blue_drop import service as blue_drop
@@ -34,6 +32,9 @@ from app.modules.vegetation import service as vegetation
 from app.modules.water_quality import service as water_quality
 from app.modules.water_quantity import service as water_quantity
 from app.registry.catalogue import get_catalogue
+
+if TYPE_CHECKING:
+    import httpx  # a dev dependency: the app imports this module, the image has no httpx
 
 SERVICE_MODULES: dict[str, ModuleType] = {
     "rainfall": rainfall,
