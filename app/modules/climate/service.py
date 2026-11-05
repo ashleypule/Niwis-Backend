@@ -1432,7 +1432,7 @@ class ClimateService:
 
 
 async def prewarm(data: DataAccess) -> None:
-    for var in ("tavg", "tmax", "tmin", "et0_daily", "pet_daily", "aet_daily", "runoff_depth_daily"):
+    for var in ("tavg", "tmax", "tmin", "frost_day", "et0_daily", "pet_daily", "aet_daily", "runoff_depth_daily"):
         await data.daily_monthly_stats(var, ())
     for var in (
         "hot_days",
@@ -1442,6 +1442,7 @@ async def prewarm(data: DataAccess) -> None:
         "rx1day",
         "rx5day",
         "rain_annual",
+        "nino34_annual",
         "rain_season_djf",
         "rain_season_mam",
         "rain_season_jja",

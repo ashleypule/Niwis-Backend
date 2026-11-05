@@ -21,7 +21,7 @@ from app import __version__
 from app.config import Settings, get_settings
 from app.core.cache import MemoryCache
 from app.core.data import DataAccess
-from app.core.errors import APIError, DataUnavailable
+from app.core.errors import APIError, DataUnavailable, NotFound
 from app.core.filters import Filters, Window, parse_scope
 from app.core.spatial import get_spatial
 from app.db import Database
@@ -112,6 +112,15 @@ async def _warm_summary(state: AppState, svc: type[Any]) -> None:
         await svc(ctx).summary()
 
 
+async def _warm_entity(state: AppState, module: str, svc: type[Any]) -> None:
+    """A page's entity card: its fields read frames the summary does not (one card loads them for every district)."""
+    newest = await state.meta.newest_date()
+    ctx = Ctx(state, Filters(parse_scope(), Window("12M", None, None), False, None), newest)
+    code = catalog.SAMPLE_ENTITIES.get(module, catalog.SAMPLE_ENTITY)
+    with contextlib.suppress(DataUnavailable, NotFound):
+        await svc(ctx).entity(code)
+
+
 def page_services() -> dict[str, type[Any]]:
     """Every live page with a summary of its own (the Overview shows other modules' panels; the AI page reads the page
     forecasts, kept fresh by their own loop)."""
@@ -152,6 +161,11 @@ async def _warm(state: AppState) -> dict[str, float | None]:
         ("services", lambda: prewarm_services(state.data)),
         ("tariffs", lambda: prewarm_tariffs(state.data)),
         *((f"{page} summary", functools.partial(_warm_summary, state, svc)) for page, svc in page_services().items()),
+        *(
+            (f"{page} entity card", functools.partial(_warm_entity, state, page, svc))
+            for page, svc in page_services().items()
+            if hasattr(svc, "entity")
+        ),
         ("table statistics", state.meta.table_stats),
     ]
 

@@ -30,7 +30,7 @@ from app.core.units import canon_unit
 from app.forecasting import pages as fc
 from app.modules.common import Ctx, Selector, anomaly_split_reasons, unknown
 from app.modules.drivers import driver_series
-from app.modules.land_cover import land_cover_set
+from app.modules.land_cover import AREA, CLASSES, land_cover_set
 from app.modules.rainfall.service import RainfallService, _months
 from app.schemas import contract as c
 
@@ -781,3 +781,5 @@ class VegetationService:
 async def prewarm(data: DataAccess) -> None:
     for var in ("ndvi", "vci", "vhi", "tci", "lst", "ndwi", "soil_moisture_surface", "gdd"):
         await data.monthly(var)
+    for var in (AREA, *(v for _, v, _ in CLASSES)):
+        await data.annual(var)

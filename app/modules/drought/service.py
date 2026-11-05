@@ -1525,9 +1525,14 @@ def _d(ts: Any) -> dt.date:
 
 async def prewarm(data: DataAccess) -> None:
     for var in (
+        "spi_1",
         "spi_3",
         "spi_6",
+        "spi_12",
+        "spi_24",
+        "spei_3",
         "spei_12",
+        "soil_moisture_rootzone",
         "vci",
         "vhi",
         "ndvi",

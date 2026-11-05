@@ -1027,6 +1027,8 @@ async def prewarm(data: DataAccess) -> None:
     """Load the frames every rainfall request needs (called in the background at startup)."""
     for var in ("rain_monthly", "rain_anomaly_mm", "spi_6", "spei_6"):
         await data.monthly(var)
+    for season in ("jfm", "amj", "jas", "ond"):
+        await data.annual(f"rain_season_{season}")
     await data.daily_monthly_stats("rain_daily", (DRY_DAY_MM, 20.0, EVENT_MM))
     newest = await data.newest("rain_daily")
     start, end = parse_window(None, None, None).resolve(newest, HISTORY_START)  # default 12M window
