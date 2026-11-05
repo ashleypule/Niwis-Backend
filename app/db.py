@@ -9,10 +9,12 @@ request.
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import contextvars
 import logging
 import re
 import time
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from typing import Any
 
 import asyncpg
@@ -20,6 +22,20 @@ import asyncpg
 from app.config import Settings
 
 log = logging.getLogger("niwis.db")
+
+_patient: contextvars.ContextVar[bool] = contextvars.ContextVar("niwis_db_patient", default=False)
+
+
+@contextlib.contextmanager
+def patient() -> Iterator[None]:
+    """`Database.fetch` in this block has the longer timeout of `fetch_slow`: the start-up warm-up, which nobody waits
+    on and which the shared database can answer slowly when its data are cold. Requests keep the short timeout."""
+    token = _patient.set(True)
+    try:
+        yield
+    finally:
+        _patient.reset(token)
+
 
 # Registry names include digits, dots, spaces (4_6, 10_2 tables) and, in the §9–§16 tables, parentheses, slashes,
 # hyphens and colons ("Electrical Conductivity (EC)", "Lead/Cadmium/Chromium", "Ammonia (NH3-N)", "system:index").
@@ -97,6 +113,8 @@ class Database:
         return self._pool
 
     async def fetch(self, query: str, *args: Any) -> list[asyncpg.Record]:
+        if _patient.get():
+            return await self.fetch_slow(query, *args)
         t0 = time.perf_counter()
         async with self._require_pool().acquire() as conn:
             rows: list[asyncpg.Record] = await conn.fetch(query, *args)

@@ -24,7 +24,7 @@ from app.core.data import DataAccess
 from app.core.errors import APIError, DataUnavailable, NotFound
 from app.core.filters import Filters, Window, parse_scope
 from app.core.spatial import get_spatial
-from app.db import Database
+from app.db import Database, patient
 from app.forecasting.contract import router as forecast_contract_router
 from app.forecasting.jobs import ForecastJobs
 from app.forecasting.pages import PageForecasts
@@ -172,7 +172,8 @@ async def _warm(state: AppState) -> dict[str, float | None]:
     async def run(name: str, step: Callable[[], Awaitable[Any]]) -> float | None:
         t0 = time.perf_counter()
         try:
-            await step()
+            with patient():
+                await step()
         except Exception:
             log.warning("cache warm-up step failed", exc_info=True, extra={"step": name})
             return None
