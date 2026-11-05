@@ -68,6 +68,7 @@ AREA_SCALE = Selector("scale", ("1", "3", "6", "12", "24"), "6")  # SPI used to 
 FORECAST_SPI_SCALE = Selector("scale", ("3", "6"), "3")  # forecast SPI (page forecasts: SPI-3 and SPI-6)
 AFFECTED_LEVEL = Selector("level", ("province", "catchment"), "province")
 SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
+    ("forecast", "spi"): (FORECAST_SPI_SCALE,),
     ("timeseries", "spi"): (SPI_SCALE,),
     ("timeseries", "drought-area"): (AREA_SCALE,),
     ("timeseries", "rain-anomaly"): (WINDOW,),

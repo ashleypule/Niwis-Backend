@@ -52,7 +52,9 @@ DRY_DAY_MM = 1.0
 WINDOW = Selector("window", ("1", "3", "6", "12"), "1")  # months summed before comparing with the normal
 EXTREMES_KIND = Selector("kind", ("wettest", "driest"), "wettest")
 EVENTS_KIND = Selector("kind", ("count", "max"), "count")
+FORECAST_SPI_SCALE = Selector("scale", ("1", "3"), "3")  # forecast SPI (page forecasts: SPI-1 and SPI-3)
 SELECTORS: dict[tuple[str, str], tuple[Selector, ...]] = {
+    ("forecast", "spi"): (FORECAST_SPI_SCALE,),
     ("timeseries", "anomaly"): (WINDOW,),
     ("table", "extremes"): (EXTREMES_KIND,),
     ("breakdown", "events"): (EVENTS_KIND,),
@@ -70,9 +72,6 @@ def _d(ts: Any) -> dt.date:
 
 def _months(start: dt.date, end: dt.date) -> list[pd.Timestamp]:
     return list(pd.date_range(start.replace(day=1), end.replace(day=1), freq="MS"))
-
-
-FORECAST_SPI_SCALE = Selector("scale", ("1", "3"), "3")  # forecast SPI (page forecasts: SPI-1 and SPI-3)
 
 
 class RainfallService:
