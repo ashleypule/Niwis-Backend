@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from app.config import Settings  # noqa: E402
 from app.core.spatial import get_spatial  # noqa: E402
+from app.db import patient  # noqa: E402
 from app.main import create_app  # noqa: E402
 
 OUT = ROOT / "docs" / "VERIFICATION.md"
@@ -1089,7 +1090,9 @@ UNION ALL SELECT district_name, 'Chla', max("Chlorophyll-a") FROM "12.3_biologic
 
 async def run(modules: list[str]) -> list[dict[str, Any]]:
     url = dotenv_values(ROOT / ".env")["SUPABASE_DB_URL"]
-    app = create_app(Settings(rate_limit_per_minute=0, log_level="WARNING", prewarm_categories=False, forecast_pages=False))
+    app = create_app(
+        Settings(rate_limit_per_minute=0, log_level="WARNING", prewarm_categories=False, forecast_pages=False)
+    )
     results = []
     async with (
         app.router.lifespan_context(app),
@@ -1098,7 +1101,8 @@ async def run(modules: list[str]) -> list[dict[str, Any]]:
         with psycopg.connect(url, autocommit=True) as conn:
             conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")
             for ch in [c for c in CHECKS if c.module in modules]:
-                r = await client.get(ch.path)
+                with patient():  # a script on a cold cache: nobody waits on it
+                    r = await client.get(ch.path)
                 r.raise_for_status()
                 api = ch.pick(r.json())
                 sql_val = ch.sql_post(conn.execute(ch.sql).fetchall())  # type: ignore[arg-type]
