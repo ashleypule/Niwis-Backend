@@ -45,6 +45,15 @@ def payload(body: dict[str, Any]) -> Any:
     return body
 
 
+def has_values(body: dict[str, Any]) -> bool:
+    """Whether a response holds any value: a table covering a subset of districts (17_1: 16) answers the others with
+    empty series and a reason, and two such answers are alike without the district being ignored."""
+    for s in body.get("series") or []:
+        if any(p[1] is not None for p in s.get("data") or []):
+            return True
+    return bool(body.get("rows") or body.get("values")) or "series" not in body
+
+
 async def check(client: httpx.AsyncClient, a: str, b: str, scopes: list[dict[str, str]]) -> tuple[list[str], int]:
     """Problems found, and how many endpoints returned data (200) for both districts."""
     problems: list[str] = []
@@ -59,6 +68,8 @@ async def check(client: httpx.AsyncClient, a: str, b: str, scopes: list[dict[str
         if ra.status_code != 200:
             if ra.status_code != 501:
                 problems.append(f"{where}: HTTP {ra.status_code} {ra.text[:200]}")
+            continue
+        if not (has_values(ra.json()) and has_values(rb.json())):
             continue
         compared += 1
         pa = payload(ra.json())
