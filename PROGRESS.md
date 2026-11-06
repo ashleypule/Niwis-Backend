@@ -2,6 +2,19 @@
 
 ## Status (2026-10-30): 21 of the 24 contract modules live and listed so by `/health` (D47: the AI, alerts, data-integration and governance pages count, with their remaining panels filled from existing data; `overview` partial; `settlements` and `roadmap` have no table); before that 20 served (water quantity, IWRM, green / blue drop, RWQO, alerts, data integration and governance added, D42–D45) and every forecast tab live (D41); forecasting added — the Forecasting Studio (`/api/v1/forecast/*`, any live column, any area, Auto or a chosen model, chronological backtest) and the pages' forecast tabs fed by precomputed Auto forecasts (D29–D39); before that, completing the system from the database — Parts 1–3 done. Owner's decisions: the database is the authoritative record (shown as Live), the system is public with no login; unclear points are decided in `docs/DECISIONS.md`.
 
+### System audit, step 3 — gaps filled by derivation, backend follow-ups (2026-11-05)
+
+Decision D49; contract `docs/CONTRACT_CHANGES.md` §20; checks `scripts/verify.py audit-step3`, 9 / 9 on Supabase.
+
+- [x] Derived: land cover from 9_2, runoff peak flow and flow-status shares, the river WQI (CCME), an SGI from the 10_1
+      telemetry, the drought cascade's groundwater stage.
+- [x] The 16 items of the frontend's BACKEND_ISSUES §15.
+- [x] Warm-up: whole daily tables read per district with the background timeout, entity cards warmed, one log line per
+      step, Prophet and cmdstanpy silent in worker processes, the app imports without development packages.
+- [ ] For step 4 (D49.6): frames expire after an idle hour; requests during the 20–40 minute warm-up can pass the
+      10 s limit and answer 500; `/health` answers 500 when the database fails; vegetation index-trend 500 when a
+      calendar month has no climatology; the owner's calls on the WQI method and the SGI.
+
 ### System audit, step 1 — data correctness of every live page (2026-10-30)
 
 Decision D48; `docs/AUDIT_STEP1_DATA.md` (224 panel rows); SQL in `scripts/audit_step1/`; checks in `scripts/verify.py`

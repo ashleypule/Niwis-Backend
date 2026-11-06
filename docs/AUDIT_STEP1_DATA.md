@@ -150,7 +150,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | Runoff | KPI Annual Runoff | 139.0 mm (07 Sep 2025 – 06 Sep 2026) | 139.0 | ✅ | Σ daily depth (model volume ÷ 6 500 km²) per district, area-weighted | — |
 | Runoff | KPI Runoff Anomaly | +37.3 % vs the 2000–2026 same-month mean stored in 7.2 | 37.3 (normal 101.2 mm) | ✅ | normal per district-month = depth ÷ (1 + stored anomaly / 100), median over years, pro-rated by days | — |
-| Runoff | KPI Peak Flow | null (withheld: the table's peaks are scaled to 6 500 km²) | | ✅ | see "Derivable in step 3" | — |
+| Runoff | KPI Peak Flow | null at step 1 (withheld: the table's peaks are scaled to 6 500 km²) | | ✅ | derived in step 3 (D49): 57 525 m³/s | — |
 | Runoff | KPI Baseflow Index | 0.32 | mean of district ratios 0.320; ratio of the area-weighted sums 0.320 | ✅ | now Σ baseflow / Σ flow of the scope (identical here because the model's BFI is nearly constant) | label and method aligned with the coefficient (same change) |
 | Runoff | KPI Runoff Coefficient | **0.186** labelled "Σ runoff / Σ rainfall, 12 months" | **0.198** = Σ runoff / Σ rainfall of the area-weighted totals; 0.186 is the area-weighted mean of the 52 district ratios | ❌ | the label and the statistics table (0.198) say ratio of sums; the KPI averaged district ratios | KPI = ratio of the scope's totals (`runoff/service.py`); test `test_runoff_coefficient_kpi_is_the_ratio_of_the_window_sums`; verify.py check (national 0.198) |
 | Runoff | KPI SSI-6 (modelled runoff) | 2.47, Aug 2026 | 2.47 (scipy MLE and Thom fits); SSI-1 0.39, SSI-3 0.49, SSI-12 1.87 | ✅ | gamma per calendar month 2000–2025 on the national depth series | — |
@@ -191,7 +191,7 @@
 | Surface water | KPI River Water Level | 0.05 m | 0.053 | ✅ | stored monthly stage, area-weighted | — |
 | Surface water | KPIs Districts with High / Low Flow | 0 / 0 of 52 | 0 / 0 (district Aug 2026 mean vs its own p90 / p10 of monthly means 2000–2025) | ✅ | | — |
 | Surface water | KPI Suspended Sediment | 130 mg/L | 130.2 | ✅ | | — |
-| Surface water | KPIs Stations / Flood alerts / E-flow / River WQ | null with reasons | | ✅ | WQ status: see "Derivable in step 3" | — |
+| Surface water | KPIs Stations / Flood alerts / E-flow / River WQ | null with reasons | | ✅ | WQ status derived in step 3 (D49): CCME 91 | — |
 | Surface water | Chart River discharge — daily | 25 Sep 2025 312.5 … 24 Sep 2026 585.0 m³/s | equal (52 districts every day) | ✅ | | — |
 | Surface water | Chart River discharge — monthly mean / normal | **Sep 2025 991.92**; Oct 444.69 … Aug 2026 422.41; normal Sep 404.48 … Aug 355.63 | Sep 2025 whole month **477.29**; 991.92 is the mean of 25–30 Sep (partial edge); the other months and normals equal | ❌ | as the Runoff page | monthly series = complete months from the window's first month to the latest complete month |
 | Surface water | Chart Flow-duration curves | last 12 months max 48 436, median 977.2, min 179.5; long-term max 56 575, median 451.7 | equal | ✅ | | — |
@@ -213,7 +213,7 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | Groundwater | KPI Mean Groundwater Level | 31.0 m bgl, Sep 2026 | 30.99 | ✅ | `10_1` telemetry depth: monthly mean of samples per district, area-weighted; Sep 2026 is the latest complete sampled month (newest sample 13 Sep 2026) | — |
 | Groundwater | KPI Level Anomaly | +0.23 m vs September mean 2000–2025 | 0.233 | ✅ | + = shallower | — |
-| Groundwater | KPI SGI | null (valid to Aug 2024) | | ✅ | see "Derivable in step 3" | — |
+| Groundwater | KPI SGI | null at step 1 (valid to Aug 2024) | | ✅ | derived in step 3 (D49): 0.03 | — |
 | Groundwater | KPI Estimated Recharge | 42 mm/yr (11.2 direct recharge 2025) | 41.8 | ✅ | area-weighted | — |
 | Groundwater | KPI Annual Abstraction | 1 520.0 Mm³/yr | 1 520.0 | ✅ | sum | — |
 | Groundwater | KPI Districts with Rising Levels | 24 of 52 | 24 | ✅ | mean depth Oct 2025 – Sep 2026 < mean Oct 2024 – Sep 2025 | — |
@@ -338,7 +338,7 @@ were checked for internal consistency with their forecast's median and band (e.g
 | Matched to the displayed precision | 212 rows (✅) + 3 rows that match with a note (⚠️: stored-baseline anomaly, a rounding tie, a MASE tie) |
 | Mismatched and fixed | 9 rows, 8 fixes (table below) |
 | Withheld anew | 0 (no served value lacked a source; the already-withheld panels were confirmed withheld with their reasons) |
-| Derivable in step 3 | 5 (below) |
+| Derivable in step 3 | 5, all done in step 3 (below) |
 
 ### Fixes
 
@@ -356,7 +356,19 @@ were checked for internal consistency with their forecast's median and band (e.g
 Each fix has a regression test in `tests/test_audit_step1.py` (plus the updated tie cases in `tests/test_thresholds.py`)
 and, where a national number changed, a check in `scripts/verify.py` (`audit-step1`, written to `docs/VERIFICATION.md`).
 
-### Derivable in step 3
+### Derivable in step 3: outcome (2026-11-05, DECISIONS D49)
+
+All five were derived. Independent SQL: `scripts/verify.py audit-step3`, 9 / 9 on Supabase (`docs/VERIFICATION.md`).
+
+| Page | Panel | Status | Checked value (API = SQL) |
+| --- | --- | --- | --- |
+| Vegetation, Runoff | Land cover from 9_2 | done; cropland stays withheld (a copy of grassland) | national shrubland / fynbos 69.1 %; KwaZulu-Natal tree cover 30.5 % |
+| Runoff | KPI Peak Flow | done | national 57 525 m³/s; DC44 map 575.1 m³/s |
+| Runoff | KPIs Districts with Normal / Low / High Flow | done | Aug 2026: normal 98 %, low 2 % |
+| Surface water | KPI River WQ Status | done, with the CCME WQI rather than the weighted arithmetic index (D49.3) | national 91 |
+| Groundwater, Drought | SGI and the cascade stage | done, under the interpolate-then-gate reading, with weak behaviour disclosed (D49.4) | national Sep 2026: 0.03 |
+
+The formulas proposed in step 1 follow, for reference.
 
 Panels that are empty or withheld today but could be derived from live data (not implemented here):
 

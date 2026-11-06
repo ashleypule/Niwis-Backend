@@ -167,8 +167,8 @@ current month, and agree an update cadence per table (daily / monthly) so the AP
 | Drought · storage vs SPI by dam size; dam points | Per-dam storage with capacity, coordinates (spec §8) |
 | Drought · borehole map, mean borehole level | Per-borehole water levels (m bgl) with coordinates (spec §10) |
 | Climate · projections (RCP 4.5 / 8.5), vulnerability index | Downscaled projections, vulnerability index |
-| Vegetation · land-cover breakdown; surface soil moisture | Land-cover class per district/area; a real soil-moisture series in `5.1` |
-| Runoff · gauging stations, flow status, station flow anomaly | DWS gauge flows with station codes and coordinates |
+| Vegetation · surface soil moisture (land-cover shares are derived from 9_2 since D49; `cropland_agri_pct` is a copy of grassland) | A real soil-moisture series in `5.1`; a real cropland column in `9_2` |
+| Runoff · gauging stations, station flow anomaly (flow status per district is derived since D49) | DWS gauge flows with station codes and coordinates |
 | Runoff/IWRM · by WMA and catchment | District × WMA / catchment area overlap, or data at catchment level |
 | All modules · forecasts | No forecast tables yet (expected; the API marks forecast panels unavailable) |
 
@@ -403,7 +403,7 @@ empty MultiPoint), so there are no station, borehole or sampling-point layers (D
 
 **What it unblocks / what to fix.** (1) Real reservoir storage per dam with capacities and coordinates (the Dam page
 and the drought Dam Storage KPI need it; `8_1` storage is a placeholder). (2) Station / borehole / sampling-point
-coordinates for point layers. (3) One consistent flow family in `9_1`. (4) An SGI computed from the borehole levels.
+coordinates for point layers. (3) One consistent flow family in `9_1`. (4) An SGI computed by the data team from real borehole levels: the one derived from the 10_1 telemetry (D49) tracks droughts weakly and the telemetry has a fixed 49-day cadence.
 (5) `14.1` must hold drinking-water results, not copies of effluent values; `13.1` pH / DO / COD need their real units.
 (6) Remove rows dated after the load date and forward-filled days.
 

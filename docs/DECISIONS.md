@@ -668,7 +668,51 @@ eight did not. The decisions taken while fixing them:
 a derived peak flow and district flow-status shares on the Runoff page, the WQI on the Surface Water page, and an SGI
 from the 10_1 telemetry (needs a method decision).
 
-### Pending review (2026-10-30)
+### D49 Step 3 of the hand-over audit: gaps filled by derivation (2026-11-05)
+
+**Question.** Step 1 listed panels that are empty today but could be derived from live data. Which can be served, by
+which formula? Every derivation is labelled `derived` with a `methodNote`, has a unit test and an independent SQL check
+(`scripts/verify.py audit-step3`, 9 / 9 on Supabase), and nothing is guessed.
+
+1. **Land cover from 9_2.** Share of a class = Σ (catchment area × share) / Σ catchment area over the scope's districts;
+   a WMA takes the district's fraction inside it. Seven classes sum to 100 %. `cropland_agri_pct` stays withheld: it is
+   a copy of grassland in every row. The `ndvi` view is the district NDVI weighted by class area, and is null with a
+   reason for one district, where every class would repeat the same number.
+2. **Runoff peak flow and flow status.** Peak = highest daily mean of depth × real district area × 1000 / 86 400, never
+   the table's 6 500 km² column. Status = the share of the scope's districts whose latest complete month lies above Q10,
+   between, or below Q90 of their own 2000–2025 monthly flows. The KPIs say "Districts with …".
+3. **River WQI: the CCME index, not the weighted arithmetic index the brief named first.** The brief asked for a
+   "weighted arithmetic index … e.g. the DWS/CCME-style approach". Tested on Sep 2026
+   (`scripts/audit_step3/wqi_sgi_candidates.py`), the weighted arithmetic index (Tyagi / Brown, wᵢ ∝ 1/Sᵢ) gives phosphate
+   77.2 % of the weight, ammonia 9.7 % and fluoride 6.4 %; it is lower-is-better, ranges 17–144 with mean 76.9, and read as
+   100 − index puts the median at 24, "Very Poor", for a nation with 94 % compliance. The NSF WQI has the right bands but
+   publishes its sub-index curves only as graphs, and reading those by eye would be guessing. **Decision:** the CCME WQI
+   the Water Quality page already computes (national 91), null below 4 parameters. It is calculated over the trailing 12
+   months, not per site-month as the brief worded it, because the CCME F1 and F2 terms need repeated samples. **The owner
+   can overrule this.**
+4. **SGI from 10_1 telemetry.** Per calendar month Φ⁻¹((r − 0.5) / n) with mid-ranks (Bloomfield & Marchant 2013), on
+   monthly mean depth, deepest = lowest. Supersedes D22's rejection. **Gate:** ≥ 36 months and ≤ 20 % missing *after*
+   interpolating gaps of ≤ 2 months, which is how the forecast code applies its rule (D35, D41.3). Raw telemetry has a
+   fixed 49-day cadence: every district has 201 of 323 months sampled (about 38 % unsampled), the longest gap is one month,
+   so all 52 pass. A literal reading of 20 % on the raw record would withhold all 52; `SGI_INTERPOLATE = 0` makes that
+   change. **Limit, disclosed in the method note:** the derived SGI barely follows the old valid SGI (median r 0.09, range
+   −0.23 to 0.27) or SPI-12 (0.12, against 0.52 for the old column); its national annual mean is flat at 0.0–0.2 except
+   2015 (−1.72) and 2016 (−1.65), and it misses the 2003–05 and 2019 droughts
+   (`scripts/audit_step3/sgi_behaviour.py`). **The owner can withdraw it.**
+5. **Warm-up.** A read of a whole daily table is one statement per district through the (district, date) index. Warm-up
+   reads have the 60 s background timeout (`db.patient()`), since nobody waits on them; requests keep 10 s. Each page's
+   entity card is a warm-up step, because the cards read frames the summaries do not. Cold start on the Docker image:
+   2 184 s, every step warm on the first attempt, no timeout (2026-11-05; earlier that day
+   the image without the cards and added frames took 976 s). Frames still live 60 minutes and refresh only when read, so after an idle
+   hour the first visitor loads them again: **not changed, listed for step 4.**
+6. **Found during the step, listed for step 4.** A request made during warm-up can pass the 10 s limit and answer 500
+   (seen on rainfall, drought soil moisture and runoff discharge while the warm-up or other clients loaded the same
+   tables). `/health` answers 500 instead of "unreachable" when its table query fails. `vegetation/timeseries` index
+   trend answers 500 when a calendar month has no climatology (the short fixture database). The Supabase session pooler
+   allows 15 clients: two API containers and a test run filled it. The climate forecast page no longer sends `scenario`
+   to its two statistical tables, which have no RCP behind them (frontend).
+
+### Pending review (2026-11-05)
 
 None: every table in the database is registered or ignored with a reason (the six §18 / §19 tables were registered
 the same day they appeared, D46).

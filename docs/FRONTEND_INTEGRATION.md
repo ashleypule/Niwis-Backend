@@ -302,3 +302,10 @@ always starts with the disclaimer.
 - Record after the backend's page-forecast round has finished (`GET /api/v1/forecast/pages`: every item `done`), else
   the forecast tabs record "being computed" 501s.
 - Playwright hybrid: `tests/e2e/hybrid/studio.spec.ts` (default run, shared link, forecast-tab note).
+
+## 11. Audit step 3 (2026-11-05)
+
+The contract is in `docs/CONTRACT_CHANGES.md` §20 and the reasons in DECISIONS D49. Show a value's `methodNote` wherever
+`derived` is true. `reference/units.json` is written by the frontend's `npm run naming:register`; run it when the register
+changes, because the backend's response checks and fixture test read it. The Docker image does not hold that file, so the
+check does nothing there. Record fixtures after the page forecasts finish, or their panels are stored as "being computed".

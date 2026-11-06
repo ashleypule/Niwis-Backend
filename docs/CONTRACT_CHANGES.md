@@ -921,3 +921,29 @@ every district the §16 / §18 / §19 tables hold.
 
 Still 501 with the reason: `governance` breakdowns `standards`, `access`, table `usage`, map `providers` (no usage
 or standards records, no provider locations).
+
+## 20. Audit step 3 (2026-11-05): derived panels and presentation rules
+
+DECISIONS D49. Additions, except where marked as a change.
+
+| Field or endpoint | Meaning |
+| --- | --- |
+| `derived`, `methodNote` on provenance and KPIs | the value is computed from live data; the note states the method in plain language |
+| `periodEnd` on entity cards and their fields | last day of the period `asOf` stands for |
+| `vegetation/breakdown?metric=land-cover&kind=share\|ndvi` | land-cover shares from 9_2 (was 501) |
+| `runoff/breakdown?metric=land-cover`, `by-province` | the Land group and flow status per province |
+| `runoff/map?layer=flow-status`, `peak-flow` | new layers |
+| `groundwater/breakdown?metric=status` | new; the SGI KPI, chart, map and drought cascade stage now serve the derived SGI |
+| `rwqo/timeseries?metric=params&param=` | `do`, `tds`, `tn`, `tp`; `ph`, `ec`, `turbidity` answer 501 with the reason |
+| `blue-drop/timeseries?metric=params&group=` | `key`, `micro`, `nutrients`, `metals` |
+
+**Changes the frontend must take:**
+
+- Runoff KPIs "Stations with … Flow" are "Districts with … Flow", in %.
+- `groundwater-reserve` exploitation KPI is a ratio with 2 decimals, not a percentage.
+- Unit strings are the register's only (`reference/units.json`, written by `npm run naming:register`); unitless axes send
+  `index`, never `—`, `score` or `mixed`; axis labels do not repeat the unit.
+- `rwqo/timeseries?metric=ecological` has two axes (index, %).
+- A category set with a series on `axis: 1` carries `axis2Unit`.
+- New map scale `volume`, on the water-quantity and IWRM runoff layers.
+- "E. coli" casing; 18_1's newest row ends in its own month (April 2026), not December.
